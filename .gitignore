@@ -5,6 +5,8 @@
 .DS_Store
 .quarto
 
+**/*.otter.R
+
 **/*.html
 **/*_files
 inst/doc

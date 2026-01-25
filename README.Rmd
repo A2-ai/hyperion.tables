@@ -1,0 +1,125 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# hyperion.tables
+
+<!-- badges: start -->
+<!-- badges: end -->
+
+Flexible tables for hyperion models.
+
+## Installation
+
+You can install the development version of hyperion.tables from [GitHub](https://github.com/) with:
+
+``` r
+# install.packages("pak")
+pak::pak("A2-ai/hyperion.tables")
+```
+
+```{r}
+library(gt)
+library(hyperion)
+library(hyperion.tables)
+```
+
+## Example
+
+### Parameter table
+
+```{r parameter-table}
+model_dir <- system.file("extdata", "models", "onecmt", "run003", package = "hyperion")
+spec <- TableSpec(
+  sections = section_rules(
+    kind == "THETA" ~ "Structural model parameters",
+    kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
+    kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
+    kind == "SIGMA" ~ "Residual error",
+    TRUE ~ "Other"
+  ),
+  name_source = "display",
+  title = "Model Parameters"
+)
+
+params <- get_parameters(model_dir)
+info <- get_model_parameter_info(model_dir)
+sum <- get_model_summary(model_dir)
+
+params |>
+  apply_table_spec(spec, info) |>
+  add_summary_info(sum) |>
+  make_parameter_table() |>
+  as_raw_html()
+```
+
+### Comparison table
+
+```{r comparison-table}
+model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
+
+spec <- TableSpec(
+  sections = section_rules(
+    kind == "THETA" ~ "Structural model parameters",
+    kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
+    kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
+    kind == "SIGMA" ~ "Residual variance",
+    TRUE ~ "Other"
+  )
+)
+
+run002 <- read_model(file.path(model_dir, "run002.mod"))
+run003 <- read_model(file.path(model_dir, "run003.mod"))
+
+get_parameters(run002) |>
+  apply_table_spec(spec, get_model_parameter_info(run002)) |>
+  add_summary_info(get_model_summary(run002)) |>
+  compare_with(
+    get_parameters(run003) |>
+      apply_table_spec(spec, get_model_parameter_info(run003)) |>
+      add_summary_info(get_model_summary(run003)),
+    labels = c("run002", "run003")
+  ) |>
+  add_model_lineage(get_model_lineage(run002)) |>
+  make_comparison_table() |>
+  as_raw_html()
+```
+
+### Summary table
+
+```{r summary-table}
+model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
+tree <- get_model_lineage(model_dir)
+
+tree |>
+  apply_summary_spec(SummarySpec()) |>
+  make_summary_table() |>
+  as_raw_html()
+```
+
+### Custom renderers
+
+`make_parameter_table(output = "data")` returns a `HyperionTable`. If you need
+custom output, call `apply_formatting()` and render the returned data frame
+with your preferred table package.
+
+```{r custom-renderer}
+htable <- params |>
+  apply_table_spec(spec, info) |>
+  add_summary_info(sum) |>
+  make_parameter_table(output = "data")
+
+data <- apply_formatting(htable)
+# render data with your custom table tool
+```
