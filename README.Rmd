@@ -107,7 +107,8 @@ spec <- TableSpec(
     kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
     kind == "SIGMA" ~ "Residual variance",
     TRUE ~ "Other"
-  )
+  ),
+  drop_columns = c("variability", "rse", "shrinkage")
 )
 
 run002 <- read_model(file.path(model_dir, "run002.mod"))
@@ -137,7 +138,8 @@ spec <- TableSpec(
     kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
     kind == "SIGMA" ~ "Residual variance",
     TRUE ~ "Other"
-  )
+  ),
+  drop_columns = c("variability", "rse", "shrinkage")
 )
 
 run002 <- read_model(file.path(model_dir, "run002.mod"))
@@ -158,8 +160,6 @@ comp_gt <- get_parameters(run002) |>
 gt::gtsave(
   comp_gt,
   "man/figures/README-comparison-table.png",
-  vwidth = 1600,
-  vheight = 900
 )
 ```
 

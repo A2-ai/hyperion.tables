@@ -84,7 +84,8 @@ spec <- TableSpec(
     kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
     kind == "SIGMA" ~ "Residual variance",
     TRUE ~ "Other"
-  )
+  ),
+  drop_columns = c("variability", "rse", "shrinkage")
 )
 
 run002 <- read_model(file.path(model_dir, "run002.mod"))
