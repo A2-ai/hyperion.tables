@@ -18,6 +18,7 @@ knitr::opts_chunk$set(
 library(hyperion)
 library(hyperion.tables)
 library(gt)
+library(flextable)
 
 data_dir <- system.file("extdata", package = "hyperion")
 model_dir <- file.path(data_dir, "models", "onecmt")
