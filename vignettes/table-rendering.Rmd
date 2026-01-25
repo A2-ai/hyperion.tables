@@ -1,0 +1,147 @@
+---
+title: "table-rendering"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{table-rendering}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(hyperion)
+library(hyperion.tables)
+
+data_dir <- system.file("extdata", package = "hyperion")
+model_dir <- file.path(data_dir, "models", "onecmt")
+model_run <- "run003"
+```
+
+# Rendering and extending tables
+
+`hyperion.tables` renders tables through a renderer-agnostic intermediate
+called `HyperionTable`. The table data is produced once from a `TableSpec`,
+then any renderer (gt/flextable/custom) can format and display it consistently.
+
+Renderers call `apply_formatting()` internally, so the same rendering rules
+apply across outputs.
+
+# Build a `HyperionTable` and render it
+
+Render rules live on `TableSpec`:
+
+- `ci` controls CI merging and missing-value display.
+- `n_sigfig` controls numeric precision.
+- `missing_text` + `missing_apply_to` control `NA` substitution.
+
+```{r}
+spec <- TableSpec(
+  sections = section_rules(
+    kind == "THETA" ~ "Structural model parameters",
+    kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
+    kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
+    kind == "SIGMA" ~ "Residual error",
+    TRUE ~ "Other"
+  ),
+  title = paste(model_run, "Parameters")
+)
+
+run003 <- read_model(file.path(model_dir, paste0(model_run, ".mod")))
+
+hyperion_table <- get_parameters(run003) |>
+  apply_table_spec(spec, get_model_parameter_info(run003)) |>
+  make_parameter_table(output = "data")
+
+hyperion_table
+```
+
+`hyperion.tables` includes two built-in renderers:
+
+```{r}
+render_gt(hyperion_table)
+```
+
+```{r}
+render_flextable(hyperion_table)
+```
+
+# Update render rules and re-render
+
+To change formatting, rebuild the `HyperionTable` with a new `TableSpec`
+and re-render it. You can also inspect the formatted data directly.
+
+```{r}
+spec <- TableSpec(
+  sections = section_rules(
+    kind == "THETA" ~ "Structural model parameters",
+    kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
+    kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
+    kind == "SIGMA" ~ "Residual error",
+    TRUE ~ "Other"
+  ),
+  title = paste(model_run, "Parameters"),
+  n_sigfig = 4,
+  ci = CIOptions(
+    merge = TRUE,
+    pattern = "(%s; %s)",
+    missing_text = "NA"
+  ),
+  missing_text = "NA",
+  missing_apply_to = "numeric"
+)
+
+hyperion_table <- get_parameters(run003) |>
+  apply_table_spec(spec, get_model_parameter_info(run003)) |>
+  make_parameter_table(output = "data")
+
+formatted <- apply_formatting(hyperion_table)
+names(formatted)
+```
+
+```{r}
+render_gt(hyperion_table)
+```
+
+
+```{r}
+head(formatted)
+```
+
+# Extending with a custom renderer
+
+Custom renderers should accept a `HyperionTable`, call `apply_formatting()`,
+and then build output using your chosen table package.
+
+```{r}
+render_custom <- function(table) {
+  data <- apply_formatting(table)
+  # Replace with your rendering package of choice
+	gt::gt(data, groupname_col = table@groupname_col)
+}
+
+render_custom(hyperion_table)
+```
+
+# What if you skip `apply_formatting()`?
+
+If you render directly from the raw `HyperionTable@data`, you will see
+unformatted numeric values and separate CI columns (if present). This is
+useful for debugging, but not recommended for final output.
+
+```{r}
+raw_data <- hyperion_table@data
+gt::gt(raw_data, groupname_col = hyperion_table@groupname_col)
+```
+
+# Notes
+
+- The render rules are **shared** across renderers to keep tables consistent.
+- `make_parameter_table(output = "data")` returns the `HyperionTable`.
+- If you need tighter control, use `apply_formatting()` and pass the returned
+  data frame to your custom renderer.

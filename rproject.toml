@@ -11,9 +11,12 @@ repositories = [
 ]
 
 dependencies = [
+	# dev dependencies
   "devtools",
-  "rextendr",
-  { name = "hyperion.tables", path = ".", dependencies_only = true, install_suggestions = true },
   { name = "covr", install_suggestions = true },
   { name = "starlightr", git = "https://github.com/a2-ai/starlightr", branch = "main" },
+	
+	# package deps
+	{ name = "hyperion", git = "https://github.com/a2-ai/hyperion", branch = "transforms-mod" },
+  { name = "hyperion.tables", path = ".", dependencies_only = true, install_suggestions = true },
 ]

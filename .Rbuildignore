@@ -1,2 +1,9 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^LICENSE\.md$
+
+^\.github$
+
+^rv$
+^rproject\.toml$
+^\.Rprofile$
