@@ -39,7 +39,7 @@ library(hyperion.tables)
 
 ### Parameter table
 
-```{r parameter-table, echo = FALSE}
+```{r parameter-table}
 model_dir <- system.file("extdata", "models", "onecmt", "run003", package = "hyperion")
 spec <- TableSpec(
   display_transforms = list(omega = c("cv")),
@@ -70,7 +70,7 @@ gt::gtsave(param_gt, "man/figures/README-param-table.png")
 
 ### Comparison table
 
-```{r comparison-table, echo = FALSE}
+```{r comparison-table}
 model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
 
 spec <- TableSpec(
@@ -106,7 +106,7 @@ gt::gtsave(comp_gt, "man/figures/README-comparison-table.png")
 
 ### Summary table
 
-```{r summary-table, echo = FALSE}
+```{r summary-table}
 model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
 tree <- get_model_lineage(model_dir)
 

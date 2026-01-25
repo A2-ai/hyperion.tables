@@ -44,37 +44,86 @@ library(hyperion.tables)
 
 ### Parameter table
 
-    #> Warning in file(con, "wb"): cannot open file
-    #> '/Users/mattsmith/Documents/hyperion.tables/man/figures/README-param-table.png':
-    #> No such file or directory
-    #> Warning in callback(...): An error occurred: Error in file(con, "wb"): cannot open the connection
-    #> file:////var/folders/bx/l0m1kftd7m93lvrc4m3_309c0000gn/T//RtmpMsrrcD/file184af7ab1943c.html screenshot completed
-    #> Warning in normalizePath(value): path[1]="An error occurred: Error in file(con, "wb"): cannot open the connection
-    #> ": No such file or directory
+``` r
+model_dir <- system.file("extdata", "models", "onecmt", "run003", package = "hyperion")
+spec <- TableSpec(
+  display_transforms = list(omega = c("cv")),
+  sections = section_rules(
+    kind == "THETA" ~ "Structural model parameters",
+    kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
+    kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
+    kind == "SIGMA" ~ "Residual error",
+    TRUE ~ "Other"
+  ),
+  name_source = "display",
+  title = "Model Parameters"
+)
+
+params <- get_parameters(model_dir)
+info <- get_model_parameter_info(model_dir)
+sum <- get_model_summary(model_dir)
+
+param_gt <- params |>
+  apply_table_spec(spec, info) |>
+  add_summary_info(sum) |>
+  make_parameter_table()
+
+gt::gtsave(param_gt, "man/figures/README-param-table.png")
+#> file:////var/folders/bx/l0m1kftd7m93lvrc4m3_309c0000gn/T//Rtmp4R80EW/file59119dd3578.html screenshot completed
+```
 
 ![](man/figures/README-param-table.png)
 
 ### Comparison table
 
-    #> Warning in file(con, "wb"): cannot open file
-    #> '/Users/mattsmith/Documents/hyperion.tables/man/figures/README-comparison-table.png':
-    #> No such file or directory
-    #> Warning in callback(...): An error occurred: Error in file(con, "wb"): cannot open the connection
-    #> file:////var/folders/bx/l0m1kftd7m93lvrc4m3_309c0000gn/T//RtmpMsrrcD/file184aff5e0a68.html screenshot completed
-    #> Warning in normalizePath(value): path[1]="An error occurred: Error in file(con, "wb"): cannot open the connection
-    #> ": No such file or directory
+``` r
+model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
+
+spec <- TableSpec(
+  display_transforms = list(omega = c("cv")),
+  sections = section_rules(
+    kind == "THETA" ~ "Structural model parameters",
+    kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
+    kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
+    kind == "SIGMA" ~ "Residual variance",
+    TRUE ~ "Other"
+  )
+)
+
+run002 <- read_model(file.path(model_dir, "run002.mod"))
+run003 <- read_model(file.path(model_dir, "run003.mod"))
+
+comp_gt <- get_parameters(run002) |>
+  apply_table_spec(spec, get_model_parameter_info(run002)) |>
+  add_summary_info(get_model_summary(run002)) |>
+  compare_with(
+    get_parameters(run003) |>
+      apply_table_spec(spec, get_model_parameter_info(run003)) |>
+      add_summary_info(get_model_summary(run003)),
+    labels = c("run002", "run003")
+  ) |>
+  add_model_lineage(get_model_lineage(run002)) |>
+  make_comparison_table()
+
+gt::gtsave(comp_gt, "man/figures/README-comparison-table.png")
+#> file:////var/folders/bx/l0m1kftd7m93lvrc4m3_309c0000gn/T//Rtmp4R80EW/file59126432cc3.html screenshot completed
+```
 
 ![](man/figures/README-comparison-table.png)
 
 ### Summary table
 
-    #> Warning in file(con, "wb"): cannot open file
-    #> '/Users/mattsmith/Documents/hyperion.tables/man/figures/README-summary-table.png':
-    #> No such file or directory
-    #> Warning in callback(...): An error occurred: Error in file(con, "wb"): cannot open the connection
-    #> file:////var/folders/bx/l0m1kftd7m93lvrc4m3_309c0000gn/T//RtmpMsrrcD/file184af31a94729.html screenshot completed
-    #> Warning in normalizePath(value): path[1]="An error occurred: Error in file(con, "wb"): cannot open the connection
-    #> ": No such file or directory
+``` r
+model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
+tree <- get_model_lineage(model_dir)
+
+summary_gt <- tree |>
+  apply_summary_spec(SummarySpec()) |>
+  make_summary_table()
+
+gt::gtsave(summary_gt, "man/figures/README-summary-table.png")
+#> file:////var/folders/bx/l0m1kftd7m93lvrc4m3_309c0000gn/T//Rtmp4R80EW/file5914d523e92.html screenshot completed
+```
 
 ![](man/figures/README-summary-table.png)
 
