@@ -14,7 +14,7 @@ dependencies = [
 	# dev dependencies
   "devtools",
   { name = "covr", install_suggestions = true },
-  { name = "starlightr", git = "https://github.com/a2-ai/starlightr", branch = "main" },
+	#{ name = "starlightr", git = "https://github.com/a2-ai/starlightr", branch = "main" },
 	
 	# package deps
 	{ name = "hyperion", git = "https://github.com/a2-ai/hyperion", branch = "transforms-mod" },
