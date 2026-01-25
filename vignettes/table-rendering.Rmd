@@ -32,6 +32,32 @@ then any renderer (gt/flextable/custom) can format and display it consistently.
 Renderers call `apply_formatting()` internally, so the same rendering rules
 apply across outputs.
 
+# Pipeline overview
+
+Here’s what happens when you run:
+
+```
+params |>
+  apply_table_spec(spec, info) |>
+  add_summary_info(mod_sum) |>
+  make_parameter_table()
+```
+
+1. **`apply_table_spec()`** enriches the raw parameter data with transforms,
+   CI bounds, section labels, and attaches `table_spec`. It does *not* create
+   display strings.
+2. **`add_summary_info()`** attaches model summary metadata for footnotes.
+3. **`make_parameter_table()`** builds a `HyperionTable`, which captures
+   labels, hide/show rules, CI merge specs, footnotes, and other display intent.
+4. **`render_gt()` / `render_flextable()`** call `apply_formatting()` to:
+   - format numeric columns
+   - build the variability display column (if requested)
+   - merge CI bounds (if enabled)
+   - apply missing-value text
+
+This keeps formatting centralized and consistent across renderers while
+keeping the underlying data pipeline clean and composable.
+
 # Build a `HyperionTable` and render it
 
 Render rules live on `TableSpec`:

@@ -86,7 +86,6 @@ ci_merge_spec <- function(
 #' @param ci CIOptions object controlling CI merge behavior.
 #' @param ci_merges List of CI merge specifications
 #' @param ci_missing_rows Integer vector of rows with missing CI values
-#' @param ci_missing_text Text to show for missing CI values (default "-")
 #' @param missing_text Text to show for other missing values (default "")
 #' @param bold_locations Character vector of locations to bold
 #' @param borders List of border specifications

@@ -22,43 +22,11 @@ apply_formatting <- function(table) {
   data <- summary_overrides$data
   numeric_cols <- summary_overrides$numeric_cols
 
-  if (table@table_type != "summary") {
-    all_numeric <- names(data)[vapply(data, is.numeric, logical(1))]
-    numeric_cols <- union(numeric_cols, all_numeric)
-  }
+  data <- format_numeric_for_table(data, table, numeric_cols)
 
-  data <- format_numeric_columns_shared(
-    data,
-    numeric_cols = numeric_cols,
-    n_sigfig = table@n_sigfig,
-    formatter = NULL
-  )
+  data <- build_variability_for_table(data, table)
 
-  spec <- table@source_spec
-  if (!is.null(spec) && S7::S7_inherits(spec, TableSpec)) {
-    wants_variability <- wants_variability_column(spec)
-    wants_components <- wants_variability_components(spec)
-
-    if (
-      wants_variability &&
-        !wants_components &&
-        table@table_type == "parameter"
-    ) {
-      data$variability <- build_variability_parameter(data, spec)
-    }
-  }
-
-  if (isTRUE(table@ci@merge)) {
-    data <- merge_ci_columns_data(
-      data,
-      ci_merges = table@ci_merges,
-      ci_missing_text = table@ci@missing_text,
-      ci_missing_rows = table@ci_missing_rows,
-      n_sigfig = table@n_sigfig,
-      pattern = table@ci@pattern,
-      formatter = NULL
-    )
-  }
+  data <- merge_ci_for_table(data, table)
 
   data <- apply_missing_text_policy(
     data,
@@ -73,6 +41,47 @@ apply_formatting <- function(table) {
     data_cols <- union(groupname_col, data_cols)
   }
   data[, data_cols, drop = FALSE]
+}
+
+#' @noRd
+format_numeric_for_table <- function(data, table, numeric_cols) {
+  if (table@table_type != "summary") {
+    all_numeric <- names(data)[vapply(data, is.numeric, logical(1))]
+    numeric_cols <- union(numeric_cols, all_numeric)
+  }
+
+  format_numeric_columns_shared(
+    data,
+    numeric_cols = numeric_cols,
+    n_sigfig = table@n_sigfig,
+    formatter = NULL
+  )
+}
+
+#' @noRd
+build_variability_for_table <- function(data, table) {
+  spec <- table@source_spec
+  plan <- variability_plan(spec)
+  if (plan$build_variability && table@table_type == "parameter") {
+    data$variability <- build_variability_parameter(data, spec)
+  }
+  data
+}
+
+#' @noRd
+merge_ci_for_table <- function(data, table) {
+  if (isTRUE(table@ci@merge)) {
+    data <- merge_ci_columns_data(
+      data,
+      ci_merges = table@ci_merges,
+      ci_missing_text = table@ci@missing_text,
+      ci_missing_rows = table@ci_missing_rows,
+      n_sigfig = table@n_sigfig,
+      pattern = table@ci@pattern,
+      formatter = NULL
+    )
+  }
+  data
 }
 
 #' Apply summary-specific display overrides

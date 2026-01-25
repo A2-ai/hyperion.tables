@@ -15,9 +15,8 @@ prepare_parameter_table_data <- function(params, spec) {
     character(0)
   }
 
-  wants_variability <- wants_variability_column(spec)
-  wants_components <- wants_variability_components(spec)
-  if (wants_variability && !wants_components) {
+  plan <- variability_plan(spec)
+  if (plan$build_variability) {
     empty_cols <- setdiff(empty_cols, "variability")
   }
 
@@ -60,7 +59,7 @@ prepare_parameter_table_data <- function(params, spec) {
   if ("sd" %in% requested_cols) {
     hide_cols <- setdiff(hide_cols, "sd")
   }
-  if (wants_components) {
+  if (plan$wants_components) {
     hide_cols <- unique(c(hide_cols, "variability"))
   }
 
@@ -490,20 +489,17 @@ prepare_comparison_table_data <- function(
   # Capture all comparison attrs early (dplyr operations strip custom attrs)
   saved_attrs <- capture_comparison_attrs(comparison)
 
-  if (!is.null(spec) && S7::S7_inherits(spec, TableSpec)) {
-    wants_variability <- wants_variability_column(spec)
-    wants_components <- wants_variability_components(spec)
-    if (wants_variability && !wants_components) {
-      suffix_for_variability <- unique(c(
-        fallback_suffix_cols,
-        "cv", "corr", "sd", "fixed"
-      ))
-      comparison <- build_variability_comparison(
-        comparison,
-        spec,
-        suffix_for_variability
-      )
-    }
+  plan <- variability_plan(spec)
+  if (plan$build_variability) {
+    suffix_for_variability <- unique(c(
+      fallback_suffix_cols,
+      "cv", "corr", "sd", "fixed"
+    ))
+    comparison <- build_variability_comparison(
+      comparison,
+      spec,
+      suffix_for_variability
+    )
   }
 
   suffix_cols <- get_comparison_suffix_cols(

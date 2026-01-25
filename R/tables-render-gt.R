@@ -141,24 +141,6 @@ apply_gt_title <- function(gt_table, table) {
     gt::tab_header(title = table@title)
 }
 
-#' Apply CI column merges to gt table
-#' @noRd
-apply_gt_ci_merges <- function(gt_table, table) {
-  for (merge in table@ci_merges) {
-    ci_low <- merge$ci_low
-    ci_high <- merge$ci_high
-    if (all(c(ci_low, ci_high) %in% names(table@data))) {
-      gt_table <- gt_table |>
-        gt::cols_merge(
-          columns = c(ci_low, ci_high),
-          pattern = merge$pattern,
-          rows = !is.na(.data[[ci_low]]) & !is.na(.data[[ci_high]])
-        )
-    }
-  }
-  gt_table
-}
-
 #' Apply spanners to gt table
 #' @noRd
 apply_gt_spanners <- function(gt_table, table, visible_cols) {

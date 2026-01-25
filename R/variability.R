@@ -132,3 +132,23 @@ wants_variability_components <- function(spec) {
   any(c("cv", "corr", "sd") %in%
     c(spec@columns %||% character(0), spec@add_columns %||% character(0)))
 }
+
+#' @noRd
+variability_plan <- function(spec) {
+  if (is.null(spec) || !S7::S7_inherits(spec, TableSpec)) {
+    return(list(
+      wants_variability = FALSE,
+      wants_components = FALSE,
+      build_variability = FALSE
+    ))
+  }
+
+  wants_variability <- wants_variability_column(spec)
+  wants_components <- wants_variability_components(spec)
+
+  list(
+    wants_variability = wants_variability,
+    wants_components = wants_components,
+    build_variability = wants_variability && !wants_components
+  )
+}

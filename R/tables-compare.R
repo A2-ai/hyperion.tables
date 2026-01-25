@@ -222,9 +222,8 @@ compare_with <- function(
     fallback_suffix_cols,
     include_fixed_for_ci = TRUE
   )
-  wants_variability <- !is.null(spec1) && wants_variability_column(spec1)
-  wants_components <- !is.null(spec1) && wants_variability_components(spec1)
-  if (wants_variability && !wants_components) {
+  plan <- variability_plan(spec1)
+  if (plan$build_variability) {
     suffix_cols <- unique(c(suffix_cols, "cv", "corr", "sd", "fixed"))
   }
   add_cols1 <- if (!is.null(spec1)) spec1@add_columns %||% character(0) else
@@ -996,85 +995,14 @@ render_gt_comparison_table <- function(
   ci_pct,
   pct_change_cols
 ) {
-  hide_cols <- layout$hide_cols
-  groupname <- layout$groupname
-
-  # Build gt table shell.
-  table <- comparison |>
-    gt::gt(groupname_col = groupname)
-
-  # Merge CI bounds per model when requested.
-  table <- apply_comparison_ci_merge(table, comparison, spec, model_indices)
-
-  # Hide internal/unused columns.
-  hide_cols <- intersect(hide_cols, names(comparison))
-  if (length(hide_cols) > 0) {
-    table <- table |>
-      gt::cols_hide(dplyr::all_of(hide_cols))
-  }
-
-  # Apply model spanners.
-  table <- apply_model_spanners(table, model_cols, labels)
-
-  table <- apply_standard_gt_formatting(
-    table,
+  htable <- hyperion_comparison_table(
+    comparison,
+    layout,
+    model_cols,
+    labels,
+    spec,
     label_map,
-    n_sigfig,
-    c(
-      paste0("estimate_", model_indices),
-      paste0("rse_", model_indices),
-      paste0("ci_low_", model_indices),
-      paste0("ci_high_", model_indices),
-      pct_change_cols,
-      "pct_change"
-    )
+    model_indices
   )
-
-  missing_cols <- missing_apply_columns(comparison, spec@missing_apply_to)
-  if (length(missing_cols) > 0) {
-    table <- apply_gt_missing_text(
-      table,
-      missing_text = spec@missing_text,
-      columns = dplyr::all_of(missing_cols)
-    )
-  }
-
-  # Title + footnotes.
-  table <- apply_table_title(table, spec@title)
-
-  table <- apply_comparison_footnotes(table, comparison, spec, n_sigfig, ci_pct)
-
-  # Final styling (bold headers + borders + nowrap).
-  table <- apply_standard_gt_styling(
-    table,
-    include_row_groups = TRUE,
-    include_spanners = TRUE
-  )
-
-  # Add vertical borders between model sections
-  border_cols <- character(0)
-  for (cols in model_cols) {
-    if (length(cols) > 0) {
-      border_cols <- c(border_cols, utils::tail(cols, 1))
-    }
-  }
-  if (
-    (length(pct_change_cols) > 0 || "pct_change" %in% names(comparison)) &&
-      length(model_cols) > 0
-  ) {
-    last_cols <- model_cols[[length(model_cols)]]
-    if (length(last_cols) > 0) {
-      border_cols <- c(border_cols, utils::tail(last_cols, 1))
-    }
-  }
-
-  if (length(border_cols) > 0) {
-    table <- table |>
-      gt::tab_style(
-        style = gt::cell_borders(sides = "right", color = "#D3D3D3"),
-        locations = gt::cells_body(columns = dplyr::all_of(border_cols))
-      )
-  }
-
-  table
+  render_gt(htable)
 }

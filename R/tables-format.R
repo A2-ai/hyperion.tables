@@ -50,36 +50,6 @@ merge_ci_columns <- function(
     )
 }
 
-#' Apply CI merge across model indices
-#' @noRd
-apply_comparison_ci_merge <- function(
-  table,
-  comparison,
-  spec,
-  model_indices
-) {
-  if (
-    is.null(spec) ||
-      !all(c("ci_low", "ci_high") %in% spec@columns) ||
-      !isTRUE(spec@ci@merge)
-  ) {
-    return(table)
-  }
-  for (idx in model_indices) {
-    ci_low <- paste0("ci_low_", idx)
-    ci_high <- paste0("ci_high_", idx)
-    if (all(c(ci_low, ci_high) %in% names(comparison))) {
-      table <- merge_ci_columns(
-        table,
-        ci_low,
-        ci_high,
-        pattern = spec@ci@pattern
-      )
-    }
-  }
-  table
-}
-
 #' Get CI percent from spec
 #' @noRd
 get_ci_pct <- function(spec, default = 95) {
