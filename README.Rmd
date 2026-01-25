@@ -11,6 +11,7 @@ knitr::opts_chunk$set(
   fig.path = "man/figures/README-",
   out.width = "100%"
 )
+dir.create("man/figures", recursive = TRUE, showWarnings = FALSE)
 ```
 
 # hyperion.tables
@@ -39,7 +40,34 @@ library(hyperion.tables)
 
 ### Parameter table
 
-```{r parameter-table}
+```{r parameter-table, eval = FALSE}
+model_dir <- system.file("extdata", "models", "onecmt", "run003", package = "hyperion")
+spec <- TableSpec(
+  display_transforms = list(omega = c("cv")),
+  sections = section_rules(
+    kind == "THETA" ~ "Structural model parameters",
+    kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
+    kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
+    kind == "SIGMA" ~ "Residual error",
+    TRUE ~ "Other"
+  ),
+  name_source = "display",
+  title = "Model Parameters"
+)
+
+params <- get_parameters(model_dir)
+info <- get_model_parameter_info(model_dir)
+sum <- get_model_summary(model_dir)
+
+param_gt <- params |>
+  apply_table_spec(spec, info) |>
+  add_summary_info(sum) |>
+  make_parameter_table()
+```
+
+![](man/figures/README-param-table.png)
+
+```{r parameter-table-save, include = FALSE}
 model_dir <- system.file("extdata", "models", "onecmt", "run003", package = "hyperion")
 spec <- TableSpec(
   display_transforms = list(omega = c("cv")),
@@ -66,11 +94,39 @@ param_gt <- params |>
 gt::gtsave(param_gt, "man/figures/README-param-table.png")
 ```
 
-![](man/figures/README-param-table.png)
-
 ### Comparison table
 
-```{r comparison-table}
+```{r comparison-table, eval = FALSE}
+model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
+
+spec <- TableSpec(
+  display_transforms = list(omega = c("cv")),
+  sections = section_rules(
+    kind == "THETA" ~ "Structural model parameters",
+    kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
+    kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
+    kind == "SIGMA" ~ "Residual variance",
+    TRUE ~ "Other"
+  )
+)
+
+run002 <- read_model(file.path(model_dir, "run002.mod"))
+run003 <- read_model(file.path(model_dir, "run003.mod"))
+
+comp_gt <- get_parameters(run002) |>
+  apply_table_spec(spec, get_model_parameter_info(run002)) |>
+  add_summary_info(get_model_summary(run002)) |>
+  compare_with(
+    get_parameters(run003) |>
+      apply_table_spec(spec, get_model_parameter_info(run003)) |>
+      add_summary_info(get_model_summary(run003)),
+    labels = c("run002", "run003")
+  ) |>
+  add_model_lineage(get_model_lineage(run002)) |>
+  make_comparison_table()
+```
+
+```{r comparison-table-save, include = FALSE}
 model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
 
 spec <- TableSpec(
@@ -99,14 +155,30 @@ comp_gt <- get_parameters(run002) |>
   add_model_lineage(get_model_lineage(run002)) |>
   make_comparison_table()
 
-gt::gtsave(comp_gt, "man/figures/README-comparison-table.png")
+gt::gtsave(
+  comp_gt,
+  "man/figures/README-comparison-table.png",
+  vwidth = 1600,
+  vheight = 900
+)
 ```
 
 ![](man/figures/README-comparison-table.png)
 
 ### Summary table
 
-```{r summary-table}
+```{r summary-table, eval = FALSE}
+model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
+tree <- get_model_lineage(model_dir)
+
+summary_gt <- tree |>
+  apply_summary_spec(SummarySpec()) |>
+  make_summary_table()
+```
+
+![](man/figures/README-summary-table.png)
+
+```{r summary-table-save, include = FALSE}
 model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
 tree <- get_model_lineage(model_dir)
 
@@ -116,8 +188,6 @@ summary_gt <- tree |>
 
 gt::gtsave(summary_gt, "man/figures/README-summary-table.png")
 ```
-
-![](man/figures/README-summary-table.png)
 
 ### Custom renderers
 

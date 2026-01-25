@@ -67,9 +67,6 @@ param_gt <- params |>
   apply_table_spec(spec, info) |>
   add_summary_info(sum) |>
   make_parameter_table()
-
-gt::gtsave(param_gt, "man/figures/README-param-table.png")
-#> file:////var/folders/bx/l0m1kftd7m93lvrc4m3_309c0000gn/T//Rtmp4R80EW/file59119dd3578.html screenshot completed
 ```
 
 ![](man/figures/README-param-table.png)
@@ -104,9 +101,6 @@ comp_gt <- get_parameters(run002) |>
   ) |>
   add_model_lineage(get_model_lineage(run002)) |>
   make_comparison_table()
-
-gt::gtsave(comp_gt, "man/figures/README-comparison-table.png")
-#> file:////var/folders/bx/l0m1kftd7m93lvrc4m3_309c0000gn/T//Rtmp4R80EW/file59126432cc3.html screenshot completed
 ```
 
 ![](man/figures/README-comparison-table.png)
@@ -120,9 +114,6 @@ tree <- get_model_lineage(model_dir)
 summary_gt <- tree |>
   apply_summary_spec(SummarySpec()) |>
   make_summary_table()
-
-gt::gtsave(summary_gt, "man/figures/README-summary-table.png")
-#> file:////var/folders/bx/l0m1kftd7m93lvrc4m3_309c0000gn/T//Rtmp4R80EW/file5914d523e92.html screenshot completed
 ```
 
 ![](man/figures/README-summary-table.png)
