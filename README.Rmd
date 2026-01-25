@@ -42,6 +42,7 @@ library(hyperion.tables)
 ```{r parameter-table}
 model_dir <- system.file("extdata", "models", "onecmt", "run003", package = "hyperion")
 spec <- TableSpec(
+  display_transforms = list(omega = c("cv")),
   sections = section_rules(
     kind == "THETA" ~ "Structural model parameters",
     kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
@@ -70,6 +71,7 @@ params |>
 model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
 
 spec <- TableSpec(
+  display_transforms = list(omega = c("cv")),
   sections = section_rules(
     kind == "THETA" ~ "Structural model parameters",
     kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
