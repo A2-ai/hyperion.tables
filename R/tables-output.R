@@ -55,7 +55,7 @@ build_summary_footnote <- function(params, n_sigfig, ofv_decimals = NULL) {
 #' the parameter table.
 #'
 #' @param params Enriched parameter data frame from `apply_table_spec()`
-#' @param sum Summary object from `get_model_summary()`, or NULL to skip
+#' @param model_sum Summary object from `summary()`, or NULL to skip
 #' @param show_method logical, if TRUE adds estimation method attribute for table footnote
 #' @param show_ofv logical, if TRUE adds final objective function value attribute for table footnote
 #' @param show_cond_num logical, if TRUE adds final condition number attribute for table footnote
@@ -65,42 +65,42 @@ build_summary_footnote <- function(params, n_sigfig, ofv_decimals = NULL) {
 #' @export
 add_summary_info <- function(
   params,
-  sum,
+  model_sum,
   show_method = TRUE,
   show_ofv = TRUE,
   show_cond_num = TRUE,
   show_number_obs = TRUE
 ) {
-  if (is.null(sum)) {
+  if (is.null(model_sum)) {
     return(params)
   }
 
   est_method <- if (show_method) {
-    dplyr::last(sum$run_details$estimation_method)
+    dplyr::last(model_sum$run_details$estimation_method)
   } else {
     NULL
   }
 
   ofv <- if (show_ofv) {
-    dplyr::last(sum$minimization_results$ofv)
+    dplyr::last(model_sum$minimization_results$ofv)
   } else {
     NULL
   }
 
   cn <- if (show_cond_num) {
-    dplyr::last(sum$minimization_results$condition_number)
+    dplyr::last(model_sum$minimization_results$condition_number)
   } else {
     NULL
   }
 
   n_obs <- if (show_number_obs) {
-    dplyr::last(sum$run_details$number_obs)
+    dplyr::last(model_sum$run_details$number_obs)
   } else {
     NULL
   }
 
   attr(params, "model_summary") <- list(
-    run_name = sum$run_name,
+    run_name = model_sum$run_name,
     estimation_method = est_method,
     ofv = ofv,
     condition_number = cn,

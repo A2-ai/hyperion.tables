@@ -10,7 +10,6 @@
 #' @importFrom hyperion compute_ci
 #' @importFrom hyperion compute_cv
 #' @importFrom hyperion compute_rse
-#' @importFrom hyperion get_model_summary
 #' @importFrom hyperion get_parameter_names
 #' @importFrom hyperion get_parameter_transform
 #' @importFrom hyperion get_parameter_unit

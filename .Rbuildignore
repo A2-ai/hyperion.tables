@@ -8,3 +8,5 @@
 ^rproject\.toml$
 ^\.Rprofile$
 ^README\.Rmd$
+
+^pharos\.toml$

@@ -558,7 +558,7 @@ load_model_summaries <- function(model_names, source_dir) {
 
     tryCatch(
       {
-        summaries[[name]] <- get_model_summary(model_path)
+        summaries[[name]] <- hyperion:::get_model_summary(model_path)
       },
       error = function(e) {
         # Silently set to NULL - unrun models handled by remove_unrun_models

@@ -16,7 +16,8 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(hyperion)
-library(hyperion.tables)
+#library(hyperion.tables)
+devtools::load_all()
 library(gt)
 library(flextable)
 
@@ -39,17 +40,19 @@ spec <- TableSpec(
   name_source = "display",
   title = paste(model_run, "Parameters")
 )
+mod <- read_model(file.path(model_dir, paste0(model_run, ".mod")))
 
 info <- get_model_parameter_info(
-  file.path(model_dir, model_run),
+	mod,
   system.file("lookup.toml", package = "hyperion")
 )
 
-info@sigma$`SIGMA(2,2)`@parameterization <- "AddErr"
+info <- info |> 
+  update_param_info("SIGMA(2,2)", parameterization = "AddErr")
 
-mod_sum <- get_model_summary(file.path(model_dir, model_run))
+mod_sum <- summary(mod)
 
-get_parameters(file.path(model_dir, model_run)) |>
+get_parameters(mod) |>
   apply_table_spec(spec, info) |>
   add_summary_info(mod_sum) |>
   make_parameter_table()
@@ -61,12 +64,13 @@ get_parameters(file.path(model_dir, model_run)) |>
 ```{r}
 spec@name_source <- "display"
 
-info@sigma$`SIGMA(1,1)`@display <- "Proportional Error"
-info@sigma$`SIGMA(2,2)`@display <- "Additive Error"
+info <- info |> 
+	update_param_info("SIGMA(1,1)", display = "Proportional Error") |>
+  update_param_info("SIGMA(2,2)", display = "Additive Error")
 
-mod_sum <- get_model_summary(file.path(model_dir, model_run))
+mod_sum <- summary(mod)
 
-get_parameters(file.path(model_dir, model_run)) |>
+get_parameters(mod) |>
   apply_table_spec(spec, info) |>
   add_summary_info(mod_sum) |>
   make_parameter_table()
@@ -75,19 +79,17 @@ get_parameters(file.path(model_dir, model_run)) |>
 ```{r}
 spec@name_source <- "nonmem_name"
 
-get_parameters(file.path(model_dir, model_run)) |>
+get_parameters(mod) |>
   apply_table_spec(spec, info) |>
   add_summary_info(mod_sum) |>
   make_parameter_table()
-
-info
 ```
 ## Adding descriptions with `@add_columns`
 ```{r}
 spec@name_source <- "display"
 spec@add_columns <- "description"
 
-get_parameters(file.path(model_dir, model_run)) |>
+get_parameters(mod) |>
   apply_table_spec(spec, info) |>
   add_summary_info(mod_sum) |>
   make_parameter_table()
@@ -99,7 +101,7 @@ spec@add_columns <- NULL
 spec@name_source <- "display"
 spec@drop_columns <- "unit"
 
-get_parameters(file.path(model_dir, model_run)) |>
+get_parameters(mod) |>
   apply_table_spec(spec, info) |>
   add_summary_info(mod_sum) |>
   make_parameter_table()
@@ -108,7 +110,7 @@ get_parameters(file.path(model_dir, model_run)) |>
 ```{r}
 spec@drop_columns <- c("unit", "shrinkage")
 
-get_parameters(file.path(model_dir, model_run)) |>
+get_parameters(mod) |>
   apply_table_spec(spec, info) |>
   add_summary_info(mod_sum) |>
   make_parameter_table()
@@ -128,7 +130,7 @@ sp_spec <- TableSpec(
   drop_columns = "shrinkage"
 )
 
-get_parameters(file.path(model_dir, model_run)) |>
+get_parameters(mod) |>
   apply_table_spec(sp_spec, info) |>
   make_parameter_table()
 ```
@@ -147,7 +149,7 @@ re_spec <- TableSpec(
   drop_columns = "unit",
 )
 
-get_parameters(file.path(model_dir, model_run)) |>
+get_parameters(mod) |>
   apply_table_spec(re_spec, info) |>
   make_parameter_table()
 ```
@@ -167,10 +169,10 @@ spec <- TableSpec(
   n_sigfig = 3
 )
 
-mod_sum <- get_model_summary(file.path(model_dir, model_run))
-info <- get_model_parameter_info(file.path(model_dir, model_run))
+mod_sum <- summary(mod)
+info <- get_model_parameter_info(mod)
 
-get_parameters(file.path(model_dir, model_run)) |>
+get_parameters(mod) |>
   apply_table_spec(spec, info) |>
   add_summary_info(mod_sum) |>
   make_parameter_table()
@@ -193,24 +195,24 @@ spec <- TableSpec(
   name_source = "display"
 )
 
-mod_sum <- get_model_summary(file.path(model_dir, model_run))
-info <- get_model_parameter_info(file.path(model_dir, model_run), lookup_path = normalizePath("../inst/lookup.toml"))
+mod_sum <- summary(mod)
+info <- get_model_parameter_info(mod, lookup_path = normalizePath("../inst/lookup.toml"))
 
-get_parameters(file.path(model_dir, model_run)) |>
+get_parameters(mod) |>
   apply_table_spec(spec, info) |>
   add_summary_info(mod_sum, show_cond_num = FALSE) |>
   make_parameter_table()
 ```
 
 ```{r}
-get_parameters(file.path(model_dir, model_run)) |>
+get_parameters(mod) |>
   apply_table_spec(spec, info) |>
   add_summary_info(mod_sum, show_cond_num = FALSE, show_ofv = FALSE) |>
   make_parameter_table()
 ```
 
 ```{r}
-get_parameters(file.path(model_dir, model_run)) |>
+get_parameters(mod) |>
   apply_table_spec(spec, info) |>
   add_summary_info(mod_sum, show_method = FALSE) |>
   make_parameter_table()
@@ -234,17 +236,17 @@ spec <- TableSpec(
   pvalue_scientific = FALSE
 )
 
-child_sum <- get_model_summary(file.path(model_dir, model_run))
-child_info <- get_model_parameter_info(file.path(model_dir, model_run))
+child_sum <- summary(mod)
+child_info <- get_model_parameter_info(mod)
 
-mod_sum <- get_model_summary(file.path(model_dir, "run002"))
+mod_sum <- summary(file.path(model_dir, "run002"))
 info <- get_model_parameter_info(file.path(model_dir, "run002"))
 
 get_parameters(file.path(model_dir, "run002")) |>
   apply_table_spec(spec, info) |>
   add_summary_info(mod_sum) |>
   compare_with(
-    get_parameters(file.path(model_dir, model_run)) |>
+    get_parameters(mod) |>
       apply_table_spec(spec, child_info) |>
       add_summary_info(child_sum),
     labels = c("run002", "run003")
@@ -271,15 +273,15 @@ spec <- TableSpec(
 )
 
 mod1 <- read_model(file.path(model_dir, "run002.mod"))
-mod_sum1 <- get_model_summary(mod1)
+mod_sum1 <- summary(mod1)
 info1 <- get_model_parameter_info(mod1)
 
 mod2 <- read_model(file.path(model_dir, "run003.mod"))
-mod_sum2 <- get_model_summary(mod2)
+mod_sum2 <- summary(mod2)
 info2 <- get_model_parameter_info(mod2)
 
 mod3 <- read_model(file.path(model_dir, "run003b1.mod"))
-mod_sum3 <- get_model_summary(mod3)
+mod_sum3 <- summary(mod3)
 info3 <- get_model_parameter_info(mod3)
 
 comp <- get_parameters(mod1) |>
@@ -321,41 +323,41 @@ spec <- TableSpec(
 )
 
 mod1 <- read_model(file.path(model_dir, "run001.mod"))
-mod_sum1 <- get_model_summary(file.path(model_dir, "run001"))
-info1 <- get_model_parameter_info(file.path(model_dir, "run001"))
+mod_sum1 <- summary(mod1)
+info1 <- get_model_parameter_info(mod1)
 
 mod2 <- read_model(file.path(model_dir, "run002.mod"))
-mod_sum2 <- get_model_summary(file.path(model_dir, "run002"))
-info2 <- get_model_parameter_info(file.path(model_dir, "run002"))
+mod_sum2 <- summary(mod2)
+info2 <- get_model_parameter_info(mod2)
 
 mod3 <- read_model(file.path(model_dir, "run003.mod"))
-mod_sum3 <- get_model_summary(file.path(model_dir, "run003"))
-info3 <- get_model_parameter_info(file.path(model_dir, "run003"))
+mod_sum3 <- summary(mod3)
+info3 <- get_model_parameter_info(mod3)
 
 mod4 <- read_model(file.path(model_dir, "run003b1.mod"))
-mod_sum4 <- get_model_summary(file.path(model_dir, "run003b1"))
-info4 <- get_model_parameter_info(file.path(model_dir, "run003b1"))
+mod_sum4 <- summary(mod4)
+info4 <- get_model_parameter_info(mod4)
 
-comp <- get_parameters(file.path(model_dir, "run001")) |>
+comp <- get_parameters(mod1) |>
   apply_table_spec(spec, info1) |>
   add_summary_info(mod_sum1) |>
   compare_with(
-    get_parameters(file.path(model_dir, "run002")) |>
+    get_parameters(mod2) |>
       apply_table_spec(spec, info2) |>
       add_summary_info(mod_sum2),
-    labels = c(mod1$filename, mod2$filename)
+    labels = c("run001", "run002")
    ) |>
   compare_with(
-    get_parameters(file.path(model_dir, "run003")) |>
+    get_parameters(mod3) |>
       apply_table_spec(spec, info3) |>
       add_summary_info(mod_sum3),
-    labels = c(mod3$filename)
+    labels = c("run003")
   ) |>
   compare_with(
-    get_parameters(file.path(model_dir, "run003b1")) |>
+    get_parameters(mod4) |>
       apply_table_spec(spec, info4) |>
       add_summary_info(mod_sum4),
-    labels = c(mod4$filename)
+    labels = c("run004")
   )
 comp |> names()
 comp |>
@@ -367,16 +369,20 @@ comp |>
 Using just model comments the source is either model file, default, or user supplied
 
 ```{r}
-info <- get_model_parameter_info(file.path(model_dir, model_run))
+info <- get_model_parameter_info(mod)
 audit_parameter_info(info)
 ```
 Editing a property by hand:
 ```{r}
-info@sigma$`SIGMA(1,1)`@display <- "Additive Error"
-info@sigma$`SIGMA(1,1)`@parameterization <- "AddErr"
-
-info@sigma$`SIGMA(2,2)`@display <- "Proportional Error"
-info@sigma$`SIGMA(2,2)`@parameterization <- "Proportional"
+info <- info |> 
+	update_param_info(
+		"SIGMA(1,1)", 
+		display = "Proportional Error", 
+		parameterization = "Proportional") |>
+  update_param_info(
+		"SIGMA(2,2)", 
+		display = "Additive Error", 
+		parameterization = "AddErr")
 
 audit_parameter_info(info)
 ```

@@ -25,7 +25,7 @@ library(hyperion)
 #> 
 #> 
 #> ── pharos configuration ────────────────────────────────────────────────────────
-#> ✖ No pharos.toml config file found. Please call hyperion::init() to create one
+#> ✔ pharos.toml found: /Users/mattsmith/Documents/hyperion.tables/pharos.toml
 #> ── hyperion options ────────────────────────────────────────────────────────────
 #> ✔ hyperion.significant_number_display : 4
 #> ── hyperion nonmem object options ──────────────────────────────────────────────
@@ -33,11 +33,6 @@ library(hyperion)
 #> ✔ hyperion.nonmem_summary.rse_threshold : 50
 #> ✔ hyperion.nonmem_summary.shrinkage_threshold : 30
 library(hyperion.tables)
-#> 
-#> Attaching package: 'hyperion.tables'
-#> The following object is masked from 'package:gt':
-#> 
-#>     render_gt
 ```
 
 ## Example
@@ -45,7 +40,7 @@ library(hyperion.tables)
 ### Parameter table
 
 ``` r
-model_dir <- system.file("extdata", "models", "onecmt", "run003", package = "hyperion")
+model_dir <- system.file("extdata", "models", "onecmt",  package = "hyperion")
 spec <- TableSpec(
   display_transforms = list(omega = c("cv")),
   sections = section_rules(
@@ -59,13 +54,14 @@ spec <- TableSpec(
   title = "Model Parameters"
 )
 
-params <- get_parameters(model_dir)
-info <- get_model_parameter_info(model_dir)
-sum <- get_model_summary(model_dir)
+model <- read_model(file.path(model_dir, "run003.mod"))
+params <- get_parameters(model)
+info <- get_model_parameter_info(model)
+mod_sum <- summary(model)
 
 param_gt <- params |>
   apply_table_spec(spec, info) |>
-  add_summary_info(sum) |>
+  add_summary_info(mod_sum) |>
   make_parameter_table()
 ```
 
@@ -93,11 +89,11 @@ run003 <- read_model(file.path(model_dir, "run003.mod"))
 
 comp_gt <- get_parameters(run002) |>
   apply_table_spec(spec, get_model_parameter_info(run002)) |>
-  add_summary_info(get_model_summary(run002)) |>
+  add_summary_info(summary(run002)) |>
   compare_with(
     get_parameters(run003) |>
       apply_table_spec(spec, get_model_parameter_info(run003)) |>
-      add_summary_info(get_model_summary(run003)),
+      add_summary_info(summary(run003)),
     labels = c("run002", "run003")
   ) |>
   add_model_lineage(get_model_lineage(run002)) |>
@@ -128,7 +124,7 @@ returned data frame with your preferred table package.
 ``` r
 htable <- params |>
   apply_table_spec(spec, info) |>
-  add_summary_info(sum) |>
+  add_summary_info(mod_sum) |>
   make_parameter_table(output = "data")
 
 data <- apply_formatting(htable)
