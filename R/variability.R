@@ -129,8 +129,10 @@ wants_variability_column <- function(spec) {
 
 #' @noRd
 wants_variability_components <- function(spec) {
-  any(c("cv", "corr", "sd") %in%
-    c(spec@columns %||% character(0), spec@add_columns %||% character(0)))
+  any(
+    c("cv", "corr", "sd") %in%
+      c(spec@columns %||% character(0), spec@add_columns %||% character(0))
+  )
 }
 
 #' @noRd

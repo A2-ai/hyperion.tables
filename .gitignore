@@ -5,8 +5,11 @@
 .DS_Store
 .quarto
 
+lefthook.yaml
+
 **/*.otter.R
 
 **/*.html
+!tests/testthat/_snaps/
 **/*_files
 inst/doc

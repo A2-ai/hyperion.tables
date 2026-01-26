@@ -437,7 +437,6 @@ TableSpec <- S7::new_class(
       ))
     }
 
-
     if (
       length(self@n_sigfig) != 1 ||
         self@n_sigfig < 1 ||
@@ -611,8 +610,10 @@ TableSpec <- S7::new_class(
     }
 
     if (length(variability_rules) > 0) {
-      want_components <- any(c("cv", "corr", "sd") %in%
-        c(columns, add_columns %||% character(0)))
+      want_components <- any(
+        c("cv", "corr", "sd") %in%
+          c(columns, add_columns %||% character(0))
+      )
       if (want_components) {
         warning(
           "variability_rules will be ignored when cv/corr/sd are included in columns or add_columns. ",

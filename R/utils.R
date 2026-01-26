@@ -1,3 +1,21 @@
+# enable usage of <S7_object>@name in package code
+#' @rawNamespace if (getRversion() < "4.3.0") importFrom("S7", "@")
+NULL
+
+#' Null-coalescing operator
+#'
+#' Returns the right-hand side if the left-hand side is NULL, otherwise returns the left-hand side.
+#'
+#' @param x Left-hand side value
+#' @param y Right-hand side value (default if x is NULL)
+#' @return x if x is not NULL, otherwise y
+#' @keywords internal
+#' @noRd
+`%||%` <- function(x, y) {
+  if (is.null(x)) y else x
+}
+
+
 #' Validate p-value threshold
 #'
 #' @param threshold Numeric or NULL

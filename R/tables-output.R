@@ -37,7 +37,10 @@ build_summary_footnote <- function(params, n_sigfig, ofv_decimals = NULL) {
       parts,
       sprintf(
         "Condition Number: %s",
-        hyperion::format_hyperion_sigfig_string(model_sum$condition_number, n_sigfig)
+        hyperion::format_hyperion_sigfig_string(
+          model_sum$condition_number,
+          n_sigfig
+        )
       )
     )
   }

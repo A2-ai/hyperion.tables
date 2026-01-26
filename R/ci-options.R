@@ -69,11 +69,15 @@ CIOptions <- S7::new_class(
           self@pattern
         ))
       }
-      if (length(regmatches(self@pattern, gregexpr("%s", self@pattern))[[1]]) != 2) {
+      if (
+        length(regmatches(self@pattern, gregexpr("%s", self@pattern))[[1]]) != 2
+      ) {
         return("@pattern must contain exactly two \"%s\" placeholders.")
       }
     } else {
-      if (!is.null(self@pattern) && !is.na(self@pattern) && nzchar(self@pattern)) {
+      if (
+        !is.null(self@pattern) && !is.na(self@pattern) && nzchar(self@pattern)
+      ) {
         return("@pattern must be NULL or empty when @merge is FALSE.")
       }
     }
