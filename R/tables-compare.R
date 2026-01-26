@@ -835,7 +835,10 @@ build_comparison_footnote <- function(
                   ofv_parts,
                   sprintf(
                     "delta = %s, LRT p-value = %s (df=%d)",
-                    hyperion::format_hyperion_decimal_string(delta_ofv, ofv_decimals),
+                    hyperion::format_hyperion_decimal_string(
+                      delta_ofv,
+                      ofv_decimals
+                    ),
                     pval_str,
                     df
                   )

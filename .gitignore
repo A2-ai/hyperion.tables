@@ -5,6 +5,8 @@
 .DS_Store
 .quarto
 
+lefthook.yaml
+
 **/*.otter.R
 
 **/*.html

@@ -493,7 +493,10 @@ prepare_comparison_table_data <- function(
   if (plan$build_variability) {
     suffix_for_variability <- unique(c(
       fallback_suffix_cols,
-      "cv", "corr", "sd", "fixed"
+      "cv",
+      "corr",
+      "sd",
+      "fixed"
     ))
     comparison <- build_variability_comparison(
       comparison,
