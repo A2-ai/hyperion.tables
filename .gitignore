@@ -10,6 +10,6 @@ lefthook.yaml
 **/*.otter.R
 
 **/*.html
-!tests/testthat/_snaps/**/*.html
+!tests/testthat/_snaps/
 **/*_files
 inst/doc
