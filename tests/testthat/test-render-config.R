@@ -43,8 +43,8 @@ test_that("renderers accept TableSpec render overrides", {
     add_summary_info(mod_sum) |>
     make_parameter_table(output = "data")
 
-  gt_tbl <- render_gt(table_data)
-  ft_tbl <- render_flextable(table_data)
+  gt_tbl <- render_to_gt(table_data)
+  ft_tbl <- render_to_flextable(table_data)
 
   snapshot_gt(gt_tbl, "render-config-gt")
   snapshot_flextable(ft_tbl, "render-config-ft")

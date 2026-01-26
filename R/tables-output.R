@@ -291,11 +291,11 @@ make_parameter_table <- function(
   if (output == "data") {
     return(htable)
   } else if (output == "flextable") {
-    return(render_flextable(htable))
+    return(render_to_flextable(htable))
   }
 
   # Default: gt output
-  render_gt(htable)
+  render_to_gt(htable)
 }
 
 #' Render parameter table as gt (internal)
@@ -308,5 +308,5 @@ make_parameter_table <- function(
 #' @noRd
 render_gt_parameter_table <- function(layout, spec) {
   htable <- hyperion_parameter_table(layout$params, layout, spec)
-  render_gt(htable)
+  render_to_gt(htable)
 }

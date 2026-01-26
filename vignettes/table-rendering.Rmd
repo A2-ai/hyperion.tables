@@ -17,8 +17,6 @@ knitr::opts_chunk$set(
 ```{r setup}
 library(hyperion)
 library(hyperion.tables)
-library(gt)
-library(flextable)
 
 data_dir <- system.file("extdata", package = "hyperion")
 model_dir <- file.path(data_dir, "models", "onecmt")
@@ -51,7 +49,7 @@ params |>
 2. **`add_summary_info()`** attaches model summary metadata for footnotes.
 3. **`make_parameter_table()`** builds a `HyperionTable`, which captures
    labels, hide/show rules, CI merge specs, footnotes, and other display intent.
-4. **`render_gt()` / `render_flextable()`** call `apply_formatting()` to:
+4. **`render_to_gt()` / `render_to_flextable()`** call `apply_formatting()` to:
    - format numeric columns
    - build the variability display column (if requested)
    - merge CI bounds (if enabled)
@@ -92,11 +90,11 @@ hyperion_table
 `hyperion.tables` includes two built-in renderers:
 
 ```{r}
-render_gt(hyperion_table)
+hyperion.tables::render_to_gt(hyperion_table)
 ```
 
 ```{r}
-render_flextable(hyperion_table)
+hyperion.tables::render_to_flextable(hyperion_table)
 ```
 
 # Update render rules and re-render
@@ -133,7 +131,7 @@ names(formatted)
 ```
 
 ```{r}
-render_gt(hyperion_table)
+hyperion.tables::render_to_gt(hyperion_table)
 ```
 
 

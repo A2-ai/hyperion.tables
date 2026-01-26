@@ -971,11 +971,11 @@ make_comparison_table <- function(
   if (output == "data") {
     return(htable)
   } else if (output == "flextable") {
-    return(render_flextable(htable))
+    return(render_to_flextable(htable))
   }
 
   # Default: gt output
-  render_gt(htable)
+  render_to_gt(htable)
 }
 
 #' Render comparison table as gt (internal)
@@ -1004,5 +1004,5 @@ render_gt_comparison_table <- function(
     label_map,
     model_indices
   )
-  render_gt(htable)
+  render_to_gt(htable)
 }

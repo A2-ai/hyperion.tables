@@ -1041,11 +1041,11 @@ make_summary_table <- function(
   if (output == "data") {
     return(htable)
   } else if (output == "flextable") {
-    return(render_flextable_summary(htable))
+    return(render_to_flextable(htable))
   }
 
   # Default: gt output
-  render_gt(htable)
+  render_to_gt(htable)
 }
 
 #' Render summary table as gt (internal)
@@ -1058,7 +1058,7 @@ make_summary_table <- function(
 #' @noRd
 render_gt_summary_table <- function(data, spec) {
   htable <- hyperion_summary_table(data, spec)
-  render_gt(htable)
+  render_to_gt(htable)
 }
 
 #' Get time format suffix for column labels

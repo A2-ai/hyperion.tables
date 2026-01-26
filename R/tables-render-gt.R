@@ -9,15 +9,15 @@
 #' @param table A HyperionTable object
 #' @return A gt table object
 #' @export
-render_gt <- function(table) {
+render_to_gt <- function(table) {
   if (!S7::S7_inherits(table, HyperionTable)) {
     stop("table must be a HyperionTable object")
   }
   if (!requireNamespace("gt", quietly = TRUE)) {
-    stop("Package 'gt' is required for render_gt()")
+    stop("Package 'gt' is required for render_to_gt()")
   }
   if (!requireNamespace("dplyr", quietly = TRUE)) {
-    stop("Package 'dplyr' is required for render_gt()")
+    stop("Package 'dplyr' is required for render_to_gt()")
   }
 
   data <- apply_formatting(table)
@@ -240,27 +240,4 @@ apply_gt_footnotes <- function(gt_table, table) {
       gt::tab_footnote(content)
   }
   gt_table
-}
-
-# ==============================================================================
-# Summary Table Special Handling
-# ==============================================================================
-
-#' Render summary HyperionTable as gt table
-#'
-#' Specialized rendering for summary tables which have additional formatting
-#' requirements (OFV decimals, pvalue/df merge, etc.)
-#'
-#' @param table A HyperionTable object with table_type = "summary"
-#' @return A gt table object
-#' @noRd
-render_gt_summary <- function(table) {
-  if (!S7::S7_inherits(table, HyperionTable)) {
-    stop("table must be a HyperionTable object")
-  }
-  if (table@table_type != "summary") {
-    stop("table@table_type must be 'summary'")
-  }
-
-  render_gt(table)
 }

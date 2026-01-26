@@ -9,12 +9,12 @@
 #' @param table A HyperionTable object
 #' @return A flextable object
 #' @export
-render_flextable <- function(table) {
+render_to_flextable <- function(table) {
   if (!S7::S7_inherits(table, HyperionTable)) {
     stop("table must be a HyperionTable object")
   }
   if (!requireNamespace("flextable", quietly = TRUE)) {
-    stop("Package 'flextable' is required for render_flextable()")
+    stop("Package 'flextable' is required for render_to_flextable()")
   }
 
   data <- apply_formatting(table)
@@ -625,26 +625,4 @@ convert_footnote_to_text <- function(content) {
   result <- trimws(result)
 
   result
-}
-
-# ==============================================================================
-# Summary Table Special Handling
-# ==============================================================================
-
-#' Render summary HyperionTable as flextable
-#'
-#' Specialized rendering for summary tables with additional formatting.
-#'
-#' @param table A HyperionTable object with table_type = "summary"
-#' @return A flextable object
-#' @noRd
-render_flextable_summary <- function(table) {
-  if (!S7::S7_inherits(table, HyperionTable)) {
-    stop("table must be a HyperionTable object")
-  }
-  if (table@table_type != "summary") {
-    stop("table@table_type must be 'summary'")
-  }
-
-  render_flextable(table)
 }

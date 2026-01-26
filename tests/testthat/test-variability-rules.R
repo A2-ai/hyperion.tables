@@ -43,9 +43,9 @@ test_that("apply_formatting uses variability_rules", {
     add_summary_info(mod_sum) |>
     make_parameter_table(output = "data")
 
-  gt_tbl <- render_gt(table_data)
+  gt_tbl <- render_to_gt(table_data)
   snapshot_gt(gt_tbl, "variability-rules-gt")
-  ft_tbl <- render_flextable(table_data)
+  ft_tbl <- render_to_flextable(table_data)
   snapshot_flextable(ft_tbl, "variability-rules-ft")
 
 })
