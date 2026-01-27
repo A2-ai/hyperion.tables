@@ -16,13 +16,12 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(hyperion)
-#library(hyperion.tables)
-devtools::load_all()
+library(hyperion.tables)
+#devtools::load_all()
 library(gt)
 library(flextable)
 
-data_dir <- system.file("extdata", package = "hyperion")
-model_dir <- file.path(data_dir, "models", "onecmt")
+model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
 model_run <- "run003"
 ```
 
@@ -40,11 +39,12 @@ spec <- TableSpec(
   name_source = "display",
   title = paste(model_run, "Parameters")
 )
+
 mod <- read_model(file.path(model_dir, paste0(model_run, ".mod")))
 
 info <- get_model_parameter_info(
 	mod,
-  system.file("lookup.toml", package = "hyperion")
+  system.file("lookup.toml", package = "hyperion.tables")
 )
 
 info <- info |> 
@@ -239,10 +239,11 @@ spec <- TableSpec(
 child_sum <- summary(mod)
 child_info <- get_model_parameter_info(mod)
 
-mod_sum <- summary(file.path(model_dir, "run002"))
-info <- get_model_parameter_info(file.path(model_dir, "run002"))
+parent_mod <- read_model(file.path(model_dir, "run002.mod"))
+mod_sum <- summary(parent_mod)
+info <- get_model_parameter_info(parent_mod)
 
-get_parameters(file.path(model_dir, "run002")) |>
+get_parameters(parent_mod) |>
   apply_table_spec(spec, info) |>
   add_summary_info(mod_sum) |>
   compare_with(
@@ -291,13 +292,13 @@ comp <- get_parameters(mod1) |>
     get_parameters(mod2) |>
       apply_table_spec(spec, info2) |>
       add_summary_info(mod_sum2),
-    labels = c(mod1$filename, mod2$filename)
+    labels = c("run002", "run003")
   ) |>
   compare_with(
     get_parameters(mod3) |>
       apply_table_spec(spec, info3) |>
       add_summary_info(mod_sum3),
-    labels = c(mod3$filename)
+    labels = c("run003b1")
   )
 
 comp |>
@@ -511,7 +512,7 @@ transform_ref |>
 # Model Lineage
 
 ```{r}
-example_tree <- get_model_lineage(file.path(data_dir, "models", "onecmt"))
+example_tree <- get_model_lineage(model_dir)
 
 example_tree
 ```

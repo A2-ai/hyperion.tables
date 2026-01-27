@@ -40,7 +40,7 @@ library(hyperion.tables)
 ### Parameter table
 
 ``` r
-model_dir <- system.file("extdata", "models", "onecmt",  package = "hyperion")
+model_dir <- system.file("extdata", "models", "onecmt",  package = "hyperion.tables")
 spec <- TableSpec(
   display_transforms = list(omega = c("cv")),
   sections = section_rules(
@@ -70,7 +70,7 @@ param_gt <- params |>
 ### Comparison table
 
 ``` r
-model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
+model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
 
 spec <- TableSpec(
   display_transforms = list(omega = c("cv")),
@@ -105,7 +105,7 @@ comp_gt <- get_parameters(run002) |>
 ### Summary table
 
 ``` r
-model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
+model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
 tree <- get_model_lineage(model_dir)
 
 summary_gt <- tree |>

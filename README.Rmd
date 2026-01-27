@@ -41,7 +41,7 @@ library(hyperion.tables)
 ### Parameter table
 
 ```{r parameter-table, eval = FALSE}
-model_dir <- system.file("extdata", "models", "onecmt",  package = "hyperion")
+model_dir <- system.file("extdata", "models", "onecmt",  package = "hyperion.tables")
 spec <- TableSpec(
   display_transforms = list(omega = c("cv")),
   sections = section_rules(
@@ -69,7 +69,7 @@ param_gt <- params |>
 ![](man/figures/README-param-table.png)
 
 ```{r parameter-table-save, include = FALSE}
-model_dir <- system.file("extdata", "models", "onecmt",  package = "hyperion")
+model_dir <- system.file("extdata", "models", "onecmt",  package = "hyperion.tables")
 spec <- TableSpec(
   display_transforms = list(omega = c("cv")),
   sections = section_rules(
@@ -100,7 +100,7 @@ gt::gtsave(param_gt, "man/figures/README-param-table.png")
 ### Comparison table
 
 ```{r comparison-table, eval = FALSE}
-model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
+model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
 
 spec <- TableSpec(
   display_transforms = list(omega = c("cv")),
@@ -131,7 +131,7 @@ comp_gt <- get_parameters(run002) |>
 ```
 
 ```{r comparison-table-save, include = FALSE}
-model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
+model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
 
 spec <- TableSpec(
   display_transforms = list(omega = c("cv")),
@@ -171,7 +171,7 @@ gt::gtsave(
 ### Summary table
 
 ```{r summary-table, eval = FALSE}
-model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
+model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
 tree <- get_model_lineage(model_dir)
 
 summary_gt <- tree |>
@@ -182,7 +182,7 @@ summary_gt <- tree |>
 ![](man/figures/README-summary-table.png)
 
 ```{r summary-table-save, include = FALSE}
-model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
+model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
 tree <- get_model_lineage(model_dir)
 
 summary_gt <- tree |>
