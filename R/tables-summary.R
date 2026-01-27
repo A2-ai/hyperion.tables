@@ -548,17 +548,20 @@ load_model_summaries <- function(model_names, source_dir) {
   for (name in model_names) {
     # Strip .mod extension to get the output directory name
     run_name <- sub("\\.mod$", "", name)
-    model_path <- file.path(source_dir, run_name)
+    output_dir <- file.path(source_dir, run_name)
 
     # Skip if output directory doesn't exist (unrun model)
-    if (!dir.exists(model_path)) {
+    if (!dir.exists(output_dir)) {
       summaries[[name]] <- NULL
       next
     }
 
+    # read_model expects the .mod file path, not the directory
+    model_path <- file.path(source_dir, name)
+
     tryCatch(
       {
-        summaries[[name]] <- hyperion:::get_model_summary(model_path)
+        summaries[[name]] <- summary(read_model(model_path))
       },
       error = function(e) {
         # Silently set to NULL - unrun models handled by remove_unrun_models

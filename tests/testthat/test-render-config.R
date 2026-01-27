@@ -8,14 +8,15 @@ test_that("renderers accept TableSpec render overrides", {
     "extdata",
     "models",
     "onecmt",
-    "run001",
     package = "hyperion"
   )
   testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
 
-  params <- hyperion::get_parameters(model_dir)
-  mod_info <- hyperion::get_model_parameter_info(model_dir)
-  mod_sum <- hyperion::get_model_summary(model_dir)
+  mod <- hyperion::read_model(file.path(model_dir, "run001.mod"))
+
+  params <- hyperion::get_parameters(mod)
+  mod_info <- hyperion::get_model_parameter_info(mod)
+  mod_sum <- summary(mod)
 
   spec <- TableSpec(
     display_transforms = list(omega = "cv"),

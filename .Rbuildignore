@@ -9,4 +9,5 @@
 ^\.Rprofile$
 ^README\.Rmd$
 
+^lefthook\.yaml$
 ^pharos\.toml$

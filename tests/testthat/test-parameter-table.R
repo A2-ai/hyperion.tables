@@ -3,14 +3,15 @@ test_that("parameter table: run001 basic spec", {
     "extdata",
     "models",
     "onecmt",
-    "run001",
     package = "hyperion"
   )
   testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
 
-  params <- hyperion::get_parameters(model_dir)
-  mod_info <- hyperion::get_model_parameter_info(model_dir)
-  mod_sum <- hyperion::get_model_summary(model_dir)
+  mod <- hyperion::read_model(file.path(model_dir, "run001.mod"))
+
+  params <- hyperion::get_parameters(mod)
+  mod_info <- hyperion::get_model_parameter_info(mod)
+  mod_sum <- summary(mod)
 
   spec <- TableSpec(
     display_transforms = list(omega = "cv"),
@@ -45,14 +46,15 @@ test_that("parameter table: run001 shows fixed", {
     "extdata",
     "models",
     "onecmt",
-    "run001",
     package = "hyperion"
   )
   testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
 
-  params <- hyperion::get_parameters(model_dir)
-  mod_info <- hyperion::get_model_parameter_info(model_dir)
-  mod_sum <- hyperion::get_model_summary(model_dir)
+  mod <- hyperion::read_model(file.path(model_dir, "run001.mod"))
+
+  params <- hyperion::get_parameters(mod)
+  mod_info <- hyperion::get_model_parameter_info(mod)
+  mod_sum <- summary(mod)
 
   spec <- TableSpec(
     display_transforms = list(omega = "cv"),
@@ -88,14 +90,15 @@ test_that("parameter table: run002 shows empty fixed", {
     "extdata",
     "models",
     "onecmt",
-    "run002",
     package = "hyperion"
   )
   testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
 
-  params <- hyperion::get_parameters(model_dir)
-  mod_info <- hyperion::get_model_parameter_info(model_dir)
-  mod_sum <- hyperion::get_model_summary(model_dir)
+  mod <- hyperion::read_model(file.path(model_dir, "run002.mod"))
+
+  params <- hyperion::get_parameters(mod)
+  mod_info <- hyperion::get_model_parameter_info(mod)
+  mod_sum <- summary(mod)
 
   spec <- TableSpec(
     display_transforms = list(omega = "cv"),
@@ -146,14 +149,15 @@ test_that("parameter table: run003 drop ci column", {
     "extdata",
     "models",
     "onecmt",
-    "run003",
     package = "hyperion"
   )
   testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
 
-  params <- hyperion::get_parameters(model_dir)
-  mod_info <- hyperion::get_model_parameter_info(model_dir)
-  mod_sum <- hyperion::get_model_summary(model_dir)
+  mod <- hyperion::read_model(file.path(model_dir, "run003.mod"))
+
+  params <- hyperion::get_parameters(mod)
+  mod_info <- hyperion::get_model_parameter_info(mod)
+  mod_sum <- summary(mod)
 
   spec <- TableSpec(
     display_transforms = list(omega = "cv"),
@@ -189,14 +193,15 @@ test_that("parameter table: run003 drop ci_low column", {
     "extdata",
     "models",
     "onecmt",
-    "run003",
     package = "hyperion"
   )
   testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
 
-  params <- hyperion::get_parameters(model_dir)
-  mod_info <- hyperion::get_model_parameter_info(model_dir)
-  mod_sum <- hyperion::get_model_summary(model_dir)
+  mod <- hyperion::read_model(file.path(model_dir, "run003.mod"))
+
+  params <- hyperion::get_parameters(mod)
+  mod_info <- hyperion::get_model_parameter_info(mod)
+  mod_sum <- summary(mod)
 
   spec <- TableSpec(
     display_transforms = list(omega = "cv"),
@@ -232,14 +237,15 @@ test_that("parameter table: run003 drop ci_high column", {
     "extdata",
     "models",
     "onecmt",
-    "run003",
     package = "hyperion"
   )
   testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
 
-  params <- hyperion::get_parameters(model_dir)
-  mod_info <- hyperion::get_model_parameter_info(model_dir)
-  mod_sum <- hyperion::get_model_summary(model_dir)
+  mod <- hyperion::read_model(file.path(model_dir, "run003.mod"))
+
+  params <- hyperion::get_parameters(mod)
+  mod_info <- hyperion::get_model_parameter_info(mod)
+  mod_sum <- summary(mod)
 
   spec <- TableSpec(
     display_transforms = list(omega = "cv"),
@@ -275,14 +281,15 @@ test_that("parameter table: run003 summary footnote only", {
     "extdata",
     "models",
     "onecmt",
-    "run003",
     package = "hyperion"
   )
   testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
 
-  params <- hyperion::get_parameters(model_dir)
-  mod_info <- hyperion::get_model_parameter_info(model_dir)
-  mod_sum <- hyperion::get_model_summary(model_dir)
+  mod <- hyperion::read_model(file.path(model_dir, "run003.mod"))
+
+  params <- hyperion::get_parameters(mod)
+  mod_info <- hyperion::get_model_parameter_info(mod)
+  mod_sum <- summary(mod)
 
   spec <- TableSpec(
     display_transforms = list(omega = "cv"),
@@ -319,14 +326,15 @@ test_that("parameter table: run003 drop footnotes", {
     "extdata",
     "models",
     "onecmt",
-    "run003",
     package = "hyperion"
   )
   testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
 
-  params <- hyperion::get_parameters(model_dir)
-  mod_info <- hyperion::get_model_parameter_info(model_dir)
-  mod_sum <- hyperion::get_model_summary(model_dir)
+  mod <- hyperion::read_model(file.path(model_dir, "run003.mod"))
+
+  params <- hyperion::get_parameters(mod)
+  mod_info <- hyperion::get_model_parameter_info(mod)
+  mod_sum <- summary(mod)
 
   spec <- TableSpec(
     display_transforms = list(omega = "cv"),
@@ -363,12 +371,13 @@ test_that("parameter table: run001 no spec", {
     "extdata",
     "models",
     "onecmt",
-    "run001",
     package = "hyperion"
   )
   testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
 
-  params <- hyperion::get_parameters(model_dir)
+  mod <- hyperion::read_model(file.path(model_dir, "run001.mod"))
+
+  params <- hyperion::get_parameters(mod)
 
   expect_error(
     make_parameter_table(params),
@@ -380,6 +389,7 @@ test_that("parameter table: base display", {
   model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
   model_run <- "run003"
   lookup_path <- system.file("lookup.toml", package = "hyperion")
+  mod <- hyperion::read_model(file.path(model_dir, paste0(model_run, ".mod")))
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
@@ -395,15 +405,12 @@ test_that("parameter table: base display", {
     title = paste(model_run, "Parameters")
   )
 
-  info <- hyperion::get_model_parameter_info(
-    file.path(model_dir, model_run),
-    lookup_path
-  )
+  info <- hyperion::get_model_parameter_info(mod, lookup_path)
   info@sigma$`SIGMA(1,1)`@parameterization <- "Proportional"
 
-  mod_sum <- hyperion::get_model_summary(file.path(model_dir, model_run))
+  mod_sum <- summary(mod)
 
-  table <- hyperion::get_parameters(file.path(model_dir, model_run)) |>
+  table <- hyperion::get_parameters(mod) |>
     apply_table_spec(spec, info) |>
     add_summary_info(mod_sum) |>
     make_parameter_table()
@@ -415,6 +422,7 @@ test_that("parameter table: display name source", {
 
   model_run <- "run003"
   lookup_path <- system.file("lookup.toml", package = "hyperion")
+  mod <- hyperion::read_model(file.path(model_dir, paste0(model_run, ".mod")))
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
@@ -430,17 +438,14 @@ test_that("parameter table: display name source", {
     title = paste(model_run, "Parameters")
   )
 
-  info <- hyperion::get_model_parameter_info(
-    file.path(model_dir, model_run),
-    lookup_path
-  )
+  info <- hyperion::get_model_parameter_info(mod, lookup_path)
   info@sigma$`SIGMA(1,1)`@parameterization <- "Proportional"
   info@sigma$`SIGMA(1,1)`@display <- "Proportional Error"
   info@sigma$`SIGMA(2,2)`@display <- "Additive Error"
 
-  mod_sum <- hyperion::get_model_summary(file.path(model_dir, model_run))
+  mod_sum <- summary(mod)
 
-  table <- hyperion::get_parameters(file.path(model_dir, model_run)) |>
+  table <- hyperion::get_parameters(mod) |>
     apply_table_spec(spec, info) |>
     add_summary_info(mod_sum) |>
     make_parameter_table()
@@ -452,6 +457,7 @@ test_that("parameter table: nonmem name source", {
 
   model_run <- "run003"
   lookup_path <- system.file("lookup.toml", package = "hyperion")
+  mod <- hyperion::read_model(file.path(model_dir, paste0(model_run, ".mod")))
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
@@ -467,15 +473,12 @@ test_that("parameter table: nonmem name source", {
     title = paste(model_run, "Parameters")
   )
 
-  info <- hyperion::get_model_parameter_info(
-    file.path(model_dir, model_run),
-    lookup_path
-  )
+  info <- hyperion::get_model_parameter_info(mod, lookup_path)
   info@sigma$`SIGMA(1,1)`@parameterization <- "Proportional"
 
-  mod_sum <- hyperion::get_model_summary(file.path(model_dir, model_run))
+  mod_sum <- summary(mod)
 
-  table <- hyperion::get_parameters(file.path(model_dir, model_run)) |>
+  table <- hyperion::get_parameters(mod) |>
     apply_table_spec(spec, info) |>
     add_summary_info(mod_sum) |>
     make_parameter_table()
@@ -486,6 +489,7 @@ test_that("parameter table: description column", {
   model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
   model_run <- "run003"
   lookup_path <- system.file("lookup.toml", package = "hyperion")
+  mod <- hyperion::read_model(file.path(model_dir, paste0(model_run, ".mod")))
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
@@ -502,15 +506,12 @@ test_that("parameter table: description column", {
     title = paste(model_run, "Parameters")
   )
 
-  info <- hyperion::get_model_parameter_info(
-    file.path(model_dir, model_run),
-    lookup_path
-  )
+  info <- hyperion::get_model_parameter_info(mod, lookup_path)
   info@sigma$`SIGMA(1,1)`@parameterization <- "Proportional"
 
-  mod_sum <- hyperion::get_model_summary(file.path(model_dir, model_run))
+  mod_sum <- summary(mod)
 
-  table <- hyperion::get_parameters(file.path(model_dir, model_run)) |>
+  table <- hyperion::get_parameters(mod) |>
     apply_table_spec(spec, info) |>
     add_summary_info(mod_sum) |>
     make_parameter_table()
@@ -522,6 +523,7 @@ test_that("parameter table: drop unit column", {
 
   model_run <- "run003"
   lookup_path <- system.file("lookup.toml", package = "hyperion")
+  mod <- hyperion::read_model(file.path(model_dir, paste0(model_run, ".mod")))
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
@@ -537,15 +539,12 @@ test_that("parameter table: drop unit column", {
     title = paste(model_run, "Parameters")
   )
 
-  info <- hyperion::get_model_parameter_info(
-    file.path(model_dir, model_run),
-    lookup_path
-  )
+  info <- hyperion::get_model_parameter_info(mod, lookup_path)
   info@sigma$`SIGMA(1,1)`@parameterization <- "Proportional"
 
-  mod_sum <- hyperion::get_model_summary(file.path(model_dir, model_run))
+  mod_sum <- summary(mod)
 
-  table <- hyperion::get_parameters(file.path(model_dir, model_run)) |>
+  table <- hyperion::get_parameters(mod) |>
     apply_table_spec(spec, info) |>
     add_summary_info(mod_sum) |>
     make_parameter_table()
@@ -556,6 +555,7 @@ test_that("parameter table: drop unit and shrinkage columns", {
   model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
   model_run <- "run003"
   lookup_path <- system.file("lookup.toml", package = "hyperion")
+  mod <- hyperion::read_model(file.path(model_dir, paste0(model_run, ".mod")))
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
@@ -571,15 +571,12 @@ test_that("parameter table: drop unit and shrinkage columns", {
     title = paste(model_run, "Parameters")
   )
 
-  info <- hyperion::get_model_parameter_info(
-    file.path(model_dir, model_run),
-    lookup_path
-  )
+  info <- hyperion::get_model_parameter_info(mod, lookup_path)
   info@sigma$`SIGMA(1,1)`@parameterization <- "Proportional"
 
-  mod_sum <- hyperion::get_model_summary(file.path(model_dir, model_run))
+  mod_sum <- summary(mod)
 
-  table <- hyperion::get_parameters(file.path(model_dir, model_run)) |>
+  table <- hyperion::get_parameters(mod) |>
     apply_table_spec(spec, info) |>
     add_summary_info(mod_sum) |>
     make_parameter_table()
@@ -590,11 +587,9 @@ test_that("parameter table: structural-only filter", {
   model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
   model_run <- "run003"
   lookup_path <- system.file("lookup.toml", package = "hyperion")
+  mod <- hyperion::read_model(file.path(model_dir, paste0(model_run, ".mod")))
 
-  info <- hyperion::get_model_parameter_info(
-    file.path(model_dir, model_run),
-    lookup_path
-  )
+  info <- hyperion::get_model_parameter_info(mod, lookup_path)
   info@sigma$`SIGMA(1,1)`@parameterization <- "Proportional"
 
   sp_spec <- TableSpec(
@@ -608,7 +603,7 @@ test_that("parameter table: structural-only filter", {
     drop_columns = "shrinkage"
   )
 
-  table <- hyperion::get_parameters(file.path(model_dir, model_run)) |>
+  table <- hyperion::get_parameters(mod) |>
     apply_table_spec(sp_spec, info) |>
     make_parameter_table()
   snapshot_gt(table, "param-structural-only-gt")
@@ -619,11 +614,9 @@ test_that("parameter table: random effects only", {
 
   model_run <- "run003"
   lookup_path <- system.file("lookup.toml", package = "hyperion")
+  mod <- hyperion::read_model(file.path(model_dir, paste0(model_run, ".mod")))
 
-  info <- hyperion::get_model_parameter_info(
-    file.path(model_dir, model_run),
-    lookup_path
-  )
+  info <- hyperion::get_model_parameter_info(mod, lookup_path)
   info@sigma$`SIGMA(1,1)`@parameterization <- "Proportional"
 
   re_spec <- TableSpec(
@@ -638,7 +631,7 @@ test_that("parameter table: random effects only", {
     drop_columns = "unit"
   )
 
-  table <- hyperion::get_parameters(file.path(model_dir, model_run)) |>
+  table <- hyperion::get_parameters(mod) |>
     apply_table_spec(re_spec, info) |>
     make_parameter_table()
   snapshot_gt(table, "param-random-effects-gt")
@@ -647,6 +640,7 @@ test_that("parameter table: random effects only", {
 test_that("parameter table: 70% CI", {
   model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
   model_run <- "run003"
+  mod <- hyperion::read_model(file.path(model_dir, paste0(model_run, ".mod")))
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
@@ -661,10 +655,10 @@ test_that("parameter table: 70% CI", {
     n_sigfig = 3
   )
 
-  mod_sum <- hyperion::get_model_summary(file.path(model_dir, model_run))
-  info <- hyperion::get_model_parameter_info(file.path(model_dir, model_run))
+  mod_sum <- summary(mod)
+  info <- hyperion::get_model_parameter_info(mod)
 
-  table <- hyperion::get_parameters(file.path(model_dir, model_run)) |>
+  table <- hyperion::get_parameters(mod) |>
     apply_table_spec(spec, info) |>
     add_summary_info(mod_sum) |>
     make_parameter_table()
@@ -675,6 +669,7 @@ test_that("parameter table: summary info without condition number", {
   model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
   model_run <- "run003"
   lookup_path <- system.file("lookup.toml", package = "hyperion")
+  mod <- hyperion::read_model(file.path(model_dir, paste0(model_run, ".mod")))
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
@@ -690,13 +685,10 @@ test_that("parameter table: summary info without condition number", {
     name_source = "display"
   )
 
-  mod_sum <- hyperion::get_model_summary(file.path(model_dir, model_run))
-  info <- hyperion::get_model_parameter_info(
-    file.path(model_dir, model_run),
-    lookup_path
-  )
+  mod_sum <- summary(mod)
+  info <- hyperion::get_model_parameter_info(mod, lookup_path)
 
-  table <- hyperion::get_parameters(file.path(model_dir, model_run)) |>
+  table <- hyperion::get_parameters(mod) |>
     apply_table_spec(spec, info) |>
     add_summary_info(mod_sum, show_cond_num = FALSE) |>
     make_parameter_table()
@@ -707,6 +699,7 @@ test_that("parameter table: summary info without condition number or OFV", {
   model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
   model_run <- "run003"
   lookup_path <- system.file("lookup.toml", package = "hyperion")
+  mod <- hyperion::read_model(file.path(model_dir, paste0(model_run, ".mod")))
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
@@ -722,13 +715,10 @@ test_that("parameter table: summary info without condition number or OFV", {
     name_source = "display"
   )
 
-  mod_sum <- hyperion::get_model_summary(file.path(model_dir, model_run))
-  info <- hyperion::get_model_parameter_info(
-    file.path(model_dir, model_run),
-    lookup_path
-  )
+  mod_sum <- summary(mod)
+  info <- hyperion::get_model_parameter_info(mod, lookup_path)
 
-  table <- hyperion::get_parameters(file.path(model_dir, model_run)) |>
+  table <- hyperion::get_parameters(mod) |>
     apply_table_spec(spec, info) |>
     add_summary_info(mod_sum, show_cond_num = FALSE, show_ofv = FALSE) |>
     make_parameter_table()
@@ -739,6 +729,7 @@ test_that("parameter table: summary info without method", {
   model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
   model_run <- "run003"
   lookup_path <- system.file("lookup.toml", package = "hyperion")
+  mod <- hyperion::read_model(file.path(model_dir, paste0(model_run, ".mod")))
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
@@ -754,13 +745,10 @@ test_that("parameter table: summary info without method", {
     name_source = "display"
   )
 
-  mod_sum <- hyperion::get_model_summary(file.path(model_dir, model_run))
-  info <- hyperion::get_model_parameter_info(
-    file.path(model_dir, model_run),
-    lookup_path
-  )
+  mod_sum <- summary(mod)
+  info <- hyperion::get_model_parameter_info(mod, lookup_path)
 
-  table <- hyperion::get_parameters(file.path(model_dir, model_run)) |>
+  table <- hyperion::get_parameters(mod) |>
     apply_table_spec(spec, info) |>
     add_summary_info(mod_sum, show_method = FALSE) |>
     make_parameter_table()
@@ -771,8 +759,10 @@ test_that("symbol + fixed shows nicely", {
   model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
   model_run <- "run001"
   lookup_path <- system.file("lookup.toml", package = "hyperion")
+  mod <- hyperion::read_model(file.path(model_dir, paste0(model_run, ".mod")))
 
   lookup_path <- system.file("lookup.toml", package = "hyperion")
+  mod <- hyperion::read_model(file.path(model_dir, paste0(model_run, ".mod")))
 
   spec <- TableSpec(
     columns = c("name", "symbol", "fixed"),
@@ -785,13 +775,10 @@ test_that("symbol + fixed shows nicely", {
     )
   )
 
-  mod_sum <- hyperion::get_model_summary(file.path(model_dir, model_run))
-  info <- hyperion::get_model_parameter_info(
-    file.path(model_dir, model_run),
-    lookup_path
-  )
+  mod_sum <- summary(mod)
+  info <- hyperion::get_model_parameter_info(mod, lookup_path)
 
-  table <- hyperion::get_parameters(file.path(model_dir, model_run)) |>
+  table <- hyperion::get_parameters(mod) |>
     apply_table_spec(spec, info) |>
     add_summary_info(mod_sum) |>
     make_parameter_table()
