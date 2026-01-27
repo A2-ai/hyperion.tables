@@ -4,19 +4,21 @@
 \alias{set_spec_variability}
 \title{Set variability rules for a TableSpec}
 \usage{
-set_spec_variability(spec, ...)
+set_spec_variability(spec, ..., overwrite = FALSE)
 }
 \arguments{
 \item{spec}{A TableSpec object}
 
 \item{...}{Variability rule formulas}
+
+\item{overwrite}{If FALSE (default), append to existing rules.
+If TRUE, replace all existing rules.}
 }
 \value{
 Modified spec (copy)
 }
 \description{
 Controls how the variability display column is constructed.
-Always replaces existing rules.
 }
 \examples{
 spec <- TableSpec() |>

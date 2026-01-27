@@ -315,8 +315,6 @@ TableSpec <- S7::new_class(
       "ci_high",
       "symbol"
     )
-    valid_table_cols <- valid_table_columns()
-
     dt <- self@display_transforms
     if (!all(names(dt) %in% valid_kinds)) {
       bad <- setdiff(names(dt), valid_kinds)
@@ -355,14 +353,14 @@ TableSpec <- S7::new_class(
       return("@row_filter rules must be created with filter_rules()")
     }
 
-    valid_columns <- c(valid_table_cols, "ci", "pct_change")
-    if (!all(self@columns %in% valid_columns)) {
-      bad <- setdiff(self@columns, valid_columns)
-      return(sprintf(
-        "@columns must be in: %s\n  Got: %s",
-        paste(valid_columns, collapse = ", "),
-        paste(bad, collapse = ", ")
-      ))
+    valid_columns <- table_spec_valid_columns()
+    columns_msg <- validate_columns_in_set(
+      self@columns,
+      valid_columns,
+      "@columns"
+    )
+    if (!is.null(columns_msg)) {
+      return(columns_msg)
     }
 
     if (!is.null(self@add_columns)) {
@@ -372,69 +370,18 @@ TableSpec <- S7::new_class(
           class(self@add_columns)[1]
         ))
       }
-      if (!all(self@add_columns %in% valid_columns)) {
-        bad <- setdiff(self@add_columns, valid_columns)
-        return(sprintf(
-          "@add_columns must be in: %s\n  Got: %s",
-          paste(valid_columns, collapse = ", "),
-          paste(bad, collapse = ", ")
-        ))
+      add_msg <- validate_columns_in_set(
+        self@add_columns,
+        valid_columns,
+        "@add_columns"
+      )
+      if (!is.null(add_msg)) {
+        return(add_msg)
       }
     }
-
-    comparison_cols <- comparison_suffix_columns()
-    comparison_drop_cols <- c(
-      paste0(comparison_cols, "_1"),
-      paste0(comparison_cols, "_2"),
-      paste0(comparison_cols, "_left"),
-      paste0(comparison_cols, "_right")
-    )
-    ci_aliases <- c("ci", "ci_1", "ci_2", "ci_left", "ci_right")
-    valid_drop_cols <- c(
-      valid_table_cols,
-      comparison_drop_cols,
-      "pct_change",
-      ci_aliases
-    )
-    main_drop_cols <- c(valid_table_cols, "pct_change", "ci")
-
-    comparison_pattern <- paste0(
-      "^(",
-      paste(comparison_cols, collapse = "|"),
-      ")_\\d+$"
-    )
-    ci_num_pattern <- "^ci_\\d+$"
-    pct_change_pattern <- "^pct_change_\\d+$"
-
-    is_valid_drop <- function(col) {
-      col %in%
-        valid_drop_cols ||
-        grepl(comparison_pattern, col) ||
-        grepl(ci_num_pattern, col) ||
-        grepl(pct_change_pattern, col)
-    }
-
-    if (
-      length(self@drop_columns) > 0 &&
-        !all(vapply(self@drop_columns, is_valid_drop, logical(1)))
-    ) {
-      bad <- self@drop_columns[
-        !vapply(
-          self@drop_columns,
-          is_valid_drop,
-          logical(1)
-        )
-      ]
-      return(sprintf(
-        paste(
-          "@drop_columns must be in: %s",
-          "For comparisons, use numeric suffixes (_1, _2, _3, ...) or _left/_right for two-model tables.",
-          "Got: %s",
-          sep = "\n"
-        ),
-        paste(main_drop_cols, collapse = ", "),
-        paste(bad, collapse = ", ")
-      ))
+    drop_msg <- validate_table_drop_columns(self@drop_columns)
+    if (!is.null(drop_msg)) {
+      return(drop_msg)
     }
 
     if (
@@ -448,17 +395,9 @@ TableSpec <- S7::new_class(
       ))
     }
 
-    if (!is.na(self@n_decimals_ofv)) {
-      if (
-        length(self@n_decimals_ofv) != 1 ||
-          self@n_decimals_ofv < 0 ||
-          self@n_decimals_ofv != floor(self@n_decimals_ofv)
-      ) {
-        return(sprintf(
-          "@n_decimals_ofv must be NA or a non-negative whole number. Got: %s",
-          self@n_decimals_ofv
-        ))
-      }
+    ofv_msg <- validate_ofv_decimals(self@n_decimals_ofv)
+    if (!is.null(ofv_msg)) {
+      return(ofv_msg)
     }
 
     if (!self@name_source %in% c("name", "display", "nonmem_name")) {
@@ -522,19 +461,9 @@ TableSpec <- S7::new_class(
       return(pvalue_msg)
     }
 
-    valid_footnote_sections <- c("summary_info", "equations", "abbreviations")
-    if (!is.null(self@footnote_order)) {
-      if (length(self@footnote_order) == 0) {
-        return("@footnote_order must be NULL or have at least one section")
-      }
-      if (!all(self@footnote_order %in% valid_footnote_sections)) {
-        bad <- setdiff(self@footnote_order, valid_footnote_sections)
-        return(sprintf(
-          "@footnote_order must be in: %s\n  Got: %s",
-          paste(valid_footnote_sections, collapse = ", "),
-          paste(bad, collapse = ", ")
-        ))
-      }
+    footnote_msg <- validate_table_footnote_order(self@footnote_order)
+    if (!is.null(footnote_msg)) {
+      return(footnote_msg)
     }
   },
   constructor = function(

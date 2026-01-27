@@ -223,25 +223,24 @@ SummarySpec <- S7::new_class(
     )
   ),
   validator = function(self) {
-    valid_fields <- valid_summary_columns()
-
-    if (!all(self@columns %in% valid_fields)) {
-      bad <- setdiff(self@columns, valid_fields)
-      return(sprintf(
-        "@columns must be in: %s\n  Got: %s",
-        paste(valid_fields, collapse = ", "),
-        paste(bad, collapse = ", ")
-      ))
+    valid_fields <- summary_spec_valid_columns()
+    columns_msg <- validate_columns_in_set(
+      self@columns,
+      valid_fields,
+      "@columns"
+    )
+    if (!is.null(columns_msg)) {
+      return(columns_msg)
     }
 
     if (!is.null(self@add_columns)) {
-      if (!all(self@add_columns %in% valid_fields)) {
-        bad <- setdiff(self@add_columns, valid_fields)
-        return(sprintf(
-          "@add_columns must be in: %s\n  Got: %s",
-          paste(valid_fields, collapse = ", "),
-          paste(bad, collapse = ", ")
-        ))
+      add_msg <- validate_columns_in_set(
+        self@add_columns,
+        valid_fields,
+        "@add_columns"
+      )
+      if (!is.null(add_msg)) {
+        return(add_msg)
       }
     }
 
@@ -284,15 +283,13 @@ SummarySpec <- S7::new_class(
       )
     }
 
-    if (
-      !is.null(self@drop_columns) && !all(self@drop_columns %in% valid_fields)
-    ) {
-      bad <- setdiff(self@drop_columns, valid_fields)
-      return(sprintf(
-        "@drop_columns must be in: %s\n  Got: %s",
-        paste(valid_fields, collapse = ", "),
-        paste(bad, collapse = ", ")
-      ))
+    drop_msg <- validate_columns_in_set(
+      self@drop_columns,
+      valid_fields,
+      "@drop_columns"
+    )
+    if (!is.null(drop_msg)) {
+      return(drop_msg)
     }
 
     if (length(self@pvalue_scientific) != 1 || is.na(self@pvalue_scientific)) {
@@ -307,10 +304,9 @@ SummarySpec <- S7::new_class(
       return(pvalue_msg)
     }
 
-    if (!is.null(self@footnote_order)) {
-      if (!identical(self@footnote_order, "abbreviations")) {
-        return("@footnote_order must be NULL or 'abbreviations'")
-      }
+    footnote_msg <- validate_summary_footnote_order(self@footnote_order)
+    if (!is.null(footnote_msg)) {
+      return(footnote_msg)
     }
   },
   constructor = function(

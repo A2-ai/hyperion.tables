@@ -46,6 +46,29 @@ clone_spec <- function(spec, ...) {
   new_spec
 }
 
+#' @noRd
+assert_any_spec <- function(spec) {
+  if (
+    !S7::S7_inherits(spec, TableSpec) && !S7::S7_inherits(spec, SummarySpec)
+  ) {
+    stop("spec must be a TableSpec or SummarySpec object")
+  }
+}
+
+#' @noRd
+assert_table_spec <- function(spec) {
+  if (!S7::S7_inherits(spec, TableSpec)) {
+    stop("spec must be a TableSpec object")
+  }
+}
+
+#' @noRd
+assert_summary_spec <- function(spec) {
+  if (!S7::S7_inherits(spec, SummarySpec)) {
+    stop("spec must be a SummarySpec object")
+  }
+}
+
 # ==============================================================================
 # Column Operations (Both Specs)
 # ==============================================================================
@@ -68,17 +91,19 @@ clone_spec <- function(spec, ...) {
 add_spec_columns <- function(spec, ...) {
   cols <- c(...)
 
+  assert_any_spec(spec)
+
   if (S7::S7_inherits(spec, TableSpec)) {
-    valid <- c(valid_table_columns(), "ci", "pct_change")
-  } else if (S7::S7_inherits(spec, SummarySpec)) {
-    valid <- valid_summary_columns()
+    cols <- expand_ci_alias(cols)
+    valid <- table_spec_valid_columns()
+    msg <- validate_columns_in_set(cols, valid, "@add_columns")
   } else {
-    stop("spec must be a TableSpec or SummarySpec object")
+    valid <- summary_spec_valid_columns()
+    msg <- validate_columns_in_set(cols, valid, "@add_columns")
   }
 
-  invalid <- setdiff(cols, valid)
-  if (length(invalid) > 0) {
-    stop("Invalid columns: ", paste(invalid, collapse = ", "))
+  if (!is.null(msg)) {
+    stop(msg)
   }
 
   new_add <- unique(c(spec@add_columns, cols))
@@ -103,50 +128,17 @@ add_spec_columns <- function(spec, ...) {
 drop_spec_columns <- function(spec, ...) {
   cols <- c(...)
 
+  assert_any_spec(spec)
+
   if (S7::S7_inherits(spec, TableSpec)) {
-    # TableSpec allows comparison suffixes
-    comparison_cols <- comparison_suffix_columns()
-    comparison_drop_cols <- c(
-      paste0(comparison_cols, "_1"),
-      paste0(comparison_cols, "_2"),
-      paste0(comparison_cols, "_left"),
-      paste0(comparison_cols, "_right")
-    )
-    ci_aliases <- c("ci", "ci_1", "ci_2", "ci_left", "ci_right")
-    valid <- c(
-      valid_table_columns(),
-      comparison_drop_cols,
-      "pct_change",
-      ci_aliases
-    )
-
-    # Also allow numeric suffixes via pattern
-    comparison_pattern <- paste0(
-      "^(",
-      paste(comparison_cols, collapse = "|"),
-      ")_\\d+$"
-    )
-    ci_num_pattern <- "^ci_\\d+$"
-    pct_change_pattern <- "^pct_change_\\d+$"
-
-    is_valid <- function(col) {
-      col %in%
-        valid ||
-        grepl(comparison_pattern, col) ||
-        grepl(ci_num_pattern, col) ||
-        grepl(pct_change_pattern, col)
-    }
-
-    invalid <- cols[!vapply(cols, is_valid, logical(1))]
-  } else if (S7::S7_inherits(spec, SummarySpec)) {
-    valid <- valid_summary_columns()
-    invalid <- setdiff(cols, valid)
+    msg <- validate_table_drop_columns(cols, "@drop_columns")
   } else {
-    stop("spec must be a TableSpec or SummarySpec object")
+    valid <- summary_spec_valid_columns()
+    msg <- validate_columns_in_set(cols, valid, "@drop_columns")
   }
 
-  if (length(invalid) > 0) {
-    stop("Invalid columns: ", paste(invalid, collapse = ", "))
+  if (!is.null(msg)) {
+    stop(msg)
   }
 
   new_drop <- unique(c(spec@drop_columns, cols))
@@ -168,17 +160,19 @@ drop_spec_columns <- function(spec, ...) {
 set_spec_columns <- function(spec, ...) {
   cols <- c(...)
 
+  assert_any_spec(spec)
+
   if (S7::S7_inherits(spec, TableSpec)) {
-    valid <- c(valid_table_columns(), "ci", "pct_change")
-  } else if (S7::S7_inherits(spec, SummarySpec)) {
-    valid <- valid_summary_columns()
+    cols <- expand_ci_alias(cols)
+    valid <- table_spec_valid_columns()
+    msg <- validate_columns_in_set(cols, valid, "@columns")
   } else {
-    stop("spec must be a TableSpec or SummarySpec object")
+    valid <- summary_spec_valid_columns()
+    msg <- validate_columns_in_set(cols, valid, "@columns")
   }
 
-  invalid <- setdiff(cols, valid)
-  if (length(invalid) > 0) {
-    stop("Invalid columns: ", paste(invalid, collapse = ", "))
+  if (!is.null(msg)) {
+    stop(msg)
   }
 
   clone_spec(spec, columns = cols)
@@ -200,11 +194,7 @@ set_spec_columns <- function(spec, ...) {
 #' spec <- TableSpec() |>
 #'   set_spec_title("Parameter Estimates")
 set_spec_title <- function(spec, title) {
-  if (
-    !S7::S7_inherits(spec, TableSpec) && !S7::S7_inherits(spec, SummarySpec)
-  ) {
-    stop("spec must be a TableSpec or SummarySpec object")
-  }
+  assert_any_spec(spec)
   if (!is.character(title) || length(title) != 1) {
     stop("title must be a single character string")
   }
@@ -223,16 +213,36 @@ set_spec_title <- function(spec, title) {
 #' spec <- TableSpec() |>
 #'   set_spec_sigfig(4)
 set_spec_sigfig <- function(spec, n) {
-  if (
-    !S7::S7_inherits(spec, TableSpec) && !S7::S7_inherits(spec, SummarySpec)
-  ) {
-    stop("spec must be a TableSpec or SummarySpec object")
-  }
+  assert_any_spec(spec)
   if (!is.numeric(n) || length(n) != 1 || n < 1 || n != floor(n)) {
     stop("n must be a positive whole number")
   }
 
   clone_spec(spec, n_sigfig = n)
+}
+
+#' Set decimal places for OFV values
+#'
+#' Controls the number of decimal places for OFV and dOFV values. Use NA to
+#' keep significant-figure formatting.
+#'
+#' @param spec A TableSpec or SummarySpec object
+#' @param n Non-negative integer or NA
+#' @return Modified spec (copy)
+#' @export
+#' @examples
+#' spec <- SummarySpec() |>
+#'   set_spec_ofv_decimals(2)
+set_spec_ofv_decimals <- function(spec, n) {
+  assert_any_spec(spec)
+  if (!is.numeric(n) || length(n) != 1) {
+    stop("n must be a single numeric value or NA")
+  }
+  msg <- validate_ofv_decimals(n, "n_decimals_ofv")
+  if (!is.null(msg)) {
+    stop(msg)
+  }
+  clone_spec(spec, n_decimals_ofv = n)
 }
 
 #' Set hide_empty_columns for a spec
@@ -247,11 +257,7 @@ set_spec_sigfig <- function(spec, n) {
 #' spec <- TableSpec() |>
 #'   set_spec_hide_empty(FALSE)
 set_spec_hide_empty <- function(spec, hide) {
-  if (
-    !S7::S7_inherits(spec, TableSpec) && !S7::S7_inherits(spec, SummarySpec)
-  ) {
-    stop("spec must be a TableSpec or SummarySpec object")
-  }
+  assert_any_spec(spec)
 
   if (!is.logical(hide) || length(hide) != 1 || is.na(hide)) {
     stop("hide must be TRUE or FALSE")
@@ -273,11 +279,7 @@ set_spec_hide_empty <- function(spec, hide) {
 #' spec <- TableSpec() |>
 #'   set_spec_pvalue(threshold = 0.001, scientific = TRUE)
 set_spec_pvalue <- function(spec, threshold = NULL, scientific = NULL) {
-  if (
-    !S7::S7_inherits(spec, TableSpec) && !S7::S7_inherits(spec, SummarySpec)
-  ) {
-    stop("spec must be a TableSpec or SummarySpec object")
-  }
+  assert_any_spec(spec)
 
   mods <- list()
 
@@ -322,27 +324,21 @@ set_spec_pvalue <- function(spec, threshold = NULL, scientific = NULL) {
 #' spec <- TableSpec() |>
 #'   set_spec_footnotes(NULL)
 set_spec_footnotes <- function(spec, order) {
-  if (
-    !S7::S7_inherits(spec, TableSpec) && !S7::S7_inherits(spec, SummarySpec)
-  ) {
-    stop("spec must be a TableSpec or SummarySpec object")
-  }
+  assert_any_spec(spec)
 
   if (!is.null(order)) {
     if (!is.character(order)) {
       stop("order must be a character vector or NULL")
     }
+  }
 
-    if (S7::S7_inherits(spec, TableSpec)) {
-      valid <- c("summary_info", "equations", "abbreviations")
-    } else {
-      valid <- "abbreviations"
-    }
-
-    invalid <- setdiff(order, valid)
-    if (length(invalid) > 0) {
-      stop("Invalid footnote sections: ", paste(invalid, collapse = ", "))
-    }
+  if (S7::S7_inherits(spec, TableSpec)) {
+    msg <- validate_table_footnote_order(order, "footnote_order")
+  } else {
+    msg <- validate_summary_footnote_order(order, "footnote_order")
+  }
+  if (!is.null(msg)) {
+    stop(msg)
   }
 
   clone_spec(spec, footnote_order = order)
@@ -364,9 +360,7 @@ set_spec_footnotes <- function(spec, order) {
 #' spec <- TableSpec() |>
 #'   set_spec_name_source("nonmem_name")
 set_spec_name_source <- function(spec, source) {
-  if (!S7::S7_inherits(spec, TableSpec)) {
-    stop("spec must be a TableSpec object")
-  }
+  assert_table_spec(spec)
   valid <- c("name", "display", "nonmem_name")
   if (!source %in% valid) {
     stop("source must be one of: ", paste(valid, collapse = ", "))
@@ -395,9 +389,7 @@ set_spec_ci <- function(
   pattern = NULL,
   missing_text = NULL
 ) {
-  if (!S7::S7_inherits(spec, TableSpec)) {
-    stop("spec must be a TableSpec object")
-  }
+  assert_table_spec(spec)
 
   # Start with current CI options
   ci_args <- list(
@@ -432,9 +424,7 @@ set_spec_ci <- function(
 #' spec <- TableSpec() |>
 #'   set_spec_missing("-", apply_to = "numeric")
 set_spec_missing <- function(spec, text = NULL, apply_to = NULL) {
-  if (!S7::S7_inherits(spec, TableSpec)) {
-    stop("spec must be a TableSpec object")
-  }
+  assert_table_spec(spec)
 
   mods <- list()
 
@@ -479,9 +469,7 @@ set_spec_transforms <- function(
   omega = NULL,
   sigma = NULL
 ) {
-  if (!S7::S7_inherits(spec, TableSpec)) {
-    stop("spec must be a TableSpec object")
-  }
+  assert_table_spec(spec)
 
   valid_cols <- c(
     "all",
@@ -553,9 +541,7 @@ set_spec_transforms <- function(
 #'     kind == "OMEGA" ~ "IIV"
 #'   )
 set_spec_sections <- function(spec, ..., overwrite = FALSE) {
-  if (!S7::S7_inherits(spec, TableSpec)) {
-    stop("spec must be a TableSpec object")
-  }
+  assert_table_spec(spec)
 
   new_rules <- section_rules(...)
 
@@ -583,9 +569,7 @@ set_spec_sections <- function(spec, ..., overwrite = FALSE) {
 #' spec <- TableSpec() |>
 #'   set_spec_filter(!fixed, diagonal)
 set_spec_filter <- function(spec, ..., overwrite = FALSE) {
-  if (!S7::S7_inherits(spec, TableSpec)) {
-    stop("spec must be a TableSpec object")
-  }
+  assert_table_spec(spec)
 
   new_rules <- filter_rules(...)
 
@@ -601,10 +585,11 @@ set_spec_filter <- function(spec, ..., overwrite = FALSE) {
 #' Set variability rules for a TableSpec
 #'
 #' Controls how the variability display column is constructed.
-#' Always replaces existing rules.
 #'
 #' @param spec A TableSpec object
 #' @param ... Variability rule formulas
+#' @param overwrite If FALSE (default), append to existing rules.
+#'   If TRUE, replace all existing rules.
 #' @return Modified spec (copy)
 #' @export
 #' @examples
@@ -614,13 +599,16 @@ set_spec_filter <- function(spec, ..., overwrite = FALSE) {
 #'     !is.na(cv) ~ sprintf("CV = %s%%", cv),
 #'     TRUE ~ NA_character_
 #'   )
-set_spec_variability <- function(spec, ...) {
-  if (!S7::S7_inherits(spec, TableSpec)) {
-    stop("spec must be a TableSpec object")
-  }
+set_spec_variability <- function(spec, ..., overwrite = FALSE) {
+  assert_table_spec(spec)
 
   new_rules <- variability_rules(...)
-  clone_spec(spec, variability_rules = new_rules)
+  if (overwrite) {
+    final_rules <- new_rules
+  } else {
+    final_rules <- c(spec@variability_rules, new_rules)
+  }
+  clone_spec(spec, variability_rules = final_rules)
 }
 
 # ==============================================================================
@@ -639,9 +627,7 @@ set_spec_variability <- function(spec, ...) {
 #' spec <- SummarySpec() |>
 #'   set_spec_time_format("minutes")
 set_spec_time_format <- function(spec, format) {
-  if (!S7::S7_inherits(spec, SummarySpec)) {
-    stop("spec must be a SummarySpec object")
-  }
+  assert_summary_spec(spec)
   valid <- c("seconds", "minutes", "hours", "auto")
   if (!format %in% valid) {
     stop("format must be one of: ", paste(valid, collapse = ", "))
@@ -661,9 +647,7 @@ set_spec_time_format <- function(spec, format) {
 #' spec <- SummarySpec() |>
 #'   set_spec_models(c("run001", "run002", "run003"))
 set_spec_models <- function(spec, models) {
-  if (!S7::S7_inherits(spec, SummarySpec)) {
-    stop("spec must be a SummarySpec object")
-  }
+  assert_summary_spec(spec)
   if (!is.null(models) && !is.character(models)) {
     stop("models must be a character vector or NULL")
   }
@@ -682,9 +666,7 @@ set_spec_models <- function(spec, models) {
 #' spec <- SummarySpec() |>
 #'   set_spec_tag_filter(c("final", "approved"))
 set_spec_tag_filter <- function(spec, tags) {
-  if (!S7::S7_inherits(spec, SummarySpec)) {
-    stop("spec must be a SummarySpec object")
-  }
+  assert_summary_spec(spec)
   if (!is.null(tags) && !is.character(tags)) {
     stop("tags must be a character vector or NULL")
   }
@@ -703,9 +685,7 @@ set_spec_tag_filter <- function(spec, tags) {
 #' spec <- SummarySpec() |>
 #'   set_spec_remove_unrun(FALSE)
 set_spec_remove_unrun <- function(spec, remove) {
-  if (!S7::S7_inherits(spec, SummarySpec)) {
-    stop("spec must be a SummarySpec object")
-  }
+  assert_summary_spec(spec)
   if (!is.logical(remove) || length(remove) != 1 || is.na(remove)) {
     stop("remove must be TRUE or FALSE")
   }
@@ -727,9 +707,7 @@ set_spec_remove_unrun <- function(spec, remove) {
 #' spec <- SummarySpec() |>
 #'   set_spec_summary_filter(ofv < 1000)
 set_spec_summary_filter <- function(spec, ..., overwrite = FALSE) {
-  if (!S7::S7_inherits(spec, SummarySpec)) {
-    stop("spec must be a SummarySpec object")
-  }
+  assert_summary_spec(spec)
 
   new_rules <- summary_filter_rules(...)
 

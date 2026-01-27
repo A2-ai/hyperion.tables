@@ -16,6 +16,13 @@ test_that("add_spec_columns appends to TableSpec", {
   expect_null(spec@add_columns)
 })
 
+test_that("add_spec_columns expands ci alias for TableSpec", {
+  spec <- TableSpec()
+  modified <- spec |> add_spec_columns("ci")
+
+  expect_equal(modified@add_columns, c("ci_low", "ci_high"))
+})
+
 test_that("add_spec_columns appends to SummarySpec", {
   spec <- SummarySpec()
   modified <- spec |> add_spec_columns("estimation_time")
@@ -29,13 +36,13 @@ test_that("add_spec_columns rejects invalid columns", {
   spec <- TableSpec()
   expect_error(
     add_spec_columns(spec, "bogus_column"),
-    "Invalid columns"
+    "@add_columns must be in"
   )
 
   sum_spec <- SummarySpec()
   expect_error(
     add_spec_columns(sum_spec, "invalid"),
-    "Invalid columns"
+    "@add_columns must be in"
   )
 })
 
@@ -60,6 +67,13 @@ test_that("set_spec_columns replaces columns", {
   modified <- spec |> set_spec_columns("name", "estimate", "rse")
 
   expect_equal(modified@columns, c("name", "estimate", "rse"))
+})
+
+test_that("set_spec_columns expands ci alias for TableSpec", {
+  spec <- TableSpec()
+  modified <- spec |> set_spec_columns("name", "estimate", "ci")
+
+  expect_equal(modified@columns, c("name", "estimate", "ci_low", "ci_high"))
 })
 
 # ==============================================================================
@@ -89,6 +103,20 @@ test_that("set_spec_sigfig validates input", {
   expect_error(set_spec_sigfig(spec, -1), "positive whole number")
 })
 
+test_that("set_spec_ofv_decimals works for both specs", {
+  table_spec <- TableSpec() |> set_spec_ofv_decimals(2)
+  expect_equal(table_spec@n_decimals_ofv, 2)
+
+  sum_spec <- SummarySpec() |> set_spec_ofv_decimals(1)
+  expect_equal(sum_spec@n_decimals_ofv, 1)
+})
+
+test_that("set_spec_ofv_decimals validates input", {
+  spec <- TableSpec()
+  expect_error(set_spec_ofv_decimals(spec, -1), "non-negative whole number")
+  expect_error(set_spec_ofv_decimals(spec, 1.5), "non-negative whole number")
+})
+
 test_that("set_spec_hide_empty works", {
   spec <- TableSpec() |> set_spec_hide_empty(FALSE)
   expect_false(spec@hide_empty_columns)
@@ -111,7 +139,7 @@ test_that("set_spec_footnotes works", {
 test_that("set_spec_footnotes validates sections", {
   expect_error(
     TableSpec() |> set_spec_footnotes(c("invalid")),
-    "Invalid footnote sections"
+    "footnote_order must be in"
   )
 })
 
@@ -181,15 +209,30 @@ test_that("set_spec_filter works", {
   expect_length(spec@row_filter, 2)
 })
 
-test_that("set_spec_variability replaces rules", {
+test_that("set_spec_variability overwrites when specified", {
   spec <- TableSpec() |>
     set_spec_variability(
       fixed ~ "(Fixed)",
-      TRUE ~ NA_character_
+      TRUE ~ NA_character_,
+      overwrite = TRUE
     )
 
   expect_length(spec@variability_rules, 2)
 })
+
+test_that("set_spec_variability appends by default", {
+  spec <- TableSpec()
+  modified <- spec |>
+    set_spec_variability(
+      fixed ~ "(Fixed)"
+    )
+
+  expect_length(
+    modified@variability_rules,
+    length(spec@variability_rules) + 1
+  )
+})
+
 
 # ==============================================================================
 # SummarySpec-Only Setters
