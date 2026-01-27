@@ -27,18 +27,17 @@ model_run <- "run003"
 
 
 ```{r}
-spec <- TableSpec(
-  display_transforms = list(omega = c("cv")),
-  sections = section_rules(
+spec <- TableSpec() |>
+  set_spec_transforms(omega = "cv") |>
+  set_spec_sections(
     kind == "THETA" ~ "Structural model parameters",
     kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
     kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
     kind == "SIGMA" ~ "Residual error",
     TRUE ~ "Other"
-  ),
-  name_source = "display",
-  title = paste(model_run, "Parameters")
-)
+  ) |>
+  set_spec_name_source("display") |>
+  set_spec_title(paste(model_run, "Parameters"))
 
 mod <- read_model(file.path(model_dir, paste0(model_run, ".mod")))
 
@@ -59,12 +58,12 @@ get_parameters(mod) |>
 ```
 
 
-# Changing display names with model info `@name_source`
+# Changing display names with `set_spec_name_source()`
 
 ```{r}
-spec@name_source <- "display"
+spec <- spec |> set_spec_name_source("display")
 
-info <- info |> 
+info <- info |>
 	update_param_info("SIGMA(1,1)", display = "Proportional Error") |>
   update_param_info("SIGMA(2,2)", display = "Additive Error")
 
@@ -77,29 +76,18 @@ get_parameters(mod) |>
 ```
 
 ```{r}
-spec@name_source <- "nonmem_name"
+spec <- spec |> set_spec_name_source("nonmem_name")
 
 get_parameters(mod) |>
   apply_table_spec(spec, info) |>
   add_summary_info(mod_sum) |>
   make_parameter_table()
 ```
-## Adding descriptions with `@add_columns`
+## Adding descriptions with `add_spec_columns()`
 ```{r}
-spec@name_source <- "display"
-spec@add_columns <- "description"
-
-get_parameters(mod) |>
-  apply_table_spec(spec, info) |>
-  add_summary_info(mod_sum) |>
-  make_parameter_table()
-```
-
-## Removing columns with `@drop_columns` property
-```{r}
-spec@add_columns <- NULL
-spec@name_source <- "display"
-spec@drop_columns <- "unit"
+spec <- spec |>
+  set_spec_name_source("display") |>
+  add_spec_columns("description")
 
 get_parameters(mod) |>
   apply_table_spec(spec, info) |>
@@ -107,8 +95,30 @@ get_parameters(mod) |>
   make_parameter_table()
 ```
 
+## Removing columns with `drop_spec_columns()`
 ```{r}
-spec@drop_columns <- c("unit", "shrinkage")
+# Start fresh to demonstrate drop_columns
+spec <- TableSpec() |>
+  set_spec_transforms(omega = "cv") |>
+  set_spec_sections(
+    kind == "THETA" ~ "Structural model parameters",
+    kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
+    kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
+    kind == "SIGMA" ~ "Residual error",
+    TRUE ~ "Other"
+  ) |>
+  set_spec_name_source("display") |>
+  drop_spec_columns("unit")
+
+get_parameters(mod) |>
+  apply_table_spec(spec, info) |>
+  add_summary_info(mod_sum) |>
+  make_parameter_table()
+```
+
+```{r}
+# Drop multiple columns
+spec <- spec |> drop_spec_columns("shrinkage")
 
 get_parameters(mod) |>
   apply_table_spec(spec, info) |>
@@ -119,16 +129,13 @@ get_parameters(mod) |>
 # Structural parameters only
 
 ```{r}
-sp_spec <- TableSpec(
-  sections = section_rules(
+sp_spec <- TableSpec() |>
+  set_spec_sections(
     kind == "THETA" ~ "Structural model parameters",
     TRUE ~ "Other"
-  ),
-  row_filter = filter_rules(
-    kind == "THETA"
-  ),
-  drop_columns = "shrinkage"
-)
+  ) |>
+  set_spec_filter(kind == "THETA") |>
+  drop_spec_columns("shrinkage")
 
 get_parameters(mod) |>
   apply_table_spec(sp_spec, info) |>
@@ -137,17 +144,14 @@ get_parameters(mod) |>
 
 # Random Effect Parameters only
 ```{r}
-re_spec <- TableSpec(
-  sections = section_rules(
+re_spec <- TableSpec() |>
+  set_spec_sections(
     kind == "OMEGA" ~ "Random Effect Parameters",
     kind == "SIGMA" ~ "Residual Error",
     TRUE ~ "Other"
-  ),
-  row_filter = filter_rules(
-    kind != "THETA"
-  ),
-  drop_columns = "unit",
-)
+  ) |>
+  set_spec_filter(kind != "THETA") |>
+  drop_spec_columns("unit")
 
 get_parameters(mod) |>
   apply_table_spec(re_spec, info) |>
@@ -156,18 +160,17 @@ get_parameters(mod) |>
 
 # Confidence Interval level
 ```{r}
-spec <- TableSpec(
-  display_transforms = list(omega = c("cv")),
-  sections = section_rules(
+spec <- TableSpec() |>
+  set_spec_transforms(omega = "cv") |>
+  set_spec_sections(
     kind == "THETA" ~ "Structural model parameters",
     kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
     kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
     kind == "SIGMA" ~ "Residual variance",
     TRUE ~ "Other"
-  ),
-  ci = CIOptions(level = 0.7),
-  n_sigfig = 3
-)
+  ) |>
+  set_spec_ci(level = 0.7) |>
+  set_spec_sigfig(3)
 
 mod_sum <- summary(mod)
 info <- get_model_parameter_info(mod)
@@ -181,19 +184,18 @@ get_parameters(mod) |>
 # Changing summary info shown
 
 ```{r}
-spec <- TableSpec(
-  display_transforms = list(omega = c("cv")),
-  sections = section_rules(
+spec <- TableSpec() |>
+  set_spec_transforms(omega = "cv") |>
+  set_spec_sections(
     kind == "THETA" ~ "Structural model parameters",
     kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
     kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
     kind == "SIGMA" ~ "Residual variance",
     TRUE ~ "Other"
-  ),
-  ci = CIOptions(level = 0.7),
-  n_sigfig = 3,
-  name_source = "display"
-)
+  ) |>
+  set_spec_ci(level = 0.7) |>
+  set_spec_sigfig(3) |>
+  set_spec_name_source("display")
 
 mod_sum <- summary(mod)
 info <- get_model_parameter_info(mod, lookup_path = normalizePath("../inst/lookup.toml"))
@@ -222,19 +224,18 @@ get_parameters(mod) |>
 # Model Comparison
 
 ```{r}
-spec <- TableSpec(
-  display_transforms = list(omega = c("cv")),
-  sections = section_rules(
+spec <- TableSpec() |>
+  set_spec_transforms(omega = "cv") |>
+  set_spec_sections(
     kind == "THETA" ~ "Structural model parameters",
     kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
     kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
     kind == "SIGMA" ~ "Residual variance",
     TRUE ~ "Other"
-  ),
-  n_sigfig = 3,
-  drop_columns = c("variability", "shrinkage", "rse"),
-  pvalue_scientific = FALSE
-)
+  ) |>
+  set_spec_sigfig(3) |>
+  drop_spec_columns("variability", "shrinkage", "rse") |>
+  set_spec_pvalue(scientific = FALSE)
 
 child_sum <- summary(mod)
 child_info <- get_model_parameter_info(mod)
@@ -258,20 +259,18 @@ get_parameters(parent_mod) |>
 ## Multiple Comparison Table
 
 ```{r}
-spec <- TableSpec(
-  display_transforms = list(omega = c("cv")),
-  sections = section_rules(
+spec <- TableSpec() |>
+  set_spec_transforms(omega = "cv") |>
+  set_spec_sections(
     kind == "THETA" ~ "Structural model parameters",
     kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
     kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
     kind == "SIGMA" ~ "Residual error",
     TRUE ~ "Other"
-  ),
-  n_sigfig = 3,
-  n_decimals_ofv = 3,
-  columns = c("symbol", "estimate", "ci", "rse", "pct_change"),
-  hide_empty_columns = FALSE
-)
+  ) |>
+  set_spec_sigfig(3) |>
+  set_spec_columns("symbol", "estimate", "ci", "rse", "pct_change") |>
+  set_spec_hide_empty(FALSE)
 
 mod1 <- read_model(file.path(model_dir, "run002.mod"))
 mod_sum1 <- summary(mod1)
@@ -308,20 +307,18 @@ comp |>
 ## Structural model comparison
 
 ```{r}
-spec <- TableSpec(
-  display_transforms = list(omega = c("cv")),
-  sections = section_rules(
+spec <- TableSpec() |>
+  set_spec_transforms(omega = "cv") |>
+  set_spec_sections(
     kind == "THETA" ~ "Structural model parameters",
     kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
     kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
     kind == "SIGMA" ~ "Residual error",
     TRUE ~ "Other"
-  ),
-  n_sigfig = 3,
-  n_decimals_ofv = 3,
-  columns = c("symbol", "fixed", "estimate"),
-  title = "Structural Model Parameter Comparison"
-)
+  ) |>
+  set_spec_sigfig(3) |>
+  set_spec_columns("symbol", "fixed", "estimate") |>
+  set_spec_title("Structural Model Parameter Comparison")
 
 mod1 <- read_model(file.path(model_dir, "run001.mod"))
 mod_sum1 <- summary(mod1)
@@ -518,9 +515,8 @@ example_tree
 ```
 
 ```{r}
-spec <- SummarySpec(
-  pvalue_scientific = FALSE
-)
+spec <- SummarySpec() |>
+  set_spec_pvalue(scientific = FALSE)
 
 example_tree |>
   apply_summary_spec(spec) |>
