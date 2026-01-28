@@ -9,7 +9,7 @@ drop_spec_columns(spec, ...)
 \arguments{
 \item{spec}{A TableSpec or SummarySpec object}
 
-\item{...}{Column names to drop (unquoted or character strings)}
+\item{...}{Column names to drop (character strings)}
 }
 \value{
 Modified spec (copy)

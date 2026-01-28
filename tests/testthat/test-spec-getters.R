@@ -60,12 +60,18 @@ test_that("get_spec_sigfig works for both specs", {
 # TableSpec-Only Getters
 # ==============================================================================
 
-test_that("get_spec_name_source works", {
+test_that("get_spec_parameter_names works", {
   spec <- TableSpec()
-  expect_equal(get_spec_name_source(spec), "name")
+  opts <- get_spec_parameter_names(spec)
 
-  modified <- spec |> set_spec_name_source("nonmem_name")
-  expect_equal(get_spec_name_source(modified), "nonmem_name")
+  expect_true(S7::S7_inherits(opts, ParameterNameOptions))
+  expect_equal(opts@source, "name")
+  expect_true(opts@append_omega_with_theta)
+
+  modified <- spec |> set_spec_parameter_names(source = "nonmem", append_omega_with_theta = FALSE)
+  opts2 <- get_spec_parameter_names(modified)
+  expect_equal(opts2@source, "nonmem")
+  expect_false(opts2@append_omega_with_theta)
 })
 
 test_that("get_spec_ci returns CIOptions", {
@@ -156,7 +162,7 @@ test_that("common getters reject non-spec objects", {
 test_that("TableSpec-only getters reject SummarySpec", {
   sum_spec <- SummarySpec()
 
-  expect_error(get_spec_name_source(sum_spec), "must be a TableSpec")
+  expect_error(get_spec_parameter_names(sum_spec), "must be a TableSpec")
   expect_error(get_spec_ci(sum_spec), "must be a TableSpec")
   expect_error(get_spec_sections(sum_spec), "must be a TableSpec")
   expect_error(get_spec_filter(sum_spec), "must be a TableSpec")
@@ -178,11 +184,11 @@ test_that("get returns what set configured for TableSpec", {
   spec <- TableSpec() |>
     set_spec_title("Custom") |>
     set_spec_sigfig(5) |>
-    set_spec_name_source("display")
+    set_spec_parameter_names(source = "display")
 
   expect_equal(get_spec_title(spec), "Custom")
   expect_equal(get_spec_sigfig(spec), 5)
-  expect_equal(get_spec_name_source(spec), "display")
+  expect_equal(get_spec_parameter_names(spec)@source, "display")
 })
 
 test_that("get returns what set configured for SummarySpec", {

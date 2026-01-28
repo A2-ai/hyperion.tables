@@ -22,7 +22,7 @@ The following columns are available for use in filter rules:
 \itemize{
 \item \code{nonmem_name} - NONMEM identifier ("THETA1", "OMEGA(1,1)")
 \item \code{user_name} - User name from control file comments ("CL", "OM1")
-\item \code{name} - Display name (depends on \code{name_source} setting)
+\item \code{name} - Display name (depends on \code{parameter_names} setting)
 \item \code{kind} - Parameter type: "THETA", "OMEGA", or "SIGMA"
 \item \code{diagonal} - TRUE for diagonal matrix elements (variance), FALSE for off-diagonal (covariance)
 \item \code{fixed} - TRUE if parameter is fixed

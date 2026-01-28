@@ -147,15 +147,34 @@ test_that("set_spec_footnotes validates sections", {
 # TableSpec-Only Setters
 # ==============================================================================
 
-test_that("set_spec_name_source works", {
-  spec <- TableSpec() |> set_spec_name_source("nonmem_name")
-  expect_equal(spec@name_source, "nonmem_name")
+test_that("set_spec_parameter_names sets source", {
+  spec <- TableSpec() |> set_spec_parameter_names(source = "nonmem")
+  expect_equal(spec@parameter_names@source, "nonmem")
 })
 
-test_that("set_spec_name_source validates input", {
+test_that("set_spec_parameter_names sets append_omega_with_theta", {
+  spec <- TableSpec() |> set_spec_parameter_names(append_omega_with_theta = FALSE)
+  expect_false(spec@parameter_names@append_omega_with_theta)
+})
+
+test_that("set_spec_parameter_names sets both options", {
+  spec <- TableSpec() |>
+    set_spec_parameter_names(source = "display", append_omega_with_theta = FALSE)
+  expect_equal(spec@parameter_names@source, "display")
+  expect_false(spec@parameter_names@append_omega_with_theta)
+})
+
+test_that("set_spec_parameter_names validates source", {
   expect_error(
-    TableSpec() |> set_spec_name_source("invalid"),
+    TableSpec() |> set_spec_parameter_names(source = "invalid"),
     "source must be one of"
+  )
+})
+
+test_that("set_spec_parameter_names validates append_omega_with_theta", {
+  expect_error(
+    TableSpec() |> set_spec_parameter_names(append_omega_with_theta = "yes"),
+    "append_omega_with_theta must be TRUE or FALSE"
   )
 })
 
@@ -322,13 +341,13 @@ test_that("TableSpec pipe chain works", {
     drop_spec_columns("unit") |>
     set_spec_title("Test Table") |>
     set_spec_sigfig(4) |>
-    set_spec_name_source("display")
+    set_spec_parameter_names(source = "display")
 
   expect_true("cv" %in% spec@add_columns)
   expect_true("unit" %in% spec@drop_columns)
   expect_equal(spec@title, "Test Table")
   expect_equal(spec@n_sigfig, 4)
-  expect_equal(spec@name_source, "display")
+  expect_equal(spec@parameter_names@source, "display")
 })
 
 test_that("SummarySpec pipe chain works", {
@@ -353,7 +372,7 @@ test_that("SummarySpec pipe chain works", {
 test_that("TableSpec-only functions reject SummarySpec", {
   sum_spec <- SummarySpec()
 
-  expect_error(set_spec_name_source(sum_spec, "display"), "must be a TableSpec")
+  expect_error(set_spec_parameter_names(sum_spec, source = "display"), "must be a TableSpec")
   expect_error(set_spec_ci(sum_spec, level = 0.9), "must be a TableSpec")
   expect_error(set_spec_missing(sum_spec, "-"), "must be a TableSpec")
   expect_error(set_spec_transforms(sum_spec, theta = "all"), "must be a TableSpec")

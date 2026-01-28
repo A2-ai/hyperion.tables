@@ -10,6 +10,7 @@
 #' @importFrom hyperion compute_ci
 #' @importFrom hyperion compute_cv
 #' @importFrom hyperion compute_rse
+#' @importFrom hyperion format_omega_display_name
 #' @importFrom hyperion read_model
 #' @importFrom hyperion get_parameter_names
 #' @importFrom hyperion get_parameter_transform

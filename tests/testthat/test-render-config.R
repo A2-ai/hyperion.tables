@@ -20,7 +20,7 @@ test_that("renderers accept TableSpec render overrides", {
 
   spec <- TableSpec(
     display_transforms = list(omega = "cv"),
-    name_source = "display",
+    parameter_names = ParameterNameOptions(source = "display"),
     title = "Model Parameters",
     n_sigfig = 4,
     ci = CIOptions(

@@ -36,7 +36,7 @@ spec <- TableSpec() |>
     kind == "SIGMA" ~ "Residual error",
     TRUE ~ "Other"
   ) |>
-  set_spec_name_source("display") |>
+  set_spec_parameter_names(source = "display") |>
   set_spec_title(paste(model_run, "Parameters"))
 
 mod <- read_model(file.path(model_dir, paste0(model_run, ".mod")))
@@ -58,10 +58,10 @@ get_parameters(mod) |>
 ```
 
 
-# Changing display names with `set_spec_name_source()`
+# Changing display names with `set_spec_parameter_names()`
 
 ```{r}
-spec <- spec |> set_spec_name_source("display")
+spec <- spec |> set_spec_parameter_names(source = "display")
 
 info <- info |>
 	update_param_info("SIGMA(1,1)", display = "Proportional Error") |>
@@ -76,7 +76,7 @@ get_parameters(mod) |>
 ```
 
 ```{r}
-spec <- spec |> set_spec_name_source("nonmem_name")
+spec <- spec |> set_spec_parameter_names(source = "nonmem")
 
 get_parameters(mod) |>
   apply_table_spec(spec, info) |>
@@ -86,7 +86,7 @@ get_parameters(mod) |>
 ## Adding descriptions with `add_spec_columns()`
 ```{r}
 spec <- spec |>
-  set_spec_name_source("display") |>
+  set_spec_parameter_names(source = "display") |>
   add_spec_columns("description")
 
 get_parameters(mod) |>
@@ -107,7 +107,7 @@ spec <- TableSpec() |>
     kind == "SIGMA" ~ "Residual error",
     TRUE ~ "Other"
   ) |>
-  set_spec_name_source("display") |>
+  set_spec_parameter_names(source = "display") |>
   drop_spec_columns("unit")
 
 get_parameters(mod) |>
@@ -195,7 +195,7 @@ spec <- TableSpec() |>
   ) |>
   set_spec_ci(level = 0.7) |>
   set_spec_sigfig(3) |>
-  set_spec_name_source("display")
+  set_spec_parameter_names(source = "display")
 
 mod_sum <- summary(mod)
 info <- get_model_parameter_info(mod, lookup_path = normalizePath("../inst/lookup.toml"))

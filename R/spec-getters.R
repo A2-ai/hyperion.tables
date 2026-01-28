@@ -82,21 +82,22 @@ get_spec_sigfig <- function(spec) {
 # TableSpec-Only Getters
 # ==============================================================================
 
-#' Get name source from a TableSpec
+#' Get parameter name options from a TableSpec
 #'
-#' Returns the name field setting.
+#' Returns the ParameterNameOptions object controlling how parameter names
+#' are displayed.
 #'
 #' @param spec A TableSpec object
-#' @return Character string: "name", "display", or "nonmem_name"
+#' @return ParameterNameOptions object
 #' @export
 #' @examples
 #' spec <- TableSpec()
-#' get_spec_name_source(spec)
-get_spec_name_source <- function(spec) {
+#' get_spec_parameter_names(spec)
+get_spec_parameter_names <- function(spec) {
   if (!S7::S7_inherits(spec, TableSpec)) {
     stop("spec must be a TableSpec object")
   }
-  spec@name_source
+  spec@parameter_names
 }
 
 #' Get CI options from a TableSpec

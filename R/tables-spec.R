@@ -15,7 +15,7 @@
 #' \itemize{
 #'   \item `nonmem_name` - NONMEM identifier ("THETA1", "OMEGA(1,1)")
 #'   \item `user_name` - User name from control file comments ("CL", "OM1")
-#'   \item `name` - Display name (depends on `name_source` setting)
+#'   \item `name` - Display name (depends on `parameter_names` setting)
 #'   \item `kind` - Parameter type: "THETA", "OMEGA", or "SIGMA"
 #'   \item `diagonal` - TRUE for diagonal matrix elements (variance), FALSE for off-diagonal (covariance)
 #'   \item `fixed` - TRUE if parameter is fixed
@@ -46,7 +46,7 @@ section_rules <- function(...) {
 #' \itemize{
 #'   \item `nonmem_name` - NONMEM identifier ("THETA1", "OMEGA(1,1)")
 #'   \item `user_name` - User name from control file comments ("CL", "OM1")
-#'   \item `name` - Display name (depends on `name_source` setting)
+#'   \item `name` - Display name (depends on `parameter_names` setting)
 #'   \item `kind` - Parameter type: "THETA", "OMEGA", or "SIGMA"
 #'   \item `diagonal` - TRUE for diagonal matrix elements (variance), FALSE for off-diagonal (covariance)
 #'   \item `fixed` - TRUE if parameter is fixed
@@ -163,9 +163,9 @@ comparison_suffix_columns <- function() {
 #'
 #' @param title Character. Title for the parameter table header. Default is
 #'   "Model Parameters".
-#' @param name_source Which name field to use from ModelComments: "name" (default),
-#'   "display", or "nonmem_name". Controls how parameter names appear in the output
-#'   table. Use "nonmem_name" to show raw NONMEM names like "THETA1", "OMEGA(1,1)".
+#' @param parameter_names ParameterNameOptions object controlling how parameter names
+#'   are displayed. Controls which name field to use ("name", "display", or "nonmem")
+#'   and whether to append theta info to omega names. Defaults to `ParameterNameOptions()`.
 #' @param columns Character vector of columns to include in output.
 #' @param add_columns Character vector of columns to append to the column list.
 #'   Useful for comparisons when you want to add columns like "pct_change"
@@ -207,9 +207,9 @@ TableSpec <- S7::new_class(
       class = S7::class_character,
       default = "Model Parameters"
     ),
-    name_source = S7::new_property(
-      class = S7::class_character,
-      default = "name"
+    parameter_names = S7::new_property(
+      class = ParameterNameOptions,
+      default = ParameterNameOptions()
     ),
     columns = S7::new_property(
       class = S7::class_character,
@@ -400,11 +400,8 @@ TableSpec <- S7::new_class(
       return(ofv_msg)
     }
 
-    if (!self@name_source %in% c("name", "display", "nonmem_name")) {
-      return(sprintf(
-        "@name_source must be 'name', 'display', or 'nonmem_name'. Got: '%s'",
-        self@name_source
-      ))
+    if (!S7::S7_inherits(self@parameter_names, ParameterNameOptions)) {
+      return("@parameter_names must be a ParameterNameOptions object.")
     }
 
     if (
@@ -468,7 +465,7 @@ TableSpec <- S7::new_class(
   },
   constructor = function(
     title = "Model Parameters",
-    name_source = "name",
+    parameter_names = ParameterNameOptions(),
     columns = NULL,
     add_columns = NULL,
     drop_columns = NULL,
@@ -563,7 +560,7 @@ TableSpec <- S7::new_class(
       n_sigfig = n_sigfig,
       add_columns = add_columns,
       n_decimals_ofv = n_decimals_ofv,
-      name_source = name_source,
+      parameter_names = parameter_names,
       title = title,
       hide_empty_columns = hide_empty_columns,
       .columns_provided = columns_provided,

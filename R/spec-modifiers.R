@@ -79,7 +79,7 @@ assert_summary_spec <- function(spec) {
 #' added to the default column set.
 #'
 #' @param spec A TableSpec or SummarySpec object
-#' @param ... Column names to add (unquoted or character strings)
+#' @param ... Column names to add (character strings)
 #' @return Modified spec (copy)
 #' @export
 #' @examples
@@ -116,7 +116,7 @@ add_spec_columns <- function(spec, ...) {
 #' excluded from the output table.
 #'
 #' @param spec A TableSpec or SummarySpec object
-#' @param ... Column names to drop (unquoted or character strings)
+#' @param ... Column names to drop (character strings)
 #' @return Modified spec (copy)
 #' @export
 #' @examples
@@ -151,7 +151,7 @@ drop_spec_columns <- function(spec, ...) {
 #' column set.
 #'
 #' @param spec A TableSpec or SummarySpec object
-#' @param ... Column names to include (unquoted or character strings)
+#' @param ... Column names to include (character strings)
 #' @return Modified spec (copy)
 #' @export
 #' @examples
@@ -161,6 +161,10 @@ set_spec_columns <- function(spec, ...) {
   cols <- c(...)
 
   assert_any_spec(spec)
+
+  if (is.null(cols) || length(cols) == 0) {
+    stop("columns must contain at least one value")
+  }
 
   if (S7::S7_inherits(spec, TableSpec)) {
     cols <- expand_ci_alias(cols)
@@ -348,24 +352,49 @@ set_spec_footnotes <- function(spec, order) {
 # TableSpec-Only Setters
 # ==============================================================================
 
-#' Set name source for a TableSpec
+#' Set parameter name options for a TableSpec
 #'
-#' Controls which name field is used from ModelComments.
+#' Controls how parameter names are displayed in the table.
 #'
 #' @param spec A TableSpec object
-#' @param source One of "name", "display", or "nonmem_name"
+#' @param source One of "name", "display", or "nonmem". If NULL, keeps current value.
+#' @param append_omega_with_theta Logical. If TRUE, append associated theta
+#'   names to omega parameters. If NULL, keeps current value.
 #' @return Modified spec (copy)
 #' @export
 #' @examples
 #' spec <- TableSpec() |>
-#'   set_spec_name_source("nonmem_name")
-set_spec_name_source <- function(spec, source) {
+#'   set_spec_parameter_names(source = "nonmem", append_omega_with_theta = FALSE)
+set_spec_parameter_names <- function(
+  spec,
+  source = NULL,
+  append_omega_with_theta = NULL
+) {
   assert_table_spec(spec)
-  valid <- c("name", "display", "nonmem_name")
-  if (!source %in% valid) {
-    stop("source must be one of: ", paste(valid, collapse = ", "))
+
+  # Start with current options
+  opts <- spec@parameter_names
+
+  if (!is.null(source)) {
+    valid <- c("name", "display", "nonmem")
+    if (!source %in% valid) {
+      stop("source must be one of: ", paste(valid, collapse = ", "))
+    }
+    S7::prop(opts, "source") <- source
   }
-  clone_spec(spec, name_source = source)
+
+  if (!is.null(append_omega_with_theta)) {
+    if (
+      !is.logical(append_omega_with_theta) ||
+        length(append_omega_with_theta) != 1 ||
+        is.na(append_omega_with_theta)
+    ) {
+      stop("append_omega_with_theta must be TRUE or FALSE")
+    }
+    S7::prop(opts, "append_omega_with_theta") <- append_omega_with_theta
+  }
+
+  clone_spec(spec, parameter_names = opts)
 }
 
 #' Set CI options for a TableSpec

@@ -9,7 +9,7 @@ set_spec_columns(spec, ...)
 \arguments{
 \item{spec}{A TableSpec or SummarySpec object}
 
-\item{...}{Column names to include (unquoted or character strings)}
+\item{...}{Column names to include (character strings)}
 }
 \value{
 Modified spec (copy)

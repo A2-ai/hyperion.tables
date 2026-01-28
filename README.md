@@ -50,7 +50,7 @@ spec <- TableSpec(
     kind == "SIGMA" ~ "Residual error",
     TRUE ~ "Other"
   ),
-  name_source = "display",
+  parameter_names = ParameterNameOptions(source = "display"),
   title = "Model Parameters"
 )
 

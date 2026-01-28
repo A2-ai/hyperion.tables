@@ -25,7 +25,7 @@ test_that("TableSpec validates key properties", {
   )
 
   expect_error(
-    TableSpec(name_source = "other"),
-    "@name_source must be"
+    TableSpec(parameter_names = ParameterNameOptions(source = "other")),
+    "@source must be"
   )
 })
