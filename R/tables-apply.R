@@ -283,7 +283,9 @@ build_name_lookup <- function(info, parameter_names) {
     theta_cmt <- NULL
     theta_nonmem <- NULL
     for (nm in names(info@theta)) {
-      if (info@theta[[nm]]@name == theta_name) {
+      if (
+        !is.na(info@theta[[nm]]@name) && info@theta[[nm]]@name == theta_name
+      ) {
         theta_cmt <- info@theta[[nm]]
         theta_nonmem <- nm
         break

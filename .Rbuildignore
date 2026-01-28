@@ -3,7 +3,7 @@
 ^LICENSE\.md$
 
 ^\.github$
-
+^\.claude$
 ^rv$
 ^rproject\.toml$
 ^\.Rprofile$
