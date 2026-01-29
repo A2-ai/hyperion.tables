@@ -147,7 +147,12 @@ Functions for comparing models:
 }
 
 \author{
-\strong{Maintainer}: First Last \email{first.last@example.com}
+\strong{Maintainer}: Matt Smith \email{matthews@a2-ai.com}
+
+Authors:
+\itemize{
+  \item Devin Pastoor \email{devin@a2-ai.com}
+}
 
 }
 \keyword{internal}
