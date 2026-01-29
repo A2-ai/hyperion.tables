@@ -17,6 +17,6 @@ dependencies = [
   #{ name = "starlightr", git = "https://github.com/a2-ai/starlightr", branch = "main" },
 
   # package deps
-  { name = "hyperion", git = "https://github.com/a2-ai/hyperion", branch = "cleanup" },
+  { name = "hyperion", git = "https://github.com/a2-ai/hyperion", branch = "main" },
   { name = "hyperion.tables", path = ".", dependencies_only = true, install_suggestions = true },
 ]
