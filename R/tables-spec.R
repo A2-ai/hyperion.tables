@@ -185,7 +185,7 @@ comparison_suffix_columns <- function() {
 #' @param n_sigfig Number of significant figures for numeric formatting in the
 #'   output table. Must be a positive integer. Default is 3.
 #' @param n_decimals_ofv Number of decimal places for OFV values in summary
-#'   footnotes. Use NA to keep significant-figure formatting. Default is NA.
+#'   footnotes. Use NA to keep significant-figure formatting. Default is 3
 #' @param pvalue_scientific Logical. If TRUE, p-values are formatted
 #'   in scientific notation. If FALSE (default), uses significant figures from n_sigfig.
 #' @param pvalue_threshold Numeric or NULL. If set, p-values below this threshold

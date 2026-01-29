@@ -64,7 +64,7 @@ output table. Must be a positive integer. Default is 3.}
 display. Defaults to \code{CIOptions()}.}
 
 \item{n_decimals_ofv}{Number of decimal places for OFV values in summary
-footnotes. Use NA to keep significant-figure formatting. Default is NA.}
+footnotes. Use NA to keep significant-figure formatting. Default is 3}
 
 \item{pvalue_scientific}{Logical. If TRUE, p-values are formatted
 in scientific notation. If FALSE (default), uses significant figures from n_sigfig.}
