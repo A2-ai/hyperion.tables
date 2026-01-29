@@ -4,7 +4,7 @@
 \alias{set_spec_pvalue}
 \title{Set p-value formatting for a spec}
 \usage{
-set_spec_pvalue(spec, threshold = NULL, scientific = NULL)
+set_spec_pvalue(spec, threshold, scientific)
 }
 \arguments{
 \item{spec}{A TableSpec or SummarySpec object}
