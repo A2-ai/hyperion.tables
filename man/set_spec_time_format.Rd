@@ -12,7 +12,7 @@ set_spec_time_format(spec, format)
 \item{format}{One of "seconds", "minutes", "hours", or "auto"}
 }
 \value{
-Modified spec (copy)
+Modified spec
 }
 \description{
 Controls how time columns are formatted.

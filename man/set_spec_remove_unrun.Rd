@@ -12,7 +12,7 @@ set_spec_remove_unrun(spec, remove)
 \item{remove}{Logical value}
 }
 \value{
-Modified spec (copy)
+Modified spec
 }
 \description{
 Controls whether models without completed runs are excluded.

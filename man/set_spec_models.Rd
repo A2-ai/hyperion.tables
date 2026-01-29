@@ -12,7 +12,7 @@ set_spec_models(spec, models)
 \item{models}{Character vector of model names, or NULL for all models}
 }
 \value{
-Modified spec (copy)
+Modified spec
 }
 \description{
 Filters which models appear in the summary table by name.

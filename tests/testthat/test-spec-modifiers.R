@@ -128,6 +128,14 @@ test_that("set_spec_pvalue works", {
   expect_true(spec@pvalue_scientific)
 })
 
+test_that("set_spec_pvalue allows clearing threshold", {
+  spec <- TableSpec() |>
+    set_spec_pvalue(threshold = 0.001, scientific = TRUE) |>
+    set_spec_pvalue(threshold = NULL)
+
+  expect_null(spec@pvalue_threshold)
+})
+
 test_that("set_spec_footnotes works", {
   spec <- TableSpec() |> set_spec_footnotes(c("abbreviations", "equations"))
   expect_equal(spec@footnote_order, c("abbreviations", "equations"))
@@ -167,14 +175,14 @@ test_that("set_spec_parameter_names sets both options", {
 test_that("set_spec_parameter_names validates source", {
   expect_error(
     TableSpec() |> set_spec_parameter_names(source = "invalid"),
-    "source must be one of"
+    "@source must be"
   )
 })
 
 test_that("set_spec_parameter_names validates append_omega_with_theta", {
   expect_error(
     TableSpec() |> set_spec_parameter_names(append_omega_with_theta = "yes"),
-    "append_omega_with_theta must be TRUE or FALSE"
+    "must be.*logical"
   )
 })
 
@@ -199,7 +207,7 @@ test_that("set_spec_transforms works", {
 test_that("set_spec_transforms validates columns", {
   expect_error(
     TableSpec() |> set_spec_transforms(theta = "invalid"),
-    "Invalid transform columns"
+    "@display_transforms values must be in"
   )
 })
 
@@ -265,7 +273,7 @@ test_that("set_spec_time_format works", {
 test_that("set_spec_time_format validates input", {
   expect_error(
     SummarySpec() |> set_spec_time_format("invalid"),
-    "format must be one of"
+    "@time_format must be"
   )
 })
 

@@ -15,7 +15,7 @@ set_spec_variability(spec, ..., overwrite = FALSE)
 If TRUE, replace all existing rules.}
 }
 \value{
-Modified spec (copy)
+Modified spec
 }
 \description{
 Controls how the variability display column is constructed.

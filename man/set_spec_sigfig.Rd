@@ -12,7 +12,7 @@ set_spec_sigfig(spec, n)
 \item{n}{Positive integer for significant figures}
 }
 \value{
-Modified spec (copy)
+Modified spec
 }
 \description{
 Sets the number of significant figures for numeric formatting.

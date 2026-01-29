@@ -15,7 +15,7 @@ set_spec_summary_filter(spec, ..., overwrite = FALSE)
 If TRUE, replace all existing rules.}
 }
 \value{
-Modified spec (copy)
+Modified spec
 }
 \description{
 Controls which models appear in the summary table based on filter

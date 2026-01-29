@@ -15,7 +15,7 @@ or NULL to disable threshold display}
 \item{scientific}{Logical. If TRUE, use scientific notation for p-values}
 }
 \value{
-Modified spec (copy)
+Modified spec
 }
 \description{
 Controls how p-values are displayed in the table.

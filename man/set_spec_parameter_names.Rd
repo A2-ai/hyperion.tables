@@ -15,7 +15,7 @@ set_spec_parameter_names(spec, source = NULL, append_omega_with_theta = NULL)
 names to omega parameters. If NULL, keeps current value.}
 }
 \value{
-Modified spec (copy)
+Modified spec
 }
 \description{
 Controls how parameter names are displayed in the table.

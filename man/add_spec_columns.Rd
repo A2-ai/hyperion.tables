@@ -12,7 +12,7 @@ add_spec_columns(spec, ...)
 \item{...}{Column names to add (character strings)}
 }
 \value{
-Modified spec (copy)
+Modified spec
 }
 \description{
 Appends columns to the spec's add_columns list. These columns will be

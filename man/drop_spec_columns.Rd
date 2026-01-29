@@ -12,7 +12,7 @@ drop_spec_columns(spec, ...)
 \item{...}{Column names to drop (character strings)}
 }
 \value{
-Modified spec (copy)
+Modified spec
 }
 \description{
 Adds columns to the spec's drop_columns list. These columns will be

@@ -12,7 +12,7 @@ set_spec_ofv_decimals(spec, n)
 \item{n}{Non-negative integer or NA}
 }
 \value{
-Modified spec (copy)
+Modified spec
 }
 \description{
 Controls the number of decimal places for OFV and dOFV values. Use NA to

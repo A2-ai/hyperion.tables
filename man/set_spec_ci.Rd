@@ -24,7 +24,7 @@ set_spec_ci(
 \item{missing_text}{Text to show for missing CI values}
 }
 \value{
-Modified spec (copy)
+Modified spec
 }
 \description{
 Controls confidence interval rendering options.

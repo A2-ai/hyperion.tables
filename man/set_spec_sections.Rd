@@ -15,7 +15,7 @@ set_spec_sections(spec, ..., overwrite = FALSE)
 If TRUE, replace all existing rules.}
 }
 \value{
-Modified spec (copy)
+Modified spec
 }
 \description{
 Controls how parameters are grouped into sections. Pass formula expressions

@@ -12,7 +12,7 @@ set_spec_hide_empty(spec, hide)
 \item{hide}{Logical value}
 }
 \value{
-Modified spec (copy)
+Modified spec
 }
 \description{
 Controls whether empty columns are automatically hidden.

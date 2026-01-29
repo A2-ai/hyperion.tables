@@ -12,7 +12,7 @@ set_spec_tag_filter(spec, tags)
 \item{tags}{Character vector of tags to filter by, or NULL for no filtering}
 }
 \value{
-Modified spec (copy)
+Modified spec
 }
 \description{
 Filters which models appear in the summary table by tags.

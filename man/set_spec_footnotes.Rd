@@ -14,7 +14,7 @@ to disable footnotes. For TableSpec: "summary_info", "equations", "abbreviations
 For SummarySpec: only "abbreviations" is valid.}
 }
 \value{
-Modified spec (copy)
+Modified spec
 }
 \description{
 Controls the order of footnote sections, or disables footnotes entirely.

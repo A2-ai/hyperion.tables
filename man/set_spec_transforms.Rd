@@ -16,7 +16,7 @@ set_spec_transforms(spec, theta = NULL, omega = NULL, sigma = NULL)
 \item{sigma}{Columns to transform for sigma parameters}
 }
 \value{
-Modified spec (copy)
+Modified spec
 }
 \description{
 Controls which transforms are applied for display by parameter kind.

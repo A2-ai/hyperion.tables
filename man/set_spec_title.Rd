@@ -12,7 +12,7 @@ set_spec_title(spec, title)
 \item{title}{Character string for the table title}
 }
 \value{
-Modified spec (copy)
+Modified spec
 }
 \description{
 Sets the table header title.

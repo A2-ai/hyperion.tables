@@ -15,7 +15,7 @@ set_spec_missing(spec, text = NULL, apply_to = NULL)
 or "character"}
 }
 \value{
-Modified spec (copy)
+Modified spec
 }
 \description{
 Controls how NA values are displayed in the table.

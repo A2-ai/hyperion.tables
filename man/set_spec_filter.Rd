@@ -15,7 +15,7 @@ set_spec_filter(spec, ..., overwrite = FALSE)
 If TRUE, replace all existing rules.}
 }
 \value{
-Modified spec (copy)
+Modified spec
 }
 \description{
 Controls which parameters appear in the output table. Pass filter

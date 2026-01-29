@@ -12,7 +12,7 @@ set_spec_columns(spec, ...)
 \item{...}{Column names to include (character strings)}
 }
 \value{
-Modified spec (copy)
+Modified spec
 }
 \description{
 Replaces the spec's columns list entirely. This overrides the default
