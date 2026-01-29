@@ -201,13 +201,13 @@ set_spec_hide_empty <- function(spec, hide) {
 #' @examples
 #' spec <- TableSpec() |>
 #'   set_spec_pvalue(threshold = 0.001, scientific = TRUE)
-set_spec_pvalue <- function(spec, threshold = NULL, scientific = NULL) {
+set_spec_pvalue <- function(spec, threshold, scientific) {
   assert_any_spec(spec)
 
   if (!missing(threshold)) {
     spec@pvalue_threshold <- threshold
   }
-  if (!is.null(scientific)) {
+  if (!missing(scientific)) {
     spec@pvalue_scientific <- scientific
   }
 
