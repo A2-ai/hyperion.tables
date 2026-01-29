@@ -12,21 +12,24 @@ assert_any_spec <- function(spec) {
   if (
     !S7::S7_inherits(spec, TableSpec) && !S7::S7_inherits(spec, SummarySpec)
   ) {
-    stop("spec must be a TableSpec or SummarySpec object")
+    stop(sprintf(
+      "spec must be a TableSpec or SummarySpec object. Got: %s",
+      class(spec)[1]
+    ))
   }
 }
 
 #' @noRd
 assert_table_spec <- function(spec) {
   if (!S7::S7_inherits(spec, TableSpec)) {
-    stop("spec must be a TableSpec object")
+    stop(sprintf("spec must be a TableSpec object. Got: %s", class(spec)[1]))
   }
 }
 
 #' @noRd
 assert_summary_spec <- function(spec) {
   if (!S7::S7_inherits(spec, SummarySpec)) {
-    stop("spec must be a SummarySpec object")
+    stop(sprintf("spec must be a SummarySpec object. Got: %s", class(spec)[1]))
   }
 }
 

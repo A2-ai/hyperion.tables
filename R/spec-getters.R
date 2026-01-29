@@ -20,11 +20,7 @@
 #' spec <- TableSpec()
 #' get_spec_columns(spec)
 get_spec_columns <- function(spec) {
-  if (
-    !S7::S7_inherits(spec, TableSpec) && !S7::S7_inherits(spec, SummarySpec)
-  ) {
-    stop("spec must be a TableSpec or SummarySpec object")
-  }
+  assert_any_spec(spec)
 
   if (S7::S7_inherits(spec, TableSpec)) {
     # For TableSpec, merge columns and add_columns
@@ -51,11 +47,7 @@ get_spec_columns <- function(spec) {
 #' spec <- TableSpec()
 #' get_spec_title(spec)
 get_spec_title <- function(spec) {
-  if (
-    !S7::S7_inherits(spec, TableSpec) && !S7::S7_inherits(spec, SummarySpec)
-  ) {
-    stop("spec must be a TableSpec or SummarySpec object")
-  }
+  assert_any_spec(spec)
   spec@title
 }
 
@@ -70,11 +62,7 @@ get_spec_title <- function(spec) {
 #' spec <- TableSpec()
 #' get_spec_sigfig(spec)
 get_spec_sigfig <- function(spec) {
-  if (
-    !S7::S7_inherits(spec, TableSpec) && !S7::S7_inherits(spec, SummarySpec)
-  ) {
-    stop("spec must be a TableSpec or SummarySpec object")
-  }
+  assert_any_spec(spec)
   spec@n_sigfig
 }
 
@@ -94,9 +82,7 @@ get_spec_sigfig <- function(spec) {
 #' spec <- TableSpec()
 #' get_spec_parameter_names(spec)
 get_spec_parameter_names <- function(spec) {
-  if (!S7::S7_inherits(spec, TableSpec)) {
-    stop("spec must be a TableSpec object")
-  }
+  assert_table_spec(spec)
   spec@parameter_names
 }
 
@@ -111,9 +97,7 @@ get_spec_parameter_names <- function(spec) {
 #' spec <- TableSpec()
 #' get_spec_ci(spec)
 get_spec_ci <- function(spec) {
-  if (!S7::S7_inherits(spec, TableSpec)) {
-    stop("spec must be a TableSpec object")
-  }
+  assert_table_spec(spec)
   spec@ci
 }
 
@@ -128,9 +112,7 @@ get_spec_ci <- function(spec) {
 #' spec <- TableSpec()
 #' get_spec_sections(spec)
 get_spec_sections <- function(spec) {
-  if (!S7::S7_inherits(spec, TableSpec)) {
-    stop("spec must be a TableSpec object")
-  }
+  assert_table_spec(spec)
   spec@sections
 }
 
@@ -145,9 +127,7 @@ get_spec_sections <- function(spec) {
 #' spec <- TableSpec()
 #' get_spec_filter(spec)
 get_spec_filter <- function(spec) {
-  if (!S7::S7_inherits(spec, TableSpec)) {
-    stop("spec must be a TableSpec object")
-  }
+  assert_table_spec(spec)
   spec@row_filter
 }
 
@@ -162,9 +142,7 @@ get_spec_filter <- function(spec) {
 #' spec <- TableSpec()
 #' get_spec_transforms(spec)
 get_spec_transforms <- function(spec) {
-  if (!S7::S7_inherits(spec, TableSpec)) {
-    stop("spec must be a TableSpec object")
-  }
+  assert_table_spec(spec)
   spec@display_transforms
 }
 
@@ -179,9 +157,7 @@ get_spec_transforms <- function(spec) {
 #' spec <- TableSpec()
 #' get_spec_variability(spec)
 get_spec_variability <- function(spec) {
-  if (!S7::S7_inherits(spec, TableSpec)) {
-    stop("spec must be a TableSpec object")
-  }
+  assert_table_spec(spec)
   spec@variability_rules
 }
 
@@ -200,8 +176,6 @@ get_spec_variability <- function(spec) {
 #' spec <- SummarySpec()
 #' get_spec_time_format(spec)
 get_spec_time_format <- function(spec) {
-  if (!S7::S7_inherits(spec, SummarySpec)) {
-    stop("spec must be a SummarySpec object")
-  }
+  assert_summary_spec(spec)
   spec@time_format
 }
