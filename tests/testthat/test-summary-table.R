@@ -1,8 +1,7 @@
 test_that("summary table gt snapshot from vignettes data", {
   testthat::skip_if_not_installed("gt")
 
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
-  testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
+  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
 
   tree <- hyperion::get_model_lineage(model_dir)
   spec <- SummarySpec()
@@ -21,8 +20,7 @@ test_that("summary table gt snapshot from vignettes data", {
 })
 
 test_that("tag_filter selects tagged models", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
-  testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
+  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
 
   tree <- hyperion::get_model_lineage(model_dir)
   for (name in names(tree$nodes)) {
@@ -40,8 +38,7 @@ test_that("tag_filter selects tagged models", {
 
 test_that("summary table snapshot filtered to selected models", {
   testthat::skip_if_not_installed("gt")
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
-  testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
+  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
 
   tree <- hyperion::get_model_lineage(model_dir)
 
@@ -63,8 +60,7 @@ test_that("summary table snapshot filtered to selected models", {
 })
 
 test_that("summary_filter applies to summary columns", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
-  testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
+  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
 
   tree <- hyperion::get_model_lineage(model_dir)
 
@@ -80,8 +76,7 @@ test_that("summary_filter applies to summary columns", {
 })
 
 test_that("models_to_include matches stems and extensions", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
-  testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
+  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
 
   tree <- hyperion::get_model_lineage(model_dir)
 
@@ -98,8 +93,7 @@ test_that("models_to_include matches stems and extensions", {
 
 test_that("remove_unrun_models snapshot", {
   testthat::skip_if_not_installed("gt")
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
-  testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
+  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
 
   tree <- hyperion::get_model_lineage(model_dir)
 
@@ -120,8 +114,7 @@ test_that("remove_unrun_models snapshot", {
 
 test_that("drop_columns removes description (snapshot)", {
   testthat::skip_if_not_installed("gt")
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
-  testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
+  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
 
   tree <- hyperion::get_model_lineage(model_dir)
 
@@ -144,8 +137,7 @@ test_that("drop_columns removes description (snapshot)", {
 })
 
 test_that("time_format auto uses seconds label", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
-  testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
+  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
 
   tree <- hyperion::get_model_lineage(model_dir)
 
@@ -166,8 +158,7 @@ test_that("time_format auto uses seconds label", {
 })
 
 test_that("time_format auto uses minutes label", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
-  testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
+  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
 
   tree <- hyperion::get_model_lineage(model_dir)
 
@@ -187,8 +178,7 @@ test_that("time_format auto uses minutes label", {
 })
 
 test_that("time_format auto uses hours label", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
-  testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
+  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
 
   tree <- hyperion::get_model_lineage(model_dir)
 
@@ -209,8 +199,7 @@ test_that("time_format auto uses hours label", {
 
 test_that("footnote_order NULL disables footnotes", {
   testthat::skip_if_not_installed("gt")
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
-  testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
+  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
 
   tree <- hyperion::get_model_lineage(model_dir)
 
@@ -231,8 +220,7 @@ test_that("footnote_order NULL disables footnotes", {
 
 test_that("pvalue_threshold formats small p-values", {
   testthat::skip_if_not_installed("gt")
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
-  testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
+  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
 
   tree <- hyperion::get_model_lineage(model_dir)
 

@@ -1,9 +1,13 @@
 Package: hyperion.tables
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
-Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+Title: Publication-Ready Tables for Pharmacometric Models
+Version: 0.1.0
+Authors@R: c(
+    person("Matt", "Smith", , "matthews@a2-ai.com", role = c("aut", "cre")),
+    person("Devin", "Pastoor", ,"devin@a2-ai.com", role = c("aut"))
+    )
+Description: Provides tools for creating publication-ready parameter tables,
+    model comparison tables, and run summary tables from NONMEM models managed
+    by hyperion/pharos.
 License: MIT + file LICENSE
 Depends:
     R (>= 4.1.0)

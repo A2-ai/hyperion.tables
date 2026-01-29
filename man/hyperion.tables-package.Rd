@@ -4,12 +4,155 @@
 \name{hyperion.tables-package}
 \alias{hyperion.tables}
 \alias{hyperion.tables-package}
-\title{hyperion.tables: What the Package Does (One Line, Title Case)}
+\title{hyperion.tables: Publication-Ready Tables for Pharmacometric Models}
 \description{
-What the package does (one paragraph).
+hyperion.tables provides tools for creating publication-ready parameter
+tables, model comparison tables, and run summary tables from NONMEM models
+managed by hyperion/pharos.
 }
+\section{Spec Classes}{
+
+S7 classes for configuring table output:
+\itemize{
+\item \link{TableSpec} - Configuration for parameter tables
+\item \link{SummarySpec} - Configuration for run summary tables
+\item \link{CIOptions} - Confidence interval display options
+\item \link{ParameterNameOptions} - Parameter name display options
+}
+}
+
+\section{Table Creation}{
+
+High-level functions for creating tables:
+\itemize{
+\item \code{\link[=make_parameter_table]{make_parameter_table()}} - Build a formatted parameter table
+\item \code{\link[=make_summary_table]{make_summary_table()}} - Build a run summary table
+\item \code{\link[=make_comparison_table]{make_comparison_table()}} - Build a model comparison table
+}
+}
+
+\section{Spec Application}{
+
+Functions for applying specs to data:
+\itemize{
+\item \code{\link[=apply_table_spec]{apply_table_spec()}} - Enrich parameter data with transforms, CIs, sections
+\item \code{\link[=apply_summary_spec]{apply_summary_spec()}} - Filter models and prepare summary data
+\item \code{\link[=apply_formatting]{apply_formatting()}} - Apply CI merging, numeric formatting, missing text
+}
+}
+
+\section{Spec Extraction}{
+
+Functions for retrieving specs attached to data frames:
+\itemize{
+\item \code{\link[=get_table_spec]{get_table_spec()}} - Extract TableSpec from parameter data
+\item \code{\link[=get_summary_spec]{get_summary_spec()}} - Extract SummarySpec from summary data
+}
+}
+
+\section{Spec Getters}{
+
+Functions for reading spec properties:
+\itemize{
+\item \code{\link[=get_spec_columns]{get_spec_columns()}} - Get columns from a spec
+\item \code{\link[=get_spec_title]{get_spec_title()}} - Get title from a spec
+\item \code{\link[=get_spec_sigfig]{get_spec_sigfig()}} - Get significant figures setting
+\item \code{\link[=get_spec_ci]{get_spec_ci()}} - Get CI options from a TableSpec
+\item \code{\link[=get_spec_parameter_names]{get_spec_parameter_names()}} - Get parameter name options
+\item \code{\link[=get_spec_sections]{get_spec_sections()}} - Get section rules
+\item \code{\link[=get_spec_filter]{get_spec_filter()}} - Get row filter rules
+\item \code{\link[=get_spec_transforms]{get_spec_transforms()}} - Get display transforms
+\item \code{\link[=get_spec_variability]{get_spec_variability()}} - Get variability rules
+\item \code{\link[=get_spec_time_format]{get_spec_time_format()}} - Get time format from a SummarySpec
+}
+}
+
+\section{Spec Modifiers - Columns}{
+
+Functions for modifying spec column settings:
+\itemize{
+\item \code{\link[=add_spec_columns]{add_spec_columns()}} - Append columns to output
+\item \code{\link[=drop_spec_columns]{drop_spec_columns()}} - Exclude columns from output
+\item \code{\link[=set_spec_columns]{set_spec_columns()}} - Replace column list entirely
+}
+}
+
+\section{Spec Modifiers - Common}{
+
+Functions that work on both TableSpec and SummarySpec:
+\itemize{
+\item \code{\link[=set_spec_title]{set_spec_title()}} - Set table title
+\item \code{\link[=set_spec_sigfig]{set_spec_sigfig()}} - Set significant figures
+\item \code{\link[=set_spec_ofv_decimals]{set_spec_ofv_decimals()}} - Set OFV decimal places
+\item \code{\link[=set_spec_hide_empty]{set_spec_hide_empty()}} - Control empty column hiding
+\item \code{\link[=set_spec_pvalue]{set_spec_pvalue()}} - Set p-value formatting
+\item \code{\link[=set_spec_footnotes]{set_spec_footnotes()}} - Set footnote order
+}
+}
+
+\section{Spec Modifiers - TableSpec}{
+
+Functions specific to TableSpec:
+\itemize{
+\item \code{\link[=set_spec_parameter_names]{set_spec_parameter_names()}} - Set parameter name display options
+\item \code{\link[=set_spec_ci]{set_spec_ci()}} - Set confidence interval options
+\item \code{\link[=set_spec_missing]{set_spec_missing()}} - Set missing value handling
+\item \code{\link[=set_spec_transforms]{set_spec_transforms()}} - Set display transforms by parameter kind
+\item \code{\link[=set_spec_sections]{set_spec_sections()}} - Set section grouping rules
+\item \code{\link[=set_spec_filter]{set_spec_filter()}} - Set row filter rules
+\item \code{\link[=set_spec_variability]{set_spec_variability()}} - Set variability display rules
+}
+}
+
+\section{Spec Modifiers - SummarySpec}{
+
+Functions specific to SummarySpec:
+\itemize{
+\item \code{\link[=set_spec_time_format]{set_spec_time_format()}} - Set time column format
+\item \code{\link[=set_spec_models]{set_spec_models()}} - Filter by model names
+\item \code{\link[=set_spec_tag_filter]{set_spec_tag_filter()}} - Filter by model tags
+\item \code{\link[=set_spec_remove_unrun]{set_spec_remove_unrun()}} - Control unrun model filtering
+\item \code{\link[=set_spec_summary_filter]{set_spec_summary_filter()}} - Set summary filter rules
+}
+}
+
+\section{Rule Builders}{
+
+Functions for creating rule expressions:
+\itemize{
+\item \code{\link[=section_rules]{section_rules()}} - Create section assignment rules
+\item \code{\link[=filter_rules]{filter_rules()}} - Create row filter rules
+\item \code{\link[=variability_rules]{variability_rules()}} - Create variability display rules
+\item \code{\link[=summary_filter_rules]{summary_filter_rules()}} - Create summary filter rules
+}
+}
+
+\section{Rendering}{
+
+Functions for rendering tables to output formats:
+\itemize{
+\item \code{\link[=render_to_gt]{render_to_gt()}} - Convert HyperionTable to gt
+\item \code{\link[=render_to_flextable]{render_to_flextable()}} - Convert HyperionTable to flextable
+}
+}
+
+\section{Model Comparison}{
+
+Functions for comparing models:
+\itemize{
+\item \code{\link[=compare_with]{compare_with()}} - Join parameter data for side-by-side comparison
+\item \code{\link[=add_model_lineage]{add_model_lineage()}} - Attach lineage for conditional LRT display
+\item \code{\link[=add_summary_info]{add_summary_info()}} - Attach summary info for table footnotes
+}
+}
+
 \author{
-\strong{Maintainer}: First Last \email{first.last@example.com}
+\strong{Maintainer}: Matt Smith \email{matthews@a2-ai.com}
+
+Authors:
+\itemize{
+  \item Devin Pastoor \email{devin@a2-ai.com}
+}
 
 }
 \keyword{internal}

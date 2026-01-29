@@ -6,7 +6,7 @@
 \usage{
 TableSpec(
   title = "Model Parameters",
-  name_source = "name",
+  parameter_names = ParameterNameOptions(),
   columns = NULL,
   add_columns = NULL,
   drop_columns = NULL,
@@ -29,9 +29,9 @@ TableSpec(
 \item{title}{Character. Title for the parameter table header. Default is
 "Model Parameters".}
 
-\item{name_source}{Which name field to use from ModelComments: "name" (default),
-"display", or "nonmem_name". Controls how parameter names appear in the output
-table. Use "nonmem_name" to show raw NONMEM names like "THETA1", "OMEGA(1,1)".}
+\item{parameter_names}{ParameterNameOptions object controlling how parameter names
+are displayed. Controls which name field to use ("name", "display", or "nonmem")
+and whether to append theta info to omega names. Defaults to \code{ParameterNameOptions()}.}
 
 \item{columns}{Character vector of columns to include in output.}
 
@@ -64,7 +64,7 @@ output table. Must be a positive integer. Default is 3.}
 display. Defaults to \code{CIOptions()}.}
 
 \item{n_decimals_ofv}{Number of decimal places for OFV values in summary
-footnotes. Use NA to keep significant-figure formatting. Default is NA.}
+footnotes. Use NA to keep significant-figure formatting. Default is 3}
 
 \item{pvalue_scientific}{Logical. If TRUE, p-values are formatted
 in scientific notation. If FALSE (default), uses significant figures from n_sigfig.}

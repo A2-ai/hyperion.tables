@@ -17,8 +17,7 @@ knitr::opts_chunk$set(
 ```{r setup}
 library(hyperion)
 library(hyperion.tables)
-
-data_dir <- system.file("extdata", package = "hyperion")
+data_dir <- system.file("extdata", package = "hyperion.tables")
 model_dir <- file.path(data_dir, "models", "onecmt")
 model_run <- "run003"
 ```

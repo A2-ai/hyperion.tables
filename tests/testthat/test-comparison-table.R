@@ -1,5 +1,5 @@
 test_that("parameter comparison table: run002 vs run003b1", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
+  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
@@ -15,21 +15,21 @@ test_that("parameter comparison table: run002 vs run003b1", {
   )
 
   mod1 <- hyperion::read_model(file.path(model_dir, "run002.mod"))
-  mod_sum1 <- hyperion::get_model_summary(file.path(model_dir, "run002"))
-  info1 <- hyperion::get_model_parameter_info(file.path(model_dir, "run002"))
+  mod_sum1 <- summary(mod1)
+  info1 <- hyperion::get_model_parameter_info(mod1)
 
   mod2 <- hyperion::read_model(file.path(model_dir, "run003b1.mod"))
-  mod_sum2 <- hyperion::get_model_summary(file.path(model_dir, "run003b1"))
-  info2 <- hyperion::get_model_parameter_info(file.path(model_dir, "run003b1"))
+  mod_sum2 <- summary(mod2)
+  info2 <- hyperion::get_model_parameter_info(mod2)
 
-  comp <- hyperion::get_parameters(file.path(model_dir, "run002")) |>
+  comp <- hyperion::get_parameters(mod1) |>
     apply_table_spec(spec, info1) |>
     add_summary_info(mod_sum1) |>
     compare_with(
-      hyperion::get_parameters(file.path(model_dir, "run003b1")) |>
+      hyperion::get_parameters(mod2) |>
         apply_table_spec(spec, info2) |>
         add_summary_info(mod_sum2),
-      labels = c(mod1$filename, mod2$filename)
+      labels = c("run002", "run003b1")
     )
 
   snapshot_gt(make_comparison_table(comp), "cmp-grandparent-gt")
@@ -37,7 +37,7 @@ test_that("parameter comparison table: run002 vs run003b1", {
 })
 
 test_that("parameter comparison table: run003 vs run003b1", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
+  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
@@ -52,17 +52,19 @@ test_that("parameter comparison table: run003 vs run003b1", {
     drop_columns = c("variability", "shrinkage")
   )
 
-  mod_sum <- hyperion::get_model_summary(file.path(model_dir, "run003"))
-  info <- hyperion::get_model_parameter_info(file.path(model_dir, "run003"))
+  mod <- hyperion::read_model(file.path(model_dir, "run003.mod"))
+  mod_sum <- summary(mod)
+  info <- hyperion::get_model_parameter_info(mod)
 
-  child_sum <- hyperion::get_model_summary(file.path(model_dir, "run003b1"))
-  child_info <- hyperion::get_model_parameter_info(file.path(model_dir, "run003b1"))
+  child_mod <- hyperion::read_model(file.path(model_dir, "run003b1.mod"))
+  child_sum <- summary(child_mod)
+  child_info <- hyperion::get_model_parameter_info(child_mod)
 
-  comp <- hyperion::get_parameters(file.path(model_dir, "run003")) |>
+  comp <- hyperion::get_parameters(mod) |>
     apply_table_spec(spec, info) |>
     add_summary_info(mod_sum) |>
     compare_with(
-      hyperion::get_parameters(file.path(model_dir, "run003b1")) |>
+      hyperion::get_parameters(child_mod) |>
         apply_table_spec(spec, child_info) |>
         add_summary_info(child_sum),
       labels = c("run003", "run003b1")
@@ -73,7 +75,7 @@ test_that("parameter comparison table: run003 vs run003b1", {
 })
 
 test_that("parameter comparison table: run002 vs run003b1 drop symbol", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
+  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
@@ -89,21 +91,21 @@ test_that("parameter comparison table: run002 vs run003b1 drop symbol", {
   )
 
   mod1 <- hyperion::read_model(file.path(model_dir, "run002.mod"))
-  mod_sum1 <- hyperion::get_model_summary(file.path(model_dir, "run002"))
-  info1 <- hyperion::get_model_parameter_info(file.path(model_dir, "run002"))
+  mod_sum1 <- summary(mod1)
+  info1 <- hyperion::get_model_parameter_info(mod1)
 
   mod2 <- hyperion::read_model(file.path(model_dir, "run003b1.mod"))
-  mod_sum2 <- hyperion::get_model_summary(file.path(model_dir, "run003b1"))
-  info2 <- hyperion::get_model_parameter_info(file.path(model_dir, "run003b1"))
+  mod_sum2 <- summary(mod2)
+  info2 <- hyperion::get_model_parameter_info(mod2)
 
-  comp <- hyperion::get_parameters(file.path(model_dir, "run002")) |>
+  comp <- hyperion::get_parameters(mod1) |>
     apply_table_spec(spec, info1) |>
     add_summary_info(mod_sum1) |>
     compare_with(
-      hyperion::get_parameters(file.path(model_dir, "run003b1")) |>
+      hyperion::get_parameters(mod2) |>
         apply_table_spec(spec, info2) |>
         add_summary_info(mod_sum2),
-      labels = c(mod1$filename, mod2$filename)
+      labels = c("run002", "run003b1")
     )
 
   snapshot_gt(make_comparison_table(comp), "cmp-no-symbol-gt")
@@ -111,7 +113,7 @@ test_that("parameter comparison table: run002 vs run003b1 drop symbol", {
 })
 
 test_that("parameter comparison table: run002 vs run003 drop ci has correct footnotes", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
+  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
@@ -127,21 +129,21 @@ test_that("parameter comparison table: run002 vs run003 drop ci has correct foot
   )
 
   mod1 <- hyperion::read_model(file.path(model_dir, "run002.mod"))
-  mod_sum1 <- hyperion::get_model_summary(file.path(model_dir, "run002"))
-  info1 <- hyperion::get_model_parameter_info(file.path(model_dir, "run002"))
+  mod_sum1 <- summary(mod1)
+  info1 <- hyperion::get_model_parameter_info(mod1)
 
   mod2 <- hyperion::read_model(file.path(model_dir, "run003.mod"))
-  mod_sum2 <- hyperion::get_model_summary(file.path(model_dir, "run003"))
-  info2 <- hyperion::get_model_parameter_info(file.path(model_dir, "run003"))
+  mod_sum2 <- summary(mod2)
+  info2 <- hyperion::get_model_parameter_info(mod2)
 
-  comp <- hyperion::get_parameters(file.path(model_dir, "run002")) |>
+  comp <- hyperion::get_parameters(mod1) |>
     apply_table_spec(spec, info1) |>
     add_summary_info(mod_sum1) |>
     compare_with(
-      hyperion::get_parameters(file.path(model_dir, "run003")) |>
+      hyperion::get_parameters(mod2) |>
         apply_table_spec(spec, info2) |>
         add_summary_info(mod_sum2),
-      labels = c(mod1$filename, mod2$filename)
+      labels = c("run002", "run003")
     )
 
   snapshot_gt(make_comparison_table(comp), "cmp-ci-fn-gt")
@@ -149,7 +151,7 @@ test_that("parameter comparison table: run002 vs run003 drop ci has correct foot
 })
 
 test_that("parameter comparison table: run002 vs run003b1 drop configurable", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
+  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
@@ -171,21 +173,21 @@ test_that("parameter comparison table: run002 vs run003b1 drop configurable", {
   )
 
   mod1 <- hyperion::read_model(file.path(model_dir, "run002.mod"))
-  mod_sum1 <- hyperion::get_model_summary(file.path(model_dir, "run002"))
-  info1 <- hyperion::get_model_parameter_info(file.path(model_dir, "run002"))
+  mod_sum1 <- summary(mod1)
+  info1 <- hyperion::get_model_parameter_info(mod1)
 
   mod2 <- hyperion::read_model(file.path(model_dir, "run003b1.mod"))
-  mod_sum2 <- hyperion::get_model_summary(file.path(model_dir, "run003b1"))
-  info2 <- hyperion::get_model_parameter_info(file.path(model_dir, "run003b1"))
+  mod_sum2 <- summary(mod2)
+  info2 <- hyperion::get_model_parameter_info(mod2)
 
-  comp <- hyperion::get_parameters(file.path(model_dir, "run002")) |>
+  comp <- hyperion::get_parameters(mod1) |>
     apply_table_spec(spec, info1) |>
     add_summary_info(mod_sum1) |>
     compare_with(
-      hyperion::get_parameters(file.path(model_dir, "run003b1")) |>
+      hyperion::get_parameters(mod2) |>
         apply_table_spec(spec, info2) |>
         add_summary_info(mod_sum2),
-      labels = c(mod1$filename, mod2$filename)
+      labels = c("run002", "run003b1")
     )
 
   snapshot_gt(make_comparison_table(comp), "cmp-drop-cols-gt")
@@ -193,7 +195,7 @@ test_that("parameter comparison table: run002 vs run003b1 drop configurable", {
 })
 
 test_that("parameter comparison table: three models with reference_model", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
+  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
@@ -209,27 +211,30 @@ test_that("parameter comparison table: three models with reference_model", {
   )
 
   # Get model summaries and parameter info for all three models
-  sum1 <- hyperion::get_model_summary(file.path(model_dir, "run001"))
-  info1 <- hyperion::get_model_parameter_info(file.path(model_dir, "run001"))
+  mod1 <- hyperion::read_model(file.path(model_dir, "run001.mod"))
+  sum1 <- summary(mod1)
+  info1 <- hyperion::get_model_parameter_info(mod1)
 
-  sum2 <- hyperion::get_model_summary(file.path(model_dir, "run002"))
-  info2 <- hyperion::get_model_parameter_info(file.path(model_dir, "run002"))
+  mod2 <- hyperion::read_model(file.path(model_dir, "run002.mod"))
+  sum2 <- summary(mod2)
+  info2 <- hyperion::get_model_parameter_info(mod2)
 
-  sum3 <- hyperion::get_model_summary(file.path(model_dir, "run003"))
-  info3 <- hyperion::get_model_parameter_info(file.path(model_dir, "run003"))
+  mod3 <- hyperion::read_model(file.path(model_dir, "run003.mod"))
+  sum3 <- summary(mod3)
+  info3 <- hyperion::get_model_parameter_info(mod3)
 
   # Build comparison: run001 + run002 (vs run001) + run003 (vs run001)
-  comp <- hyperion::get_parameters(file.path(model_dir, "run001")) |>
+  comp <- hyperion::get_parameters(mod1) |>
     apply_table_spec(spec, info1) |>
     add_summary_info(sum1) |>
     compare_with(
-      hyperion::get_parameters(file.path(model_dir, "run002")) |>
+      hyperion::get_parameters(mod2) |>
         apply_table_spec(spec, info2) |>
         add_summary_info(sum2),
       labels = c("run001", "run002")
     ) |>
     compare_with(
-      hyperion::get_parameters(file.path(model_dir, "run003")) |>
+      hyperion::get_parameters(mod3) |>
         apply_table_spec(spec, info3) |>
         add_summary_info(sum3),
       labels = "run003",
@@ -241,7 +246,7 @@ test_that("parameter comparison table: three models with reference_model", {
 })
 
 test_that("parameter comparison table: three models with lineage shows LRT", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
+  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
@@ -257,30 +262,33 @@ test_that("parameter comparison table: three models with lineage shows LRT", {
   )
 
   # Get model summaries and parameter info for all three models
-  sum1 <- hyperion::get_model_summary(file.path(model_dir, "run001"))
-  info1 <- hyperion::get_model_parameter_info(file.path(model_dir, "run001"))
+  mod1 <- hyperion::read_model(file.path(model_dir, "run001.mod"))
+  sum1 <- summary(mod1)
+  info1 <- hyperion::get_model_parameter_info(mod1)
 
-  sum2 <- hyperion::get_model_summary(file.path(model_dir, "run002"))
-  info2 <- hyperion::get_model_parameter_info(file.path(model_dir, "run002"))
+  mod2 <- hyperion::read_model(file.path(model_dir, "run002.mod"))
+  sum2 <- summary(mod2)
+  info2 <- hyperion::get_model_parameter_info(mod2)
 
-  sum3 <- hyperion::get_model_summary(file.path(model_dir, "run003"))
-  info3 <- hyperion::get_model_parameter_info(file.path(model_dir, "run003"))
+  mod3 <- hyperion::read_model(file.path(model_dir, "run003.mod"))
+  sum3 <- summary(mod3)
+  info3 <- hyperion::get_model_parameter_info(mod3)
 
   # Get real lineage from model directory
   lineage <- hyperion::get_model_lineage(model_dir)
 
   # Build comparison: run001 -> run002 -> run003 (all in lineage)
-  comp <- hyperion::get_parameters(file.path(model_dir, "run001")) |>
+  comp <- hyperion::get_parameters(mod1) |>
     apply_table_spec(spec, info1) |>
     add_summary_info(sum1) |>
     compare_with(
-      hyperion::get_parameters(file.path(model_dir, "run002")) |>
+      hyperion::get_parameters(mod2) |>
         apply_table_spec(spec, info2) |>
         add_summary_info(sum2),
       labels = c("run001", "run002")
     ) |>
     compare_with(
-      hyperion::get_parameters(file.path(model_dir, "run003")) |>
+      hyperion::get_parameters(mod3) |>
         apply_table_spec(spec, info3) |>
         add_summary_info(sum3),
       labels = "run003"
@@ -292,7 +300,7 @@ test_that("parameter comparison table: three models with lineage shows LRT", {
 })
 
 test_that("parameter comparison table: broken lineage suppresses LRT", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
+  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
@@ -308,14 +316,17 @@ test_that("parameter comparison table: broken lineage suppresses LRT", {
   )
 
   # Get model summaries and parameter info for all three models
-  sum1 <- hyperion::get_model_summary(file.path(model_dir, "run001"))
-  info1 <- hyperion::get_model_parameter_info(file.path(model_dir, "run001"))
+  mod1 <- hyperion::read_model(file.path(model_dir, "run001.mod"))
+  sum1 <- summary(mod1)
+  info1 <- hyperion::get_model_parameter_info(mod1)
 
-  sum2 <- hyperion::get_model_summary(file.path(model_dir, "run002"))
-  info2 <- hyperion::get_model_parameter_info(file.path(model_dir, "run002"))
+  mod2 <- hyperion::read_model(file.path(model_dir, "run002.mod"))
+  sum2 <- summary(mod2)
+  info2 <- hyperion::get_model_parameter_info(mod2)
 
-  sum3 <- hyperion::get_model_summary(file.path(model_dir, "run003"))
-  info3 <- hyperion::get_model_parameter_info(file.path(model_dir, "run003"))
+  mod3 <- hyperion::read_model(file.path(model_dir, "run003.mod"))
+  sum3 <- summary(mod3)
+  info3 <- hyperion::get_model_parameter_info(mod3)
 
   # Get real lineage and break run003's based_on relationship
   # This makes run003 not in lineage with run002
@@ -325,17 +336,17 @@ test_that("parameter comparison table: broken lineage suppresses LRT", {
   # Build comparison: run001 -> run002 -> run003
   # LRT should only show for run002 vs run001 (in lineage)
   # LRT should NOT show for run003 vs run002 (lineage broken)
-  comp <- hyperion::get_parameters(file.path(model_dir, "run001")) |>
+  comp <- hyperion::get_parameters(mod1) |>
     apply_table_spec(spec, info1) |>
     add_summary_info(sum1) |>
     compare_with(
-      hyperion::get_parameters(file.path(model_dir, "run002")) |>
+      hyperion::get_parameters(mod2) |>
         apply_table_spec(spec, info2) |>
         add_summary_info(sum2),
       labels = c("run001", "run002")
     ) |>
     compare_with(
-      hyperion::get_parameters(file.path(model_dir, "run003")) |>
+      hyperion::get_parameters(mod3) |>
         apply_table_spec(spec, info3) |>
         add_summary_info(sum3),
       labels = "run003"
@@ -347,7 +358,7 @@ test_that("parameter comparison table: broken lineage suppresses LRT", {
 })
 
 test_that("parameter comparison table: pvalue_threshold formats small p-values", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
+  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
@@ -364,30 +375,33 @@ test_that("parameter comparison table: pvalue_threshold formats small p-values",
   )
 
   # Get model summaries and parameter info for all three models
-  sum1 <- hyperion::get_model_summary(file.path(model_dir, "run001"))
-  info1 <- hyperion::get_model_parameter_info(file.path(model_dir, "run001"))
+  mod1 <- hyperion::read_model(file.path(model_dir, "run001.mod"))
+  sum1 <- summary(mod1)
+  info1 <- hyperion::get_model_parameter_info(mod1)
 
-  sum2 <- hyperion::get_model_summary(file.path(model_dir, "run002"))
-  info2 <- hyperion::get_model_parameter_info(file.path(model_dir, "run002"))
+  mod2 <- hyperion::read_model(file.path(model_dir, "run002.mod"))
+  sum2 <- summary(mod2)
+  info2 <- hyperion::get_model_parameter_info(mod2)
 
-  sum3 <- hyperion::get_model_summary(file.path(model_dir, "run003"))
-  info3 <- hyperion::get_model_parameter_info(file.path(model_dir, "run003"))
+  mod3 <- hyperion::read_model(file.path(model_dir, "run003.mod"))
+  sum3 <- summary(mod3)
+  info3 <- hyperion::get_model_parameter_info(mod3)
 
   # Get lineage for LRT calculation
   lineage <- hyperion::get_model_lineage(model_dir)
 
   # Build comparison: run001 -> run002 -> run003 with pairwise comparisons
-  comp <- hyperion::get_parameters(file.path(model_dir, "run001")) |>
+  comp <- hyperion::get_parameters(mod1) |>
     apply_table_spec(spec, info1) |>
     add_summary_info(sum1) |>
     compare_with(
-      hyperion::get_parameters(file.path(model_dir, "run002")) |>
+      hyperion::get_parameters(mod2) |>
         apply_table_spec(spec, info2) |>
         add_summary_info(sum2),
       labels = c("run001", "run002")
     ) |>
     compare_with(
-      hyperion::get_parameters(file.path(model_dir, "run003")) |>
+      hyperion::get_parameters(mod3) |>
         apply_table_spec(spec, info3) |>
         add_summary_info(sum3),
       labels = "run003"
@@ -399,27 +413,31 @@ test_that("parameter comparison table: pvalue_threshold formats small p-values",
 })
 
 test_that("parameter comparison table: errors no spec", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion")
+  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
 
   # Get model summaries and parameter info for all three models
-  sum1 <- hyperion::get_model_summary(file.path(model_dir, "run001"))
-  sum2 <- hyperion::get_model_summary(file.path(model_dir, "run002"))
-  sum3 <- hyperion::get_model_summary(file.path(model_dir, "run003"))
+  mod1 <- hyperion::read_model(file.path(model_dir, "run001.mod"))
+  mod2 <- hyperion::read_model(file.path(model_dir, "run002.mod"))
+  mod3 <- hyperion::read_model(file.path(model_dir, "run003.mod"))
+
+  sum1 <- summary(mod1)
+  sum2 <- summary(mod2)
+  sum3 <- summary(mod3)
 
   # Get lineage for LRT calculation
   lineage <- hyperion::get_model_lineage(model_dir)
 
   # Build comparison: run001 -> run002 -> run003 with pairwise comparisons
   expect_error(
-    hyperion::get_parameters(file.path(model_dir, "run001")) |>
+    hyperion::get_parameters(mod1) |>
       add_summary_info(sum1) |>
       compare_with(
-        hyperion::get_parameters(file.path(model_dir, "run002")) |>
+        hyperion::get_parameters(mod2) |>
           add_summary_info(sum2),
         labels = c("run001", "run002")
       ) |>
       compare_with(
-        hyperion::get_parameters(file.path(model_dir, "run003")) |>
+        hyperion::get_parameters(mod3) |>
           add_summary_info(sum3),
         labels = "run003"
       ) |>

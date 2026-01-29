@@ -3,8 +3,11 @@
 ^LICENSE\.md$
 
 ^\.github$
-
+^\.claude$
 ^rv$
 ^rproject\.toml$
 ^\.Rprofile$
 ^README\.Rmd$
+
+^lefthook\.yaml$
+^pharos\.toml$

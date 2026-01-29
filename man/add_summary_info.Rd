@@ -6,7 +6,7 @@
 \usage{
 add_summary_info(
   params,
-  sum,
+  model_sum,
   show_method = TRUE,
   show_ofv = TRUE,
   show_cond_num = TRUE,
@@ -16,7 +16,7 @@ add_summary_info(
 \arguments{
 \item{params}{Enriched parameter data frame from \code{apply_table_spec()}}
 
-\item{sum}{Summary object from \code{get_model_summary()}, or NULL to skip}
+\item{model_sum}{Summary object from \code{summary()}, or NULL to skip}
 
 \item{show_method}{logical, if TRUE adds estimation method attribute for table footnote}
 
