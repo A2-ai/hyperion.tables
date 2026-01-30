@@ -1,0 +1,117 @@
+---
+title: "summary-tables"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{summary-tables}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(hyperion)
+library(hyperion.tables)
+
+model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+```
+
+## Basic Summary Table
+
+Summary tables display model run information across a project. Start by loading the model lineage tree:
+
+```{r}
+tree <- get_model_lineage(model_dir)
+
+tree
+```
+
+Create a summary table with default columns:
+
+```{r}
+tree |>
+  apply_summary_spec(SummarySpec()) |>
+  make_summary_table()
+```
+
+## Customizing Columns
+
+Use `set_spec_columns()` to control which columns appear:
+
+```{r}
+spec <- SummarySpec() |>
+  set_spec_columns(
+    "description",
+    "estimation_method",
+    "ofv",
+    "dofv",
+    "condition_number"
+  )
+
+tree |>
+  apply_summary_spec(spec) |>
+  make_summary_table()
+```
+
+Available columns include: `based_on`, `description`, `n_parameters`, `problem`, `number_data_records`, `number_subjects`, `number_obs`, `estimation_method`, `estimation_time`, `covariance_time`, `ofv`, `dofv`, `condition_number`, `termination_status`, `pvalue`, `df`.
+
+## Filtering Models
+
+Filter to specific models by name:
+
+```{r}
+spec <- SummarySpec(models_to_include = c("run002", "run003"))
+
+tree |>
+  apply_summary_spec(spec) |>
+  make_summary_table()
+```
+
+Or use custom filter rules:
+
+```{r}
+spec <- SummarySpec() |>
+  set_spec_summary_filter(ofv < -104)
+
+tree |>
+  apply_summary_spec(spec) |>
+  make_summary_table()
+```
+
+## P-value Formatting
+
+Control p-value display with thresholds or scientific notation:
+
+```{r}
+spec <- SummarySpec() |>
+  set_spec_pvalue(threshold = 0.001)
+
+tree |>
+  apply_summary_spec(spec) |>
+  make_summary_table()
+```
+
+```{r}
+spec <- SummarySpec() |>
+  set_spec_pvalue(scientific = TRUE)
+
+tree |>
+  apply_summary_spec(spec) |>
+  make_summary_table()
+```
+
+## Table Title
+
+```{r}
+spec <- SummarySpec() |>
+  set_spec_title("PK Model Development Summary")
+
+tree |>
+  apply_summary_spec(spec) |>
+  make_summary_table()
+```

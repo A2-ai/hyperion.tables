@@ -18,7 +18,7 @@ test_that("apply_formatting uses variability_rules", {
     "extdata",
     "models",
     "onecmt",
-    package = "hyperion"
+    package = "hyperion.tables"
   )
   testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
 

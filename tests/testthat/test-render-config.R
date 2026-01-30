@@ -8,7 +8,7 @@ test_that("renderers accept TableSpec render overrides", {
     "extdata",
     "models",
     "onecmt",
-    package = "hyperion"
+    package = "hyperion.tables"
   )
   testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
 
