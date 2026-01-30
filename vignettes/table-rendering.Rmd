@@ -17,12 +17,13 @@ knitr::opts_chunk$set(
 ```{r setup}
 library(hyperion)
 library(hyperion.tables)
+
 data_dir <- system.file("extdata", package = "hyperion.tables")
 model_dir <- file.path(data_dir, "models", "onecmt")
 model_run <- "run003"
 ```
 
-# Rendering and extending tables
+## Rendering and extending tables
 
 `hyperion.tables` renders tables through a renderer-agnostic intermediate
 called `HyperionTable`. The table data is produced once from a `TableSpec`,
@@ -31,7 +32,7 @@ then any renderer (gt/flextable/custom) can format and display it consistently.
 Renderers call `apply_formatting()` internally, so the same rendering rules
 apply across outputs.
 
-# Pipeline overview
+## Pipeline overview
 
 Here’s what happens when you run:
 
@@ -57,7 +58,7 @@ params |>
 This keeps formatting centralized and consistent across renderers while
 keeping the underlying data pipeline clean and composable.
 
-# Build a `HyperionTable` and render it
+## Build a `HyperionTable` and render it
 
 Render rules live on `TableSpec`:
 
@@ -75,7 +76,8 @@ spec <- TableSpec(
     TRUE ~ "Other"
   ),
   title = paste(model_run, "Parameters")
-)
+) |>
+	set_spec_transforms(omega = "cv")
 
 run003 <- read_model(file.path(model_dir, paste0(model_run, ".mod")))
 
@@ -89,14 +91,14 @@ hyperion_table
 `hyperion.tables` includes two built-in renderers:
 
 ```{r}
-hyperion.tables::render_to_gt(hyperion_table)
+render_to_gt(hyperion_table)
 ```
 
 ```{r}
-hyperion.tables::render_to_flextable(hyperion_table)
+render_to_flextable(hyperion_table)
 ```
 
-# Update render rules and re-render
+## Update render rules and re-render
 
 To change formatting, rebuild the `HyperionTable` with a new `TableSpec`
 and re-render it. You can also inspect the formatted data directly.
@@ -119,7 +121,10 @@ spec <- TableSpec(
   ),
   missing_text = "NA",
   missing_apply_to = "numeric"
-)
+) |>
+	set_spec_transforms(omega = "cv")
+
+
 
 hyperion_table <- get_parameters(run003) |>
   apply_table_spec(spec, get_model_parameter_info(run003)) |>
@@ -130,15 +135,14 @@ names(formatted)
 ```
 
 ```{r}
-hyperion.tables::render_to_gt(hyperion_table)
+render_to_gt(hyperion_table)
 ```
-
 
 ```{r}
 head(formatted)
 ```
 
-# Extending with a custom renderer
+## Extending with a custom renderer
 
 Custom renderers should accept a `HyperionTable`, call `apply_formatting()`,
 and then build output using your chosen table package.
@@ -153,7 +157,7 @@ render_custom <- function(table) {
 render_custom(hyperion_table)
 ```
 
-# What if you skip `apply_formatting()`?
+## What if you skip `apply_formatting()`?
 
 If you render directly from the raw `HyperionTable@data`, you will see
 unformatted numeric values and separate CI columns (if present). This is
@@ -164,7 +168,7 @@ raw_data <- hyperion_table@data
 gt::gt(raw_data, groupname_col = hyperion_table@groupname_col)
 ```
 
-# Notes
+## Notes
 
 - The render rules are **shared** across renderers to keep tables consistent.
 - `make_parameter_table(output = "data")` returns the `HyperionTable`.

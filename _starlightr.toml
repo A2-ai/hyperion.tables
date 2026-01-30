@@ -1,0 +1,112 @@
+# starlighti configuration file
+[site]
+title = "hyperion.tables"
+description = "Publication-ready parameter tables, model comparison tables, and run summary tables for NONMEM models"
+
+[output]
+dir = "../Docs/hyperion-tables-docs"
+
+[versions]
+enabled = true
+list = [{ tag = "0.1.0", label = "v0.1.0", default = true }]
+
+[home]
+hero = { actions = [
+	{ text = "Get Started", link = "./articles/readme/", icon = "right-arrow", variant = "primary" },
+	{ text = "View on GitHub", link = "https://github.com/A2-ai/hyperion.tables", icon = "external", variant = "minimal" },
+] }
+cards = [
+	{ icon = "document", title = "Parameter Tables", description = "Build publication-ready parameter tables from NONMEM models", link = "./articles/parameter-tables/" },
+	{ icon = "document", title = "Model Comparison", description = "Create side-by-side model comparison tables", link = "./articles/comparison-tables/" },
+	{ icon = "document", title = "Run Summaries", description = "Generate run summary tables across model lineages", link = "./articles/summary-tables/" },
+]
+
+[sidebar]
+articles = [
+	{ label = "Getting Started", contents = [
+		{ slug = "README", label = "Welcome" },
+		{ slug = "parameter-tables", label = "Parameter Tables" },
+		{ slug = "comparison-tables", label = "Comparison Tables" },
+		{ slug = "summary-tables", label = "Modelling Summary Tables" },
+		{ slug = "table-rendering", label = "Customizing Table Renders" },
+	] },
+]
+reference = [
+	"hyperion.tables-package",
+	{ label = "Spec Classes", contents = [
+		"TableSpec",
+		"SummarySpec",
+		"CIOptions",
+		"ParameterNameOptions",
+	] },
+	{ label = "Table Creation", contents = [
+		"make_parameter_table",
+		"make_summary_table",
+		"make_comparison_table",
+	] },
+	{ label = "Spec Application", contents = [
+		"apply_table_spec",
+		"apply_summary_spec",
+		"apply_formatting",
+	] },
+	{ label = "Spec Extraction", contents = [
+		"get_table_spec",
+		"get_summary_spec",
+	] },
+	{ label = "Spec Getters", contents = [
+		"get_spec_columns",
+		"get_spec_title",
+		"get_spec_sigfig",
+		"get_spec_ci",
+		"get_spec_parameter_names",
+		"get_spec_sections",
+		"get_spec_filter",
+		"get_spec_transforms",
+		"get_spec_variability",
+		"get_spec_time_format",
+	] },
+	{ label = "Spec Modifiers - Columns", contents = [
+		"add_spec_columns",
+		"drop_spec_columns",
+		"set_spec_columns",
+	] },
+	{ label = "Spec Modifiers - Common", contents = [
+		"set_spec_title",
+		"set_spec_sigfig",
+		"set_spec_ofv_decimals",
+		"set_spec_hide_empty",
+		"set_spec_pvalue",
+		"set_spec_footnotes",
+	] },
+	{ label = "Spec Modifiers - TableSpec", contents = [
+		"set_spec_parameter_names",
+		"set_spec_ci",
+		"set_spec_missing",
+		"set_spec_transforms",
+		"set_spec_sections",
+		"set_spec_filter",
+		"set_spec_variability",
+	] },
+	{ label = "Spec Modifiers - SummarySpec", contents = [
+		"set_spec_time_format",
+		"set_spec_models",
+		"set_spec_tag_filter",
+		"set_spec_remove_unrun",
+		"set_spec_summary_filter",
+	] },
+	{ label = "Rule Builders", contents = [
+		"section_rules",
+		"filter_rules",
+		"variability_rules",
+		"summary_filter_rules",
+	] },
+	{ label = "Rendering", contents = [
+		"render_to_gt",
+		"render_to_flextable",
+	] },
+	{ label = "Model Comparison", contents = [
+		"compare_with",
+		"add_model_lineage",
+		"add_summary_info",
+	] },
+]

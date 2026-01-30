@@ -17,7 +17,7 @@ knitr::opts_chunk$set(
 ```{r setup}
 library(hyperion)
 library(hyperion.tables)
-#devtools::load_all()
+
 library(gt)
 library(flextable)
 
@@ -58,7 +58,7 @@ get_parameters(mod) |>
 ```
 
 
-# Changing display names with `set_spec_parameter_names()`
+## Changing display names with `set_spec_parameter_names()`
 
 ```{r}
 spec <- spec |> set_spec_parameter_names(source = "display")
@@ -83,7 +83,9 @@ get_parameters(mod) |>
   add_summary_info(mod_sum) |>
   make_parameter_table()
 ```
-## Adding descriptions with `add_spec_columns()`
+
+### Adding descriptions with `add_spec_columns()`
+
 ```{r}
 spec <- spec |>
   set_spec_parameter_names(source = "display") |>
@@ -95,9 +97,10 @@ get_parameters(mod) |>
   make_parameter_table()
 ```
 
-## Removing columns with `drop_spec_columns()`
+### Removing columns with `drop_spec_columns()`
+
 ```{r}
-# Start fresh to demonstrate drop_columns
+## Start fresh to demonstrate drop_columns
 spec <- TableSpec() |>
   set_spec_transforms(omega = "cv") |>
   set_spec_sections(
@@ -117,7 +120,7 @@ get_parameters(mod) |>
 ```
 
 ```{r}
-# Drop multiple columns
+## Drop multiple columns
 spec <- spec |> drop_spec_columns("shrinkage")
 
 get_parameters(mod) |>
@@ -126,7 +129,7 @@ get_parameters(mod) |>
   make_parameter_table()
 ```
 
-# Structural parameters only
+## Structural parameters only
 
 ```{r}
 sp_spec <- TableSpec() |>
@@ -142,7 +145,7 @@ get_parameters(mod) |>
   make_parameter_table()
 ```
 
-# Random Effect Parameters only
+## Random Effect Parameters only
 ```{r}
 re_spec <- TableSpec() |>
   set_spec_sections(
@@ -158,7 +161,7 @@ get_parameters(mod) |>
   make_parameter_table()
 ```
 
-# Confidence Interval level
+## Confidence Interval level
 ```{r}
 spec <- TableSpec() |>
   set_spec_transforms(omega = "cv") |>
@@ -181,7 +184,7 @@ get_parameters(mod) |>
   make_parameter_table()
 ```
 
-# Changing summary info shown
+## Changing summary info shown
 
 ```{r}
 spec <- TableSpec() |>
@@ -221,183 +224,7 @@ get_parameters(mod) |>
 ```
 
 
-# Model Comparison
-
-```{r}
-spec <- TableSpec() |>
-  set_spec_transforms(omega = "cv") |>
-  set_spec_sections(
-    kind == "THETA" ~ "Structural model parameters",
-    kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
-    kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
-    kind == "SIGMA" ~ "Residual variance",
-    TRUE ~ "Other"
-  ) |>
-  set_spec_sigfig(3) |>
-  drop_spec_columns("variability", "shrinkage", "rse") |>
-  set_spec_pvalue(scientific = FALSE)
-
-child_sum <- summary(mod)
-child_info <- get_model_parameter_info(mod)
-
-parent_mod <- read_model(file.path(model_dir, "run002.mod"))
-mod_sum <- summary(parent_mod)
-info <- get_model_parameter_info(parent_mod)
-
-get_parameters(parent_mod) |>
-  apply_table_spec(spec, info) |>
-  add_summary_info(mod_sum) |>
-  compare_with(
-    get_parameters(mod) |>
-      apply_table_spec(spec, child_info) |>
-      add_summary_info(child_sum),
-    labels = c("run002", "run003")
-  ) |>
-  make_comparison_table()
-```
-
-## Multiple Comparison Table
-
-```{r}
-spec <- TableSpec() |>
-  set_spec_transforms(omega = "cv") |>
-  set_spec_sections(
-    kind == "THETA" ~ "Structural model parameters",
-    kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
-    kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
-    kind == "SIGMA" ~ "Residual error",
-    TRUE ~ "Other"
-  ) |>
-  set_spec_sigfig(3) |>
-  set_spec_columns("symbol", "estimate", "ci", "rse", "pct_change") |>
-  set_spec_hide_empty(FALSE)
-
-mod1 <- read_model(file.path(model_dir, "run002.mod"))
-mod_sum1 <- summary(mod1)
-info1 <- get_model_parameter_info(mod1)
-
-mod2 <- read_model(file.path(model_dir, "run003.mod"))
-mod_sum2 <- summary(mod2)
-info2 <- get_model_parameter_info(mod2)
-
-mod3 <- read_model(file.path(model_dir, "run003b1.mod"))
-mod_sum3 <- summary(mod3)
-info3 <- get_model_parameter_info(mod3)
-
-comp <- get_parameters(mod1) |>
-  apply_table_spec(spec, info1) |>
-  add_summary_info(mod_sum1) |>
-  compare_with(
-    get_parameters(mod2) |>
-      apply_table_spec(spec, info2) |>
-      add_summary_info(mod_sum2),
-    labels = c("run002", "run003")
-  ) |>
-  compare_with(
-    get_parameters(mod3) |>
-      apply_table_spec(spec, info3) |>
-      add_summary_info(mod_sum3),
-    labels = c("run003b1")
-  )
-
-comp |>
-  make_comparison_table()
-```
-
-## Structural model comparison
-
-```{r}
-spec <- TableSpec() |>
-  set_spec_transforms(omega = "cv") |>
-  set_spec_sections(
-    kind == "THETA" ~ "Structural model parameters",
-    kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
-    kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
-    kind == "SIGMA" ~ "Residual error",
-    TRUE ~ "Other"
-  ) |>
-  set_spec_sigfig(3) |>
-  set_spec_columns("symbol", "fixed", "estimate") |>
-  set_spec_title("Structural Model Parameter Comparison")
-
-mod1 <- read_model(file.path(model_dir, "run001.mod"))
-mod_sum1 <- summary(mod1)
-info1 <- get_model_parameter_info(mod1)
-
-mod2 <- read_model(file.path(model_dir, "run002.mod"))
-mod_sum2 <- summary(mod2)
-info2 <- get_model_parameter_info(mod2)
-
-mod3 <- read_model(file.path(model_dir, "run003.mod"))
-mod_sum3 <- summary(mod3)
-info3 <- get_model_parameter_info(mod3)
-
-mod4 <- read_model(file.path(model_dir, "run003b1.mod"))
-mod_sum4 <- summary(mod4)
-info4 <- get_model_parameter_info(mod4)
-
-comp <- get_parameters(mod1) |>
-  apply_table_spec(spec, info1) |>
-  add_summary_info(mod_sum1) |>
-  compare_with(
-    get_parameters(mod2) |>
-      apply_table_spec(spec, info2) |>
-      add_summary_info(mod_sum2),
-    labels = c("run001", "run002")
-   ) |>
-  compare_with(
-    get_parameters(mod3) |>
-      apply_table_spec(spec, info3) |>
-      add_summary_info(mod_sum3),
-    labels = c("run003")
-  ) |>
-  compare_with(
-    get_parameters(mod4) |>
-      apply_table_spec(spec, info4) |>
-      add_summary_info(mod_sum4),
-    labels = c("run004")
-  )
-comp |> names()
-comp |>
-  make_comparison_table()
-```
-
-# Parameter Info Audit trail
-
-Using just model comments the source is either model file, default, or user supplied
-
-```{r}
-info <- get_model_parameter_info(mod)
-audit_parameter_info(info)
-```
-Editing a property by hand:
-```{r}
-info <- info |> 
-	update_param_info(
-		"SIGMA(1,1)", 
-		display = "Proportional Error", 
-		parameterization = "Proportional") |>
-  update_param_info(
-		"SIGMA(2,2)", 
-		display = "Additive Error", 
-		parameterization = "AddErr")
-
-audit_parameter_info(info)
-```
-
-Adding lookup values updates sources as well
-
-```{r}
-info <- apply_lookup(info, normalizePath("../inst/lookup.toml"))
-
-audit_parameter_info(info)
-```
-
-```{r}
-info
-```
-
-# Transformation Reference
+## Transformation Reference
 
 The following table shows how CV, RSE, and CI are computed for each transform and parameter type combination.
 
@@ -506,7 +333,7 @@ transform_ref |>
   )
 ```
 
-# Model Lineage
+## Model Lineage
 
 ```{r}
 example_tree <- get_model_lineage(model_dir)
