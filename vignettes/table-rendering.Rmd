@@ -1,6 +1,7 @@
 ---
 title: "table-rendering"
 output: rmarkdown::html_vignette
+always_allow_html: true
 vignette: >
   %\VignetteIndexEntry{table-rendering}
   %\VignetteEngine{knitr::rmarkdown}
@@ -17,6 +18,10 @@ knitr::opts_chunk$set(
 ```{r setup}
 library(hyperion)
 library(hyperion.tables)
+
+library(gt)
+library(flextable)
+library(officer)
 
 data_dir <- system.file("extdata", package = "hyperion.tables")
 model_dir <- file.path(data_dir, "models", "onecmt")
@@ -93,9 +98,12 @@ hyperion_table
 ```{r}
 render_to_gt(hyperion_table)
 ```
-
-```{r}
-render_to_flextable(hyperion_table)
+```{r results="asis"}
+# saving flextable as images strips equations 
+render_to_flextable(hyperion_table) |> 
+	autofit() |> 
+	to_html(type = "table") |> 
+	cat()
 ```
 
 ## Update render rules and re-render
@@ -122,9 +130,7 @@ spec <- TableSpec(
   missing_text = "NA",
   missing_apply_to = "numeric"
 ) |>
-	set_spec_transforms(omega = "cv")
-
-
+  set_spec_transforms(omega = "cv")
 
 hyperion_table <- get_parameters(run003) |>
   apply_table_spec(spec, get_model_parameter_info(run003)) |>
