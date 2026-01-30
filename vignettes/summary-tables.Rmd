@@ -45,7 +45,6 @@ Use `set_spec_columns()` to control which columns appear:
 
 ```{r}
 spec <- SummarySpec() |>
-
   set_spec_columns(
     "description",
     "estimation_method",

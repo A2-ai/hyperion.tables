@@ -27,7 +27,7 @@ articles = [
 		{ slug = "README", label = "Welcome" },
 		{ slug = "parameter-tables", label = "Parameter Tables" },
 		{ slug = "comparison-tables", label = "Comparison Tables" },
-		{ slug = "summary-tables", label = "Modelling Summary Tables" },
+		{ slug = "summary-tables", label = "Summary Tables" },
 		{ slug = "table-rendering", label = "Customizing Table Renders" },
 	] },
 ]

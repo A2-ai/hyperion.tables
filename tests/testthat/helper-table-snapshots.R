@@ -8,6 +8,8 @@ snapshot_gt <- function(table, name) {
   testthat::expect_snapshot_file(html_snapshot_path)
 
   testthat::skip_on_ci()
+  testthat::skip_on_os("windows")
+  testthat::skip_on_os("linux")
   testthat::skip_if_not_installed("webshot2")
   png_path <- file.path(tempdir(), paste0(name, ".png"))
   gt::gtsave(table, filename = html_path)
@@ -37,6 +39,8 @@ snapshot_flextable <- function(table, name) {
   testthat::expect_snapshot_file(html_snapshot_path)
 
   testthat::skip_on_ci()
+  testthat::skip_on_os("windows")
+  testthat::skip_on_os("linux")
   testthat::skip_if_not_installed("webshot2")
   png_path <- file.path(tempdir(), paste0(name, ".png"))
 

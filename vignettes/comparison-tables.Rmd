@@ -1,8 +1,8 @@
 ---
-title: "model-comparisons"
+title: "comparison-tables"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{model-comparisons}
+  %\VignetteIndexEntry{comparison-tables}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -162,7 +162,6 @@ comp <- get_parameters(mod1) |>
       add_summary_info(mod_sum4),
     labels = c("run004")
   )
-comp |> names()
 comp |>
   make_comparison_table()
 ```
