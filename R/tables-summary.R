@@ -1111,6 +1111,9 @@ get_time_suffix <- function(time_format, data) {
     if (max_val < 1) {
       return("h")
     }
+    if (max_val < 60) {
+      return("min")
+    }
     return("s")
   }
 

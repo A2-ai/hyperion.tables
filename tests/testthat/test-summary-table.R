@@ -370,7 +370,13 @@ test_that("load_model_summaries preserves list entries for missing outputs", {
   testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
 
   model_names <- c("run001.mod", "missing.mod")
-  summaries <- hyperion.tables:::load_model_summaries(model_names, model_dir)
+  expect_warning(
+    hyperion.tables:::load_model_summaries(model_names, model_dir),
+    "could not load model summary for:"
+  )
+  summaries <- suppressWarnings(
+    hyperion.tables:::load_model_summaries(model_names, model_dir)
+  )
 
   # Use [<- with NULL to preserve list entry for missing models.
   expect_true(all(model_names %in% names(summaries)))
@@ -416,7 +422,7 @@ test_that("format_time_columns(auto) does not warn on all-NA data", {
   )
 })
 
-test_that("get_time_suffix(auto) returns seconds for small values when attribute missing", {
+test_that("get_time_suffix(auto) returns minutes for mid-range values when attribute missing", {
   data <- data.frame(
     estimation_time = c(10, 20, 30),
     stringsAsFactors = FALSE
@@ -424,7 +430,7 @@ test_that("get_time_suffix(auto) returns seconds for small values when attribute
 
   suffix <- hyperion.tables:::get_time_suffix("auto", data)
 
-  expect_equal(suffix, "s")
+  expect_equal(suffix, "min")
 })
 
 test_that("build_na_row includes n_parameters when needed for dofv", {
