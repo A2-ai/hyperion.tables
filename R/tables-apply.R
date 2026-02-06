@@ -18,10 +18,10 @@
 #' @export
 apply_table_spec <- function(params, spec, info = NULL) {
   if (!S7::S7_inherits(spec, TableSpec)) {
-    stop("spec must be a TableSpec object")
+    rlang::abort("spec must be a TableSpec object")
   }
   if (!is.null(info) && !S7::S7_inherits(info, ModelComments)) {
-    stop("info must be a ModelComments object or NULL")
+    rlang::abort("info must be a ModelComments object or NULL")
   }
 
   dt_kinds <- build_display_transforms(spec)
@@ -91,11 +91,10 @@ apply_table_spec <- function(params, spec, info = NULL) {
     !"description" %in% spec@drop_columns
   if (want_description) {
     if (is.null(info)) {
-      warning(
+      rlang::warn(paste0(
         "description requires a ModelComments object. ",
-        "Descriptions will not be available.",
-        call. = FALSE
-      )
+        "Descriptions will not be available."
+      ))
       df$description <- NA_character_
     } else {
       df <- enrich_description(df, info)
@@ -129,13 +128,12 @@ apply_table_spec <- function(params, spec, info = NULL) {
   if (!is.null(info)) {
     df <- apply_name_source(df, info, spec@parameter_names)
   } else if (spec@parameter_names@source != "nonmem") {
-    warning(
+    rlang::warn(paste0(
       "parameter_names source '",
       spec@parameter_names@source,
       "' requires a ModelComments object. ",
-      "Using NONMEM names instead.",
-      call. = FALSE
-    )
+      "Using NONMEM names instead."
+    ))
   }
 
   # Apply section rules AFTER name transformation (consistent with row_filter)
@@ -164,7 +162,7 @@ apply_table_spec <- function(params, spec, info = NULL) {
 #' @noRd
 build_display_transforms <- function(spec) {
   if (!S7::S7_inherits(spec, TableSpec)) {
-    stop("spec must be a TableSpec object")
+    rlang::abort("spec must be a TableSpec object")
   }
 
   dt <- spec@display_transforms
@@ -194,7 +192,7 @@ build_display_transforms <- function(spec) {
 #' @noRd
 build_section <- function(data, spec) {
   if (!S7::S7_inherits(spec, TableSpec)) {
-    stop("spec must be a TableSpec object")
+    rlang::abort("spec must be a TableSpec object")
   }
 
   rules <- spec@sections
@@ -215,7 +213,7 @@ build_section <- function(data, spec) {
 #' @noRd
 get_section_order <- function(spec) {
   if (!S7::S7_inherits(spec, TableSpec)) {
-    stop("spec must be a TableSpec object")
+    rlang::abort("spec must be a TableSpec object")
   }
 
   vapply(

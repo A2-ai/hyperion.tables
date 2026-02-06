@@ -11,7 +11,7 @@
 #' @export
 render_to_gt <- function(table) {
   if (!S7::S7_inherits(table, HyperionTable)) {
-    stop("table must be a HyperionTable object")
+    rlang::abort("table must be a HyperionTable object")
   }
   data <- apply_formatting(table)
   visible_cols <- names(data)

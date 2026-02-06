@@ -125,7 +125,7 @@ get_table_spec <- function(params) {
     return(NULL)
   }
   if (!S7::S7_inherits(spec, TableSpec)) {
-    stop("Attached table_spec is not a TableSpec object")
+    rlang::abort("Attached table_spec is not a TableSpec object")
   }
   spec
 }
@@ -260,16 +260,18 @@ make_parameter_table <- function(
   output <- match.arg(output)
 
   if (output == "flextable" && !requireNamespace("flextable", quietly = TRUE)) {
-    stop(
+    rlang::abort(paste0(
       "Package 'flextable' is required for flextable output. ",
       "Install it with 'rv add flextable'"
-    )
+    ))
   }
 
   # Get table_spec - required for proper formatting
   spec <- attr(params, "table_spec")
   if (is.null(spec)) {
-    stop("TableSpec not found. Run apply_table_spec(params, spec, info) first.")
+    rlang::abort(
+      "TableSpec not found. Run apply_table_spec(params, spec, info) first."
+    )
   }
 
   # Prepare data + layout (ordering, display columns, labels, hide rules).

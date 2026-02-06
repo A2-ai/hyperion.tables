@@ -360,7 +360,7 @@ test_that("apply_summary_spec keeps df when pvalue requested", {
   expect_true("df" %in% names(data))
 })
 
-test_that("load_model_summaries preserves list entries for missing outputs", {
+test_that("load_models preserves list entries for missing outputs", {
   model_dir <- system.file(
     "extdata",
     "models",
@@ -371,42 +371,19 @@ test_that("load_model_summaries preserves list entries for missing outputs", {
 
   model_names <- c("run001.mod", "missing.mod")
   expect_warning(
-    hyperion.tables:::load_model_summaries(model_names, model_dir),
-    "could not load model summary for:"
+    hyperion.tables:::load_models(model_names, model_dir),
+    "could not load model:"
   )
-  summaries <- suppressWarnings(
-    hyperion.tables:::load_model_summaries(model_names, model_dir)
+  models <- suppressWarnings(
+    hyperion.tables:::load_models(model_names, model_dir)
   )
 
   # Use [<- with NULL to preserve list entry for missing models.
-  expect_true(all(model_names %in% names(summaries)))
+  expect_true(all(model_names %in% names(models)))
+  expect_false(is.null(models[["run001.mod"]]))
+  expect_true(is.null(models[["missing.mod"]]))
 })
 
-test_that("load_model_summaries handles summary errors per model", {
-  model_dir <- system.file(
-    "extdata",
-    "models",
-    "onecmt",
-    package = "hyperion.tables"
-  )
-  testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
-
-  testthat::local_mocked_bindings(
-    summary = function(...) stop("boom"),
-    .package = "base"
-  )
-
-  expect_warning(
-    hyperion.tables:::load_model_summaries("run001.mod", model_dir),
-    "could not load model summary for:"
-  )
-  summaries <- suppressWarnings(
-    hyperion.tables:::load_model_summaries("run001.mod", model_dir)
-  )
-
-  expect_true("run001.mod" %in% names(summaries))
-  expect_null(summaries[["run001.mod"]])
-})
 
 test_that("format_time_columns(auto) does not warn on all-NA data", {
   spec <- SummarySpec(columns = "estimation_time", time_format = "auto")
@@ -433,7 +410,7 @@ test_that("get_time_suffix(auto) returns minutes for mid-range values when attri
   expect_equal(suffix, "min")
 })
 
-test_that("build_na_row includes n_parameters when needed for dofv", {
+test_that("dofv calculation includes n_parameters even when not in spec columns", {
   model_dir <- system.file(
     "extdata",
     "models",
@@ -443,18 +420,14 @@ test_that("build_na_row includes n_parameters when needed for dofv", {
   testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
 
   tree <- hyperion::get_model_lineage(model_dir)
-  metadata_df <- hyperion.tables:::build_metadata_df(tree)
-  meta_row <- metadata_df[metadata_df$name == "run001.mod", , drop = FALSE]
+  # Requesting dofv forces n_parameters to be computed internally,
+  # even though it's not in spec@columns
+  spec <- SummarySpec(columns = c("ofv", "dofv"))
 
-  spec <- SummarySpec(columns = "ofv")
-  row <- hyperion.tables:::build_na_row(
-    "run001.mod",
-    meta_row,
-    spec,
-    needs_dofv = TRUE
-  )
+  data <- apply_summary_spec(tree, spec)
 
-  expect_true("n_parameters" %in% names(row))
+  # dofv should be present (computed from n_parameters internally)
+  expect_true("dofv" %in% names(data))
 })
 
 test_that("format_time_value treats auto as seconds", {

@@ -262,7 +262,7 @@ compare_with <- function(
   }
 
   if (!is_comparison && !is.null(reference_model)) {
-    warning("reference_model is ignored for initial two-model comparisons")
+    rlang::warn("reference_model is ignored for initial two-model comparisons")
   }
 
   # Validate labels
@@ -275,12 +275,12 @@ compare_with <- function(
       }
       labels <- c(existing_labels, labels[2])
     } else {
-      stop(
+      rlang::abort(
         "labels must be length 1 or 2 when comparing with an existing comparison"
       )
     }
   } else if (length(labels) != 2) {
-    stop("labels must be a character vector of length 2")
+    rlang::abort("labels must be a character vector of length 2")
   }
 
   # Extract attributes from both dataframes
@@ -290,12 +290,12 @@ compare_with <- function(
 
   # Warn if missing attributes but don't fail
   if (!is_comparison && is.null(sum1)) {
-    warning(
+    rlang::warn(
       "params1 is missing model_summary attribute - footnote stats will be incomplete"
     )
   }
   if (is.null(sum2)) {
-    warning(
+    rlang::warn(
       "params2 is missing model_summary attribute - footnote stats will be incomplete"
     )
   }
@@ -492,10 +492,12 @@ compare_with <- function(
 #' @export
 add_model_lineage <- function(comparison, lineage) {
   if (!inherits(comparison, "hyperion_comparison")) {
-    stop("comparison must be a hyperion_comparison object from compare_with()")
+    rlang::abort(
+      "comparison must be a hyperion_comparison object from compare_with()"
+    )
   }
   if (!inherits(lineage, "hyperion_nonmem_tree")) {
-    stop(
+    rlang::abort(
       "lineage must be a hyperion_nonmem_tree object from get_model_lineage()"
     )
   }
@@ -873,20 +875,24 @@ make_comparison_table <- function(
   output <- match.arg(output)
 
   if (output == "flextable" && !requireNamespace("flextable", quietly = TRUE)) {
-    stop(
+    rlang::abort(paste0(
       "Package 'flextable' is required for flextable output. ",
       "Install it with 'rv add flextable'"
-    )
+    ))
   }
 
   if (!inherits(comparison, "hyperion_comparison")) {
-    stop("Input must be a hyperion_comparison object from compare_with()")
+    rlang::abort(
+      "Input must be a hyperion_comparison object from compare_with()"
+    )
   }
 
   # Preserve attributes before dplyr operations (which strip custom attrs)
   spec <- attr(comparison, "table_spec")
   if (is.null(spec)) {
-    stop("TableSpec not found. Run apply_table_spec(params, spec, info) first.")
+    rlang::abort(
+      "TableSpec not found. Run apply_table_spec(params, spec, info) first."
+    )
   }
   fallback_suffix_cols <- c(
     "symbol",

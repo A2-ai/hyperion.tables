@@ -12,7 +12,7 @@
 #' @export
 apply_formatting <- function(table) {
   if (!S7::S7_inherits(table, HyperionTable)) {
-    stop("table must be a HyperionTable object")
+    rlang::abort("table must be a HyperionTable object")
   }
 
   data <- table@data
@@ -88,7 +88,7 @@ merge_ci_for_table <- function(data, table) {
 #' @noRd
 apply_summary_render_overrides <- function(table, data, numeric_cols) {
   if (!S7::S7_inherits(table, HyperionTable)) {
-    stop("table must be a HyperionTable object")
+    rlang::abort("table must be a HyperionTable object")
   }
   if (table@table_type != "summary") {
     return(list(data = data, numeric_cols = numeric_cols))
