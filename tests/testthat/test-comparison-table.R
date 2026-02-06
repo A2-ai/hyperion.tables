@@ -875,6 +875,51 @@ test_that("resolve_reference_index finds by run_name and label", {
   expect_error(resolve("nope", summaries, labels, indices, 1L), "not found")
 })
 
+test_that("compare_with resolves reference_model against renamed labels", {
+  spec <- TableSpec(n_sigfig = 3)
+
+  p1 <- data.frame(
+    name = c("THETA1", "THETA2"),
+    estimate = c(1.0, 2.0),
+    stringsAsFactors = FALSE
+  )
+  attr(p1, "table_spec") <- spec
+  attr(p1, "model_summary") <- list(run_name = "run001")
+
+  p2 <- data.frame(
+    name = c("THETA1", "THETA2"),
+    estimate = c(1.5, 2.5),
+    stringsAsFactors = FALSE
+  )
+  attr(p2, "model_summary") <- list(run_name = "run002")
+
+  p3 <- data.frame(
+    name = c("THETA1", "THETA2"),
+    estimate = c(1.8, 2.8),
+    stringsAsFactors = FALSE
+  )
+  attr(p3, "model_summary") <- list(run_name = "run003")
+
+  comp2 <- compare_with(p1, p2, labels = c("run001", "run002"))
+
+  # Rename "run002" -> "BaseModel" via labels[1], add "run003" via labels[2],
+  # and set reference_model to the renamed label
+  comp3 <- compare_with(
+    comp2,
+    p3,
+    labels = c("BaseModel", "run003"),
+    reference_model = "BaseModel"
+  )
+
+  # Should resolve: "BaseModel" matches renamed label for model index 2
+  # pct_change_3 should be relative to model 2 (the renamed one)
+  pct_refs <- attr(comp3, "pct_change_refs")
+  expect_equal(pct_refs[["pct_change_3"]], 2L)
+
+  # Labels should reflect the rename
+  expect_equal(attr(comp3, "labels"), c("run001", "BaseModel", "run003"))
+})
+
 test_that("compute_pct_change adds correct columns", {
   comp <- data.frame(
     estimate_1 = c(10, 20, 0),

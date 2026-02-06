@@ -670,10 +670,14 @@ compare_with <- function(
   comparison <- join_comparison_params(params1, params2, suffix_cols, positions)
   warn_no_shared_parameters(comparison, positions$prev_idx, positions$last_idx)
 
+  # Use updated labels (post-rename) for reference resolution so that
+
+  # labels = c("RenamedPrev", "New") + reference_model = "RenamedPrev" works.
+  ref_labels <- labels[seq_along(positions$model_indices)]
   ref_idx <- resolve_reference_index(
     if (positions$is_comparison) reference_model else NULL,
     positions$existing_summaries,
-    positions$existing_labels,
+    ref_labels,
     positions$model_indices,
     default_idx = positions$prev_idx
   )
