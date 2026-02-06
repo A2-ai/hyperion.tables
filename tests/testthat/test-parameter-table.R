@@ -894,3 +894,116 @@ test_that("symbol + fixed shows nicely", {
 
   snapshot_gt(table, "param-symbol-fixed-gt")
 })
+
+# ==============================================================================
+# Guard tests for extracted helpers
+# ==============================================================================
+
+test_that("resolve_name_columns warns and falls back when info=NULL and source != nonmem", {
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
+  testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
+
+  mod <- hyperion::read_model(file.path(model_dir, "run001.mod"))
+  params <- hyperion::get_parameters(mod)
+
+  spec <- TableSpec(
+    parameter_names = ParameterNameOptions(source = "display")
+  )
+
+  df <- compute_derived_columns(params, spec, info = NULL)
+
+  expect_warning(
+    result <- resolve_name_columns(df, spec, info = NULL),
+    "requires a ModelComments object"
+  )
+
+  # Falls back to NONMEM names (same as input)
+  expect_equal(result$nonmem_name, result$name)
+  expect_equal(result$user_name, result$name)
+})
+
+test_that("maybe_enrich_description returns df unchanged when description is dropped", {
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
+  testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
+
+  mod <- hyperion::read_model(file.path(model_dir, "run001.mod"))
+  params <- hyperion::get_parameters(mod)
+  info <- hyperion::get_model_parameter_info(mod)
+
+  # Request description via columns but also drop it
+  spec <- TableSpec(
+    add_columns = "description",
+    drop_columns = "description"
+  )
+
+  df <- compute_derived_columns(params, spec, info)
+  result <- maybe_enrich_description(df, spec, info)
+
+  # drop_columns takes precedence — no description column added
+  expect_false("description" %in% names(result))
+})
+
+test_that("resolve_hidden_columns shows fixed_fmt when fixed is requested", {
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
+  testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
+
+  mod <- hyperion::read_model(file.path(model_dir, "run001.mod"))
+  params <- hyperion::get_parameters(mod)
+  info <- hyperion::get_model_parameter_info(mod)
+
+  spec <- TableSpec(add_columns = "fixed")
+
+  df <- params |> apply_table_spec(spec, info)
+  df <- blank_ci_for_fixed(df)
+  df <- add_fixed_display_columns(df, "fixed")
+
+  hide <- resolve_hidden_columns(df, spec)
+
+  # Raw fixed is always hidden
+
+  expect_true("fixed" %in% hide)
+  # fixed_fmt should be visible when fixed was requested
+  expect_false("fixed_fmt" %in% hide)
+})
+
+test_that("resolve_hidden_columns hides fixed and fixed_fmt when all NA", {
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
+  testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
+
+  # run002 has no fixed parameters
+  mod <- hyperion::read_model(file.path(model_dir, "run002.mod"))
+  params <- hyperion::get_parameters(mod)
+  info <- hyperion::get_model_parameter_info(mod)
+
+  spec <- TableSpec(hide_empty_columns = TRUE)
+
+  df <- params |> apply_table_spec(spec, info)
+  df <- blank_ci_for_fixed(df)
+  df <- add_fixed_display_columns(df, "fixed")
+
+  hide <- resolve_hidden_columns(df, spec)
+
+  # Both should be hidden when no params are fixed and hide_empty_columns = TRUE
+  expect_true("fixed" %in% hide || !"fixed" %in% names(df))
+  expect_true("fixed_fmt" %in% hide || !"fixed_fmt" %in% names(df))
+})

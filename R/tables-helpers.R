@@ -9,6 +9,28 @@ prepare_parameter_table_data <- function(params, spec) {
   params <- add_fixed_display_columns(params, "fixed")
   params <- order_sections(params, spec)
 
+  hide_cols <- resolve_hidden_columns(params, spec)
+  label_map <- build_layout_labels(params, spec, hide_cols)
+
+  groupname <- if (length(spec@sections) > 0) "section" else NULL
+
+  ci_rows <- integer(0)
+  if (all(c("ci_low", "ci_high") %in% names(params))) {
+    ci_rows <- which(!is_fixed_true(params$fixed))
+  }
+
+  list(
+    params = params,
+    hide_cols = hide_cols,
+    label_map = label_map,
+    groupname = groupname,
+    ci_rows = ci_rows
+  )
+}
+
+#' Determine which columns to hide in a parameter table
+#' @noRd
+resolve_hidden_columns <- function(params, spec) {
   empty_cols <- if (spec@hide_empty_columns) {
     find_empty_columns(params)
   } else {
@@ -63,65 +85,64 @@ prepare_parameter_table_data <- function(params, spec) {
     hide_cols <- unique(c(hide_cols, "variability"))
   }
 
+  # Fixed column visibility (single check, was previously duplicated)
   fixed_requested <- if (isTRUE(spec@.columns_provided)) {
     "fixed" %in% c(spec@columns, add_cols)
   } else {
     "fixed" %in% add_cols
   }
-  if (!fixed_requested) {
-    hide_cols <- c(hide_cols, "fixed")
-  } else {
-    hide_cols <- c(hide_cols, "fixed")
+
+  # Raw `fixed` column is always hidden (display uses `fixed_fmt`)
+  hide_cols <- unique(c(hide_cols, "fixed"))
+  if (fixed_requested) {
     hide_cols <- setdiff(hide_cols, "fixed_fmt")
+  } else {
+    hide_cols <- unique(c(hide_cols, "fixed_fmt"))
   }
 
+  # Hide both when all fixed values are NA (only if not explicitly requested)
   if (
-    "fixed" %in%
-      names(params) &&
+    !fixed_requested &&
+      "fixed" %in% names(params) &&
       spec@hide_empty_columns &&
       !any(params$fixed, na.rm = TRUE)
   ) {
-    hide_cols <- c(hide_cols, "fixed", "fixed_fmt")
+    hide_cols <- unique(c(hide_cols, "fixed", "fixed_fmt"))
   }
-  hide_cols <- intersect(hide_cols, names(params))
 
+  intersect(hide_cols, names(params))
+}
+
+#' Build column label map for a parameter table
+#' @noRd
+build_layout_labels <- function(params, spec, hide_cols) {
   ci_pct <- get_ci_pct(spec, default = 95)
   label_map <- build_parameter_label_map(ci_pct)
   label_map <- adjust_ci_labels(label_map, spec, ci_pct)
+
   if ("fixed_fmt" %in% names(params)) {
     label_map$fixed_fmt <- label_map$fixed
   }
   label_map <- label_map[intersect(names(label_map), names(params))]
 
-  groupname <- if (length(spec@sections) > 0) "section" else NULL
-
-  ci_rows <- integer(0)
-  if (all(c("ci_low", "ci_high") %in% names(params))) {
-    ci_rows <- which(!is_fixed_true(params$fixed))
+  # Remove labels for hidden fixed columns
+  add_cols <- spec@add_columns %||% character(0)
+  fixed_requested <- if (isTRUE(spec@.columns_provided)) {
+    "fixed" %in% c(spec@columns, add_cols)
+  } else {
+    "fixed" %in% add_cols
   }
 
   if (!fixed_requested) {
-    hide_cols <- unique(c(hide_cols, "fixed", "fixed_fmt"))
     label_map <- label_map[setdiff(names(label_map), c("fixed", "fixed_fmt"))]
-  } else {
-    # Always display fixed_fmt, never the raw fixed column.
-    hide_cols <- unique(c(hide_cols, "fixed"))
-    hide_cols <- setdiff(hide_cols, "fixed_fmt")
-    if (!"fixed_fmt" %in% names(label_map) && "fixed" %in% names(label_map)) {
-      label_map$fixed_fmt <- label_map$fixed
-      label_map$fixed <- NULL
-    }
+  } else if (
+    !"fixed_fmt" %in% names(label_map) && "fixed" %in% names(label_map)
+  ) {
+    label_map$fixed_fmt <- label_map$fixed
+    label_map$fixed <- NULL
   }
 
-  hide_cols <- intersect(hide_cols, names(params))
-
-  list(
-    params = params,
-    hide_cols = hide_cols,
-    label_map = label_map,
-    groupname = groupname,
-    ci_rows = ci_rows
-  )
+  label_map
 }
 
 #' Compute comparison table layout details
