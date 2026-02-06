@@ -78,7 +78,10 @@ missing_apply_columns <- function(data, apply_to) {
 
 #' Compute LRT p-value from a test statistic and degrees of freedom
 #'
-#' @param test_stat Numeric test statistic (assumed >= 0)
+#' Negative values of `test_stat` (i.e., the child model has a higher OFV than
+#' the parent) are valid and will produce p-values near 1.
+#'
+#' @param test_stat Numeric test statistic (parent OFV - child OFV).
 #' @param df Degrees of freedom
 #' @return Numeric p-value, or NA if inputs are invalid
 #' @noRd
