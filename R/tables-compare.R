@@ -225,7 +225,6 @@ resolve_reference_index <- function(
   if (is.null(reference_model)) return(default_idx)
 
   ref_model_clean <- sub("\\.mod$", "", reference_model)
-  found <- FALSE
 
   # First try matching by run_name in summaries
   for (i in seq_along(existing_summaries)) {
@@ -671,7 +670,6 @@ compare_with <- function(
   warn_no_shared_parameters(comparison, positions$prev_idx, positions$last_idx)
 
   # Use updated labels (post-rename) for reference resolution so that
-
   # labels = c("RenamedPrev", "New") + reference_model = "RenamedPrev" works.
   ref_labels <- labels[seq_along(positions$model_indices)]
   ref_idx <- resolve_reference_index(
