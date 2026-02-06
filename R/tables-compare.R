@@ -191,10 +191,6 @@ compare_with <- function(
   labels = c("Model 1", "Model 2"),
   reference_model = NULL
 ) {
-  if (!requireNamespace("dplyr", quietly = TRUE)) {
-    stop("Package 'dplyr' is required for compare_with()")
-  }
-
   # Columns to suffix (model-specific values)
   fallback_suffix_cols <- c(
     "symbol",
@@ -824,7 +820,7 @@ build_comparison_footnote <- function(
                   right_sum
                 )
               ) {
-                p_value <- lrt_pvalue(abs(delta_ofv), df)
+                p_value <- lrt_pvalue(-delta_ofv, df)
                 pval_str <- format_pvalue_string(
                   p_value,
                   n_sigfig,
@@ -874,15 +870,8 @@ make_comparison_table <- function(
   comparison,
   output = c("gt", "flextable", "data")
 ) {
-  if (!requireNamespace("dplyr", quietly = TRUE)) {
-    stop("Package 'dplyr' is required for make_comparison_table()")
-  }
-
   output <- match.arg(output)
 
-  if (output == "gt" && !requireNamespace("gt", quietly = TRUE)) {
-    stop("Package 'gt' is required for gt output")
-  }
   if (output == "flextable" && !requireNamespace("flextable", quietly = TRUE)) {
     stop(
       "Package 'flextable' is required for flextable output. ",

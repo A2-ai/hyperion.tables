@@ -132,6 +132,7 @@
 #' @importFrom hyperion get_parameter_transform
 #' @importFrom hyperion get_parameter_unit
 #' @importFrom hyperion transform_value
+#' @importFrom rlang .data
 ## usethis namespace: end
 #'
 #' @keywords internal

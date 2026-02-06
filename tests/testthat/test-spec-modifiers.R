@@ -161,13 +161,17 @@ test_that("set_spec_parameter_names sets source", {
 })
 
 test_that("set_spec_parameter_names sets append_omega_with_theta", {
-  spec <- TableSpec() |> set_spec_parameter_names(append_omega_with_theta = FALSE)
+  spec <- TableSpec() |>
+    set_spec_parameter_names(append_omega_with_theta = FALSE)
   expect_false(spec@parameter_names@append_omega_with_theta)
 })
 
 test_that("set_spec_parameter_names sets both options", {
   spec <- TableSpec() |>
-    set_spec_parameter_names(source = "display", append_omega_with_theta = FALSE)
+    set_spec_parameter_names(
+      source = "display",
+      append_omega_with_theta = FALSE
+    )
   expect_equal(spec@parameter_names@source, "display")
   expect_false(spec@parameter_names@append_omega_with_theta)
 })
@@ -199,7 +203,8 @@ test_that("set_spec_missing works", {
 })
 
 test_that("set_spec_transforms works", {
-  spec <- TableSpec() |> set_spec_transforms(theta = "estimate", omega = c("cv", "rse"))
+  spec <- TableSpec() |>
+    set_spec_transforms(theta = "estimate", omega = c("cv", "rse"))
   expect_equal(spec@display_transforms$theta, "estimate")
   expect_equal(spec@display_transforms$omega, c("cv", "rse"))
 })
@@ -380,11 +385,20 @@ test_that("SummarySpec pipe chain works", {
 test_that("TableSpec-only functions reject SummarySpec", {
   sum_spec <- SummarySpec()
 
-  expect_error(set_spec_parameter_names(sum_spec, source = "display"), "must be a TableSpec")
+  expect_error(
+    set_spec_parameter_names(sum_spec, source = "display"),
+    "must be a TableSpec"
+  )
   expect_error(set_spec_ci(sum_spec, level = 0.9), "must be a TableSpec")
   expect_error(set_spec_missing(sum_spec, "-"), "must be a TableSpec")
-  expect_error(set_spec_transforms(sum_spec, theta = "all"), "must be a TableSpec")
-  expect_error(set_spec_sections(sum_spec, kind == "THETA" ~ "T"), "must be a TableSpec")
+  expect_error(
+    set_spec_transforms(sum_spec, theta = "all"),
+    "must be a TableSpec"
+  )
+  expect_error(
+    set_spec_sections(sum_spec, kind == "THETA" ~ "T"),
+    "must be a TableSpec"
+  )
   expect_error(set_spec_filter(sum_spec, !fixed), "must be a TableSpec")
   expect_error(set_spec_variability(sum_spec, TRUE ~ NA), "must be a TableSpec")
 })
@@ -392,17 +406,47 @@ test_that("TableSpec-only functions reject SummarySpec", {
 test_that("SummarySpec-only functions reject TableSpec", {
   table_spec <- TableSpec()
 
-  expect_error(set_spec_time_format(table_spec, "minutes"), "must be a SummarySpec")
-  expect_error(set_spec_models(table_spec, c("run001")), "must be a SummarySpec")
-  expect_error(set_spec_tag_filter(table_spec, c("final")), "must be a SummarySpec")
-  expect_error(set_spec_remove_unrun(table_spec, FALSE), "must be a SummarySpec")
-  expect_error(set_spec_summary_filter(table_spec, ofv < 1000), "must be a SummarySpec")
+  expect_error(
+    set_spec_time_format(table_spec, "minutes"),
+    "must be a SummarySpec"
+  )
+  expect_error(
+    set_spec_models(table_spec, c("run001")),
+    "must be a SummarySpec"
+  )
+  expect_error(
+    set_spec_tag_filter(table_spec, c("final")),
+    "must be a SummarySpec"
+  )
+  expect_error(
+    set_spec_remove_unrun(table_spec, FALSE),
+    "must be a SummarySpec"
+  )
+  expect_error(
+    set_spec_summary_filter(table_spec, ofv < 1000),
+    "must be a SummarySpec"
+  )
 })
 
 test_that("common functions reject non-spec objects", {
-  expect_error(add_spec_columns(list(), "cv"), "must be a TableSpec or SummarySpec")
-  expect_error(drop_spec_columns("string", "cv"), "must be a TableSpec or SummarySpec")
-  expect_error(set_spec_columns(NULL, "cv"), "must be a TableSpec or SummarySpec")
-  expect_error(set_spec_title(42, "title"), "must be a TableSpec or SummarySpec")
-  expect_error(set_spec_sigfig(data.frame(), 3), "must be a TableSpec or SummarySpec")
+  expect_error(
+    add_spec_columns(list(), "cv"),
+    "must be a TableSpec or SummarySpec"
+  )
+  expect_error(
+    drop_spec_columns("string", "cv"),
+    "must be a TableSpec or SummarySpec"
+  )
+  expect_error(
+    set_spec_columns(NULL, "cv"),
+    "must be a TableSpec or SummarySpec"
+  )
+  expect_error(
+    set_spec_title(42, "title"),
+    "must be a TableSpec or SummarySpec"
+  )
+  expect_error(
+    set_spec_sigfig(data.frame(), 3),
+    "must be a TableSpec or SummarySpec"
+  )
 })

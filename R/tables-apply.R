@@ -17,9 +17,6 @@
 #' @return Enriched data frame ready for table building
 #' @export
 apply_table_spec <- function(params, spec, info = NULL) {
-  if (!requireNamespace("dplyr", quietly = TRUE)) {
-    stop("Package 'dplyr' is required for apply_table_spec()")
-  }
   if (!S7::S7_inherits(spec, TableSpec)) {
     stop("spec must be a TableSpec object")
   }

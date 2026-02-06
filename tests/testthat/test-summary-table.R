@@ -1,7 +1,12 @@
 test_that("summary table gt snapshot from vignettes data", {
   testthat::skip_if_not_installed("gt")
 
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
 
   tree <- hyperion::get_model_lineage(model_dir)
   spec <- SummarySpec()
@@ -20,7 +25,12 @@ test_that("summary table gt snapshot from vignettes data", {
 })
 
 test_that("tag_filter selects tagged models", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
 
   tree <- hyperion::get_model_lineage(model_dir)
   for (name in names(tree$nodes)) {
@@ -38,7 +48,12 @@ test_that("tag_filter selects tagged models", {
 
 test_that("summary table snapshot filtered to selected models", {
   testthat::skip_if_not_installed("gt")
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
 
   tree <- hyperion::get_model_lineage(model_dir)
 
@@ -60,7 +75,12 @@ test_that("summary table snapshot filtered to selected models", {
 })
 
 test_that("summary_filter applies to summary columns", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
 
   tree <- hyperion::get_model_lineage(model_dir)
 
@@ -76,7 +96,12 @@ test_that("summary_filter applies to summary columns", {
 })
 
 test_that("models_to_include matches stems and extensions", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
 
   tree <- hyperion::get_model_lineage(model_dir)
 
@@ -93,7 +118,12 @@ test_that("models_to_include matches stems and extensions", {
 
 test_that("remove_unrun_models snapshot", {
   testthat::skip_if_not_installed("gt")
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
 
   tree <- hyperion::get_model_lineage(model_dir)
 
@@ -114,7 +144,12 @@ test_that("remove_unrun_models snapshot", {
 
 test_that("drop_columns removes description (snapshot)", {
   testthat::skip_if_not_installed("gt")
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
 
   tree <- hyperion::get_model_lineage(model_dir)
 
@@ -137,7 +172,12 @@ test_that("drop_columns removes description (snapshot)", {
 })
 
 test_that("time_format auto uses seconds label", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
 
   tree <- hyperion::get_model_lineage(model_dir)
 
@@ -158,7 +198,12 @@ test_that("time_format auto uses seconds label", {
 })
 
 test_that("time_format auto uses minutes label", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
 
   tree <- hyperion::get_model_lineage(model_dir)
 
@@ -178,7 +223,12 @@ test_that("time_format auto uses minutes label", {
 })
 
 test_that("time_format auto uses hours label", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
 
   tree <- hyperion::get_model_lineage(model_dir)
 
@@ -199,7 +249,12 @@ test_that("time_format auto uses hours label", {
 
 test_that("footnote_order NULL disables footnotes", {
   testthat::skip_if_not_installed("gt")
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
 
   tree <- hyperion::get_model_lineage(model_dir)
 
@@ -220,7 +275,12 @@ test_that("footnote_order NULL disables footnotes", {
 
 test_that("pvalue_threshold formats small p-values", {
   testthat::skip_if_not_installed("gt")
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
 
   tree <- hyperion::get_model_lineage(model_dir)
 
@@ -237,4 +297,217 @@ test_that("pvalue_threshold formats small p-values", {
     make_summary_table(output = "flextable")
 
   snapshot_flextable(table_ft, "sum-pval-thresh-ft")
+})
+
+test_that("summary rendering merges df unless explicitly dropped", {
+  data <- data.frame(
+    model = "run001",
+    pvalue = 0.12,
+    df = 1L,
+    stringsAsFactors = FALSE
+  )
+  spec <- SummarySpec(columns = c("pvalue", "df"))
+
+  htable <- hyperion.tables:::hyperion_summary_table(data, spec)
+  overrides <- hyperion.tables:::apply_summary_render_overrides(
+    htable,
+    data,
+    htable@numeric_cols
+  )
+
+  expect_true("pvalue" %in% names(overrides$data))
+  expect_false("df" %in% names(overrides$data))
+})
+
+test_that("SummarySpec validates n_decimals_ofv", {
+  expect_error(
+    SummarySpec(n_decimals_ofv = -1),
+    "@n_decimals_ofv"
+  )
+})
+
+test_that("summary tables handle .ctl model names", {
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "ctls",
+    package = "hyperion.tables"
+  )
+  testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
+
+  tree <- hyperion::get_model_lineage(model_dir)
+
+  spec <- SummarySpec(columns = "ofv")
+  data <- apply_summary_spec(tree, spec)
+
+  expect_true(nrow(data) > 0)
+})
+
+test_that("apply_summary_spec keeps df when pvalue requested", {
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
+  testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
+
+  tree <- hyperion::get_model_lineage(model_dir)
+  spec <- SummarySpec(columns = c("ofv", "dofv", "pvalue"))
+
+  data <- apply_summary_spec(tree, spec)
+
+  expect_true("df" %in% names(data))
+})
+
+test_that("load_model_summaries preserves list entries for missing outputs", {
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
+  testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
+
+  model_names <- c("run001.mod", "missing.mod")
+  summaries <- hyperion.tables:::load_model_summaries(model_names, model_dir)
+
+  # Use [<- with NULL to preserve list entry for missing models.
+  expect_true(all(model_names %in% names(summaries)))
+})
+
+test_that("load_model_summaries handles summary errors per model", {
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
+  testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
+
+  testthat::local_mocked_bindings(
+    summary = function(...) stop("boom"),
+    .package = "base"
+  )
+
+  expect_warning(
+    hyperion.tables:::load_model_summaries("run001.mod", model_dir),
+    "could not load model summary for:"
+  )
+  summaries <- suppressWarnings(
+    hyperion.tables:::load_model_summaries("run001.mod", model_dir)
+  )
+
+  expect_true("run001.mod" %in% names(summaries))
+  expect_null(summaries[["run001.mod"]])
+})
+
+test_that("format_time_columns(auto) does not warn on all-NA data", {
+  spec <- SummarySpec(columns = "estimation_time", time_format = "auto")
+  df <- data.frame(
+    model = "run001",
+    estimation_time = NA_real_,
+    stringsAsFactors = FALSE
+  )
+
+  expect_warning(
+    format_time_columns(df, spec),
+    NA
+  )
+})
+
+test_that("get_time_suffix(auto) returns seconds for small values when attribute missing", {
+  data <- data.frame(
+    estimation_time = c(10, 20, 30),
+    stringsAsFactors = FALSE
+  )
+
+  suffix <- hyperion.tables:::get_time_suffix("auto", data)
+
+  expect_equal(suffix, "s")
+})
+
+test_that("build_na_row includes n_parameters when needed for dofv", {
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
+  testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
+
+  tree <- hyperion::get_model_lineage(model_dir)
+  metadata_df <- hyperion.tables:::build_metadata_df(tree)
+  meta_row <- metadata_df[metadata_df$name == "run001.mod", , drop = FALSE]
+
+  spec <- SummarySpec(columns = "ofv")
+  row <- hyperion.tables:::build_na_row(
+    "run001.mod",
+    meta_row,
+    spec,
+    needs_dofv = TRUE
+  )
+
+  expect_true("n_parameters" %in% names(row))
+})
+
+test_that("format_time_value treats auto as seconds", {
+  expect_equal(
+    hyperion.tables:::format_time_value(c(3600), "auto"),
+    3600
+  )
+})
+
+test_that("filter_metadata errors with message when tag_filter matches nothing", {
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
+
+  tree <- hyperion::get_model_lineage(model_dir)
+  spec <- SummarySpec(tag_filter = "nonexistent_tag_xyz")
+
+  expect_error(
+    apply_summary_spec(tree, spec),
+    "No models remain after filtering.*tag_filter: nonexistent_tag_xyz"
+  )
+})
+
+test_that("filter_metadata errors with message when models_to_include matches nothing", {
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
+
+  tree <- hyperion::get_model_lineage(model_dir)
+  spec <- SummarySpec(models_to_include = c("no_such_model", "also_missing"))
+
+  expect_error(
+    apply_summary_spec(tree, spec),
+    "No models remain after filtering.*models_to_include: no_such_model, also_missing"
+  )
+})
+
+test_that("filter_metadata errors with both filters in message", {
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
+
+  tree <- hyperion::get_model_lineage(model_dir)
+  spec <- SummarySpec(
+    tag_filter = "fake_tag",
+    models_to_include = "fake_model"
+  )
+
+  expect_error(
+    apply_summary_spec(tree, spec),
+    "No models remain after filtering"
+  )
 })

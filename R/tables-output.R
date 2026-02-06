@@ -156,9 +156,6 @@ expand_ci_drop_columns <- function(drop_columns) {
 }
 
 order_sections <- function(params, spec) {
-  if (!requireNamespace("dplyr", quietly = TRUE)) {
-    stop("Package 'dplyr' is required for order_sections()")
-  }
   section_levels <- get_section_order(spec)
 
   internal_cols <- c(
@@ -260,17 +257,8 @@ make_parameter_table <- function(
   params,
   output = c("gt", "flextable", "data")
 ) {
-  if (!requireNamespace("dplyr", quietly = TRUE)) {
-    stop("Package 'dplyr' is required for make_parameter_table()")
-  }
-
   output <- match.arg(output)
 
-  if (output == "gt" && !requireNamespace("gt", quietly = TRUE)) {
-    stop(
-      "Package 'gt' is required for gt output. Install it with 'rv add gt'"
-    )
-  }
   if (output == "flextable" && !requireNamespace("flextable", quietly = TRUE)) {
     stop(
       "Package 'flextable' is required for flextable output. ",

@@ -1,5 +1,10 @@
 test_that("parameter comparison table: run002 vs run003b1", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
@@ -33,11 +38,19 @@ test_that("parameter comparison table: run002 vs run003b1", {
     )
 
   snapshot_gt(make_comparison_table(comp), "cmp-grandparent-gt")
-  snapshot_flextable(make_comparison_table(comp, output = "flextable"), "cmp-grandparent-ft")
+  snapshot_flextable(
+    make_comparison_table(comp, output = "flextable"),
+    "cmp-grandparent-ft"
+  )
 })
 
 test_that("parameter comparison table: run003 vs run003b1", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
@@ -71,11 +84,19 @@ test_that("parameter comparison table: run003 vs run003b1", {
     )
 
   snapshot_gt(make_comparison_table(comp), "cmp-child-gt")
-  snapshot_flextable(make_comparison_table(comp, output = "flextable"), "cmp-child-ft")
+  snapshot_flextable(
+    make_comparison_table(comp, output = "flextable"),
+    "cmp-child-ft"
+  )
 })
 
 test_that("parameter comparison table: run002 vs run003b1 drop symbol", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
@@ -109,11 +130,19 @@ test_that("parameter comparison table: run002 vs run003b1 drop symbol", {
     )
 
   snapshot_gt(make_comparison_table(comp), "cmp-no-symbol-gt")
-  snapshot_flextable(make_comparison_table(comp, output = "flextable"), "cmp-no-symbol-ft")
+  snapshot_flextable(
+    make_comparison_table(comp, output = "flextable"),
+    "cmp-no-symbol-ft"
+  )
 })
 
 test_that("parameter comparison table: run002 vs run003 drop ci has correct footnotes", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
@@ -147,11 +176,19 @@ test_that("parameter comparison table: run002 vs run003 drop ci has correct foot
     )
 
   snapshot_gt(make_comparison_table(comp), "cmp-ci-fn-gt")
-  snapshot_flextable(make_comparison_table(comp, output = "flextable"), "cmp-ci-fn-ft")
+  snapshot_flextable(
+    make_comparison_table(comp, output = "flextable"),
+    "cmp-ci-fn-ft"
+  )
 })
 
 test_that("parameter comparison table: run002 vs run003b1 drop configurable", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
@@ -191,11 +228,62 @@ test_that("parameter comparison table: run002 vs run003b1 drop configurable", {
     )
 
   snapshot_gt(make_comparison_table(comp), "cmp-drop-cols-gt")
-  snapshot_flextable(make_comparison_table(comp, output = "flextable"), "cmp-drop-cols-ft")
+  snapshot_flextable(
+    make_comparison_table(comp, output = "flextable"),
+    "cmp-drop-cols-ft"
+  )
+})
+
+test_that("comparison LRT p-value respects direction of delta OFV", {
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
+  testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
+
+  lineage <- hyperion::get_model_lineage(model_dir)
+
+  comparison <- data.frame(
+    estimate_1 = c(1, 2, 3),
+    estimate_2 = c(1, 2, 3),
+    fixed_1 = c(FALSE, FALSE, NA),
+    fixed_2 = c(FALSE, FALSE, FALSE),
+    stringsAsFactors = FALSE
+  )
+  class(comparison) <- c("hyperion_comparison", class(comparison))
+  attr(comparison, "labels") <- c("run001", "run002")
+  attr(comparison, "summaries") <- list(
+    list(run_name = "run001", ofv = 100, number_obs = 10, condition_number = 1),
+    list(run_name = "run002", ofv = 110, number_obs = 10, condition_number = 1)
+  )
+  attr(comparison, "lineage") <- lineage
+  attr(comparison, "table_spec") <- TableSpec(columns = c("estimate", "fixed"))
+
+  lines <- hyperion.tables:::build_comparison_footnote(
+    comparison,
+    n_sigfig = 3,
+    pvalue_scientific = FALSE
+  )
+  lrt_line <- lines[grep("LRT p-value", lines)]
+
+  expect_true(length(lrt_line) == 1)
+
+  pval <- as.numeric(
+    sub(".*LRT p-value = ([0-9.eE+-]+).*", "\\1", lrt_line)
+  )
+
+  expect_true(pval > 0.9)
 })
 
 test_that("parameter comparison table: three models with reference_model", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
@@ -242,11 +330,19 @@ test_that("parameter comparison table: three models with reference_model", {
     )
 
   snapshot_gt(make_comparison_table(comp), "cmp-ref-mod-gt")
-  snapshot_flextable(make_comparison_table(comp, output = "flextable"), "cmp-ref-mod-ft")
+  snapshot_flextable(
+    make_comparison_table(comp, output = "flextable"),
+    "cmp-ref-mod-ft"
+  )
 })
 
 test_that("parameter comparison table: three models with lineage shows LRT", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
@@ -296,11 +392,19 @@ test_that("parameter comparison table: three models with lineage shows LRT", {
     add_model_lineage(lineage)
 
   snapshot_gt(make_comparison_table(comp), "cmp-lineage-lrt-gt")
-  snapshot_flextable(make_comparison_table(comp, output = "flextable"), "cmp-lineage-lrt-ft")
+  snapshot_flextable(
+    make_comparison_table(comp, output = "flextable"),
+    "cmp-lineage-lrt-ft"
+  )
 })
 
 test_that("parameter comparison table: broken lineage suppresses LRT", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
@@ -354,11 +458,19 @@ test_that("parameter comparison table: broken lineage suppresses LRT", {
     add_model_lineage(lineage)
 
   snapshot_gt(make_comparison_table(comp), "cmp-lineage-brk-gt")
-  snapshot_flextable(make_comparison_table(comp, output = "flextable"), "cmp-lineage-brk-ft")
+  snapshot_flextable(
+    make_comparison_table(comp, output = "flextable"),
+    "cmp-lineage-brk-ft"
+  )
 })
 
 test_that("parameter comparison table: pvalue_threshold formats small p-values", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
@@ -409,11 +521,19 @@ test_that("parameter comparison table: pvalue_threshold formats small p-values",
     add_model_lineage(lineage)
 
   snapshot_gt(make_comparison_table(comp), "cmp-pval-thresh-gt")
-  snapshot_flextable(make_comparison_table(comp, output = "flextable"), "cmp-pval-thresh-ft")
+  snapshot_flextable(
+    make_comparison_table(comp, output = "flextable"),
+    "cmp-pval-thresh-ft"
+  )
 })
 
 test_that("parameter comparison table: errors no spec", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
 
   # Get model summaries and parameter info for all three models
   mod1 <- hyperion::read_model(file.path(model_dir, "run001.mod"))

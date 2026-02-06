@@ -386,7 +386,12 @@ test_that("parameter table: run001 no spec", {
 })
 
 test_that("parameter table: base display", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
   model_run <- "run003"
   lookup_path <- system.file("lookup.toml", package = "hyperion.tables")
   mod <- hyperion::read_model(file.path(model_dir, paste0(model_run, ".mod")))
@@ -418,7 +423,12 @@ test_that("parameter table: base display", {
 })
 
 test_that("parameter table: display name source", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
 
   model_run <- "run003"
   lookup_path <- system.file("lookup.toml", package = "hyperion.tables")
@@ -453,7 +463,12 @@ test_that("parameter table: display name source", {
 })
 
 test_that("parameter table: nonmem name source", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
 
   model_run <- "run003"
   lookup_path <- system.file("lookup.toml", package = "hyperion.tables")
@@ -486,7 +501,12 @@ test_that("parameter table: nonmem name source", {
 })
 
 test_that("parameter table: nonmem source without theta append", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
 
   model_run <- "run003"
   lookup_path <- system.file("lookup.toml", package = "hyperion.tables")
@@ -525,7 +545,12 @@ test_that("parameter table: nonmem source without theta append", {
 })
 
 test_that("parameter table: description column", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
   model_run <- "run003"
   lookup_path <- system.file("lookup.toml", package = "hyperion.tables")
   mod <- hyperion::read_model(file.path(model_dir, paste0(model_run, ".mod")))
@@ -558,7 +583,12 @@ test_that("parameter table: description column", {
 })
 
 test_that("parameter table: drop unit column", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
 
   model_run <- "run003"
   lookup_path <- system.file("lookup.toml", package = "hyperion.tables")
@@ -591,7 +621,12 @@ test_that("parameter table: drop unit column", {
 })
 
 test_that("parameter table: drop unit and shrinkage columns", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
   model_run <- "run003"
   lookup_path <- system.file("lookup.toml", package = "hyperion.tables")
   mod <- hyperion::read_model(file.path(model_dir, paste0(model_run, ".mod")))
@@ -623,7 +658,12 @@ test_that("parameter table: drop unit and shrinkage columns", {
 })
 
 test_that("parameter table: structural-only filter", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
   model_run <- "run003"
   lookup_path <- system.file("lookup.toml", package = "hyperion.tables")
   mod <- hyperion::read_model(file.path(model_dir, paste0(model_run, ".mod")))
@@ -649,7 +689,12 @@ test_that("parameter table: structural-only filter", {
 })
 
 test_that("parameter table: random effects only", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
 
   model_run <- "run003"
   lookup_path <- system.file("lookup.toml", package = "hyperion.tables")
@@ -677,7 +722,12 @@ test_that("parameter table: random effects only", {
 })
 
 test_that("parameter table: 70% CI", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
   model_run <- "run003"
   mod <- hyperion::read_model(file.path(model_dir, paste0(model_run, ".mod")))
 
@@ -705,7 +755,12 @@ test_that("parameter table: 70% CI", {
 })
 
 test_that("parameter table: summary info without condition number", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
   model_run <- "run003"
   lookup_path <- system.file("lookup.toml", package = "hyperion.tables")
   mod <- hyperion::read_model(file.path(model_dir, paste0(model_run, ".mod")))
@@ -735,7 +790,12 @@ test_that("parameter table: summary info without condition number", {
 })
 
 test_that("parameter table: summary info without condition number or OFV", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
   model_run <- "run003"
   lookup_path <- system.file("lookup.toml", package = "hyperion.tables")
   mod <- hyperion::read_model(file.path(model_dir, paste0(model_run, ".mod")))
@@ -765,7 +825,12 @@ test_that("parameter table: summary info without condition number or OFV", {
 })
 
 test_that("parameter table: summary info without method", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
   model_run <- "run003"
   lookup_path <- system.file("lookup.toml", package = "hyperion.tables")
   mod <- hyperion::read_model(file.path(model_dir, paste0(model_run, ".mod")))
@@ -795,7 +860,12 @@ test_that("parameter table: summary info without method", {
 })
 
 test_that("symbol + fixed shows nicely", {
-  model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
   model_run <- "run001"
   lookup_path <- system.file("lookup.toml", package = "hyperion.tables")
   mod <- hyperion::read_model(file.path(model_dir, paste0(model_run, ".mod")))

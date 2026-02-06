@@ -48,5 +48,4 @@ test_that("apply_formatting uses variability_rules", {
   snapshot_gt(gt_tbl, "variability-rules-gt")
   ft_tbl <- render_to_flextable(table_data)
   snapshot_flextable(ft_tbl, "variability-rules-ft")
-
 })
