@@ -371,8 +371,11 @@ test_that("load_models preserves list entries for missing outputs", {
 
   model_names <- c("run001.mod", "missing.mod")
   expect_warning(
-    hyperion.tables:::load_models(model_names, model_dir),
-    "could not load model:"
+    expect_warning(
+      hyperion.tables:::load_models(model_names, model_dir),
+      "could not load model:"
+    ),
+    "1 of 2 model\\(s\\) failed to load"
   )
   models <- suppressWarnings(
     hyperion.tables:::load_models(model_names, model_dir)

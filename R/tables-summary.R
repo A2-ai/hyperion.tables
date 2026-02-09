@@ -553,6 +553,16 @@ load_models <- function(model_names, source_dir) {
     rlang::abort("No models could be loaded.")
   }
 
+  # Warn if some (but not all) models failed
+  failed_count <- sum(vapply(models, is.null, logical(1)))
+  if (failed_count > 0) {
+    rlang::warn(sprintf(
+      "%d of %d model(s) failed to load and will be excluded from the table.",
+      failed_count,
+      length(models)
+    ))
+  }
+
   models
 }
 
@@ -653,6 +663,8 @@ build_summary_df <- function(models, model_names, metadata_df, spec) {
     # Metadata columns (from tree, not model)
     if ("based_on" %in% spec@columns || needs_dofv) {
       parents <- metadata_df$based_on[[meta_idx[i]]]
+      # .based_on_raw: list-column storing full file paths of parent models.
+      # Used for OFV lookups in calculate_dofv(); removed before output.
       row$.based_on_raw <- list(parents)
       row$based_on <- if (length(parents) == 0) NA_character_ else
         paste(tools::file_path_sans_ext(basename(parents)), collapse = ", ")
