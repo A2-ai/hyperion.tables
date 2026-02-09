@@ -224,13 +224,13 @@ resolve_reference_index <- function(
 ) {
   if (is.null(reference_model)) return(default_idx)
 
-  ref_model_clean <- sub("\\.mod$", "", reference_model)
+  ref_model_clean <- tools::file_path_sans_ext(reference_model)
 
   # First try matching by run_name in summaries
   for (i in seq_along(existing_summaries)) {
     sum_i <- existing_summaries[[i]]
     if (!is.null(sum_i) && !is.null(sum_i$run_name)) {
-      run_name_clean <- sub("\\.mod$", "", sum_i$run_name)
+      run_name_clean <- tools::file_path_sans_ext(sum_i$run_name)
       if (run_name_clean == ref_model_clean) {
         return(model_indices[i])
       }
@@ -239,7 +239,7 @@ resolve_reference_index <- function(
 
   # Fall back to matching by label
   for (i in seq_along(existing_labels)) {
-    label_clean <- sub("\\.mod$", "", existing_labels[i])
+    label_clean <- tools::file_path_sans_ext(existing_labels[i])
     if (label_clean == ref_model_clean) {
       return(model_indices[i])
     }
@@ -250,10 +250,10 @@ resolve_reference_index <- function(
   for (i in seq_along(existing_summaries)) {
     sum_i <- existing_summaries[[i]]
     if (!is.null(sum_i) && !is.null(sum_i$run_name)) {
-      available <- c(available, sub("\\.mod$", "", sum_i$run_name))
+      available <- c(available, tools::file_path_sans_ext(sum_i$run_name))
     }
   }
-  label_names <- sub("\\.mod$", "", existing_labels)
+  label_names <- tools::file_path_sans_ext(existing_labels)
   available <- unique(c(available, label_names))
   rlang::abort(c(
     sprintf(
