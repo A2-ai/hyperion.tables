@@ -661,13 +661,42 @@ build_summary_df <- function(models, model_names, metadata_df, spec) {
       row$description <- metadata_df$description[meta_idx[i]]
     }
 
+    # Ensure requested model-derived columns are present even when summaries fail
+    na_defaults <- list(
+      problem = NA_character_,
+      number_data_records = NA_real_,
+      number_subjects = NA_real_,
+      number_obs = NA_real_,
+      estimation_method = NA_character_,
+      estimation_time = NA_real_,
+      covariance_time = NA_real_,
+      postprocess_time = NA_real_,
+      function_evaluations = NA_real_,
+      significant_digits = NA_real_,
+      ofv = NA_real_,
+      condition_number = NA_real_,
+      termination_status = NA_character_
+    )
+    if ("n_parameters" %in% spec@columns || needs_dofv) {
+      row$n_parameters <- NA_integer_
+    }
+    for (col in needed_from_run_details) {
+      row[[col]] <- na_defaults[[col]]
+    }
+    for (col in needed_from_min_results) {
+      row[[col]] <- na_defaults[[col]]
+    }
+
     # Model-derived columns — summary(mod) once per model
     if (!is.null(mod) && needs_summary) {
       mod_sum <- tryCatch(summary(mod), error = function(e) {
         rlang::warn(paste0("could not summarize model: ", name))
-        row$.unrun <<- TRUE
         NULL
       })
+
+      if (is.null(mod_sum)) {
+        row$.unrun <- TRUE
+      }
 
       if (!is.null(mod_sum)) {
         # Prefer run_name from summary for display (handles .ctl/custom names)
@@ -791,6 +820,16 @@ calculate_dofv <- function(df, spec) {
 
     # Check if number_obs matches
     if (is.na(model_nobs) || is.na(parent_nobs) || model_nobs != parent_nobs) {
+      rlang::inform(c(
+        sprintf(
+          "dOFV not calculated for '%s' vs '%s': observation counts differ (%s vs %s).",
+          df$.name[i],
+          parent_name,
+          if (is.na(model_nobs)) "NA" else as.character(model_nobs),
+          if (is.na(parent_nobs)) "NA" else as.character(parent_nobs)
+        ),
+        i = "dOFV is only calculated when the number of observations matches the reference model."
+      ))
       return(list(dofv = NA_real_, df = NA_integer_, pvalue = NA_real_))
     }
 
