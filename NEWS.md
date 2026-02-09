@@ -9,6 +9,7 @@
 
 * `compare_with()` warns when models share no parameters after joining.
 * Summary table dOFV calculation warns when a model has multiple `based_on` parents, indicating which parent is used.
+* Footnote about number of observations not matching reference model is now an `rlang::inform` instead of footnote.
 * LRT suppression now emits an informational message with the reason (e.g., "models not in direct lineage", "degrees of freedom is zero").
 * `make_comparison_table()` validates the comparison is renderable before building, aborting early with actionable hints if no rows or model columns remain.
 * `SummarySpec` now validates `n_decimals_ofv` at construction time.
