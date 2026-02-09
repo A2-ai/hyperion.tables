@@ -16,13 +16,18 @@ compare_with(
 
 \item{params2}{Enriched parameter data frame from model 2}
 
-\item{labels}{Character vector of length 2 for model labels in table headers.
-Default: c("Model 1", "Model 2")}
+\item{labels}{Model labels used in table headers.
+For an initial 2-model comparison, supply length 2 (default:
+\code{c("Model 1", "Model 2")}).
+For chained comparisons (\code{params1} is already a \code{hyperion_comparison}):
+length 1 appends a label for the new model; length 2 renames the previous
+latest label to \code{labels[1]} and appends \code{labels[2]} for the new model.}
 
 \item{reference_model}{Character string specifying which model to use as
-reference for percent change calculations. Should match the \code{run_name} of
-one of the models already in the comparison. When NULL (default), percent
-change is calculated relative to the previous model in the chain.}
+reference for percent change calculations. Must match a model already in
+the comparison by \code{run_name} or label (file extensions are ignored).
+When NULL (default), percent change is calculated relative to the previous
+model in the chain.}
 }
 \value{
 Data frame with class \code{hyperion_comparison} containing joined

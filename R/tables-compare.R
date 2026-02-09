@@ -631,12 +631,17 @@ finalize_comparison <- function(
 #'
 #' @param params1 Enriched parameter data frame from model 1
 #' @param params2 Enriched parameter data frame from model 2
-#' @param labels Character vector of length 2 for model labels in table headers.
-#'   Default: c("Model 1", "Model 2")
+#' @param labels Model labels used in table headers.
+#'   For an initial 2-model comparison, supply length 2 (default:
+#'   `c("Model 1", "Model 2")`).
+#'   For chained comparisons (`params1` is already a `hyperion_comparison`):
+#'   length 1 appends a label for the new model; length 2 renames the previous
+#'   latest label to `labels[1]` and appends `labels[2]` for the new model.
 #' @param reference_model Character string specifying which model to use as
-#'   reference for percent change calculations. Should match the `run_name` of
-#'   one of the models already in the comparison. When NULL (default), percent
-#'   change is calculated relative to the previous model in the chain.
+#'   reference for percent change calculations. Must match a model already in
+#'   the comparison by `run_name` or label (file extensions are ignored).
+#'   When NULL (default), percent change is calculated relative to the previous
+#'   model in the chain.
 #'
 #' @return Data frame with class `hyperion_comparison` containing joined
 #'   parameter data with suffixed columns and comparison attributes.

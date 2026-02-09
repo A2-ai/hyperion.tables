@@ -5,6 +5,14 @@
 * `apply_summary_spec()` now aborts when no models remain after filtering or the tree is empty, instead of silently returning an empty data frame.
 * `compare_with()` now aborts when `reference_model` does not match any model in the comparison, instead of silently falling through to the default.
 
+## Migration Notes (0.2.0)
+
+* `compare_with(reference_model = ...)`: use an existing model `run_name` or label already present in the comparison chain; unmatched values now error.
+* `apply_summary_spec()`: if your filters or input tree can produce zero models, handle that case before calling `apply_summary_spec()` instead of relying on an empty-table return.
+* `compare_with(labels = ...)` in chained comparisons (`params1` is already a comparison):
+  * length 1: append the new label to existing labels.
+  * length 2: rename the previous/latest existing label to `labels[1]`, then append `labels[2]` for the newly added model.
+
 ## New Diagnostics
 
 * `compare_with()` warns when models share no parameters after joining.
