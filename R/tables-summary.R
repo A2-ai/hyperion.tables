@@ -387,7 +387,7 @@ apply_summary_spec <- function(tree, spec = SummarySpec()) {
         "Could not resolve `tree$source_dir` path from pharos.toml"
       )
     },
-    hyperion:::from_config_relative(tree$source_dir)
+    hyperion::from_config_relative(tree$source_dir)
   )
 
   metadata_df <- build_metadata_df(tree) |>
