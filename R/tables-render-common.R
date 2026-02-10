@@ -12,7 +12,7 @@
 #' @export
 apply_formatting <- function(table) {
   if (!S7::S7_inherits(table, HyperionTable)) {
-    stop("table must be a HyperionTable object")
+    rlang::abort("table must be a HyperionTable object")
   }
 
   data <- table@data
@@ -88,7 +88,7 @@ merge_ci_for_table <- function(data, table) {
 #' @noRd
 apply_summary_render_overrides <- function(table, data, numeric_cols) {
   if (!S7::S7_inherits(table, HyperionTable)) {
-    stop("table must be a HyperionTable object")
+    rlang::abort("table must be a HyperionTable object")
   }
   if (table@table_type != "summary") {
     return(list(data = data, numeric_cols = numeric_cols))
@@ -96,16 +96,19 @@ apply_summary_render_overrides <- function(table, data, numeric_cols) {
 
   spec <- table@source_spec
 
-  if (all(c("pvalue", "df") %in% names(data))) {
+  if ("pvalue" %in% names(data)) {
     use_scientific <- spec@pvalue_scientific
     pval_threshold <- spec@pvalue_threshold
     n_sig <- spec@n_sigfig
+    df_dropped <- !is.null(spec) &&
+      !is.null(spec@drop_columns) &&
+      "df" %in% spec@drop_columns
+    merge_df <- !df_dropped && "df" %in% names(data)
     data$pvalue <- vapply(
       seq_len(nrow(data)),
       function(i) {
         pval <- data$pvalue[i]
-        df_val <- data$df[i]
-        if (is.na(pval) || is.na(df_val)) {
+        if (is.na(pval)) {
           return(NA_character_)
         }
         format_p <- format_pvalue_string(
@@ -114,11 +117,18 @@ apply_summary_render_overrides <- function(table, data, numeric_cols) {
           use_scientific,
           pval_threshold
         )
+        if (!merge_df) return(format_p)
+        df_val <- data$df[i]
+        if (is.na(df_val)) {
+          return(NA_character_)
+        }
         sprintf("%s (df = %d)", format_p, df_val)
       },
       character(1)
     )
-    data$df <- NULL
+    if (merge_df && "df" %in% names(data)) {
+      data$df <- NULL
+    }
   }
 
   ofv_cols <- intersect(c("ofv", "dofv"), names(data))

@@ -76,9 +76,25 @@ missing_apply_columns <- function(data, apply_to) {
   names(data)
 }
 
+#' Safely extract a field from a model summary
+#'
+#' Returns NA if the summary is NULL or the field is NULL/missing.
+#'
+#' @param summary A model summary list (or NULL)
+#' @param field Character name of the field to extract
+#' @return The field value, or NA if not available
+#' @noRd
+safe_summary_field <- function(summary, field) {
+  if (is.null(summary) || is.null(summary[[field]])) return(NA)
+  summary[[field]]
+}
+
 #' Compute LRT p-value from a test statistic and degrees of freedom
 #'
-#' @param test_stat Numeric test statistic (assumed >= 0)
+#' Negative values of `test_stat` (i.e., the child model has a higher OFV than
+#' the parent) are valid and will produce p-values near 1.
+#'
+#' @param test_stat Numeric test statistic (parent OFV - child OFV).
 #' @param df Degrees of freedom
 #' @return Numeric p-value, or NA if inputs are invalid
 #' @noRd

@@ -11,15 +11,8 @@
 #' @export
 render_to_gt <- function(table) {
   if (!S7::S7_inherits(table, HyperionTable)) {
-    stop("table must be a HyperionTable object")
+    rlang::abort("table must be a HyperionTable object")
   }
-  if (!requireNamespace("gt", quietly = TRUE)) {
-    stop("Package 'gt' is required for render_to_gt()")
-  }
-  if (!requireNamespace("dplyr", quietly = TRUE)) {
-    stop("Package 'dplyr' is required for render_to_gt()")
-  }
-
   data <- apply_formatting(table)
   visible_cols <- names(data)
   groupname_col <- normalize_groupname_col(table@groupname_col, names(data))

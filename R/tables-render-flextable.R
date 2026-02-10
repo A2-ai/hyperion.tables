@@ -11,10 +11,10 @@
 #' @export
 render_to_flextable <- function(table) {
   if (!S7::S7_inherits(table, HyperionTable)) {
-    stop("table must be a HyperionTable object")
+    rlang::abort("table must be a HyperionTable object")
   }
   if (!requireNamespace("flextable", quietly = TRUE)) {
-    stop("Package 'flextable' is required for render_to_flextable()")
+    rlang::abort("Package 'flextable' is required for render_to_flextable()")
   }
 
   data <- apply_formatting(table)

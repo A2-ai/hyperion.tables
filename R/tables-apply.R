@@ -17,20 +17,28 @@
 #' @return Enriched data frame ready for table building
 #' @export
 apply_table_spec <- function(params, spec, info = NULL) {
-  if (!requireNamespace("dplyr", quietly = TRUE)) {
-    stop("Package 'dplyr' is required for apply_table_spec()")
-  }
   if (!S7::S7_inherits(spec, TableSpec)) {
-    stop("spec must be a TableSpec object")
+    rlang::abort("spec must be a TableSpec object")
   }
   if (!is.null(info) && !S7::S7_inherits(info, ModelComments)) {
-    stop("info must be a ModelComments object or NULL")
+    rlang::abort("info must be a ModelComments object or NULL")
   }
 
+  df <- compute_derived_columns(params, spec, info)
+  df <- maybe_enrich_description(df, spec, info)
+  df <- resolve_name_columns(df, spec, info)
+  df <- apply_sections_and_filters(df, spec)
+
+  attr(df, "table_spec") <- spec
+  df
+}
+
+#' Compute derived columns (transforms, CV, RSE, CI, symbol)
+#' @noRd
+compute_derived_columns <- function(params, spec, info) {
   dt_kinds <- build_display_transforms(spec)
   col_values <- unlist(spec@display_transforms)
 
-  # Build dt_* column expressions
   dt_exprs <- lapply(names(dt_kinds), function(group) {
     kinds <- dt_kinds[[group]]
     rlang::expr(dplyr::if_else(
@@ -41,12 +49,10 @@ apply_table_spec <- function(params, spec, info = NULL) {
   }) |>
     stats::setNames(paste0("dt_", names(dt_kinds)))
 
-  # Helper to get the right dt column for a given output column
   dt_for <- function(col) {
     if (col %in% col_values) paste0("dt_", col) else "dt_all"
   }
 
-  # Handle transforms and unit based on whether info is provided
   if (!is.null(info)) {
     transforms_vec <- get_parameter_transform(info, params$name, params$kind)
     unit_vec <- get_parameter_unit(info, params$name, params$kind)
@@ -55,7 +61,7 @@ apply_table_spec <- function(params, spec, info = NULL) {
     unit_vec <- rep(NA_character_, nrow(params))
   }
 
-  df <- params |>
+  params |>
     dplyr::mutate(
       transforms = transforms_vec,
       unit = unit_vec,
@@ -86,68 +92,72 @@ apply_table_spec <- function(params, spec, info = NULL) {
         .data[[dt_for("symbol")]]
       )
     )
+}
 
-  # Add description column FIRST (before name transformation)
-  # This ensures we match on original/untransformed names
+#' Add description column if requested (before name transformation)
+#' @noRd
+maybe_enrich_description <- function(df, spec, info) {
   want_description <- "description" %in%
     c(spec@columns, spec@add_columns %||% character(0)) &&
     !"description" %in% spec@drop_columns
-  if (want_description) {
-    if (is.null(info)) {
-      warning(
-        "description requires a ModelComments object. ",
-        "Descriptions will not be available.",
-        call. = FALSE
-      )
-      df$description <- NA_character_
-    } else {
-      df <- enrich_description(df, info)
-    }
+
+  if (!want_description) return(df)
+
+  if (is.null(info)) {
+    rlang::warn(paste0(
+      "description requires a ModelComments object. ",
+      "Descriptions will not be available."
+    ))
+    df$description <- NA_character_
+    return(df)
   }
 
-  # Add nonmem_name and user_name columns for filtering/sectioning
+  enrich_description(df, info)
+}
+
+#' Resolve nonmem_name/user_name columns and apply name source
+#' @noRd
+resolve_name_columns <- function(df, spec, info) {
   if (!is.null(info)) {
-    # get_parameter_names returns df with rownames = nonmem_name, columns = name, display
     labels <- get_parameter_names(info)
 
-    # Match params to ModelComments by the current name (could be nonmem or user name)
-    match_idx <- match(df$name, rownames(labels)) # Try nonmem_name first
+    match_idx <- match(df$name, rownames(labels))
     if (all(is.na(match_idx))) {
-      match_idx <- match(df$name, labels$name) # Try user_name
+      match_idx <- match(df$name, labels$name)
     }
 
     df$nonmem_name <- rownames(labels)[match_idx]
     df$user_name <- labels$name[match_idx]
 
-    # Fallback to current name if no match
     df$nonmem_name <- ifelse(is.na(df$nonmem_name), df$name, df$nonmem_name)
     df$user_name <- ifelse(is.na(df$user_name), df$name, df$user_name)
+
+    df <- apply_name_source(df, info, spec@parameter_names)
   } else {
-    # No ModelComments - use current name for both
     df$nonmem_name <- df$name
     df$user_name <- df$name
+
+    if (spec@parameter_names@source != "nonmem") {
+      rlang::warn(paste0(
+        "parameter_names source '",
+        spec@parameter_names@source,
+        "' requires a ModelComments object. ",
+        "Using NONMEM names instead."
+      ))
+    }
   }
 
-  # Apply name replacement based on spec@parameter_names
-  if (!is.null(info)) {
-    df <- apply_name_source(df, info, spec@parameter_names)
-  } else if (spec@parameter_names@source != "nonmem") {
-    warning(
-      "parameter_names source '",
-      spec@parameter_names@source,
-      "' requires a ModelComments object. ",
-      "Using NONMEM names instead.",
-      call. = FALSE
-    )
-  }
+  df
+}
 
-  # Apply section rules AFTER name transformation (consistent with row_filter)
+#' Apply section assignments and row filters
+#' @noRd
+apply_sections_and_filters <- function(df, spec) {
   df <- df |>
     dplyr::mutate(
       section = build_section(dplyr::pick(dplyr::everything()), spec)
     )
 
-  # Apply row filter AFTER name transformation so users can filter on display names
   if (length(spec@row_filter) > 0) {
     for (f in spec@row_filter) {
       df <- df |>
@@ -155,7 +165,6 @@ apply_table_spec <- function(params, spec, info = NULL) {
     }
   }
 
-  attr(df, "table_spec") <- spec
   df
 }
 
@@ -167,7 +176,7 @@ apply_table_spec <- function(params, spec, info = NULL) {
 #' @noRd
 build_display_transforms <- function(spec) {
   if (!S7::S7_inherits(spec, TableSpec)) {
-    stop("spec must be a TableSpec object")
+    rlang::abort("spec must be a TableSpec object")
   }
 
   dt <- spec@display_transforms
@@ -197,7 +206,7 @@ build_display_transforms <- function(spec) {
 #' @noRd
 build_section <- function(data, spec) {
   if (!S7::S7_inherits(spec, TableSpec)) {
-    stop("spec must be a TableSpec object")
+    rlang::abort("spec must be a TableSpec object")
   }
 
   rules <- spec@sections
@@ -218,7 +227,7 @@ build_section <- function(data, spec) {
 #' @noRd
 get_section_order <- function(spec) {
   if (!S7::S7_inherits(spec, TableSpec)) {
-    stop("spec must be a TableSpec object")
+    rlang::abort("spec must be a TableSpec object")
   }
 
   vapply(

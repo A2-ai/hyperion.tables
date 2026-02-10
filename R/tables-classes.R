@@ -565,8 +565,7 @@ build_summary_footnotes <- function(data, spec) {
     has_cond_num = "condition_number" %in%
       names(data) &&
       any(!is.na(data$condition_number)),
-    has_pvalue = "pvalue" %in% names(data) && any(!is.na(data$pvalue)),
-    dofv_excluded = isTRUE(attr(data, "dofv_excluded_nobs_mismatch"))
+    has_pvalue = "pvalue" %in% names(data) && any(!is.na(data$pvalue))
   )
 
   # Detect table statistics (empty for summary tables)

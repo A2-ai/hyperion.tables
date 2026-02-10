@@ -531,14 +531,6 @@ build_abbreviations_footnote <- function(
     result <- c("Abbreviations:", wrapped_abbrevs)
   }
 
-  # Summary table: note about excluded dOFV comparisons
-  if (!is.null(summary_stats) && isTRUE(summary_stats$dofv_excluded)) {
-    result <- c(
-      result,
-      "\u0394OFV only calculated when number of observations matches reference model"
-    )
-  }
-
   if (length(result) == 0) {
     return(NULL)
   }

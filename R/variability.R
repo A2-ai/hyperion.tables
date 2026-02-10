@@ -76,7 +76,7 @@ format_sigfig_pad <- function(x, n_sigfig) {
 #' @noRd
 build_variability <- function(data, spec) {
   if (!S7::S7_inherits(spec, TableSpec)) {
-    stop("spec must be a TableSpec object")
+    rlang::abort("spec must be a TableSpec object")
   }
 
   rules <- spec@variability_rules

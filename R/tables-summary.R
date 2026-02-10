@@ -262,6 +262,11 @@ SummarySpec <- S7::new_class(
       ))
     }
 
+    ofv_msg <- validate_ofv_decimals(self@n_decimals_ofv, "@n_decimals_ofv")
+    if (!is.null(ofv_msg)) {
+      return(ofv_msg)
+    }
+
     if (
       length(self@hide_empty_columns) != 1 || is.na(self@hide_empty_columns)
     ) {
@@ -363,68 +368,39 @@ SummarySpec <- S7::new_class(
 #' @return Data frame with summary_spec attribute, ready for make_summary_table()
 #' @export
 apply_summary_spec <- function(tree, spec = SummarySpec()) {
-  if (!requireNamespace("dplyr", quietly = TRUE)) {
-    stop("Package 'dplyr' is required for apply_summary_spec()")
-  }
   if (!inherits(tree, "hyperion_nonmem_tree")) {
-    stop("tree must be a hyperion_nonmem_tree object from get_model_lineage()")
+    rlang::abort(
+      "tree must be a hyperion_nonmem_tree object from get_model_lineage()"
+    )
   }
   if (!S7::S7_inherits(spec, SummarySpec)) {
-    stop("spec must be a SummarySpec object")
+    rlang::abort("spec must be a SummarySpec object")
   }
 
-  source_dir <- tree$source_dir
-  if (is.null(source_dir) || source_dir == "") {
-    stop(
-      "Tree does not have source_dir. ",
-      "Ensure you are using a recent version of get_model_lineage()."
-    )
+  if (length(tree$nodes) == 0) {
+    rlang::abort("tree must contain at least one model.")
   }
 
-  # Extract model metadata for filtering
-  model_names <- names(tree$nodes)
-  if (length(model_names) == 0) {
-    return(build_empty_summary_df(spec))
-  }
+  source_dir <- tryCatch(
+    error = function(e) {
+      rlang::abort(
+        "Could not resolve `tree$source_dir` path from pharos.toml"
+      )
+    },
+    hyperion::from_config_relative(tree$source_dir)
+  )
 
-  # Build metadata data frame for filtering
-  metadata_df <- build_metadata_df(tree)
-
-  # Apply tag_filter - keep models that have any of the specified tags
-  if (!is.null(spec@tag_filter)) {
-    has_matching_tag <- vapply(
-      metadata_df$tags,
-      function(model_tags) {
-        any(spec@tag_filter %in% model_tags)
-      },
-      logical(1)
-    )
-    metadata_df <- metadata_df[has_matching_tag, , drop = FALSE]
-  }
-
-  # Apply models_to_include (match with or without extension)
-  if (!is.null(spec@models_to_include)) {
-    include_names <- tolower(spec@models_to_include)
-    include_stems <- tolower(tools::file_path_sans_ext(spec@models_to_include))
-    include_set <- unique(c(include_names, include_stems))
-    target_names <- tolower(metadata_df$name)
-    target_stems <- tolower(tools::file_path_sans_ext(metadata_df$name))
-    keep <- target_names %in% include_set | target_stems %in% include_set
-    metadata_df <- metadata_df[keep, , drop = FALSE]
-  }
-
-  if (nrow(metadata_df) == 0) {
-    return(build_empty_summary_df(spec))
-  }
+  metadata_df <- build_metadata_df(tree) |>
+    filter_metadata(spec)
 
   # Topologically sort models
   sorted_names <- topological_sort_models(metadata_df, tree)
 
-  # Load summaries and extract run details
-  summaries <- load_model_summaries(sorted_names, source_dir)
+  # Load models
+  models <- load_models(sorted_names, source_dir)
 
   # Build summary data frame (pass metadata for based_on/description)
-  df <- build_summary_df(summaries, sorted_names, metadata_df, spec)
+  df <- build_summary_df(models, sorted_names, metadata_df, spec)
 
   # Apply summary_filter rules to summary columns
   if (length(spec@summary_filter) > 0) {
@@ -443,6 +419,47 @@ apply_summary_spec <- function(tree, spec = SummarySpec()) {
   df
 }
 
+#' Filter metadata data frame by tag and model name
+#' @noRd
+filter_metadata <- function(metadata_df, spec) {
+  if (!is.null(spec@tag_filter)) {
+    metadata_df <- metadata_df |>
+      dplyr::rowwise() |>
+      dplyr::filter(any(spec@tag_filter %in% .data$tags)) |>
+      dplyr::ungroup()
+  }
+
+  if (!is.null(spec@models_to_include)) {
+    include_stems <- tolower(tools::file_path_sans_ext(spec@models_to_include))
+    metadata_df <- metadata_df |>
+      dplyr::filter(
+        tolower(tools::file_path_sans_ext(.data$name)) %in% include_stems
+      )
+  }
+
+  if (nrow(metadata_df) == 0) {
+    parts <- "No models remain after filtering."
+    if (!is.null(spec@tag_filter)) {
+      parts <- c(
+        parts,
+        sprintf("tag_filter: %s", paste(spec@tag_filter, collapse = ", "))
+      )
+    }
+    if (!is.null(spec@models_to_include)) {
+      parts <- c(
+        parts,
+        sprintf(
+          "models_to_include: %s",
+          paste(spec@models_to_include, collapse = ", ")
+        )
+      )
+    }
+    rlang::abort(paste(parts, collapse = "\n"))
+  }
+
+  metadata_df
+}
+
 # ==============================================================================
 # Helper functions
 # ==============================================================================
@@ -458,33 +475,12 @@ build_metadata_df <- function(tree) {
       name = name,
       description = node$description %||% NA_character_,
       tags = I(list(node$tags %||% character(0))),
-      based_on = I(list(node$based_on %||% character(0))),
+      based_on = I(list(as.character(unlist(node$based_on %||% list())))),
       stringsAsFactors = FALSE
     )
   })
 
   dplyr::bind_rows(rows)
-}
-
-#' Build empty summary data frame
-#' @noRd
-build_empty_summary_df <- function(spec) {
-  df <- data.frame(model = character(0), stringsAsFactors = FALSE)
-  char_fields <- c(
-    "based_on",
-    "description",
-    "problem",
-    "estimation_method",
-    "termination_status"
-  )
-  for (field in spec@columns) {
-    df[[field]] <- vector(
-      mode = if (field %in% char_fields) "character" else "numeric",
-      length = 0
-    )
-  }
-  attr(df, "summary_spec") <- spec
-  df
 }
 
 #' Topological sort of models based on based_on relationships
@@ -537,201 +533,63 @@ topological_sort_models <- function(metadata_df, tree) {
   c(sorted, remaining)
 }
 
-#' Load model summaries for given model names
+#' Load models for given model names
 #' @noRd
-load_model_summaries <- function(model_names, source_dir) {
-  summaries <- list()
+load_models <- function(model_names, source_dir) {
+  models <- list()
   for (name in model_names) {
-    # Strip .mod extension to get the output directory name
-    run_name <- sub("\\.mod$", "", name)
-    output_dir <- file.path(source_dir, run_name)
-
-    # Skip if output directory doesn't exist (unrun model)
-    if (!dir.exists(output_dir)) {
-      summaries[[name]] <- NULL
-      next
-    }
-
-    # read_model expects the .mod file path, not the directory
     model_path <- file.path(source_dir, name)
-
-    tryCatch(
-      {
-        summaries[[name]] <- summary(read_model(model_path))
-      },
+    mod <- tryCatch(
+      read_model(model_path),
       error = function(e) {
-        # Silently set to NULL - unrun models handled by remove_unrun_models
-        summaries[[name]] <<- NULL
+        rlang::warn(paste0("could not load model: ", model_path))
+        NULL
       }
     )
+    models[name] <- list(mod)
   }
-  summaries
+
+  if (all(vapply(models, is.null, logical(1)))) {
+    rlang::abort("No models could be loaded.")
+  }
+
+  # Warn if some (but not all) models failed
+  failed_count <- sum(vapply(models, is.null, logical(1)))
+  if (failed_count > 0) {
+    rlang::warn(sprintf(
+      "%d of %d model(s) failed to load and will be excluded from the table.",
+      failed_count,
+      length(models)
+    ))
+  }
+
+  models
 }
 
-#' Build summary data frame from loaded summaries
+#' Filter unrun model rows and remove the .unrun column
 #' @noRd
-build_summary_df <- function(summaries, model_names, metadata_df, spec) {
-  # Check if comparison stats are requested - need ofv, number_obs, n_parameters
-  needs_dofv <- any(c("dofv", "pvalue", "df") %in% spec@columns)
-
-  rows <- lapply(model_names, function(name) {
-    mod_sum <- summaries[[name]]
-    meta_row <- metadata_df[metadata_df$name == name, ]
-
-    if (is.null(mod_sum)) {
-      row <- build_na_row(name, meta_row, spec, needs_dofv)
-      row$.unrun <- TRUE
-      return(row)
-    }
-
-    # Extract last row from run_details
-    rd <- mod_sum$run_details
-    mr <- mod_sum$minimization_results
-
-    if (is.null(rd) || nrow(rd) == 0) {
-      row <- build_na_row(name, meta_row, spec, needs_dofv)
-      row$.unrun <- TRUE
-      return(row)
-    }
-
-    last_idx <- nrow(rd)
-
-    row <- data.frame(
-      model = mod_sum$run_name %||% sub("\\.mod$", "", name),
-      .unrun = FALSE,
-      stringsAsFactors = FALSE
-    )
-
-    # Store internal name for dofv lookup
-    row$.name <- name
-
-    # Extract metadata fields (based_on, description)
-    if ("based_on" %in% spec@columns || needs_dofv) {
-      parents <- if (nrow(meta_row) > 0) meta_row$based_on[[1]] else
-        character(0)
-      if (length(parents) > 0) {
-        # Format based_on: strip .mod and join with comma
-        row$based_on <- paste(sub("\\.mod$", "", parents), collapse = ", ")
-        # Store raw based_on for dofv lookup (first parent only)
-        row$.based_on_raw <- as.character(parents[1])
-      } else {
-        row$based_on <- NA_character_
-        row$.based_on_raw <- NA_character_
-      }
-    }
-
-    if ("description" %in% spec@columns) {
-      if (nrow(meta_row) > 0 && !is.na(meta_row$description)) {
-        row$description <- meta_row$description
-      } else {
-        row$description <- NA_character_
-      }
-    }
-
-    # Extract n_parameters (count of non-fixed parameters)
-    # Always extract if needs_dofv for pvalue/df calculation
-    if ("n_parameters" %in% spec@columns || needs_dofv) {
-      if (
-        !is.null(mod_sum$parameters) &&
-          nrow(mod_sum$parameters) > 0 &&
-          "fixed" %in% names(mod_sum$parameters)
-      ) {
-        row$n_parameters <- sum(!mod_sum$parameters$fixed, na.rm = TRUE)
-      } else {
-        row$n_parameters <- NA_integer_
-      }
-    }
-
-    # Extract fields from run_details
-    rd_fields <- c(
-      "problem",
-      "number_data_records",
-      "number_subjects",
-      "number_obs",
-      "estimation_method",
-      "estimation_time",
-      "covariance_time",
-      "postprocess_time",
-      "function_evaluations",
-      "significant_digits"
-    )
-
-    # Always extract number_obs if we need dofv
-    fields_to_extract <- if (needs_dofv) {
-      unique(c(intersect(spec@columns, rd_fields), "number_obs"))
-    } else {
-      intersect(spec@columns, rd_fields)
-    }
-
-    for (field in fields_to_extract) {
-      if (field %in% names(rd)) {
-        row[[field]] <- rd[[field]][last_idx]
-      } else {
-        row[[field]] <- NA
-      }
-    }
-
-    # Extract fields from minimization_results
-    mr_fields <- c("ofv", "condition_number", "termination_status")
-
-    # Always extract ofv if we need dofv
-    mr_fields_to_extract <- if (needs_dofv) {
-      unique(c(intersect(spec@columns, mr_fields), "ofv"))
-    } else {
-      intersect(spec@columns, mr_fields)
-    }
-
-    if (!is.null(mr) && nrow(mr) > 0) {
-      last_mr_idx <- min(last_idx, nrow(mr))
-      for (field in mr_fields_to_extract) {
-        if (field %in% names(mr)) {
-          row[[field]] <- mr[[field]][last_mr_idx]
-        } else {
-          row[[field]] <- NA
-        }
-      }
-    } else {
-      for (field in mr_fields_to_extract) {
-        row[[field]] <- NA
-      }
-    }
-
-    row
-  })
-
-  df <- dplyr::bind_rows(rows)
-
-  # Remove unrun models if requested
-  if (spec@remove_unrun_models && ".unrun" %in% names(df)) {
+filter_unrun_rows <- function(df, remove = TRUE) {
+  if (!".unrun" %in% names(df)) return(df)
+  if (remove) {
     df <- df[!df$.unrun, , drop = FALSE]
-    df <- df[, setdiff(names(df), ".unrun"), drop = FALSE]
-  } else if (".unrun" %in% names(df)) {
-    df <- df[, setdiff(names(df), ".unrun"), drop = FALSE]
   }
+  df[, setdiff(names(df), ".unrun"), drop = FALSE]
+}
 
-  # Calculate dofv, df, pvalue if requested
-  if (needs_dofv) {
-    df <- calculate_dofv(df, summaries, spec)
-  }
-
-  # Apply time formatting
-  df <- format_time_columns(df, spec)
-  time_unit <- attr(df, "summary_time_unit")
-
-  # Remove internal columns if not needed in output
+#' Remove internal columns and reorder to match spec column order
+#' @noRd
+select_output_columns <- function(df, spec, needs_dofv) {
+  # Remove internal columns
   internal_cols <- c(".name", ".based_on_raw")
   if (!needs_dofv && "based_on" %in% spec@columns) {
-    # Keep based_on but remove internals
     df <- df[, setdiff(names(df), internal_cols), drop = FALSE]
   } else if (needs_dofv) {
-    # Remove .name but keep data for now
     df <- df[, setdiff(names(df), ".name"), drop = FALSE]
-    # Remove .based_on_raw too
     df <- df[, setdiff(names(df), ".based_on_raw"), drop = FALSE]
   }
 
-  # Remove internal columns that weren't requested (but we needed them for calculations)
-  # Keep df if pvalue is requested (needed for merge in table)
+  # Remove internal columns that weren't requested (but we needed for calculations)
+  # Keep df if pvalue is requested (used for display merging)
   keep_df_for_pvalue <- "pvalue" %in% spec@columns
   internal_calc_cols <- c(
     "number_obs",
@@ -757,8 +615,171 @@ build_summary_df <- function(summaries, model_names, metadata_df, spec) {
       col_order <- append(col_order, "df", after = pvalue_idx)
     }
   }
-  df <- df[, col_order, drop = FALSE]
+  df[, col_order, drop = FALSE]
+}
 
+#' Build summary data frame from loaded models
+#' @noRd
+build_summary_df <- function(models, model_names, metadata_df, spec) {
+  needs_dofv <- any(c("dofv", "pvalue", "df") %in% spec@columns)
+
+  run_detail_cols <- c(
+    "problem",
+    "number_data_records",
+    "number_subjects",
+    "number_obs",
+    "estimation_method",
+    "estimation_time",
+    "covariance_time",
+    "postprocess_time",
+    "function_evaluations",
+    "significant_digits"
+  )
+  min_result_cols <- c("ofv", "condition_number", "termination_status")
+
+  needed_from_run_details <- intersect(spec@columns, run_detail_cols)
+  needed_from_min_results <- intersect(spec@columns, min_result_cols)
+  if (needs_dofv) {
+    needed_from_run_details <- unique(c(needed_from_run_details, "number_obs"))
+    needed_from_min_results <- unique(c(needed_from_min_results, "ofv"))
+  }
+  needs_summary <- length(needed_from_run_details) > 0 ||
+    length(needed_from_min_results) > 0 ||
+    "n_parameters" %in% spec@columns ||
+    needs_dofv
+
+  meta_idx <- match(model_names, metadata_df$name)
+
+  rows <- lapply(seq_along(model_names), function(i) {
+    name <- model_names[i]
+    mod <- models[[name]]
+
+    row <- list(
+      model = tools::file_path_sans_ext(basename(name)),
+      .name = name,
+      .unrun = is.null(mod) || !identical(attr(mod, "run_status"), "run")
+    )
+
+    # Metadata columns (from tree, not model)
+    if ("based_on" %in% spec@columns || needs_dofv) {
+      parents <- metadata_df$based_on[[meta_idx[i]]]
+      # .based_on_raw: list-column storing full file paths of parent models.
+      # Used for OFV lookups in calculate_dofv(); removed before output.
+      row$.based_on_raw <- list(parents)
+      row$based_on <- if (length(parents) == 0) NA_character_ else
+        paste(tools::file_path_sans_ext(basename(parents)), collapse = ", ")
+    }
+    if ("description" %in% spec@columns) {
+      row$description <- metadata_df$description[meta_idx[i]]
+    }
+
+    # Ensure requested model-derived columns are present even when summaries fail
+    na_defaults <- list(
+      problem = NA_character_,
+      number_data_records = NA_real_,
+      number_subjects = NA_real_,
+      number_obs = NA_real_,
+      estimation_method = NA_character_,
+      estimation_time = NA_real_,
+      covariance_time = NA_real_,
+      postprocess_time = NA_real_,
+      function_evaluations = NA_real_,
+      significant_digits = NA_real_,
+      ofv = NA_real_,
+      condition_number = NA_real_,
+      termination_status = NA_character_
+    )
+    if ("n_parameters" %in% spec@columns || needs_dofv) {
+      row$n_parameters <- NA_integer_
+    }
+    for (col in needed_from_run_details) {
+      row[[col]] <- na_defaults[[col]]
+    }
+    for (col in needed_from_min_results) {
+      row[[col]] <- na_defaults[[col]]
+    }
+
+    # Model-derived columns — summary(mod) once per model
+    if (!is.null(mod) && needs_summary) {
+      mod_sum <- tryCatch(summary(mod), error = function(e) {
+        rlang::warn(paste0("could not summarize model: ", name))
+        NULL
+      })
+
+      if (is.null(mod_sum)) {
+        row$.unrun <- TRUE
+      }
+
+      if (!is.null(mod_sum)) {
+        # Prefer run_name from summary for display (handles .ctl/custom names)
+        if (!is.null(mod_sum$run_name)) {
+          row$model <- mod_sum$run_name
+        }
+
+        # n_parameters
+        if ("n_parameters" %in% spec@columns || needs_dofv) {
+          params <- mod_sum$parameters
+          row$n_parameters <- if (
+            !is.null(params) && nrow(params) > 0 && "fixed" %in% names(params)
+          ) {
+            as.integer(sum(!params$fixed, na.rm = TRUE))
+          } else {
+            NA_integer_
+          }
+        }
+
+        # run_details (last row)
+        if (length(needed_from_run_details) > 0) {
+          rd <- mod_sum$run_details
+          if (!is.null(rd) && nrow(rd) > 0) {
+            last <- rd[nrow(rd), , drop = FALSE]
+            for (col in intersect(needed_from_run_details, names(last))) {
+              row[[col]] <- last[[col]]
+            }
+          }
+        }
+
+        # minimization_results (last row)
+        if (length(needed_from_min_results) > 0) {
+          mr <- mod_sum$minimization_results
+          if (!is.null(mr) && nrow(mr) > 0) {
+            last <- mr[nrow(mr), , drop = FALSE]
+            for (col in intersect(needed_from_min_results, names(last))) {
+              row[[col]] <- last[[col]]
+            }
+          }
+        }
+      }
+    }
+
+    row
+  })
+
+  df <- dplyr::bind_rows(rows)
+
+  # Downstream pipeline
+  df <- filter_unrun_rows(df, remove = spec@remove_unrun_models)
+
+  # Fail explicitly if all rows removed by unrun filter
+  if (nrow(df) == 0 && isTRUE(spec@remove_unrun_models)) {
+    rlang::abort(
+      "All models were filtered out by remove_unrun_models. No run models remain."
+    )
+  }
+
+  if (needs_dofv) {
+    # Ensure dofv-required columns exist (may be absent if all summaries failed)
+    for (col in c("ofv", "number_obs", "n_parameters")) {
+      if (!col %in% names(df)) {
+        df[[col]] <- if (col == "n_parameters") NA_integer_ else NA_real_
+      }
+    }
+    df <- calculate_dofv(df, spec)
+  }
+
+  df <- format_time_columns(df, spec)
+  time_unit <- attr(df, "summary_time_unit")
+  df <- select_output_columns(df, spec, needs_dofv)
   if (!is.null(time_unit)) {
     attr(df, "summary_time_unit") <- time_unit
   }
@@ -768,22 +789,34 @@ build_summary_df <- function(summaries, model_names, metadata_df, spec) {
 
 #' Calculate dOFV, df, and p-value for each model vs its parent
 #' @noRd
-calculate_dofv <- function(df, summaries, spec) {
+calculate_dofv <- function(df, spec) {
   # Create lookups by .name
   ofv_lookup <- stats::setNames(df$ofv, df$.name)
   nobs_lookup <- stats::setNames(df$number_obs, df$.name)
   npar_lookup <- stats::setNames(df$n_parameters, df$.name)
 
-  dofv_excluded <- FALSE
   needs_pvalue <- "pvalue" %in% spec@columns || "df" %in% spec@columns
 
   results <- lapply(seq_len(nrow(df)), function(i) {
-    parent_name <- df$.based_on_raw[i]
+    parents <- df$.based_on_raw[[i]]
 
     # No parent - no comparison stats
-    if (is.na(parent_name) || parent_name == "") {
+    if (length(parents) == 0) {
       return(list(dofv = NA_real_, df = NA_integer_, pvalue = NA_real_))
     }
+
+    if (length(parents) > 1) {
+      rlang::warn(
+        sprintf(
+          "model '%s' has multiple parents (%s); using '%s' for dOFV/LRT",
+          df$.name[i],
+          paste(parents, collapse = ", "),
+          parents[1]
+        )
+      )
+    }
+
+    parent_name <- parents[1]
 
     # Check if parent is in our data
     if (!parent_name %in% names(ofv_lookup)) {
@@ -799,7 +832,16 @@ calculate_dofv <- function(df, summaries, spec) {
 
     # Check if number_obs matches
     if (is.na(model_nobs) || is.na(parent_nobs) || model_nobs != parent_nobs) {
-      dofv_excluded <<- TRUE
+      rlang::inform(c(
+        sprintf(
+          "dOFV not calculated for '%s' vs '%s': observation counts differ (%s vs %s).",
+          df$.name[i],
+          parent_name,
+          if (is.na(model_nobs)) "NA" else as.character(model_nobs),
+          if (is.na(parent_nobs)) "NA" else as.character(parent_nobs)
+        ),
+        i = "dOFV is only calculated when the number of observations matches the reference model."
+      ))
       return(list(dofv = NA_real_, df = NA_integer_, pvalue = NA_real_))
     }
 
@@ -830,50 +872,7 @@ calculate_dofv <- function(df, summaries, spec) {
   df$df <- vapply(results, function(x) x$df, integer(1))
   df$pvalue <- vapply(results, function(x) x$pvalue, numeric(1))
 
-  attr(df, "dofv_excluded_nobs_mismatch") <- dofv_excluded
   df
-}
-
-#' Build a row with NA values for a model
-#' @noRd
-build_na_row <- function(name, meta_row, spec, needs_dofv = FALSE) {
-  row <- data.frame(model = sub("\\.mod$", "", name), stringsAsFactors = FALSE)
-
-  # Add internal columns for dofv lookup
-  row$.name <- name
-  if (needs_dofv || "based_on" %in% spec@columns) {
-    parents <- if (nrow(meta_row) > 0) meta_row$based_on[[1]] else character(0)
-    if (length(parents) > 0) {
-      row$based_on <- paste(sub("\\.mod$", "", parents), collapse = ", ")
-      row$.based_on_raw <- as.character(parents[1])
-    } else {
-      row$based_on <- NA_character_
-      row$.based_on_raw <- NA_character_
-    }
-  }
-
-  for (field in spec@columns) {
-    if (field == "based_on") {
-      # Already handled above
-      next
-    } else if (field == "description") {
-      if (nrow(meta_row) > 0 && !is.na(meta_row$description)) {
-        row$description <- meta_row$description
-      } else {
-        row$description <- NA_character_
-      }
-    } else {
-      row[[field]] <- NA
-    }
-  }
-
-  # Add number_obs and ofv for dofv calculation if needed
-  if (needs_dofv) {
-    if (!"number_obs" %in% spec@columns) row$number_obs <- NA_real_
-    if (!"ofv" %in% spec@columns) row$ofv <- NA_real_
-  }
-
-  row
 }
 
 #' Format time columns based on spec
@@ -889,6 +888,15 @@ format_time_columns <- function(df, spec) {
   }
 
   if (spec@time_format == "auto") {
+    all_missing <- all(vapply(
+      time_cols,
+      function(col) all(is.na(df[[col]])),
+      logical(1)
+    ))
+    if (all_missing) {
+      attr(df, "summary_time_unit") <- "s"
+      return(df)
+    }
     max_vals <- vapply(
       time_cols,
       function(col) max(df[[col]], na.rm = TRUE),
@@ -928,16 +936,7 @@ format_time_value <- function(seconds, format) {
     format,
     "minutes" = seconds / 60,
     "hours" = seconds / 3600,
-    "auto" = {
-      max_val <- max(seconds, na.rm = TRUE)
-      if (max_val >= 3600) {
-        seconds / 3600
-      } else if (max_val >= 60) {
-        seconds / 60
-      } else {
-        seconds
-      }
-    },
+    "auto" = seconds,
     seconds
   )
 }
@@ -961,7 +960,7 @@ get_summary_spec <- function(data) {
     return(NULL)
   }
   if (!S7::S7_inherits(spec, SummarySpec)) {
-    stop("Attached summary_spec is not a SummarySpec object")
+    rlang::abort("Attached summary_spec is not a SummarySpec object")
   }
   spec
 }
@@ -1009,28 +1008,20 @@ make_summary_table <- function(
   data,
   output = c("gt", "flextable", "data")
 ) {
-  if (!requireNamespace("dplyr", quietly = TRUE)) {
-    stop("Package 'dplyr' is required for make_summary_table()")
-  }
-
   output <- match.arg(output)
 
-  if (output == "gt" && !requireNamespace("gt", quietly = TRUE)) {
-    stop(
-      "Package 'gt' is required for gt output. ",
-      "Install it with 'rv add gt'"
-    )
-  }
   if (output == "flextable" && !requireNamespace("flextable", quietly = TRUE)) {
-    stop(
+    rlang::abort(paste0(
       "Package 'flextable' is required for flextable output. ",
       "Install it with 'rv add flextable'"
-    )
+    ))
   }
 
   spec <- attr(data, "summary_spec")
   if (is.null(spec)) {
-    stop("SummarySpec not found. Run apply_summary_spec(tree, spec) first.")
+    rlang::abort(
+      "SummarySpec not found. Run apply_summary_spec(tree, spec) first."
+    )
   }
 
   # Create intermediate representation
@@ -1090,17 +1081,14 @@ get_time_suffix <- function(time_format, data) {
 
     if (is.na(max_val) || max_val == 0) {
       return("s")
-    } else if (max_val < 1) {
-      # Values were divided by 3600 (hours)
-      return("h")
-    } else if (max_val < 60) {
-      # Could be minutes or hours - check original magnitude
-      # If max is < 1, it was hours; if 1-60, could be either
-      # This is a heuristic - "auto" format already transformed the data
-      return("min")
-    } else {
-      return("s")
     }
+    if (max_val < 1) {
+      return("h")
+    }
+    if (max_val < 60) {
+      return("min")
+    }
+    return("s")
   }
 
   NULL

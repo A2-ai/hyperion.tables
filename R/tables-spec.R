@@ -484,10 +484,10 @@ TableSpec <- S7::new_class(
     footnote_order = c("summary_info", "equations", "abbreviations")
   ) {
     if (!is.list(display_transforms)) {
-      stop(
+      rlang::abort(paste0(
         "@display_transforms must be a list, not a ",
         class(display_transforms)[1]
-      )
+      ))
     }
 
     if (length(display_transforms) > 0 && !is.null(names(display_transforms))) {
@@ -526,12 +526,11 @@ TableSpec <- S7::new_class(
       }
       dropped_used <- intersect(referenced, drop_columns)
       if (length(dropped_used) > 0) {
-        warning(
+        rlang::warn(paste0(
           "variability_rules reference dropped columns: ",
           paste(dropped_used, collapse = ", "),
-          ". These rules will still run; adjust variability_rules or drop_columns if unintended.",
-          call. = FALSE
-        )
+          ". These rules will still run; adjust variability_rules or drop_columns if unintended."
+        ))
       }
     }
 
@@ -541,11 +540,10 @@ TableSpec <- S7::new_class(
           c(columns, add_columns %||% character(0))
       )
       if (want_components) {
-        warning(
+        rlang::warn(paste0(
           "variability_rules will be ignored when cv/corr/sd are included in columns or add_columns. ",
-          "Remove variability_rules or omit cv/corr/sd to use the variability column.",
-          call. = FALSE
-        )
+          "Remove variability_rules or omit cv/corr/sd to use the variability column."
+        ))
       }
     }
 

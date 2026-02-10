@@ -12,7 +12,7 @@ assert_any_spec <- function(spec) {
   if (
     !S7::S7_inherits(spec, TableSpec) && !S7::S7_inherits(spec, SummarySpec)
   ) {
-    stop(sprintf(
+    rlang::abort(sprintf(
       "spec must be a TableSpec or SummarySpec object. Got: %s",
       class(spec)[1]
     ))
@@ -22,14 +22,20 @@ assert_any_spec <- function(spec) {
 #' @noRd
 assert_table_spec <- function(spec) {
   if (!S7::S7_inherits(spec, TableSpec)) {
-    stop(sprintf("spec must be a TableSpec object. Got: %s", class(spec)[1]))
+    rlang::abort(sprintf(
+      "spec must be a TableSpec object. Got: %s",
+      class(spec)[1]
+    ))
   }
 }
 
 #' @noRd
 assert_summary_spec <- function(spec) {
   if (!S7::S7_inherits(spec, SummarySpec)) {
-    stop(sprintf("spec must be a SummarySpec object. Got: %s", class(spec)[1]))
+    rlang::abort(sprintf(
+      "spec must be a SummarySpec object. Got: %s",
+      class(spec)[1]
+    ))
   }
 }
 
