@@ -1,3 +1,6 @@
+# hyperion.tables 0.2.1
+* Updated katex dep from suggests to imports
+
 # hyperion.tables 0.2.0
 
 ## Breaking Changes
