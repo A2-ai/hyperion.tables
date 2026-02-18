@@ -1,6 +1,6 @@
 Package: hyperion.tables
 Title: Publication-Ready Tables for Pharmacometric Models
-Version: 0.2.0
+Version: 0.2.1
 Authors@R: c(
     person("Matt", "Smith", , "matthews@a2-ai.com", role = c("aut", "cre")),
     person("Devin", "Pastoor", ,"devin@a2-ai.com", role = c("aut"))
@@ -20,8 +20,8 @@ Suggests:
     flextable,
     ftExtra,
     htmltools,
-		katex,
     knitr,
+    officer,
     rmarkdown,
     testthat (>= 3.0.0),
     tomledit,
@@ -31,7 +31,7 @@ Imports:
     dplyr,
     gt (>= 1.0.0),
     hyperion,
-    officer,
+		katex,
     rlang,
     S7 (>= 0.2.1)
 VignetteBuilder: knitr
