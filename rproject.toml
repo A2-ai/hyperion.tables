@@ -18,5 +18,5 @@ dependencies = [
   #{ name = "starlightr", git = "https://github.com/a2-ai/starlightr", branch = "main" },
 
   "hyperion",
-  { name = "hyperion.tables", path = ".", dependencies_only = false, install_suggestions = true },
+  { name = "hyperion.tables", path = ".", dependencies_only = true, install_suggestions = true },
 ]
