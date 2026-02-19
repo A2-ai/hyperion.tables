@@ -251,7 +251,23 @@ TableSpec <- S7::new_class(
     ),
     sections = S7::new_property(
       class = S7::class_list,
-      default = list()
+      default = list(),
+      setter = function(self, value) {
+        if (length(value) > 0) {
+          labels <- vapply(
+            value,
+            function(r) {
+              rlang::f_rhs(rlang::eval_tidy(r))
+            },
+            character(1)
+          )
+          # Keep last rule for each label (later rules win)
+          dups <- duplicated(labels, fromLast = TRUE)
+          value <- value[!dups]
+        }
+        self@sections <- value
+        self
+      }
     ),
     row_filter = S7::new_property(
       class = S7::class_list,
