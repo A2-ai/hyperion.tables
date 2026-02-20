@@ -40,9 +40,9 @@ test_that("section_filter multi-section", {
 
   tree <- hyperion::get_model_lineage(model_dir)
 	
-	tree$nodes$run001.mod$tags <- c(tree$node$run001.mod$tags, "one-comp")
-	tree$nodes$run002.mod$tags <- c(tree$node$run002.mod$tags, "two-comp")
-	tree$nodes$run003.mod$tags <- c(tree$node$run003.mod$tags, "two-comp")
+	tree$nodes$run001.mod$tags <- c(tree$nodes$run001.mod$tags, "one-comp")
+	tree$nodes$run002.mod$tags <- c(tree$nodes$run002.mod$tags, "two-comp")
+	tree$nodes$run003.mod$tags <- c(tree$nodes$run003.mod$tags, "two-comp")
 
   # No catch-all: untagged models get NA section
   # Filter both "Key Models" and NA — only "Base Models" (run001) survives

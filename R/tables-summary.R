@@ -680,62 +680,66 @@ build_summary_section <- function(df, rules) {
     return(rep(NA_character_, nrow(df)))
   }
 
-  # Pre-evaluate quosures to formulas
   formulas <- lapply(rules, function(q) rlang::eval_tidy(q))
   is_catchall <- vapply(
     formulas,
     function(f) identical(rlang::f_lhs(f), TRUE),
     logical(1)
   )
+  labels <- vapply(formulas, rlang::f_rhs, character(1))
 
-  multi_match_msgs <- character(0)
+  n <- nrow(df)
+  result <- character(n)
+  multi_matches <- vector("list", n)
 
-  result <- vapply(
-    seq_len(nrow(df)),
-    function(i) {
-      # Build a row environment: unwrap list columns to their element
-      row_env <- new.env(parent = parent.frame())
-      for (col in names(df)) {
-        val <- df[[col]][[i]]
-        assign(col, val, envir = row_env)
+  for (i in seq_len(n)) {
+    # Build row data: unwrap list columns to their scalar element
+    row_data <- lapply(df, function(col) col[[i]])
+    names(row_data) <- names(df)
+
+    first_match <- NA_character_
+    matched_nc <- character(0)
+
+    for (j in seq_along(formulas)) {
+      f <- formulas[[j]]
+      res <- tryCatch(
+        rlang::eval_tidy(
+          rlang::f_lhs(f),
+          data = row_data,
+          env = rlang::f_env(f)
+        ),
+        error = function(e) FALSE
+      )
+      if (isTRUE(res)) {
+        if (is.na(first_match)) first_match <- labels[j]
+        if (!is_catchall[j]) matched_nc <- c(matched_nc, labels[j])
       }
+    }
 
-      first_match <- NA_character_
-      matched_labels <- character(0)
+    result[i] <- first_match
+    if (length(matched_nc) > 1) multi_matches[[i]] <- matched_nc
+  }
 
-      for (j in seq_along(formulas)) {
-        f <- formulas[[j]]
-        lhs <- rlang::f_lhs(f)
-        res <- tryCatch(
-          eval(lhs, envir = row_env),
-          error = function(e) FALSE
-        )
-        if (isTRUE(res)) {
-          label <- rlang::f_rhs(f)
-          if (is.na(first_match)) first_match <- label
-          if (!is_catchall[j]) matched_labels <- c(matched_labels, label)
-        }
-      }
-
-      if (length(matched_labels) > 1) {
-        row_id <- if ("model" %in% names(df)) df$model[i] else as.character(i)
-        multi_match_msgs[[length(multi_match_msgs) + 1]] <<- sprintf(
+  # Warn for multi-match rows
+  multi_idx <- which(lengths(multi_matches) > 0)
+  if (length(multi_idx) > 0) {
+    row_ids <- if ("model" %in% names(df)) df$model else
+      as.character(seq_len(n))
+    msgs <- vapply(
+      multi_idx,
+      function(i) {
+        sprintf(
           "'%s' matches: %s (using '%s')",
-          row_id,
-          paste(sprintf("'%s'", matched_labels), collapse = ", "),
-          first_match
+          row_ids[i],
+          paste(sprintf("'%s'", multi_matches[[i]]), collapse = ", "),
+          result[i]
         )
-      }
-
-      first_match
-    },
-    character(1)
-  )
-
-  if (length(multi_match_msgs) > 0) {
+      },
+      character(1)
+    )
     rlang::warn(c(
       "Models matched multiple section rules; first match used:",
-      stats::setNames(multi_match_msgs, rep("*", length(multi_match_msgs)))
+      stats::setNames(msgs, rep("*", length(msgs)))
     ))
   }
 
