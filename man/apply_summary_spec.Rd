@@ -4,7 +4,7 @@
 \alias{apply_summary_spec}
 \title{Apply summary specification to lineage tree}
 \usage{
-apply_summary_spec(tree, spec = SummarySpec())
+apply_summary_spec(tree, spec)
 }
 \arguments{
 \item{tree}{A hyperion_nonmem_tree object from \code{get_model_lineage()}}

@@ -1,5 +1,9 @@
 # hyperion.tables 0.3.0
 
+## Breaking Changes
+
+* `apply_summary_spec()` no longer has a default for `spec`. Pass `SummarySpec()` explicitly.
+
 ## New Features
 
 * **Section rules for summary tables.** `section_rules()` / `set_spec_sections()` now work with `SummarySpec`, enabling model grouping in summary tables (e.g., `"base" %in% tags ~ "Base Models"`). Rules are evaluated row-by-row to support list columns like `tags`.

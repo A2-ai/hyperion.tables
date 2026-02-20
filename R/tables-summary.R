@@ -387,7 +387,7 @@ SummarySpec <- S7::new_class(
 #'
 #' @return Data frame with summary_spec attribute, ready for make_summary_table()
 #' @export
-apply_summary_spec <- function(tree, spec = SummarySpec()) {
+apply_summary_spec <- function(tree, spec) {
   if (!inherits(tree, "hyperion_nonmem_tree")) {
     rlang::abort(
       "tree must be a hyperion_nonmem_tree object from get_model_lineage()"
