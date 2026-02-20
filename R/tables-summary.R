@@ -427,7 +427,7 @@ apply_summary_spec <- function(tree, spec = SummarySpec()) {
   # Evaluate section rules (before column trim so rule-referenced cols available)
   if (length(spec@sections) > 0) {
     df$section <- build_summary_section(df, spec@sections)
-    section_levels <- get_section_order(spec)
+    section_levels <- unique(get_section_order(spec))
     df$section <- factor(df$section, levels = section_levels)
     df <- dplyr::arrange(df, .data$section)
     df$section <- as.character(df$section)
@@ -717,7 +717,7 @@ build_summary_section <- function(df, rules) {
     }
 
     result[i] <- first_match
-    if (length(matched_nc) > 1) multi_matches[[i]] <- matched_nc
+    if (length(unique(matched_nc)) > 1) multi_matches[[i]] <- matched_nc
   }
 
   # Warn for multi-match rows

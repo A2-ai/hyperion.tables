@@ -541,7 +541,7 @@ prepare_comparison_table_data <- function(
 
   if ("section" %in% names(comparison) && !all(is.na(comparison$section))) {
     if (!is.null(spec) && length(spec@sections) > 0) {
-      section_levels <- get_section_order(spec)
+      section_levels <- unique(get_section_order(spec))
       comparison <- comparison |>
         dplyr::mutate(
           .appear_order = dplyr::row_number(),

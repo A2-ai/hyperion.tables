@@ -20,11 +20,21 @@ NULL
 #' @param pkg Package name
 #' @param reason Why the package is needed (appended to error message)
 #' @noRd
-check_suggested <- function(pkg, reason = NULL) {
+check_suggested <- function(pkg, reason = NULL, severity = c("abort", "warn")) {
   if (requireNamespace(pkg, quietly = TRUE)) return(invisible())
+  severity <- match.arg(severity)
   msg <- paste0("Package '", pkg, "' is required")
   if (!is.null(reason)) msg <- paste(msg, reason)
-  rlang::abort(paste0(msg, "\nInstall it with: rv add ", pkg))
+  full_msg <- paste0(msg, "\nInstall it with: rv add ", pkg)
+  if (severity == "warn") {
+    rlang::warn(
+      full_msg,
+      .frequency = "once",
+      .frequency_id = paste0(pkg, "_missing")
+    )
+  } else {
+    rlang::abort(full_msg)
+  }
 }
 
 

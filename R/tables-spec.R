@@ -111,16 +111,8 @@ sections_property <- function() {
         length(value) > 0 &&
           all(vapply(value, rlang::is_formula, logical(1)))
       ) {
-        labels <- vapply(
-          value,
-          function(r) {
-            rlang::f_rhs(rlang::eval_tidy(r))
-          },
-          character(1)
-        )
-        # Keep last rule for each label (later rules win)
-        dups <- duplicated(labels, fromLast = TRUE)
-        value <- value[!dups]
+        # validation only — no dedup; overwrite=TRUE in set_spec_sections
+        # handles intentional replacement
       }
       self@sections <- value
       self

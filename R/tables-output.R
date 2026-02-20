@@ -156,7 +156,7 @@ expand_ci_drop_columns <- function(drop_columns) {
 }
 
 order_sections <- function(params, spec) {
-  section_levels <- get_section_order(spec)
+  section_levels <- unique(get_section_order(spec))
 
   internal_cols <- c(
     "section",

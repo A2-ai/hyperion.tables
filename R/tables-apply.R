@@ -281,11 +281,19 @@ warn_multi_match_sections <- function(formulas, data) {
     )
   })
 
-  match_counts <- Reduce("+", lapply(lhs_results, as.integer))
-  multi_rows <- which(match_counts > 1)
+  nc_labels <- labels[nc_idx]
+
+  # Only flag rows where matched labels are genuinely different
+  multi_rows <- which(vapply(
+    seq_len(nrow(data)),
+    function(i) {
+      matched <- vapply(lhs_results, function(r) isTRUE(r[i]), logical(1))
+      length(unique(nc_labels[matched])) > 1
+    },
+    logical(1)
+  ))
   if (length(multi_rows) == 0) return(invisible())
 
-  nc_labels <- labels[nc_idx]
   msgs <- vapply(
     multi_rows,
     function(i) {

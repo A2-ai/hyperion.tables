@@ -119,7 +119,7 @@ test_that("multi-match warning fires for parameter table sections", {
   )
 })
 
-test_that("SummarySpec deduplicates section rules by label", {
+test_that("SummarySpec accumulates section rules across calls", {
   spec <- SummarySpec() |>
     set_spec_sections(
       "base" %in% tags ~ "Base Models",
@@ -133,8 +133,8 @@ test_that("SummarySpec deduplicates section rules by label", {
   labels <- vapply(rules, function(r) {
     rlang::f_rhs(rlang::eval_tidy(r))
   }, character(1))
-  expect_equal(sum(labels == "Base Models"), 1)
-  expect_length(rules, 2)
+  expect_equal(sum(labels == "Base Models"), 2)
+  expect_length(rules, 3)
 })
 
 test_that("SummarySpec rejects invalid section rules", {
