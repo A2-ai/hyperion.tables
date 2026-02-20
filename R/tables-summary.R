@@ -456,7 +456,7 @@ apply_summary_spec <- function(tree, spec = SummarySpec()) {
 
   # Apply drop_columns
   if (!is.null(spec@drop_columns)) {
-    df <- df[, setdiff(names(df), spec@drop_columns), drop = FALSE]
+    df <- dplyr::select(df, -dplyr::all_of(spec@drop_columns))
   }
 
   attr(df, "summary_spec") <- spec
@@ -615,9 +615,9 @@ load_models <- function(model_names, source_dir) {
 filter_unrun_rows <- function(df, remove = TRUE) {
   if (!".unrun" %in% names(df)) return(df)
   if (remove) {
-    df <- df[!df$.unrun, , drop = FALSE]
+    df <- dplyr::filter(df, !.data$.unrun)
   }
-  df[, setdiff(names(df), ".unrun"), drop = FALSE]
+  dplyr::select(df, -dplyr::any_of(".unrun"))
 }
 
 #' Remove internal columns and reorder to match spec column order
@@ -626,10 +626,9 @@ select_output_columns <- function(df, spec, needs_dofv) {
   # Remove internal columns
   internal_cols <- c(".name", ".based_on_raw")
   if (!needs_dofv && "based_on" %in% spec@columns) {
-    df <- df[, setdiff(names(df), internal_cols), drop = FALSE]
+    df <- dplyr::select(df, -dplyr::all_of(internal_cols))
   } else if (needs_dofv) {
-    df <- df[, setdiff(names(df), ".name"), drop = FALSE]
-    df <- df[, setdiff(names(df), ".based_on_raw"), drop = FALSE]
+    df <- dplyr::select(df, -dplyr::any_of(c(".name", ".based_on_raw")))
   }
 
   # Remove internal columns that weren't requested (but we needed for calculations)
@@ -646,7 +645,7 @@ select_output_columns <- function(df, spec, needs_dofv) {
   for (col in internal_calc_cols) {
     if (col == "df" && keep_df_for_pvalue) next
     if (needs_dofv && col %in% names(df) && !col %in% spec@columns) {
-      df <- df[, setdiff(names(df), col), drop = FALSE]
+      df <- dplyr::select(df, -dplyr::all_of(col))
     }
   }
 
@@ -858,7 +857,7 @@ build_summary_df <- function(models, model_names, metadata_df, spec) {
         if (length(needed_from_run_details) > 0) {
           rd <- mod_sum$run_details
           if (!is.null(rd) && nrow(rd) > 0) {
-            last <- rd[nrow(rd), , drop = FALSE]
+            last <- dplyr::slice_tail(rd, n = 1)
             for (col in intersect(needed_from_run_details, names(last))) {
               row[[col]] <- last[[col]]
             }
@@ -869,7 +868,7 @@ build_summary_df <- function(models, model_names, metadata_df, spec) {
         if (length(needed_from_min_results) > 0) {
           mr <- mod_sum$minimization_results
           if (!is.null(mr) && nrow(mr) > 0) {
-            last <- mr[nrow(mr), , drop = FALSE]
+            last <- dplyr::slice_tail(mr, n = 1)
             for (col in intersect(needed_from_min_results, names(last))) {
               row[[col]] <- last[[col]]
             }

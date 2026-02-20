@@ -8,7 +8,12 @@ dir = "../Docs/hyperion-tables-docs"
 
 [versions]
 enabled = true
-list = [{ tag = "0.1.0", label = "v0.1.0", default = true }]
+list = [
+	{ tag = "0.3.0", default = true },
+	{ tag = "0.2.1", label = "v0.2.1" },
+	{ tag = "0.2.0", label = "v0.2.0" },
+	{ tag = "0.1.0", label = "v0.1.0" },
+]
 
 [home]
 hero = { actions = [

@@ -429,12 +429,15 @@ join_comparison_params <- function(params1, params2, suffix_cols, positions) {
   # Select relevant columns from params2
   keep_cols <- c("name", suffix_cols, coalesce_cols)
   keep_cols2 <- intersect(keep_cols, names(params2))
-  p2 <- params2[, keep_cols2, drop = FALSE]
+  p2 <- dplyr::select(params2, dplyr::all_of(keep_cols2))
 
   # Rename suffix columns for params2
   for (col in suffix_cols) {
     if (col %in% names(p2)) {
-      names(p2)[names(p2) == col] <- paste0(col, "_", next_index)
+      p2 <- dplyr::rename(
+        p2,
+        !!paste0(col, "_", next_index) := dplyr::all_of(col)
+      )
     }
   }
 
@@ -458,16 +461,13 @@ join_comparison_chained <- function(params1, p2, suffix_cols, coalesce_cols) {
     grep(base_suffix_pattern, names(params1), value = TRUE),
     grep(pct_pattern, names(params1), value = TRUE)
   ))
-  base_suffix <- params1[, keep_base, drop = FALSE]
+  base_suffix <- dplyr::select(params1, dplyr::all_of(keep_base))
 
-  base_coalesce <- params1[,
-    intersect(c("name", coalesce_cols), names(params1)),
-    drop = FALSE
-  ]
-  p2_coalesce <- p2[,
-    intersect(c("name", coalesce_cols), names(p2)),
-    drop = FALSE
-  ]
+  base_coalesce <- dplyr::select(
+    params1,
+    dplyr::any_of(c("name", coalesce_cols))
+  )
+  p2_coalesce <- dplyr::select(p2, dplyr::any_of(c("name", coalesce_cols)))
 
   comparison <- dplyr::full_join(base_suffix, p2, by = "name")
 
@@ -485,14 +485,13 @@ join_comparison_chained <- function(params1, p2, suffix_cols, coalesce_cols) {
         coalesce_df[[col_prev]],
         coalesce_df[[col_new]]
       )
-      coalesce_df[[col_prev]] <- NULL
-      coalesce_df[[col_new]] <- NULL
+      coalesce_df <- dplyr::select(
+        coalesce_df,
+        -dplyr::all_of(c(col_prev, col_new))
+      )
     }
   }
-  comparison <- comparison[,
-    setdiff(names(comparison), coalesce_cols),
-    drop = FALSE
-  ]
+  comparison <- dplyr::select(comparison, -dplyr::any_of(coalesce_cols))
   dplyr::left_join(comparison, coalesce_df, by = "name")
 }
 
@@ -505,15 +504,15 @@ join_comparison_initial <- function(
   coalesce_cols
 ) {
   keep_cols1 <- intersect(keep_cols, names(params1))
-  p1 <- params1[, keep_cols1, drop = FALSE]
+  p1 <- dplyr::select(params1, dplyr::all_of(keep_cols1))
 
   # Rename suffix columns with _1 and _2
   for (col in suffix_cols) {
     if (col %in% names(p1)) {
-      names(p1)[names(p1) == col] <- paste0(col, "_1")
+      p1 <- dplyr::rename(p1, !!paste0(col, "_1") := dplyr::all_of(col))
     }
     if (col %in% names(p2)) {
-      names(p2)[names(p2) == col] <- paste0(col, "_2")
+      p2 <- dplyr::rename(p2, !!paste0(col, "_2") := dplyr::all_of(col))
     }
   }
 
@@ -527,8 +526,7 @@ join_comparison_initial <- function(
         comparison[[col1]],
         comparison[[col2]]
       )
-      comparison[[col1]] <- NULL
-      comparison[[col2]] <- NULL
+      comparison <- dplyr::select(comparison, -dplyr::all_of(c(col1, col2)))
     }
   }
   comparison
@@ -1142,11 +1140,8 @@ make_comparison_table <- function(
 ) {
   output <- match.arg(output)
 
-  if (output == "flextable" && !requireNamespace("flextable", quietly = TRUE)) {
-    rlang::abort(paste0(
-      "Package 'flextable' is required for flextable output. ",
-      "Install it with 'rv add flextable'"
-    ))
+  if (output == "flextable") {
+    check_suggested("flextable", reason = "for flextable output.")
   }
 
   if (!inherits(comparison, "hyperion_comparison")) {

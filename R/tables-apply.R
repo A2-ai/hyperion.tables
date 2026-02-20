@@ -129,8 +129,12 @@ resolve_name_columns <- function(df, spec, info) {
     df$nonmem_name <- rownames(labels)[match_idx]
     df$user_name <- labels$name[match_idx]
 
-    df$nonmem_name <- ifelse(is.na(df$nonmem_name), df$name, df$nonmem_name)
-    df$user_name <- ifelse(is.na(df$user_name), df$name, df$user_name)
+    df$nonmem_name <- dplyr::if_else(
+      is.na(df$nonmem_name),
+      df$name,
+      df$nonmem_name
+    )
+    df$user_name <- dplyr::if_else(is.na(df$user_name), df$name, df$user_name)
 
     df <- apply_name_source(df, info, spec@parameter_names)
   } else {

@@ -392,7 +392,10 @@ compute_comparison_model_cols <- function(
 
   desired_cols <- c("name", unlist(model_cols, use.names = FALSE))
   remaining_cols <- setdiff(names(comparison), desired_cols)
-  comparison <- comparison[, c(desired_cols, remaining_cols), drop = FALSE]
+  comparison <- dplyr::select(
+    comparison,
+    dplyr::all_of(c(desired_cols, remaining_cols))
+  )
 
   list(comparison = comparison, model_cols = model_cols)
 }

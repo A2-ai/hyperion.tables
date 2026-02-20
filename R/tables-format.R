@@ -114,7 +114,7 @@ add_fixed_display_columns <- function(df, fixed_cols) {
     } else {
       sub("^fixed_", "fixed_fmt_", fc)
     }
-    df[[fmt_col]] <- ifelse(is_fixed_true(df[[fc]]), "Fixed", "")
+    df[[fmt_col]] <- dplyr::if_else(is_fixed_true(df[[fc]]), "Fixed", "")
   }
 
   df
@@ -197,7 +197,7 @@ apply_fixed_display <- function(table, fixed_cols) {
   for (fc in fixed_cols) {
     table <- table |>
       gt::text_transform(
-        fn = function(x) ifelse(is_fixed_true(x), "Fixed", ""),
+        fn = function(x) dplyr::if_else(is_fixed_true(x), "Fixed", ""),
         locations = gt::cells_body(columns = fc)
       )
   }
