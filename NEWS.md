@@ -6,6 +6,8 @@
 
 ## New Features
 
+* `set_spec_tag_filter()` gains an `exclude` parameter to remove models by tag
+  (e.g., `set_spec_tag_filter(exclude = "failed")`).
 * **Section rules for summary tables.** `section_rules()` / `set_spec_sections()` now work with `SummarySpec`, enabling model grouping in summary tables (e.g., `"base" %in% tags ~ "Base Models"`). Rules are evaluated row-by-row to support list columns like `tags`.
 * **Section filtering.** `set_spec_section_filter()` excludes entire sections from both parameter and summary tables. Pass `NA` to also remove rows that didn't match any section rule.
 * `set_spec_sections()` promoted from TableSpec-only to a common modifier that works on both `TableSpec` and `SummarySpec`.

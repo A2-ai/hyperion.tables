@@ -46,6 +46,55 @@ test_that("tag_filter selects tagged models", {
   expect_true(all(data$model == "run001"))
 })
 
+test_that("tag_exclude removes tagged models", {
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
+
+  tree <- hyperion::get_model_lineage(model_dir)
+  # Tag one model as "failed"
+  tree$nodes[["run001.mod"]]$tags <- c(
+    tree$nodes[["run001.mod"]]$tags, "failed"
+  )
+
+  spec <- SummarySpec(tag_exclude = "failed", columns = "ofv")
+
+  data <- apply_summary_spec(tree, spec)
+
+  expect_true(nrow(data) > 0)
+  expect_false("run001" %in% data$model)
+})
+
+test_that("tag_exclude works with tag_filter", {
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
+
+  tree <- hyperion::get_model_lineage(model_dir)
+  # Tag all models with "candidate", then mark one as "failed"
+  for (name in names(tree$nodes)) {
+    tree$nodes[[name]]$tags <- "candidate"
+  }
+  tree$nodes[["run001.mod"]]$tags <- c("candidate", "failed")
+
+  spec <- SummarySpec(
+    tag_filter = "candidate",
+    tag_exclude = "failed",
+    columns = "ofv"
+  )
+
+  data <- apply_summary_spec(tree, spec)
+
+  expect_true(nrow(data) > 0)
+  expect_false("run001" %in% data$model)
+})
+
 test_that("summary table snapshot filtered to selected models", {
   testthat::skip_if_not_installed("gt")
   model_dir <- system.file(
@@ -491,5 +540,26 @@ test_that("filter_metadata errors with both filters in message", {
   expect_error(
     apply_summary_spec(tree, spec),
     "No models remain after filtering"
+  )
+})
+
+test_that("filter_metadata errors with tag_exclude in message", {
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
+
+  tree <- hyperion::get_model_lineage(model_dir)
+  # Tag all models so exclusion removes everything
+  for (name in names(tree$nodes)) {
+    tree$nodes[[name]]$tags <- "doomed"
+  }
+  spec <- SummarySpec(tag_exclude = "doomed")
+
+  expect_error(
+    apply_summary_spec(tree, spec),
+    "No models remain after filtering.*tag_exclude: doomed"
   )
 })

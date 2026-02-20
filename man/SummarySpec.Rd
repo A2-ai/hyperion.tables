@@ -8,6 +8,7 @@ SummarySpec(
   title = "Run Summary",
   models_to_include = NULL,
   tag_filter = NULL,
+  tag_exclude = NULL,
   summary_filter = summary_filter_rules(),
   remove_unrun_models = TRUE,
   columns = NULL,
@@ -33,6 +34,9 @@ table (with or without .mod/.ctl extensions), or NULL (default).}
 
 \item{tag_filter}{Character vector of tags, or NULL (default). Only models
 with at least one matching tag are included.}
+
+\item{tag_exclude}{Character vector of tags to exclude, or NULL (default).
+Models with any matching tag are removed. Applied after tag_filter.}
 
 \item{summary_filter}{Filter rules created with \code{summary_filter_rules()}.}
 
