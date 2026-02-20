@@ -150,6 +150,33 @@ resolve_name_columns <- function(df, spec, info) {
   df
 }
 
+#' Filter rows by section_filter
+#'
+#' Removes rows whose section label is in `spec@section_filter`.
+#' Pass `NA` in the filter to also remove unmatched (NA-section) rows.
+#'
+#' @param df Data frame with a `section` column
+#' @param spec A TableSpec or SummarySpec with a `section_filter` property
+#' @return Filtered data frame
+#' @noRd
+filter_sections <- function(df, spec) {
+  if (is.null(spec@section_filter) || !"section" %in% names(df)) {
+    return(df)
+  }
+
+  filter_labels <- spec@section_filter
+  has_na_filter <- any(is.na(filter_labels))
+  named_filters <- filter_labels[!is.na(filter_labels)]
+
+  if (length(named_filters) > 0) {
+    df <- dplyr::filter(df, !.data$section %in% named_filters)
+  }
+  if (has_na_filter) {
+    df <- dplyr::filter(df, !is.na(.data$section))
+  }
+  df
+}
+
 #' Apply section assignments and row filters
 #' @noRd
 apply_sections_and_filters <- function(df, spec) {
@@ -157,6 +184,8 @@ apply_sections_and_filters <- function(df, spec) {
     dplyr::mutate(
       section = build_section(dplyr::pick(dplyr::everything()), spec)
     )
+
+  df <- filter_sections(df, spec)
 
   if (length(spec@row_filter) > 0) {
     for (f in spec@row_filter) {
@@ -220,15 +249,63 @@ build_section <- function(data, spec) {
     rlang::eval_tidy(q, data = data)
   })
 
+  warn_multi_match_sections(args, data)
+
   dplyr::case_when(!!!args)
+}
+
+#' Warn when rows match multiple non-catch-all section rules
+#' @noRd
+warn_multi_match_sections <- function(formulas, data) {
+  labels <- vapply(formulas, function(f) rlang::f_rhs(f), character(1))
+  is_catchall <- vapply(
+    formulas,
+    function(f) identical(rlang::f_lhs(f), TRUE),
+    logical(1)
+  )
+  nc_idx <- which(!is_catchall)
+  if (length(nc_idx) < 2) return(invisible())
+
+  lhs_results <- lapply(nc_idx, function(j) {
+    tryCatch(
+      eval(
+        rlang::f_lhs(formulas[[j]]),
+        envir = data,
+        enclos = rlang::f_env(formulas[[j]])
+      ),
+      error = function(e) rep(FALSE, nrow(data))
+    )
+  })
+
+  match_counts <- Reduce("+", lapply(lhs_results, as.integer))
+  multi_rows <- which(match_counts > 1)
+  if (length(multi_rows) == 0) return(invisible())
+
+  nc_labels <- labels[nc_idx]
+  msgs <- vapply(
+    multi_rows,
+    function(i) {
+      matched <- vapply(lhs_results, function(r) isTRUE(r[i]), logical(1))
+      row_id <- if ("name" %in% names(data)) data$name[i] else as.character(i)
+      sprintf(
+        "'%s' matches: %s",
+        row_id,
+        paste(sprintf("'%s'", nc_labels[matched]), collapse = ", ")
+      )
+    },
+    character(1)
+  )
+
+  rlang::warn(c(
+    "Rows matched multiple section rules; first match used:",
+    stats::setNames(msgs, rep("*", length(msgs)))
+  ))
 }
 
 #' Get section order from spec
 #' @noRd
 get_section_order <- function(spec) {
-  if (!S7::S7_inherits(spec, TableSpec)) {
-    rlang::abort("spec must be a TableSpec object")
-  }
+  assert_any_spec(spec)
 
   vapply(
     spec@sections,

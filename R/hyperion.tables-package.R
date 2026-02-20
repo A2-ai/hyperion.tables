@@ -46,6 +46,7 @@
 #'   \item [get_spec_ci()] - Get CI options from a TableSpec
 #'   \item [get_spec_parameter_names()] - Get parameter name options
 #'   \item [get_spec_sections()] - Get section rules
+#'   \item [get_spec_section_filter()] - Get section filter function
 #'   \item [get_spec_filter()] - Get row filter rules
 #'   \item [get_spec_transforms()] - Get display transforms
 #'   \item [get_spec_variability()] - Get variability rules
@@ -69,6 +70,8 @@
 #'   \item [set_spec_hide_empty()] - Control empty column hiding
 #'   \item [set_spec_pvalue()] - Set p-value formatting
 #'   \item [set_spec_footnotes()] - Set footnote order
+#'   \item [set_spec_sections()] - Set section grouping rules
+#'   \item [set_spec_section_filter()] - Set section filter function
 #' }
 #'
 #' @section Spec Modifiers - TableSpec:
@@ -78,7 +81,6 @@
 #'   \item [set_spec_ci()] - Set confidence interval options
 #'   \item [set_spec_missing()] - Set missing value handling
 #'   \item [set_spec_transforms()] - Set display transforms by parameter kind
-#'   \item [set_spec_sections()] - Set section grouping rules
 #'   \item [set_spec_filter()] - Set row filter rules
 #'   \item [set_spec_variability()] - Set variability display rules
 #' }

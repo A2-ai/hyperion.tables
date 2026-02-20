@@ -101,19 +101,31 @@ get_spec_ci <- function(spec) {
   spec@ci
 }
 
-#' Get section rules from a TableSpec
+#' Get section rules from a spec
 #'
 #' Returns the list of section assignment rules.
 #'
-#' @param spec A TableSpec object
+#' @param spec A TableSpec or SummarySpec object
 #' @return List of quosures
 #' @export
 #' @examples
 #' spec <- TableSpec()
 #' get_spec_sections(spec)
 get_spec_sections <- function(spec) {
-  assert_table_spec(spec)
+  assert_any_spec(spec)
   spec@sections
+}
+
+#' Get section filter from a spec
+#'
+#' Returns the section labels being filtered out, or NULL if no filter is set.
+#'
+#' @param spec A TableSpec or SummarySpec object
+#' @return Character vector or NULL
+#' @export
+get_spec_section_filter <- function(spec) {
+  assert_any_spec(spec)
+  spec@section_filter
 }
 
 #' Get row filter rules from a TableSpec

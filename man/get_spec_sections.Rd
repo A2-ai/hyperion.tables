@@ -2,12 +2,12 @@
 % Please edit documentation in R/spec-getters.R
 \name{get_spec_sections}
 \alias{get_spec_sections}
-\title{Get section rules from a TableSpec}
+\title{Get section rules from a spec}
 \usage{
 get_spec_sections(spec)
 }
 \arguments{
-\item{spec}{A TableSpec object}
+\item{spec}{A TableSpec or SummarySpec object}
 }
 \value{
 List of quosures

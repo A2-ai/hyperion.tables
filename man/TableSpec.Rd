@@ -12,6 +12,7 @@ TableSpec(
   drop_columns = NULL,
   hide_empty_columns = TRUE,
   sections = section_rules(),
+  section_filter = NULL,
   row_filter = filter_rules(),
   display_transforms = list(),
   variability_rules = default_variability_rules(),
@@ -47,6 +48,10 @@ are automatically hidden unless explicitly requested via \code{columns} or
 \code{add_columns}. Default is TRUE.}
 
 \item{sections}{Section rules created with \code{section_rules()}.}
+
+\item{section_filter}{Character vector of section labels to exclude from the
+table. Use \code{NA} to also exclude rows that don't match any section rule.
+Default is NULL (no filtering). See \code{set_spec_section_filter()}.}
 
 \item{row_filter}{Filter rules created with \code{filter_rules()}.}
 

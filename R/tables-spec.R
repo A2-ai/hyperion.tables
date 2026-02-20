@@ -98,6 +98,37 @@ default_variability_rules <- function() {
 }
 
 # ==============================================================================
+# Shared Property Factories
+# ==============================================================================
+
+#' @noRd
+sections_property <- function() {
+  S7::new_property(
+    class = S7::class_list,
+    default = list(),
+    setter = function(self, value) {
+      if (
+        length(value) > 0 &&
+          all(vapply(value, rlang::is_formula, logical(1)))
+      ) {
+        labels <- vapply(
+          value,
+          function(r) {
+            rlang::f_rhs(rlang::eval_tidy(r))
+          },
+          character(1)
+        )
+        # Keep last rule for each label (later rules win)
+        dups <- duplicated(labels, fromLast = TRUE)
+        value <- value[!dups]
+      }
+      self@sections <- value
+      self
+    }
+  )
+}
+
+# ==============================================================================
 # TableSpec S7 Class
 # ==============================================================================
 
@@ -176,6 +207,9 @@ comparison_suffix_columns <- function() {
 #'   are automatically hidden unless explicitly requested via `columns` or
 #'   `add_columns`. Default is TRUE.
 #' @param sections Section rules created with `section_rules()`.
+#' @param section_filter Character vector of section labels to exclude from the
+#'   table. Use `NA` to also exclude rows that don't match any section rule.
+#'   Default is NULL (no filtering). See `set_spec_section_filter()`.
 #' @param row_filter Filter rules created with `filter_rules()`.
 #' @param display_transforms Named list specifying which transforms to apply
 #'   for display. Names are parameter kinds (theta, omega, sigma), values are
@@ -249,25 +283,10 @@ TableSpec <- S7::new_class(
       class = S7::class_logical,
       default = TRUE
     ),
-    sections = S7::new_property(
-      class = S7::class_list,
-      default = list(),
-      setter = function(self, value) {
-        if (length(value) > 0) {
-          labels <- vapply(
-            value,
-            function(r) {
-              rlang::f_rhs(rlang::eval_tidy(r))
-            },
-            character(1)
-          )
-          # Keep last rule for each label (later rules win)
-          dups <- duplicated(labels, fromLast = TRUE)
-          value <- value[!dups]
-        }
-        self@sections <- value
-        self
-      }
+    sections = sections_property(),
+    section_filter = S7::new_property(
+      class = S7::class_character | NULL,
+      default = NULL
     ),
     row_filter = S7::new_property(
       class = S7::class_list,
@@ -487,6 +506,7 @@ TableSpec <- S7::new_class(
     drop_columns = NULL,
     hide_empty_columns = TRUE,
     sections = section_rules(),
+    section_filter = NULL,
     row_filter = filter_rules(),
     display_transforms = list(),
     variability_rules = default_variability_rules(),
@@ -568,6 +588,7 @@ TableSpec <- S7::new_class(
       display_transforms = display_transforms,
       variability_rules = variability_rules,
       sections = sections,
+      section_filter = section_filter,
       row_filter = row_filter,
       columns = columns,
       drop_columns = drop_columns,

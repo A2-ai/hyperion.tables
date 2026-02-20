@@ -106,6 +106,16 @@ test_that("get_spec_sections returns added sections", {
   expect_length(sections, 1)
 })
 
+test_that("get_spec_section_filter returns NULL by default", {
+  expect_null(get_spec_section_filter(TableSpec()))
+  expect_null(get_spec_section_filter(SummarySpec()))
+})
+
+test_that("get_spec_section_filter returns set value", {
+  spec <- TableSpec() |> set_spec_section_filter("Other", NA)
+  expect_equal(get_spec_section_filter(spec), c("Other", NA_character_))
+})
+
 test_that("get_spec_filter returns list", {
   spec <- TableSpec()
   filters <- get_spec_filter(spec)
@@ -165,7 +175,6 @@ test_that("TableSpec-only getters reject SummarySpec", {
 
   expect_error(get_spec_parameter_names(sum_spec), "must be a TableSpec")
   expect_error(get_spec_ci(sum_spec), "must be a TableSpec")
-  expect_error(get_spec_sections(sum_spec), "must be a TableSpec")
   expect_error(get_spec_filter(sum_spec), "must be a TableSpec")
   expect_error(get_spec_transforms(sum_spec), "must be a TableSpec")
   expect_error(get_spec_variability(sum_spec), "must be a TableSpec")
@@ -202,3 +211,4 @@ test_that("get returns what set configured for SummarySpec", {
   expect_equal(get_spec_sigfig(spec), 4)
   expect_equal(get_spec_time_format(spec), "hours")
 })
+

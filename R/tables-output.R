@@ -259,11 +259,8 @@ make_parameter_table <- function(
 ) {
   output <- match.arg(output)
 
-  if (output == "flextable" && !requireNamespace("flextable", quietly = TRUE)) {
-    rlang::abort(paste0(
-      "Package 'flextable' is required for flextable output. ",
-      "Install it with 'rv add flextable'"
-    ))
+  if (output == "flextable") {
+    check_suggested("flextable", reason = "for flextable output.")
   }
 
   # Get table_spec - required for proper formatting

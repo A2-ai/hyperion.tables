@@ -112,6 +112,10 @@ merge_summary_columns <- function(columns, add_columns) {
 #' @param summary_filter Filter rules created with `summary_filter_rules()`.
 #' @param remove_unrun_models Logical. If TRUE (default), models without
 #'   completed runs are excluded from the table.
+#' @param sections Section rules created with `section_rules()`.
+#' @param section_filter Character vector of section labels to exclude from the
+#'   table. Use `NA` to also exclude models that don't match any section rule.
+#'   Default is NULL (no filtering). See `set_spec_section_filter()`.
 #' @param columns Character vector of columns to include. Valid columns:
 #'   "based_on", "description", "n_parameters", "problem",
 #'   "number_data_records", "number_subjects", "number_obs",
@@ -164,6 +168,11 @@ SummarySpec <- S7::new_class(
     remove_unrun_models = S7::new_property(
       class = S7::class_logical,
       default = TRUE
+    ),
+    sections = sections_property(),
+    section_filter = S7::new_property(
+      class = S7::class_character | NULL,
+      default = NULL
     ),
     columns = S7::new_property(
       class = S7::class_character,
@@ -223,6 +232,13 @@ SummarySpec <- S7::new_class(
     )
   ),
   validator = function(self) {
+    if (
+      length(self@sections) > 0 &&
+        !all(vapply(self@sections, rlang::is_formula, logical(1)))
+    ) {
+      return("@section rules must be created with section_rules()")
+    }
+
     valid_fields <- summary_spec_valid_columns()
     columns_msg <- validate_columns_in_set(
       self@columns,
@@ -329,6 +345,8 @@ SummarySpec <- S7::new_class(
     time_format = "seconds",
     pvalue_scientific = FALSE,
     pvalue_threshold = NULL,
+    sections = section_rules(),
+    section_filter = NULL,
     footnote_order = "abbreviations"
   ) {
     columns <- merge_summary_columns(columns, add_columns)
@@ -349,6 +367,8 @@ SummarySpec <- S7::new_class(
       tag_filter = tag_filter,
       pvalue_scientific = pvalue_scientific,
       pvalue_threshold = pvalue_threshold,
+      sections = sections,
+      section_filter = section_filter,
       footnote_order = footnote_order
     )
   }
@@ -401,6 +421,30 @@ apply_summary_spec <- function(tree, spec = SummarySpec()) {
 
   # Build summary data frame (pass metadata for based_on/description)
   df <- build_summary_df(models, sorted_names, metadata_df, spec)
+  needs_dofv <- isTRUE(attr(df, ".needs_dofv"))
+  attr(df, ".needs_dofv") <- NULL
+
+  # Evaluate section rules (before column trim so rule-referenced cols available)
+  if (length(spec@sections) > 0) {
+    df$section <- build_summary_section(df, spec@sections)
+    section_levels <- get_section_order(spec)
+    df$section <- factor(df$section, levels = section_levels)
+    df <- dplyr::arrange(df, .data$section)
+    df$section <- as.character(df$section)
+
+    df <- filter_sections(df, spec)
+  }
+
+  # Drop internal tags column
+
+  df <- dplyr::select(df, -dplyr::any_of("tags"))
+
+  # Select and reorder output columns
+  time_unit <- attr(df, "summary_time_unit")
+  df <- select_output_columns(df, spec, needs_dofv)
+  if (!is.null(time_unit)) {
+    attr(df, "summary_time_unit") <- time_unit
+  }
 
   # Apply summary_filter rules to summary columns
   if (length(spec@summary_filter) > 0) {
@@ -615,7 +659,88 @@ select_output_columns <- function(df, spec, needs_dofv) {
       col_order <- append(col_order, "df", after = pvalue_idx)
     }
   }
-  df[, col_order, drop = FALSE]
+  # Preserve section column for grouped rendering
+  if ("section" %in% names(df) && !"section" %in% col_order) {
+    col_order <- c(col_order, "section")
+  }
+  dplyr::select(df, dplyr::all_of(col_order))
+}
+
+#' Evaluate section rules row-by-row for summary tables
+#'
+#' Uses row-by-row evaluation (not vectorized case_when) to support
+#' list-column fields like `tags`. For each row, unwraps list columns
+#' to their element, evaluates each rule's LHS; first match wins.
+#'
+#' @param df Data frame with all columns available for rule evaluation
+#' @param rules List of quosures containing formulas
+#' @return Character vector of section labels (NA for unmatched)
+#' @noRd
+build_summary_section <- function(df, rules) {
+  if (length(rules) == 0) {
+    return(rep(NA_character_, nrow(df)))
+  }
+
+  # Pre-evaluate quosures to formulas
+  formulas <- lapply(rules, function(q) rlang::eval_tidy(q))
+  is_catchall <- vapply(
+    formulas,
+    function(f) identical(rlang::f_lhs(f), TRUE),
+    logical(1)
+  )
+
+  multi_match_msgs <- character(0)
+
+  result <- vapply(
+    seq_len(nrow(df)),
+    function(i) {
+      # Build a row environment: unwrap list columns to their element
+      row_env <- new.env(parent = parent.frame())
+      for (col in names(df)) {
+        val <- df[[col]][[i]]
+        assign(col, val, envir = row_env)
+      }
+
+      first_match <- NA_character_
+      matched_labels <- character(0)
+
+      for (j in seq_along(formulas)) {
+        f <- formulas[[j]]
+        lhs <- rlang::f_lhs(f)
+        res <- tryCatch(
+          eval(lhs, envir = row_env),
+          error = function(e) FALSE
+        )
+        if (isTRUE(res)) {
+          label <- rlang::f_rhs(f)
+          if (is.na(first_match)) first_match <- label
+          if (!is_catchall[j]) matched_labels <- c(matched_labels, label)
+        }
+      }
+
+      if (length(matched_labels) > 1) {
+        row_id <- if ("model" %in% names(df)) df$model[i] else as.character(i)
+        multi_match_msgs[[length(multi_match_msgs) + 1]] <<- sprintf(
+          "'%s' matches: %s (using '%s')",
+          row_id,
+          paste(sprintf("'%s'", matched_labels), collapse = ", "),
+          first_match
+        )
+      }
+
+      first_match
+    },
+    character(1)
+  )
+
+  if (length(multi_match_msgs) > 0) {
+    rlang::warn(c(
+      "Models matched multiple section rules; first match used:",
+      stats::setNames(multi_match_msgs, rep("*", length(multi_match_msgs)))
+    ))
+  }
+
+  result
 }
 
 #' Build summary data frame from loaded models
@@ -657,7 +782,8 @@ build_summary_df <- function(models, model_names, metadata_df, spec) {
     row <- list(
       model = tools::file_path_sans_ext(basename(name)),
       .name = name,
-      .unrun = is.null(mod) || !identical(attr(mod, "run_status"), "run")
+      .unrun = is.null(mod) || !identical(attr(mod, "run_status"), "run"),
+      tags = I(list(metadata_df$tags[[meta_idx[i]]]))
     )
 
     # Metadata columns (from tree, not model)
@@ -778,11 +904,7 @@ build_summary_df <- function(models, model_names, metadata_df, spec) {
   }
 
   df <- format_time_columns(df, spec)
-  time_unit <- attr(df, "summary_time_unit")
-  df <- select_output_columns(df, spec, needs_dofv)
-  if (!is.null(time_unit)) {
-    attr(df, "summary_time_unit") <- time_unit
-  }
+  attr(df, ".needs_dofv") <- needs_dofv
 
   df
 }
@@ -1010,11 +1132,8 @@ make_summary_table <- function(
 ) {
   output <- match.arg(output)
 
-  if (output == "flextable" && !requireNamespace("flextable", quietly = TRUE)) {
-    rlang::abort(paste0(
-      "Package 'flextable' is required for flextable output. ",
-      "Install it with 'rv add flextable'"
-    ))
+  if (output == "flextable") {
+    check_suggested("flextable", reason = "for flextable output.")
   }
 
   spec <- attr(data, "summary_spec")
