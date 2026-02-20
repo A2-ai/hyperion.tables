@@ -310,6 +310,19 @@ test_that("set_spec_tag_filter works", {
   expect_equal(spec@tag_filter, c("final", "approved"))
 })
 
+test_that("set_spec_tag_filter exclude works", {
+  spec <- SummarySpec() |> set_spec_tag_filter(exclude = "failed")
+  expect_null(spec@tag_filter)
+  expect_equal(spec@tag_exclude, "failed")
+})
+
+test_that("set_spec_tag_filter sets both tags and exclude", {
+  spec <- SummarySpec() |>
+    set_spec_tag_filter(tags = c("final", "approved"), exclude = "failed")
+  expect_equal(spec@tag_filter, c("final", "approved"))
+  expect_equal(spec@tag_exclude, "failed")
+})
+
 test_that("set_spec_remove_unrun works", {
   spec <- SummarySpec() |> set_spec_remove_unrun(FALSE)
   expect_false(spec@remove_unrun_models)

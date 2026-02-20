@@ -543,15 +543,23 @@ set_spec_models <- function(spec, models) {
 #' Filters which models appear in the summary table by tags.
 #'
 #' @param spec A SummarySpec object
-#' @param tags Character vector of tags to filter by, or NULL for no filtering
+#' @param tags Character vector of tags to include, or NULL for no inclusion
+#'   filter. Only models with at least one matching tag are kept.
+#' @param exclude Character vector of tags to exclude, or NULL for no exclusion
+#'   filter. Models with any matching tag are removed. Applied after `tags`.
 #' @return Modified spec
 #' @export
 #' @examples
 #' spec <- SummarySpec() |>
 #'   set_spec_tag_filter(c("final", "approved"))
-set_spec_tag_filter <- function(spec, tags) {
+#'
+#' # Exclude models tagged "failed"
+#' spec <- SummarySpec() |>
+#'   set_spec_tag_filter(exclude = "failed")
+set_spec_tag_filter <- function(spec, tags, exclude) {
   assert_summary_spec(spec)
-  spec@tag_filter <- tags
+  if (!missing(tags)) spec@tag_filter <- tags
+  if (!missing(exclude)) spec@tag_exclude <- exclude
   spec
 }
 

@@ -109,6 +109,8 @@ merge_summary_columns <- function(columns, add_columns) {
 #'   table (with or without .mod/.ctl extensions), or NULL (default).
 #' @param tag_filter Character vector of tags, or NULL (default). Only models
 #'   with at least one matching tag are included.
+#' @param tag_exclude Character vector of tags to exclude, or NULL (default).
+#'   Models with any matching tag are removed. Applied after tag_filter.
 #' @param summary_filter Filter rules created with `summary_filter_rules()`.
 #' @param remove_unrun_models Logical. If TRUE (default), models without
 #'   completed runs are excluded from the table.
@@ -158,6 +160,10 @@ SummarySpec <- S7::new_class(
       default = NULL
     ),
     tag_filter = S7::new_property(
+      class = S7::class_character | NULL,
+      default = NULL
+    ),
+    tag_exclude = S7::new_property(
       class = S7::class_character | NULL,
       default = NULL
     ),
@@ -334,6 +340,7 @@ SummarySpec <- S7::new_class(
     title = "Run Summary",
     models_to_include = NULL,
     tag_filter = NULL,
+    tag_exclude = NULL,
     summary_filter = summary_filter_rules(),
     remove_unrun_models = TRUE,
     columns = NULL,
@@ -365,6 +372,7 @@ SummarySpec <- S7::new_class(
       hide_empty_columns = hide_empty_columns,
       remove_unrun_models = remove_unrun_models,
       tag_filter = tag_filter,
+      tag_exclude = tag_exclude,
       pvalue_scientific = pvalue_scientific,
       pvalue_threshold = pvalue_threshold,
       sections = sections,
@@ -473,6 +481,13 @@ filter_metadata <- function(metadata_df, spec) {
       dplyr::ungroup()
   }
 
+  if (!is.null(spec@tag_exclude)) {
+    metadata_df <- metadata_df |>
+      dplyr::rowwise() |>
+      dplyr::filter(!any(spec@tag_exclude %in% .data$tags)) |>
+      dplyr::ungroup()
+  }
+
   if (!is.null(spec@models_to_include)) {
     include_stems <- tolower(tools::file_path_sans_ext(spec@models_to_include))
     metadata_df <- metadata_df |>
@@ -487,6 +502,12 @@ filter_metadata <- function(metadata_df, spec) {
       parts <- c(
         parts,
         sprintf("tag_filter: %s", paste(spec@tag_filter, collapse = ", "))
+      )
+    }
+    if (!is.null(spec@tag_exclude)) {
+      parts <- c(
+        parts,
+        sprintf("tag_exclude: %s", paste(spec@tag_exclude, collapse = ", "))
       )
     }
     if (!is.null(spec@models_to_include)) {
