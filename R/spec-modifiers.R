@@ -243,6 +243,35 @@ set_spec_footnotes <- function(spec, order) {
   spec
 }
 
+#' Set section filter for a spec
+#'
+#' Filters out rows belonging to specified sections. Use `NA` to also
+#' filter unmatched rows (those that didn't match any section rule).
+#'
+#' @param spec A TableSpec or SummarySpec object
+#' @param ... Section labels to exclude. Pass `NA` to exclude unmatched rows.
+#'   Call with no arguments to clear the filter.
+#' @return Modified spec
+#' @export
+#' @examples
+#' spec <- SummarySpec(
+#'   sections = section_rules(
+#'     "base" %in% tags ~ "Base Models",
+#'     TRUE ~ "Other"
+#'   )
+#' ) |>
+#'   set_spec_section_filter("Other")
+set_spec_section_filter <- function(spec, ...) {
+  assert_any_spec(spec)
+  values <- c(...)
+  if (length(values) == 0) {
+    spec@section_filter <- NULL
+  } else {
+    spec@section_filter <- as.character(values)
+  }
+  spec
+}
+
 # ==============================================================================
 # TableSpec-Only Setters
 # ==============================================================================
@@ -378,12 +407,18 @@ set_spec_transforms <- function(
 # TableSpec Rule Modifiers
 # ==============================================================================
 
-#' Set section rules for a TableSpec
+#' Set section rules for a spec
 #'
-#' Controls how parameters are grouped into sections. Pass formula expressions
-#' like `kind == "THETA" ~ "Structural Parameters"`.
+#' Controls how rows are grouped into sections. Pass formula expressions
+#' where the LHS is a condition and the RHS is the section label.
 #'
-#' @param spec A TableSpec object
+#' For TableSpec, rules are evaluated against parameter columns
+#' (e.g., `kind == "THETA" ~ "Structural Parameters"`).
+#'
+#' For SummarySpec, rules are evaluated row-by-row against summary columns
+#' including `tags` (e.g., `"base" %in% tags ~ "Base Models"`).
+#'
+#' @param spec A TableSpec or SummarySpec object
 #' @param ... Section rule formulas
 #' @param overwrite If FALSE (default), append to existing rules.
 #'   If TRUE, replace all existing rules.
@@ -396,7 +431,7 @@ set_spec_transforms <- function(
 #'     kind == "OMEGA" ~ "IIV"
 #'   )
 set_spec_sections <- function(spec, ..., overwrite = FALSE) {
-  assert_table_spec(spec)
+  assert_any_spec(spec)
 
   new_rules <- section_rules(...)
   if (overwrite) {

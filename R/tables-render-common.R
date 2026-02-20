@@ -40,7 +40,7 @@ apply_formatting <- function(table) {
   if (!is.null(groupname_col)) {
     data_cols <- union(groupname_col, data_cols)
   }
-  data[, data_cols, drop = FALSE]
+  dplyr::select(data, dplyr::all_of(data_cols))
 }
 
 #' @noRd
@@ -127,7 +127,7 @@ apply_summary_render_overrides <- function(table, data, numeric_cols) {
       character(1)
     )
     if (merge_df && "df" %in% names(data)) {
-      data$df <- NULL
+      data <- dplyr::select(data, -dplyr::all_of("df"))
     }
   }
 
@@ -218,7 +218,7 @@ merge_ci_columns_data <- function(
     )
 
     data[[ci_low]] <- merged_values
-    data[[ci_high]] <- NULL
+    data <- dplyr::select(data, -dplyr::all_of(ci_high))
   }
 
   data

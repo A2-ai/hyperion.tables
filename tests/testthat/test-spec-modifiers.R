@@ -151,6 +151,21 @@ test_that("set_spec_footnotes validates sections", {
   )
 })
 
+test_that("set_spec_section_filter works for both specs", {
+  table_spec <- TableSpec() |> set_spec_section_filter("Other")
+  expect_equal(table_spec@section_filter, "Other")
+
+  sum_spec <- SummarySpec() |> set_spec_section_filter("Other", NA)
+  expect_equal(sum_spec@section_filter, c("Other", NA_character_))
+})
+
+test_that("set_spec_section_filter clears with no args", {
+  spec <- SummarySpec() |>
+    set_spec_section_filter("Other") |>
+    set_spec_section_filter()
+  expect_null(spec@section_filter)
+})
+
 # ==============================================================================
 # TableSpec-Only Setters
 # ==============================================================================
@@ -393,10 +408,6 @@ test_that("TableSpec-only functions reject SummarySpec", {
   expect_error(set_spec_missing(sum_spec, "-"), "must be a TableSpec")
   expect_error(
     set_spec_transforms(sum_spec, theta = "all"),
-    "must be a TableSpec"
-  )
-  expect_error(
-    set_spec_sections(sum_spec, kind == "THETA" ~ "T"),
     "must be a TableSpec"
   )
   expect_error(set_spec_filter(sum_spec, !fixed), "must be a TableSpec")

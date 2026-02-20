@@ -2,12 +2,12 @@
 % Please edit documentation in R/spec-modifiers.R
 \name{set_spec_sections}
 \alias{set_spec_sections}
-\title{Set section rules for a TableSpec}
+\title{Set section rules for a spec}
 \usage{
 set_spec_sections(spec, ..., overwrite = FALSE)
 }
 \arguments{
-\item{spec}{A TableSpec object}
+\item{spec}{A TableSpec or SummarySpec object}
 
 \item{...}{Section rule formulas}
 
@@ -18,8 +18,15 @@ If TRUE, replace all existing rules.}
 Modified spec
 }
 \description{
-Controls how parameters are grouped into sections. Pass formula expressions
-like \code{kind == "THETA" ~ "Structural Parameters"}.
+Controls how rows are grouped into sections. Pass formula expressions
+where the LHS is a condition and the RHS is the section label.
+}
+\details{
+For TableSpec, rules are evaluated against parameter columns
+(e.g., \code{kind == "THETA" ~ "Structural Parameters"}).
+
+For SummarySpec, rules are evaluated row-by-row against summary columns
+including \code{tags} (e.g., \code{"base" \%in\% tags ~ "Base Models"}).
 }
 \examples{
 spec <- TableSpec() |>

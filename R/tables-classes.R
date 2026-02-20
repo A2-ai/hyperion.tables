@@ -412,10 +412,18 @@ hyperion_summary_table <- function(data, spec) {
     names(data)
   )
 
+  # Determine section grouping
+  has_sections <- "section" %in% names(data) && !all(is.na(data$section))
+  groupname_col <- if (has_sections) "section" else NULL
+  bold_locs <- c("column_labels", "title")
+  if (has_sections) {
+    bold_locs <- c(bold_locs, "row_groups")
+  }
+
   HyperionTable(
     data = data,
     table_type = "summary",
-    groupname_col = NULL,
+    groupname_col = groupname_col,
     hide_cols = empty_cols,
     col_labels = label_map,
     title = spec@title,
@@ -424,7 +432,7 @@ hyperion_summary_table <- function(data, spec) {
     n_sigfig = spec@n_sigfig,
     ci_merges = list(),
     ci_missing_rows = integer(0),
-    bold_locations = c("column_labels", "title"),
+    bold_locations = bold_locs,
     borders = list(),
     footnotes = footnotes,
     source_spec = spec

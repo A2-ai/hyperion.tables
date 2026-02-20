@@ -13,6 +13,11 @@ render_to_gt <- function(table) {
   if (!S7::S7_inherits(table, HyperionTable)) {
     rlang::abort("table must be a HyperionTable object")
   }
+  check_suggested(
+    "katex",
+    reason = "to render LaTeX symbols in gt tables.",
+    severity = "warn"
+  )
   data <- apply_formatting(table)
   visible_cols <- names(data)
   groupname_col <- normalize_groupname_col(table@groupname_col, names(data))

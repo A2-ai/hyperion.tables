@@ -392,7 +392,10 @@ compute_comparison_model_cols <- function(
 
   desired_cols <- c("name", unlist(model_cols, use.names = FALSE))
   remaining_cols <- setdiff(names(comparison), desired_cols)
-  comparison <- comparison[, c(desired_cols, remaining_cols), drop = FALSE]
+  comparison <- dplyr::select(
+    comparison,
+    dplyr::all_of(c(desired_cols, remaining_cols))
+  )
 
   list(comparison = comparison, model_cols = model_cols)
 }
@@ -538,7 +541,7 @@ prepare_comparison_table_data <- function(
 
   if ("section" %in% names(comparison) && !all(is.na(comparison$section))) {
     if (!is.null(spec) && length(spec@sections) > 0) {
-      section_levels <- get_section_order(spec)
+      section_levels <- unique(get_section_order(spec))
       comparison <- comparison |>
         dplyr::mutate(
           .appear_order = dplyr::row_number(),

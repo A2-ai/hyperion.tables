@@ -1,3 +1,18 @@
+# hyperion.tables 0.3.0
+
+## New Features
+
+* **Section rules for summary tables.** `section_rules()` / `set_spec_sections()` now work with `SummarySpec`, enabling model grouping in summary tables (e.g., `"base" %in% tags ~ "Base Models"`). Rules are evaluated row-by-row to support list columns like `tags`.
+* **Section filtering.** `set_spec_section_filter()` excludes entire sections from both parameter and summary tables. Pass `NA` to also remove rows that didn't match any section rule.
+* `set_spec_sections()` promoted from TableSpec-only to a common modifier that works on both `TableSpec` and `SummarySpec`.
+* `get_spec_section_filter()` getter for reading the current section filter.
+
+## Bug Fixes
+
+* Fixed crash when multiple section rules mapped to the same label (e.g., two rules both producing `"Base Models"`). Duplicate factor levels are now deduplicated before ordering.
+* Multi-match section warning now only fires when a row matches rules with genuinely different labels. Same-label multi-match (intentional overlap) no longer warns.
+* `katex` moved back to Suggests (from Imports) with a one-time warning when missing, instead of aborting `render_to_gt()`.
+
 # hyperion.tables 0.2.1
 * Updated katex dep from suggests to imports
 

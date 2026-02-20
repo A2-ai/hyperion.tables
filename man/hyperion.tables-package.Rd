@@ -60,6 +60,7 @@ Functions for reading spec properties:
 \item \code{\link[=get_spec_ci]{get_spec_ci()}} - Get CI options from a TableSpec
 \item \code{\link[=get_spec_parameter_names]{get_spec_parameter_names()}} - Get parameter name options
 \item \code{\link[=get_spec_sections]{get_spec_sections()}} - Get section rules
+\item \code{\link[=get_spec_section_filter]{get_spec_section_filter()}} - Get section filter function
 \item \code{\link[=get_spec_filter]{get_spec_filter()}} - Get row filter rules
 \item \code{\link[=get_spec_transforms]{get_spec_transforms()}} - Get display transforms
 \item \code{\link[=get_spec_variability]{get_spec_variability()}} - Get variability rules
@@ -87,6 +88,8 @@ Functions that work on both TableSpec and SummarySpec:
 \item \code{\link[=set_spec_hide_empty]{set_spec_hide_empty()}} - Control empty column hiding
 \item \code{\link[=set_spec_pvalue]{set_spec_pvalue()}} - Set p-value formatting
 \item \code{\link[=set_spec_footnotes]{set_spec_footnotes()}} - Set footnote order
+\item \code{\link[=set_spec_sections]{set_spec_sections()}} - Set section grouping rules
+\item \code{\link[=set_spec_section_filter]{set_spec_section_filter()}} - Set section filter function
 }
 }
 
@@ -98,7 +101,6 @@ Functions specific to TableSpec:
 \item \code{\link[=set_spec_ci]{set_spec_ci()}} - Set confidence interval options
 \item \code{\link[=set_spec_missing]{set_spec_missing()}} - Set missing value handling
 \item \code{\link[=set_spec_transforms]{set_spec_transforms()}} - Set display transforms by parameter kind
-\item \code{\link[=set_spec_sections]{set_spec_sections()}} - Set section grouping rules
 \item \code{\link[=set_spec_filter]{set_spec_filter()}} - Set row filter rules
 \item \code{\link[=set_spec_variability]{set_spec_variability()}} - Set variability display rules
 }

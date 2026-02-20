@@ -13,9 +13,12 @@ render_to_flextable <- function(table) {
   if (!S7::S7_inherits(table, HyperionTable)) {
     rlang::abort("table must be a HyperionTable object")
   }
-  if (!requireNamespace("flextable", quietly = TRUE)) {
-    rlang::abort("Package 'flextable' is required for render_to_flextable()")
-  }
+  check_suggested("flextable", reason = "to render flextable tables.")
+  check_suggested(
+    "equatags",
+    reason = "to render LaTeX symbols in flextable tables.",
+    severity = "warn"
+  )
 
   data <- apply_formatting(table)
   visible_cols <- names(data)
@@ -392,9 +395,9 @@ apply_flextable_footnotes <- function(ft, table) {
     content <- fn$content
 
     # Check if this footnote contains equations and we can render them
-    has_equations <- fn$is_markdown && grepl("\\$", content)
+    has_equations <- use_equations && fn$is_markdown && grepl("\\$", content)
 
-    if (has_equations && use_equations) {
+    if (has_equations) {
       # Build equation string with \text{} for non-math parts
       equation_str <- convert_to_single_equation(content)
 

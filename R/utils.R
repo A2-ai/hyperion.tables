@@ -15,6 +15,28 @@ NULL
   if (is.null(x)) y else x
 }
 
+#' Check that a suggested package is installed
+#'
+#' @param pkg Package name
+#' @param reason Why the package is needed (appended to error message)
+#' @noRd
+check_suggested <- function(pkg, reason = NULL, severity = c("abort", "warn")) {
+  if (requireNamespace(pkg, quietly = TRUE)) return(invisible())
+  severity <- match.arg(severity)
+  msg <- paste0("Package '", pkg, "' is required")
+  if (!is.null(reason)) msg <- paste(msg, reason)
+  full_msg <- paste0(msg, "\nInstall it with: rv add ", pkg)
+  if (severity == "warn") {
+    rlang::warn(
+      full_msg,
+      .frequency = "once",
+      .frequency_id = paste0(pkg, "_missing")
+    )
+  } else {
+    rlang::abort(full_msg)
+  }
+}
+
 
 #' Validate p-value threshold
 #'

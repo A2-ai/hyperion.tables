@@ -156,7 +156,7 @@ expand_ci_drop_columns <- function(drop_columns) {
 }
 
 order_sections <- function(params, spec) {
-  section_levels <- get_section_order(spec)
+  section_levels <- unique(get_section_order(spec))
 
   internal_cols <- c(
     "section",
@@ -259,11 +259,8 @@ make_parameter_table <- function(
 ) {
   output <- match.arg(output)
 
-  if (output == "flextable" && !requireNamespace("flextable", quietly = TRUE)) {
-    rlang::abort(paste0(
-      "Package 'flextable' is required for flextable output. ",
-      "Install it with 'rv add flextable'"
-    ))
+  if (output == "flextable") {
+    check_suggested("flextable", reason = "for flextable output.")
   }
 
   # Get table_spec - required for proper formatting

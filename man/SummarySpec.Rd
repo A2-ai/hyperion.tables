@@ -19,6 +19,8 @@ SummarySpec(
   time_format = "seconds",
   pvalue_scientific = FALSE,
   pvalue_threshold = NULL,
+  sections = section_rules(),
+  section_filter = NULL,
   footnote_order = "abbreviations"
 )
 }
@@ -70,6 +72,12 @@ from n_sigfig.}
 
 \item{pvalue_threshold}{Numeric or NULL. If set, p-values below this threshold
 are displayed as "< threshold" (e.g., "< 0.05"). Default is NULL (no threshold).}
+
+\item{sections}{Section rules created with \code{section_rules()}.}
+
+\item{section_filter}{Character vector of section labels to exclude from the
+table. Use \code{NA} to also exclude models that don't match any section rule.
+Default is NULL (no filtering). See \code{set_spec_section_filter()}.}
 
 \item{footnote_order}{Character vector controlling the order of footnote sections,
 or NULL to disable footnotes. Valid value for SummarySpec: "abbreviations".
