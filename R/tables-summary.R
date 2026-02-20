@@ -456,7 +456,7 @@ apply_summary_spec <- function(tree, spec = SummarySpec()) {
 
   # Apply drop_columns
   if (!is.null(spec@drop_columns)) {
-    df <- dplyr::select(df, -dplyr::all_of(spec@drop_columns))
+    df <- dplyr::select(df, -dplyr::any_of(spec@drop_columns))
   }
 
   attr(df, "summary_spec") <- spec

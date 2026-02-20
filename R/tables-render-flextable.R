@@ -16,7 +16,8 @@ render_to_flextable <- function(table) {
   check_suggested("flextable", reason = "to render flextable tables.")
   check_suggested(
     "equatags",
-    reason = "to render LaTeX symbols in flextable tables."
+    reason = "to render LaTeX symbols in flextable tables.",
+    severity = "warn"
   )
 
   data <- apply_formatting(table)
@@ -176,6 +177,7 @@ render_symbol_equations <- function(
   row_indices = NULL
 ) {
   if (is.null(original_symbol)) return(ft)
+  if (!requireNamespace("equatags", quietly = TRUE)) return(ft)
 
   col_idx <- which(names(ft$body$dataset) == symbol_col)
   if (length(col_idx) == 0) return(ft)
@@ -387,11 +389,13 @@ apply_flextable_borders <- function(ft, table, visible_cols) {
 #' @return flextable object with footnotes applied
 #' @noRd
 apply_flextable_footnotes <- function(ft, table) {
+  use_equations <- requireNamespace("equatags", quietly = TRUE)
+
   for (fn in table@footnotes) {
     content <- fn$content
 
-    # Check if this footnote contains equations
-    has_equations <- fn$is_markdown && grepl("\\$", content)
+    # Check if this footnote contains equations and we can render them
+    has_equations <- use_equations && fn$is_markdown && grepl("\\$", content)
 
     if (has_equations) {
       # Build equation string with \text{} for non-math parts
