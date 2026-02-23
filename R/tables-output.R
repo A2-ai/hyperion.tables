@@ -255,7 +255,7 @@ order_sections <- function(params, spec) {
 #' @export
 make_parameter_table <- function(
   params,
-  output = c("gt", "flextable", "data")
+  output = c("gt", "flextable", "image", "data")
 ) {
   output <- match.arg(output)
 
@@ -278,14 +278,16 @@ make_parameter_table <- function(
   htable <- hyperion_parameter_table(layout$params, layout, spec)
 
   # Return based on output format
-  if (output == "data") {
-    return(htable)
-  } else if (output == "flextable") {
-    return(render_to_flextable(htable))
-  }
-
-  # Default: gt output
-  render_to_gt(htable)
+  return(
+    switch(
+      output,
+      data = htable,
+      flextable = render_to_flextable(htable),
+      image = render_to_image(htable),
+      # default
+      render_to_gt(htable)
+    )
+  )
 }
 
 #' Render parameter table as gt (internal)

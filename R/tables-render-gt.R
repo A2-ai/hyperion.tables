@@ -239,3 +239,46 @@ apply_gt_footnotes <- function(gt_table, table) {
   }
   gt_table
 }
+
+#' Render htable to image for quarto chunk output
+#' @noRd
+render_to_image <- function(table) {
+  if (!S7::S7_inherits(table, HyperionTable)) {
+    rlang::abort("table must be a HyperionTable object")
+  }
+
+  check_suggested(
+    "katex",
+    reason = "to render LaTeX symbols in gt tables.",
+    severity = "warn"
+  )
+
+  knitting <- isTRUE(getOption("knitr.in.progress"))
+
+  if (knitting) {
+    html_path <- knitr::fig_path(ext = "html")
+    png_path <- knitr::fig_path(ext = "png")
+  } else {
+    html_path <- tempfile("hyperion-table-", fileext = ".html")
+    png_path <- tempfile("hyperion-table-", fileext = ".png")
+  }
+
+  gt::gtsave(render_to_gt(table), filename = html_path, inline_css = TRUE)
+
+  webshot2::webshot(
+    url = paste0("file://", normalizePath(html_path)),
+    file = png_path,
+    selector = "table.gt_table",
+    vwidth = 4000,
+    vheight = 3000,
+    zoom = 2,
+    delay = 3,
+    quiet = TRUE
+  )
+
+  if (knitting) {
+    return(knitr::include_graphics(png_path))
+  }
+
+  png_path
+}
