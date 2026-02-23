@@ -180,7 +180,7 @@ order_sections <- function(params, spec) {
   if (length(add_cols) > 0) {
     select_cols <- unique(c(select_cols, add_cols))
   }
-  if ("description" %in% select_cols) {
+  if ("description" %in% select_cols && !spec@.columns_provided) {
     select_cols <- c(
       "name",
       "description",
