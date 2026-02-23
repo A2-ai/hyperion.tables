@@ -4,7 +4,7 @@
 \alias{make_parameter_table}
 \title{Build parameter table}
 \usage{
-make_parameter_table(params, output = c("gt", "flextable", "data"))
+make_parameter_table(params, output = c("gt", "flextable", "image", "data"))
 }
 \arguments{
 \item{params}{Parameter data frame from \code{get_parameters()} or enriched via
