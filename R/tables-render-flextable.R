@@ -657,15 +657,11 @@ render_to_image.flextable <- function(table, path = NULL) {
   # Intermediate HTML is always temp.
   html_path <- tempfile("hyperion-table-", fileext = ".html")
 
-  # Determine PNG destination.
-  if (!is.null(path)) {
-    png_path <- path
-    dir.create(dirname(png_path), recursive = TRUE, showWarnings = FALSE)
-  } else if (isTRUE(getOption("knitr.in.progress"))) {
+  # PNG for display (knitr-relative or temp).
+  if (isTRUE(getOption("knitr.in.progress"))) {
     png_path <- knitr::fig_path(suffix = ".png")
     dir.create(dirname(png_path), recursive = TRUE, showWarnings = FALSE)
   } else {
-    # Non-knitr fallback for interactive use.
     png_path <- tempfile("hyperion-table-", fileext = ".png")
   }
 
@@ -691,6 +687,11 @@ render_to_image.flextable <- function(table, path = NULL) {
     quiet = TRUE,
     zoom = 1
   )
+
+  if (!is.null(path)) {
+    dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+    file.copy(png_path, path, overwrite = TRUE)
+  }
 
   knitr::include_graphics(png_path)
 }
