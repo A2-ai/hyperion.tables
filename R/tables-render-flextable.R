@@ -629,3 +629,56 @@ convert_footnote_to_text <- function(content) {
 
   result
 }
+
+#' Render htable to image for quarto/knitr output
+#' @noRd
+render_ft_to_image <- function(table) {
+  check_suggested("webshot2", reason = "for image output.")
+  check_suggested(
+    "equatags",
+    reason = "to render LaTeX symbols in flextable tables.",
+    severity = "warn"
+  )
+  check_suggested(
+    "htmltools",
+    reason = "to save intermediary html file for equation rendering",
+    severity = "warn"
+  )
+
+  # Intermediate HTML is always temp.
+  html_path <- tempfile("hyperion-table-", fileext = ".html")
+
+  # Final PNG must be in knitr/quarto figure path so it is carried into output.
+  if (isTRUE(getOption("knitr.in.progress"))) {
+    png_path <- knitr::fig_path(suffix = ".png")
+    dir.create(dirname(png_path), recursive = TRUE, showWarnings = FALSE)
+  } else {
+    # Non-knitr fallback for interactive use.
+    png_path <- tempfile("hyperion-table-", fileext = ".png")
+  }
+
+  html_tag <- flextable::htmltools_value(table)
+  # Inject CSS to ensure white background and prevent the shadow host div
+  # (created by tabwid.js) from stretching to full viewport width
+  custom_css <- htmltools::tags$style(
+    "body { background-color: white; }
+     .flextable-shadow-host { display: inline-block; }"
+  )
+
+  # Bundle the custom CSS and the flextable HTML together
+  html_content <- htmltools::tagList(custom_css, html_tag)
+  htmltools::save_html(html_content, file = html_path)
+
+  webshot2::webshot(
+    url = html_path,
+    file = png_path,
+    selector = "div.flextable-shadow-host",
+    delay = 1, # Allow time for KaTeX CSS to load from CDN
+    vwidth = 4000,
+    vheight = 3000,
+    quiet = TRUE,
+    zoom =  1
+  )
+
+  return(knitr::include_graphics(png_path))
+}

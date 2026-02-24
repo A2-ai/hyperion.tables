@@ -248,14 +248,17 @@ order_sections <- function(params, spec) {
 #'   `apply_table_spec()`
 #' @param output Output format: "gt" (default), "flextable", or "data" for
 #'   the intermediate HyperionTable object.
+#' @param image logical, if TRUE then output will be image of table. output must be
+#'   "gt" or "flextable"
 #'
 #' @importFrom rlang .data
 #'
 #' @return A gt table, flextable, or HyperionTable object depending on `output`
 #' @export
 make_parameter_table <- function(
-  params,
-  output = c("gt", "flextable", "image", "data")
+    params,
+    output = c("gt", "flextable", "image"),
+    image = FALSE
 ) {
   output <- match.arg(output)
 
@@ -278,27 +281,23 @@ make_parameter_table <- function(
   htable <- hyperion_parameter_table(layout$params, layout, spec)
 
   # Return based on output format
-  return(
+
+  table <- switch(
+    output,
+    data = htable,
+    flextable = render_to_flextable(htable),
+    # default
+    render_to_gt(htable)
+  )
+
+  if (isTRUE(image)) {
     switch(
       output,
-      data = htable,
-      flextable = render_to_flextable(htable),
-      image = render_gt_to_image(htable),
-      # default
-      render_to_gt(htable)
+      gt = render_gt_to_image(table),
+      flextable = render_ft_to_image(table),
+      rlang::abort("Must use output = 'gt' or 'flextable' with image = TRUE")
     )
-  )
-}
-
-#' Render parameter table as gt (internal)
-#'
-#' Preserves the original gt rendering logic for backwards compatibility.
-#'
-#' @param layout List from prepare_parameter_table_data()
-#' @param spec TableSpec object
-#' @return gt table object
-#' @noRd
-render_gt_parameter_table <- function(layout, spec) {
-  htable <- hyperion_parameter_table(layout$params, layout, spec)
-  render_to_gt(htable)
+  } else {
+    return(table)
+  }
 }

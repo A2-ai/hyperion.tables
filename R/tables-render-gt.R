@@ -243,10 +243,6 @@ apply_gt_footnotes <- function(gt_table, table) {
 #' Render htable to image for quarto/knitr output
 #' @noRd
 render_gt_to_image <- function(table) {
-  if (!S7::S7_inherits(table, HyperionTable)) {
-    rlang::abort("table must be a HyperionTable object")
-  }
-
   check_suggested("webshot2", reason = "for image output.")
   check_suggested(
     "katex",
@@ -273,7 +269,7 @@ render_gt_to_image <- function(table) {
     if (!is.na(old_quarto)) Sys.setenv(QUARTO_BIN_PATH = old_quarto)
   }, add = TRUE)
 
-  render_to_gt(table) |>
+  table |>
     gt::gtsave(filename = html_path)
 
   webshot2::webshot(
@@ -284,7 +280,6 @@ render_gt_to_image <- function(table) {
     vheight = 3000,
     zoom = 1,
     delay = 1,
-
     quiet = TRUE
   )
 

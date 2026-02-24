@@ -4,7 +4,11 @@
 \alias{make_parameter_table}
 \title{Build parameter table}
 \usage{
-make_parameter_table(params, output = c("gt", "flextable", "image", "data"))
+make_parameter_table(
+  params,
+  output = c("gt", "flextable", "image"),
+  image = FALSE
+)
 }
 \arguments{
 \item{params}{Parameter data frame from \code{get_parameters()} or enriched via
@@ -12,6 +16,9 @@ make_parameter_table(params, output = c("gt", "flextable", "image", "data"))
 
 \item{output}{Output format: "gt" (default), "flextable", or "data" for
 the intermediate HyperionTable object.}
+
+\item{image}{logical, if TRUE then output will be image of table. output must be
+"gt" or "flextable"}
 }
 \value{
 A gt table, flextable, or HyperionTable object depending on \code{output}
