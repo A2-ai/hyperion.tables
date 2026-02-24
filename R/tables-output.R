@@ -256,9 +256,9 @@ order_sections <- function(params, spec) {
 #' @return A gt table, flextable, or HyperionTable object depending on `output`
 #' @export
 make_parameter_table <- function(
-    params,
-    output = c("gt", "flextable", "image"),
-    image = FALSE
+  params,
+  output = c("gt", "flextable", "data"),
+  image = FALSE
 ) {
   output <- match.arg(output)
 
@@ -290,14 +290,26 @@ make_parameter_table <- function(
     render_to_gt(htable)
   )
 
-  if (isTRUE(image)) {
-    switch(
-      output,
-      gt = render_gt_to_image(table),
-      flextable = render_ft_to_image(table),
-      rlang::abort("Must use output = 'gt' or 'flextable' with image = TRUE")
-    )
-  } else {
+  if (!isTRUE(image)) {
     return(table)
   }
+
+  if (output == "data") {
+    rlang::warn("image = TRUE ignored when output = 'data'")
+    return(table)
+  }
+
+  render_to_image(table)
+}
+
+#' Render a table object to an image
+#'
+#' S3 generic that dispatches on the table class (gt_tbl or flextable).
+#' Methods live in tables-render-gt.R and tables-render-flextable.R.
+#'
+#' @param table A gt or flextable table object
+#' @return A knitr image inclusion object
+#' @noRd
+render_to_image <- function(table) {
+  UseMethod("render_to_image")
 }

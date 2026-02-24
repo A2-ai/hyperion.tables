@@ -632,7 +632,7 @@ convert_footnote_to_text <- function(content) {
 
 #' Render htable to image for quarto/knitr output
 #' @noRd
-render_ft_to_image <- function(table) {
+render_to_image.flextable <- function(table) {
   check_suggested("webshot2", reason = "for image output.")
   check_suggested(
     "equatags",
@@ -677,7 +677,7 @@ render_ft_to_image <- function(table) {
     vwidth = 4000,
     vheight = 3000,
     quiet = TRUE,
-    zoom =  1
+    zoom = 1
   )
 
   return(knitr::include_graphics(png_path))

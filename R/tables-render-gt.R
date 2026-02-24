@@ -242,7 +242,7 @@ apply_gt_footnotes <- function(gt_table, table) {
 
 #' Render htable to image for quarto/knitr output
 #' @noRd
-render_gt_to_image <- function(table) {
+render_to_image.gt_tbl <- function(table) {
   check_suggested("webshot2", reason = "for image output.")
   check_suggested(
     "katex",
@@ -265,9 +265,12 @@ render_gt_to_image <- function(table) {
   # Temporarily hide Quarto env so gt uses katex (not data-qmd-base64)
   old_quarto <- Sys.getenv("QUARTO_BIN_PATH", unset = NA)
   Sys.unsetenv("QUARTO_BIN_PATH")
-  on.exit({
-    if (!is.na(old_quarto)) Sys.setenv(QUARTO_BIN_PATH = old_quarto)
-  }, add = TRUE)
+  on.exit(
+    {
+      if (!is.na(old_quarto)) Sys.setenv(QUARTO_BIN_PATH = old_quarto)
+    },
+    add = TRUE
+  )
 
   table |>
     gt::gtsave(filename = html_path)
