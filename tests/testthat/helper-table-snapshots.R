@@ -34,7 +34,12 @@ snapshot_flextable <- function(table, name) {
   html_path <- file.path(tempdir(), paste0(name, ".html"))
   html_snapshot_path <- file.path(tempdir(), paste0(name, "-snapshot.html"))
   html_tag <- flextable::htmltools_value(table)
-  htmltools::save_html(html_tag, file = html_path)
+  custom_css <- htmltools::tags$style(
+    "body { background-color: white; }
+     .flextable-shadow-host { display: inline-block; }"
+  )
+  html_content <- htmltools::tagList(custom_css, html_tag)
+  htmltools::save_html(html_content, file = html_path)
   normalize_snapshot_html_file(html_path, html_snapshot_path)
   testthat::expect_snapshot_file(html_snapshot_path)
 
@@ -47,7 +52,7 @@ snapshot_flextable <- function(table, name) {
   webshot2::webshot(
     url = html_path,
     file = png_path,
-    selector = ".flextable-shadow-host",
+    selector = "div.flextable-shadow-host",
     delay = 1, # Allow time for KaTeX CSS to load from CDN
     vwidth = 4000,
     vheight = 3000,
