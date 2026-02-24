@@ -1177,7 +1177,15 @@ make_summary_table <- function(
   image = FALSE,
   path = NULL
 ) {
+  image_supplied <- !missing(image)
   output <- match.arg(output)
+
+  if (!is.null(path)) {
+    if (image_supplied && !isTRUE(image)) {
+      rlang::abort("`image` cannot be FALSE when `path` is set.")
+    }
+    image <- TRUE
+  }
 
   if (output == "flextable") {
     check_suggested("flextable", reason = "for flextable output.")

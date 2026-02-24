@@ -692,9 +692,5 @@ render_to_image.flextable <- function(table, path = NULL) {
     zoom = 1
   )
 
-  result <- knitr::include_graphics(png_path)
-  if (!is.null(path)) {
-    return(invisible(result))
-  }
-  result
+  knitr::include_graphics(png_path)
 }

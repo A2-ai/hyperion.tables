@@ -264,7 +264,15 @@ make_parameter_table <- function(
   image = FALSE,
   path = NULL
 ) {
+  image_supplied <- !missing(image)
   output <- match.arg(output)
+
+  if (!is.null(path)) {
+    if (image_supplied && !isTRUE(image)) {
+      rlang::abort("`image` cannot be FALSE when `path` is set.")
+    }
+    image <- TRUE
+  }
 
   if (output == "flextable") {
     check_suggested("flextable", reason = "for flextable output.")
@@ -311,8 +319,7 @@ make_parameter_table <- function(
 #' @param table A gt or flextable object
 #' @param path Optional file path for the output PNG. When NULL (default),
 #'   uses knitr figure path during knit or a temp file interactively.
-#' @return A `knitr::include_graphics()` object (invisibly when `path` is
-#'   provided)
+#' @return A `knitr::include_graphics()` object
 #' @export
 render_to_image <- function(table, path = NULL) {
   UseMethod("render_to_image")

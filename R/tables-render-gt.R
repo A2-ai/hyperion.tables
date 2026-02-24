@@ -288,9 +288,5 @@ render_to_image.gt_tbl <- function(table, path = NULL) {
     quiet = TRUE
   )
 
-  result <- knitr::include_graphics(png_path)
-  if (!is.null(path)) {
-    return(invisible(result))
-  }
-  result
+  knitr::include_graphics(png_path)
 }
