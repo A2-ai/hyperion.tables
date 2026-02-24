@@ -6,7 +6,7 @@
 \usage{
 make_parameter_table(
   params,
-  output = c("gt", "flextable", "image"),
+  output = c("gt", "flextable", "data"),
   image = FALSE
 )
 }
