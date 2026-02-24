@@ -7,7 +7,8 @@
 make_parameter_table(
   params,
   output = c("gt", "flextable", "data"),
-  image = FALSE
+  image = FALSE,
+  path = NULL
 )
 }
 \arguments{
@@ -19,6 +20,10 @@ the intermediate HyperionTable object.}
 
 \item{image}{logical, if TRUE then output will be image of table. output must be
 "gt" or "flextable"}
+
+\item{path}{Optional file path for the output PNG when \code{image = TRUE}. When
+NULL (default), uses knitr figure path during knit or a temp file
+interactively.}
 }
 \value{
 A gt table, flextable, or HyperionTable object depending on \code{output}

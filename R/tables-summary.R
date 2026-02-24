@@ -583,7 +583,9 @@ topological_sort_models <- function(metadata_df, tree) {
 
     # Find children of current (models where current is in based_on)
     for (name in names_to_sort) {
-      if (name %in% sorted) next
+      if (name %in% sorted) {
+        next
+      }
       if (current %in% parent_of[[name]]) {
         in_degree[name] <- in_degree[name] - 1
         if (in_degree[name] == 0) {
@@ -634,7 +636,9 @@ load_models <- function(model_names, source_dir) {
 #' Filter unrun model rows and remove the .unrun column
 #' @noRd
 filter_unrun_rows <- function(df, remove = TRUE) {
-  if (!".unrun" %in% names(df)) return(df)
+  if (!".unrun" %in% names(df)) {
+    return(df)
+  }
   if (remove) {
     df <- dplyr::filter(df, !.data$.unrun)
   }
@@ -664,7 +668,9 @@ select_output_columns <- function(df, spec, needs_dofv) {
     "pvalue"
   )
   for (col in internal_calc_cols) {
-    if (col == "df" && keep_df_for_pvalue) next
+    if (col == "df" && keep_df_for_pvalue) {
+      next
+    }
     if (needs_dofv && col %in% names(df) && !col %in% spec@columns) {
       df <- dplyr::select(df, -dplyr::all_of(col))
     }
@@ -732,7 +738,9 @@ build_summary_section <- function(df, rules) {
         error = function(e) FALSE
       )
       if (isTRUE(res)) {
-        if (is.na(first_match)) first_match <- labels[j]
+        if (is.na(first_match)) {
+          first_match <- labels[j]
+        }
         if (!is_catchall[j]) matched_nc <- c(matched_nc, labels[j])
       }
     }
@@ -744,8 +752,11 @@ build_summary_section <- function(df, rules) {
   # Warn for multi-match rows
   multi_idx <- which(lengths(multi_matches) > 0)
   if (length(multi_idx) > 0) {
-    row_ids <- if ("model" %in% names(df)) df$model else
+    row_ids <- if ("model" %in% names(df)) {
+      df$model
+    } else {
       as.character(seq_len(n))
+    }
     msgs <- vapply(
       multi_idx,
       function(i) {
@@ -816,8 +827,11 @@ build_summary_df <- function(models, model_names, metadata_df, spec) {
       # .based_on_raw: list-column storing full file paths of parent models.
       # Used for OFV lookups in calculate_dofv(); removed before output.
       row$.based_on_raw <- list(parents)
-      row$based_on <- if (length(parents) == 0) NA_character_ else
+      row$based_on <- if (length(parents) == 0) {
+        NA_character_
+      } else {
         paste(tools::file_path_sans_ext(basename(parents)), collapse = ", ")
+      }
     }
     if ("description" %in% spec@columns) {
       row$description <- metadata_df$description[meta_idx[i]]
@@ -1076,7 +1090,9 @@ format_time_columns <- function(df, spec) {
 #' Format time values based on format setting
 #' @noRd
 format_time_value <- function(seconds, format) {
-  if (all(is.na(seconds))) return(seconds)
+  if (all(is.na(seconds))) {
+    return(seconds)
+  }
 
   switch(
     format,
@@ -1147,12 +1163,19 @@ build_summary_label_map <- function() {
 #' @param data Data frame from apply_summary_spec()
 #' @param output Output format: "gt" (default), "flextable", or "data" for
 #'   the intermediate HyperionTable object.
+#' @param image logical, if TRUE then output will be image of table. output must
+#'   be "gt" or "flextable"
+#' @param path Optional file path for the output PNG when `image = TRUE`. When
+#'   NULL (default), uses knitr figure path during knit or a temp file
+#'   interactively.
 #'
 #' @return A gt table, flextable, or HyperionTable object depending on `output`
 #' @export
 make_summary_table <- function(
   data,
-  output = c("gt", "flextable", "data")
+  output = c("gt", "flextable", "data"),
+  image = FALSE,
+  path = NULL
 ) {
   output <- match.arg(output)
 
@@ -1171,14 +1194,24 @@ make_summary_table <- function(
   htable <- hyperion_summary_table(data, spec)
 
   # Return based on output format
-  if (output == "data") {
-    return(htable)
-  } else if (output == "flextable") {
-    return(render_to_flextable(htable))
+  table <- switch(
+    output,
+    data = htable,
+    flextable = render_to_flextable(htable),
+    # default
+    render_to_gt(htable)
+  )
+
+  if (!isTRUE(image)) {
+    return(table)
   }
 
-  # Default: gt output
-  render_to_gt(htable)
+  if (output == "data") {
+    rlang::warn("image = TRUE ignored when output = 'data'")
+    return(table)
+  }
+
+  render_to_image(table, path = path)
 }
 
 #' Render summary table as gt (internal)
@@ -1213,7 +1246,9 @@ get_time_suffix <- function(time_format, data) {
       c("estimation_time", "covariance_time", "postprocess_time"),
       names(data)
     )
-    if (length(time_cols) == 0) return("s")
+    if (length(time_cols) == 0) {
+      return("s")
+    }
 
     max_vals <- vapply(
       time_cols,

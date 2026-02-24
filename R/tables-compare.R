@@ -222,7 +222,9 @@ resolve_reference_index <- function(
   model_indices,
   default_idx
 ) {
-  if (is.null(reference_model)) return(default_idx)
+  if (is.null(reference_model)) {
+    return(default_idx)
+  }
 
   ref_model_clean <- tools::file_path_sans_ext(reference_model)
 
@@ -281,8 +283,8 @@ compute_pct_change <- function(comparison, ref_idx, last_idx) {
       comparison[[est_ref]] == 0 ~ NA_real_,
       TRUE ~
         (comparison[[est_last]] - comparison[[est_ref]]) /
-          comparison[[est_ref]] *
-          100
+        comparison[[est_ref]] *
+        100
     )
     comparison$pct_change <- comparison[[pct_col]]
   }
@@ -313,8 +315,11 @@ resolve_suffix_cols_for_comparison <- function(params1) {
     suffix_cols <- unique(c(suffix_cols, "cv", "corr", "sd", "fixed"))
   }
 
-  add_cols1 <- if (!is.null(spec1)) spec1@add_columns %||% character(0) else
+  add_cols1 <- if (!is.null(spec1)) {
+    spec1@add_columns %||% character(0)
+  } else {
     character(0)
+  }
   columns_provided <- !is.null(spec1) && isTRUE(spec1@.columns_provided)
   if (is.null(spec1) || !columns_provided) {
     suffix_cols <- unique(c(suffix_cols, "pct_change"))
@@ -352,11 +357,14 @@ compute_model_positions <- function(params1, params2, suffix_cols) {
     existing_summaries <- meta$summaries
     model_indices <- get_comparison_model_indices(names(params1), suffix_cols)
     max_index <- if (length(model_indices) > 0) max(model_indices) else 0
-    model_count <- if (max_index > 0) max_index else
+    model_count <- if (max_index > 0) {
+      max_index
+    } else {
       max(
         length(existing_labels),
         length(existing_summaries)
       )
+    }
     if (length(existing_summaries) < model_count) {
       existing_summaries <- c(
         existing_summaries,
@@ -388,8 +396,11 @@ compute_model_positions <- function(params1, params2, suffix_cols) {
 
   if (is_comparison) {
     last_idx <- next_index
-    prev_idx <- if (length(model_indices) > 0) max(model_indices) else
+    prev_idx <- if (length(model_indices) > 0) {
+      max(model_indices)
+    } else {
       next_index - 1
+    }
   } else {
     last_idx <- 2
     prev_idx <- 1
@@ -853,7 +864,9 @@ format_condition_number_footnote <- function(
   cn1 <- safe_summary_field(left_sum, "condition_number")
   cn2 <- safe_summary_field(right_sum, "condition_number")
 
-  if (is.na(cn1) && is.na(cn2)) return(NULL)
+  if (is.na(cn1) && is.na(cn2)) {
+    return(NULL)
+  }
 
   cn1_str <- if (!is.na(cn1)) {
     hyperion::format_hyperion_sigfig_string(cn1, n_sigfig)
@@ -882,7 +895,9 @@ format_nobs_footnote <- function(left_sum, right_sum, left_label, right_label) {
   nobs1 <- safe_summary_field(left_sum, "number_obs")
   nobs2 <- safe_summary_field(right_sum, "number_obs")
 
-  if (is.na(nobs1) && is.na(nobs2)) return(NULL)
+  if (is.na(nobs1) && is.na(nobs2)) {
+    return(NULL)
+  }
 
   nobs1_str <- if (!is.na(nobs1)) as.character(nobs1) else na_label(left_sum)
   nobs2_str <- if (!is.na(nobs2)) as.character(nobs2) else na_label(right_sum)
@@ -917,7 +932,9 @@ format_ofv_lrt_footnote <- function(
   ofv1 <- safe_summary_field(left_sum, "ofv")
   ofv2 <- safe_summary_field(right_sum, "ofv")
 
-  if (is.na(ofv1) && is.na(ofv2)) return(NULL)
+  if (is.na(ofv1) && is.na(ofv2)) {
+    return(NULL)
+  }
 
   ofv1_str <- if (!is.na(ofv1)) {
     hyperion::format_hyperion_decimal_string(ofv1, ofv_decimals)
@@ -1070,7 +1087,9 @@ build_comparison_footnote <- function(
       right_label,
       n_sigfig
     )
-    if (!is.null(cn_line)) lines <- c(lines, cn_line)
+    if (!is.null(cn_line)) {
+      lines <- c(lines, cn_line)
+    }
 
     nobs_line <- format_nobs_footnote(
       left_sum,
@@ -1078,7 +1097,9 @@ build_comparison_footnote <- function(
       left_label,
       right_label
     )
-    if (!is.null(nobs_line)) lines <- c(lines, nobs_line)
+    if (!is.null(nobs_line)) {
+      lines <- c(lines, nobs_line)
+    }
 
     nobs1 <- safe_summary_field(left_sum, "number_obs")
     nobs2 <- safe_summary_field(right_sum, "number_obs")
@@ -1129,6 +1150,11 @@ validate_comparison_renderable <- function(comparison, model_cols) {
 #' @param comparison Comparison data frame from `compare_with()`
 #' @param output Output format: "gt" (default), "flextable", or "data" for
 #'   the intermediate HyperionTable object.
+#' @param image logical, if TRUE then output will be image of table. output must
+#'   be "gt" or "flextable"
+#' @param path Optional file path for the output PNG when `image = TRUE`. When
+#'   NULL (default), uses knitr figure path during knit or a temp file
+#'   interactively.
 #'
 #' @importFrom rlang .data
 #'
@@ -1136,7 +1162,9 @@ validate_comparison_renderable <- function(comparison, model_cols) {
 #' @export
 make_comparison_table <- function(
   comparison,
-  output = c("gt", "flextable", "data")
+  output = c("gt", "flextable", "data"),
+  image = FALSE,
+  path = NULL
 ) {
   output <- match.arg(output)
 
@@ -1220,14 +1248,24 @@ make_comparison_table <- function(
   )
 
   # Return based on output format
-  if (output == "data") {
-    return(htable)
-  } else if (output == "flextable") {
-    return(render_to_flextable(htable))
+  table <- switch(
+    output,
+    data = htable,
+    flextable = render_to_flextable(htable),
+    # default
+    render_to_gt(htable)
+  )
+
+  if (!isTRUE(image)) {
+    return(table)
   }
 
-  # Default: gt output
-  render_to_gt(htable)
+  if (output == "data") {
+    rlang::warn("image = TRUE ignored when output = 'data'")
+    return(table)
+  }
+
+  render_to_image(table, path = path)
 }
 
 #' Render comparison table as gt (internal)

@@ -176,11 +176,17 @@ render_symbol_equations <- function(
   symbol_col = "symbol",
   row_indices = NULL
 ) {
-  if (is.null(original_symbol)) return(ft)
-  if (!requireNamespace("equatags", quietly = TRUE)) return(ft)
+  if (is.null(original_symbol)) {
+    return(ft)
+  }
+  if (!requireNamespace("equatags", quietly = TRUE)) {
+    return(ft)
+  }
 
   col_idx <- which(names(ft$body$dataset) == symbol_col)
-  if (length(col_idx) == 0) return(ft)
+  if (length(col_idx) == 0) {
+    return(ft)
+  }
 
   # Default: row indices match 1:n
 
@@ -190,7 +196,9 @@ render_symbol_equations <- function(
 
   for (i in seq_along(original_symbol)) {
     val <- original_symbol[i]
-    if (is.na(val) || !grepl("\\$", val)) next
+    if (is.na(val) || !grepl("\\$", val)) {
+      next
+    }
 
     # Extract LaTeX from $...$
     latex <- gsub("^\\$|\\$$", "", val)
@@ -342,7 +350,9 @@ apply_flextable_title <- function(ft, table) {
 apply_flextable_borders <- function(ft, table, visible_cols) {
   for (border in table@borders) {
     cols <- intersect(border$columns, visible_cols)
-    if (length(cols) == 0) next
+    if (length(cols) == 0) {
+      next
+    }
 
     # Map column names to indices
     col_indices <- which(visible_cols %in% cols)
@@ -630,9 +640,8 @@ convert_footnote_to_text <- function(content) {
   result
 }
 
-#' Render htable to image for quarto/knitr output
-#' @noRd
-render_to_image.flextable <- function(table) {
+#' @export
+render_to_image.flextable <- function(table, path = NULL) {
   check_suggested("webshot2", reason = "for image output.")
   check_suggested(
     "equatags",
@@ -648,8 +657,11 @@ render_to_image.flextable <- function(table) {
   # Intermediate HTML is always temp.
   html_path <- tempfile("hyperion-table-", fileext = ".html")
 
-  # Final PNG must be in knitr/quarto figure path so it is carried into output.
-  if (isTRUE(getOption("knitr.in.progress"))) {
+  # Determine PNG destination.
+  if (!is.null(path)) {
+    png_path <- path
+    dir.create(dirname(png_path), recursive = TRUE, showWarnings = FALSE)
+  } else if (isTRUE(getOption("knitr.in.progress"))) {
     png_path <- knitr::fig_path(suffix = ".png")
     dir.create(dirname(png_path), recursive = TRUE, showWarnings = FALSE)
   } else {
@@ -680,5 +692,9 @@ render_to_image.flextable <- function(table) {
     zoom = 1
   )
 
-  return(knitr::include_graphics(png_path))
+  result <- knitr::include_graphics(png_path)
+  if (!is.null(path)) {
+    return(invisible(result))
+  }
+  result
 }

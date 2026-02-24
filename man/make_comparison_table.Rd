@@ -4,13 +4,25 @@
 \alias{make_comparison_table}
 \title{Build comparison table}
 \usage{
-make_comparison_table(comparison, output = c("gt", "flextable", "data"))
+make_comparison_table(
+  comparison,
+  output = c("gt", "flextable", "data"),
+  image = FALSE,
+  path = NULL
+)
 }
 \arguments{
 \item{comparison}{Comparison data frame from \code{compare_with()}}
 
 \item{output}{Output format: "gt" (default), "flextable", or "data" for
 the intermediate HyperionTable object.}
+
+\item{image}{logical, if TRUE then output will be image of table. output must
+be "gt" or "flextable"}
+
+\item{path}{Optional file path for the output PNG when \code{image = TRUE}. When
+NULL (default), uses knitr figure path during knit or a temp file
+interactively.}
 }
 \value{
 A gt table, flextable, or HyperionTable object depending on \code{output}

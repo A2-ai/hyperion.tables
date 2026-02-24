@@ -250,6 +250,9 @@ order_sections <- function(params, spec) {
 #'   the intermediate HyperionTable object.
 #' @param image logical, if TRUE then output will be image of table. output must be
 #'   "gt" or "flextable"
+#' @param path Optional file path for the output PNG when `image = TRUE`. When
+#'   NULL (default), uses knitr figure path during knit or a temp file
+#'   interactively.
 #'
 #' @importFrom rlang .data
 #'
@@ -258,7 +261,8 @@ order_sections <- function(params, spec) {
 make_parameter_table <- function(
   params,
   output = c("gt", "flextable", "data"),
-  image = FALSE
+  image = FALSE,
+  path = NULL
 ) {
   output <- match.arg(output)
 
@@ -299,17 +303,17 @@ make_parameter_table <- function(
     return(table)
   }
 
-  render_to_image(table)
+  render_to_image(table, path = path)
 }
 
-#' Render a table object to an image
+#' Render a table to a PNG image
 #'
-#' S3 generic that dispatches on the table class (gt_tbl or flextable).
-#' Methods live in tables-render-gt.R and tables-render-flextable.R.
-#'
-#' @param table A gt or flextable table object
-#' @return A knitr image inclusion object
-#' @noRd
-render_to_image <- function(table) {
+#' @param table A gt or flextable object
+#' @param path Optional file path for the output PNG. When NULL (default),
+#'   uses knitr figure path during knit or a temp file interactively.
+#' @return A `knitr::include_graphics()` object (invisibly when `path` is
+#'   provided)
+#' @export
+render_to_image <- function(table, path = NULL) {
   UseMethod("render_to_image")
 }

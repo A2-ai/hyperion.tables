@@ -240,9 +240,8 @@ apply_gt_footnotes <- function(gt_table, table) {
   gt_table
 }
 
-#' Render htable to image for quarto/knitr output
-#' @noRd
-render_to_image.gt_tbl <- function(table) {
+#' @export
+render_to_image.gt_tbl <- function(table, path = NULL) {
   check_suggested("webshot2", reason = "for image output.")
   check_suggested(
     "katex",
@@ -253,8 +252,11 @@ render_to_image.gt_tbl <- function(table) {
   # Intermediate HTML is always temp.
   html_path <- tempfile("hyperion-table-", fileext = ".html")
 
-  # Final PNG must be in knitr/quarto figure path so it is carried into output.
-  if (isTRUE(getOption("knitr.in.progress"))) {
+  # Determine PNG destination.
+  if (!is.null(path)) {
+    png_path <- path
+    dir.create(dirname(png_path), recursive = TRUE, showWarnings = FALSE)
+  } else if (isTRUE(getOption("knitr.in.progress"))) {
     png_path <- knitr::fig_path(suffix = ".png")
     dir.create(dirname(png_path), recursive = TRUE, showWarnings = FALSE)
   } else {
@@ -286,5 +288,9 @@ render_to_image.gt_tbl <- function(table) {
     quiet = TRUE
   )
 
-  return(knitr::include_graphics(png_path))
+  result <- knitr::include_graphics(png_path)
+  if (!is.null(path)) {
+    return(invisible(result))
+  }
+  result
 }
