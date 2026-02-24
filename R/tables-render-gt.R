@@ -240,45 +240,53 @@ apply_gt_footnotes <- function(gt_table, table) {
   gt_table
 }
 
-#' Render htable to image for quarto chunk output
+#' Render htable to image for quarto/knitr output
 #' @noRd
-render_to_image <- function(table) {
+render_gt_to_image <- function(table) {
   if (!S7::S7_inherits(table, HyperionTable)) {
     rlang::abort("table must be a HyperionTable object")
   }
 
+  check_suggested("webshot2", reason = "for image output.")
   check_suggested(
     "katex",
     reason = "to render LaTeX symbols in gt tables.",
     severity = "warn"
   )
 
-  knitting <- isTRUE(getOption("knitr.in.progress"))
+  # Intermediate HTML is always temp.
+  html_path <- tempfile("hyperion-table-", fileext = ".html")
 
-  if (knitting) {
-    html_path <- knitr::fig_path(ext = "html")
-    png_path <- knitr::fig_path(ext = "png")
+  # Final PNG must be in knitr/quarto figure path so it is carried into output.
+  if (isTRUE(getOption("knitr.in.progress"))) {
+    png_path <- knitr::fig_path(suffix = ".png")
+    dir.create(dirname(png_path), recursive = TRUE, showWarnings = FALSE)
   } else {
-    html_path <- tempfile("hyperion-table-", fileext = ".html")
+    # Non-knitr fallback for interactive use.
     png_path <- tempfile("hyperion-table-", fileext = ".png")
   }
 
-  gt::gtsave(render_to_gt(table), filename = html_path, inline_css = TRUE)
+  # Temporarily hide Quarto env so gt uses katex (not data-qmd-base64)
+  old_quarto <- Sys.getenv("QUARTO_BIN_PATH", unset = NA)
+  Sys.unsetenv("QUARTO_BIN_PATH")
+  on.exit({
+    if (!is.na(old_quarto)) Sys.setenv(QUARTO_BIN_PATH = old_quarto)
+  }, add = TRUE)
+
+  render_to_gt(table) |>
+    gt::gtsave(filename = html_path)
 
   webshot2::webshot(
-    url = paste0("file://", normalizePath(html_path)),
+    url = html_path,
     file = png_path,
     selector = "table.gt_table",
     vwidth = 4000,
     vheight = 3000,
-    zoom = 2,
-    delay = 3,
+    zoom = 1,
+    delay = 1,
+
     quiet = TRUE
   )
 
-  if (knitting) {
-    return(knitr::include_graphics(png_path))
-  }
-
-  png_path
+  return(knitr::include_graphics(png_path))
 }

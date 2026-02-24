@@ -283,7 +283,7 @@ make_parameter_table <- function(
       output,
       data = htable,
       flextable = render_to_flextable(htable),
-      image = render_to_image(htable),
+      image = render_gt_to_image(htable),
       # default
       render_to_gt(htable)
     )
