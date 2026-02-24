@@ -549,7 +549,9 @@ TableSpec <- S7::new_class(
       referenced <- character(0)
       for (rule in variability_rules) {
         formula <- rlang::eval_tidy(rule)
-        if (!rlang::is_formula(formula)) next
+        if (!rlang::is_formula(formula)) {
+          next
+        }
         referenced <- unique(c(referenced, all.vars(rlang::f_lhs(formula))))
       }
       dropped_used <- intersect(referenced, drop_columns)

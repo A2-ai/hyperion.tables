@@ -21,10 +21,14 @@ NULL
 #' @param reason Why the package is needed (appended to error message)
 #' @noRd
 check_suggested <- function(pkg, reason = NULL, severity = c("abort", "warn")) {
-  if (requireNamespace(pkg, quietly = TRUE)) return(invisible())
+  if (requireNamespace(pkg, quietly = TRUE)) {
+    return(invisible())
+  }
   severity <- match.arg(severity)
   msg <- paste0("Package '", pkg, "' is required")
-  if (!is.null(reason)) msg <- paste(msg, reason)
+  if (!is.null(reason)) {
+    msg <- paste(msg, reason)
+  }
   full_msg <- paste0(msg, "\nInstall it with: rv add ", pkg)
   if (severity == "warn") {
     rlang::warn(
@@ -107,7 +111,9 @@ missing_apply_columns <- function(data, apply_to) {
 #' @return The field value, or NA if not available
 #' @noRd
 safe_summary_field <- function(summary, field) {
-  if (is.null(summary) || is.null(summary[[field]])) return(NA)
+  if (is.null(summary) || is.null(summary[[field]])) {
+    return(NA)
+  }
   summary[[field]]
 }
 

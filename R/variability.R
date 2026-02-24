@@ -18,7 +18,9 @@ format_numeric_for_rules <- function(data, n_sigfig) {
     data[[col]] <- vapply(
       data[[col]],
       function(x) {
-        if (is.na(x)) return(NA_character_)
+        if (is.na(x)) {
+          return(NA_character_)
+        }
         format_sigfig_pad(x, n_sigfig)
       },
       character(1)
@@ -31,8 +33,12 @@ format_numeric_for_rules <- function(data, n_sigfig) {
 #' Format numeric values with fixed significant figures
 #' @noRd
 format_sigfig_pad <- function(x, n_sigfig) {
-  if (is.na(x)) return(NA_character_)
-  if (is.character(x)) return(x)
+  if (is.na(x)) {
+    return(NA_character_)
+  }
+  if (is.character(x)) {
+    return(x)
+  }
 
   base <- trimws(formatC(x, digits = n_sigfig, format = "g"))
   if (grepl("[eE]", base)) {
@@ -44,7 +50,9 @@ format_sigfig_pad <- function(x, n_sigfig) {
 
   if (!grepl("\\.", core)) {
     sig <- gsub("^0+", "", core)
-    if (sig == "") sig <- "0"
+    if (sig == "") {
+      sig <- "0"
+    }
     sig_count <- nchar(sig)
     if (sig_count < n_sigfig) {
       core <- paste0(
@@ -61,7 +69,9 @@ format_sigfig_pad <- function(x, n_sigfig) {
   frac <- parts[2]
   digits_all <- paste0(int, frac)
   sig <- sub("^0+", "", digits_all)
-  if (sig == "") sig <- "0"
+  if (sig == "") {
+    sig <- "0"
+  }
   sig_count <- nchar(sig)
   if (sig_count < n_sigfig) {
     frac <- paste0(

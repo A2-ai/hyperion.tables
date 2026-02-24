@@ -101,7 +101,9 @@ maybe_enrich_description <- function(df, spec, info) {
     c(spec@columns, spec@add_columns %||% character(0)) &&
     !"description" %in% spec@drop_columns
 
-  if (!want_description) return(df)
+  if (!want_description) {
+    return(df)
+  }
 
   if (is.null(info)) {
     rlang::warn(paste0(
@@ -268,7 +270,9 @@ warn_multi_match_sections <- function(formulas, data) {
     logical(1)
   )
   nc_idx <- which(!is_catchall)
-  if (length(nc_idx) < 2) return(invisible())
+  if (length(nc_idx) < 2) {
+    return(invisible())
+  }
 
   lhs_results <- lapply(nc_idx, function(j) {
     tryCatch(
@@ -292,7 +296,9 @@ warn_multi_match_sections <- function(formulas, data) {
     },
     logical(1)
   ))
-  if (length(multi_rows) == 0) return(invisible())
+  if (length(multi_rows) == 0) {
+    return(invisible())
+  }
 
   msgs <- vapply(
     multi_rows,
@@ -490,7 +496,9 @@ enrich_description <- function(df, info) {
     lapply(names(comments), function(nonmem) {
       cmt <- comments[[nonmem]]
       desc <- cmt@description
-      if (is.null(desc)) desc <- NA_character_
+      if (is.null(desc)) {
+        desc <- NA_character_
+      }
 
       keys <- comment_keys_for(nonmem, cmt, include_associated_theta = TRUE)
 

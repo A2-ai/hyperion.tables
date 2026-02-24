@@ -394,8 +394,11 @@ hyperion_summary_table <- function(data, spec) {
   }
 
   # Find empty columns to hide
-  empty_cols <- if (spec@hide_empty_columns) find_empty_columns(data) else
+  empty_cols <- if (spec@hide_empty_columns) {
+    find_empty_columns(data)
+  } else {
     character(0)
+  }
 
   # Build footnotes
   footnotes <- build_summary_footnotes(data, spec)

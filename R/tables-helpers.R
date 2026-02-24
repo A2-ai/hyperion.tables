@@ -196,8 +196,11 @@ compute_comparison_layout <- function(
   }
   hide_cols <- intersect(c(hide_cols, hide_suffix), names(comparison))
 
-  add_cols <- if (!is.null(spec)) spec@add_columns %||% character(0) else
+  add_cols <- if (!is.null(spec)) {
+    spec@add_columns %||% character(0)
+  } else {
     character(0)
+  }
   columns <- if (!is.null(spec)) spec@columns else character(0)
   if (!"fixed" %in% c(columns, add_cols)) {
     hide_cols <- unique(c(
@@ -425,7 +428,9 @@ build_comparison_label_map <- function(
       } else {
         idx - 1
       }
-      ref_label <- if (length(labels) >= ref_idx) labels[ref_idx] else {
+      ref_label <- if (length(labels) >= ref_idx) {
+        labels[ref_idx]
+      } else {
         paste0("Model ", ref_idx)
       }
       if (length(pct_change_cols) == 1) {

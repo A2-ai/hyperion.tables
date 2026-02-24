@@ -430,8 +430,12 @@ build_equations_footnote <- function(
   # Formula: sqrt(exp(Est) - 1) * 100 (Omega LogNormal, Sigma LogNormal/LogAddErr)
   if (stats$has_omega_lognormal_cv || stats$has_sigma_lognormal_cv) {
     parts <- character(0)
-    if (stats$has_omega_lognormal_cv) parts <- c(parts, "log-normal $\\Omega$")
-    if (stats$has_sigma_lognormal_cv) parts <- c(parts, "log-normal $\\Sigma$")
+    if (stats$has_omega_lognormal_cv) {
+      parts <- c(parts, "log-normal $\\Omega$")
+    }
+    if (stats$has_sigma_lognormal_cv) {
+      parts <- c(parts, "log-normal $\\Sigma$")
+    }
     footnotes <- c(
       footnotes,
       list(
@@ -448,8 +452,12 @@ build_equations_footnote <- function(
   # Formula: sqrt(Est) * 100 (Omega Proportional, Sigma Proportional)
   if (stats$has_omega_proportional_cv || stats$has_sigma_proportional_cv) {
     parts <- character(0)
-    if (stats$has_omega_proportional_cv) parts <- c(parts, "$\\Omega$")
-    if (stats$has_sigma_proportional_cv) parts <- c(parts, "$\\Sigma$")
+    if (stats$has_omega_proportional_cv) {
+      parts <- c(parts, "$\\Omega$")
+    }
+    if (stats$has_sigma_proportional_cv) {
+      parts <- c(parts, "$\\Sigma$")
+    }
     footnotes <- c(
       footnotes,
       list(
@@ -486,14 +494,24 @@ build_abbreviations_footnote <- function(
   summary_stats = NULL
 ) {
   abbrevs <- character(0)
-  if (stats$has_ci) abbrevs <- c(abbrevs, "CI = confidence intervals")
-  if (stats$has_rse) abbrevs <- c(abbrevs, "RSE = relative standard error")
+  if (stats$has_ci) {
+    abbrevs <- c(abbrevs, "CI = confidence intervals")
+  }
+  if (stats$has_rse) {
+    abbrevs <- c(abbrevs, "RSE = relative standard error")
+  }
   if (stats$has_ci || stats$has_stderr) {
     abbrevs <- c(abbrevs, "SE = standard error")
   }
-  if (stats$has_cv) abbrevs <- c(abbrevs, "CV = coefficient of variation")
-  if (stats$has_sd) abbrevs <- c(abbrevs, "SD = standard deviation")
-  if (stats$has_corr) abbrevs <- c(abbrevs, "Corr = correlation")
+  if (stats$has_cv) {
+    abbrevs <- c(abbrevs, "CV = coefficient of variation")
+  }
+  if (stats$has_sd) {
+    abbrevs <- c(abbrevs, "SD = standard deviation")
+  }
+  if (stats$has_corr) {
+    abbrevs <- c(abbrevs, "Corr = correlation")
+  }
 
   # Comparison table abbreviations
   if (!is.null(comparison_stats)) {
@@ -707,7 +725,9 @@ param_symbol_md <- function(kind, random_effect, transforms) {
   base_sym <- greek_to_latex(kind, random_effect)
 
   tr <- transforms
-  if (is.factor(tr)) tr <- as.character(tr)
+  if (is.factor(tr)) {
+    tr <- as.character(tr)
+  }
 
   # Build raw LaTeX expression (without $..$ delimiters)
   latex_expr <- dplyr::case_when(

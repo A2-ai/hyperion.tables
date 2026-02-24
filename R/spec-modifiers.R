@@ -338,10 +338,18 @@ set_spec_ci <- function(
     missing_text = spec@ci@missing_text
   )
 
-  if (!is.null(level)) ci_args$level <- level
-  if (!is.null(merge)) ci_args$merge <- merge
-  if (!is.null(pattern)) ci_args$pattern <- pattern
-  if (!is.null(missing_text)) ci_args$missing_text <- missing_text
+  if (!is.null(level)) {
+    ci_args$level <- level
+  }
+  if (!is.null(merge)) {
+    ci_args$merge <- merge
+  }
+  if (!is.null(pattern)) {
+    ci_args$pattern <- pattern
+  }
+  if (!is.null(missing_text)) {
+    ci_args$missing_text <- missing_text
+  }
 
   spec@ci <- do.call(CIOptions, ci_args)
   spec
@@ -395,9 +403,15 @@ set_spec_transforms <- function(
   assert_table_spec(spec)
 
   transforms <- spec@display_transforms
-  if (!is.null(theta)) transforms$theta <- theta
-  if (!is.null(omega)) transforms$omega <- omega
-  if (!is.null(sigma)) transforms$sigma <- sigma
+  if (!is.null(theta)) {
+    transforms$theta <- theta
+  }
+  if (!is.null(omega)) {
+    transforms$omega <- omega
+  }
+  if (!is.null(sigma)) {
+    transforms$sigma <- sigma
+  }
 
   spec@display_transforms <- transforms
   spec
@@ -558,8 +572,12 @@ set_spec_models <- function(spec, models) {
 #'   set_spec_tag_filter(exclude = "failed")
 set_spec_tag_filter <- function(spec, tags, exclude) {
   assert_summary_spec(spec)
-  if (!missing(tags)) spec@tag_filter <- tags
-  if (!missing(exclude)) spec@tag_exclude <- exclude
+  if (!missing(tags)) {
+    spec@tag_filter <- tags
+  }
+  if (!missing(exclude)) {
+    spec@tag_exclude <- exclude
+  }
   spec
 }
 

@@ -117,7 +117,9 @@ apply_summary_render_overrides <- function(table, data, numeric_cols) {
           use_scientific,
           pval_threshold
         )
-        if (!merge_df) return(format_p)
+        if (!merge_df) {
+          return(format_p)
+        }
         df_val <- data$df[i]
         if (is.na(df_val)) {
           return(NA_character_)
@@ -138,7 +140,9 @@ apply_summary_render_overrides <- function(table, data, numeric_cols) {
         data[[col]] <- vapply(
           data[[col]],
           function(x) {
-            if (is.na(x)) return("")
+            if (is.na(x)) {
+              return("")
+            }
             formatC(x, digits = spec@n_decimals_ofv, format = "f")
           },
           character(1)
@@ -251,7 +255,9 @@ format_numeric_columns_shared <- function(
   }
 
   format_numeric_value <- function(x) {
-    if (is.na(x)) return(NA_character_)
+    if (is.na(x)) {
+      return(NA_character_)
+    }
     if (!is.null(formatter)) {
       return(formatter(x, n_sigfig))
     }
@@ -259,9 +265,15 @@ format_numeric_columns_shared <- function(
   }
 
   for (col in numeric_cols) {
-    if (!col %in% names(data)) next
-    if (col %in% skip_cols) next
-    if (!is.numeric(data[[col]])) next
+    if (!col %in% names(data)) {
+      next
+    }
+    if (col %in% skip_cols) {
+      next
+    }
+    if (!is.numeric(data[[col]])) {
+      next
+    }
 
     data[[col]] <- vapply(
       data[[col]],
