@@ -13,8 +13,7 @@ render_to_image(table, path = NULL)
 uses knitr figure path during knit or a temp file interactively.}
 }
 \value{
-A \code{knitr::include_graphics()} object (invisibly when \code{path} is
-provided)
+A \code{knitr::include_graphics()} object
 }
 \description{
 Render a table to a PNG image
