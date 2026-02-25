@@ -4,25 +4,13 @@
 \alias{make_summary_table}
 \title{Create summary table from prepared data}
 \usage{
-make_summary_table(
-  data,
-  output = c("gt", "flextable", "data"),
-  image = FALSE,
-  path = NULL
-)
+make_summary_table(data, output = c("gt", "flextable", "data"))
 }
 \arguments{
 \item{data}{Data frame from apply_summary_spec()}
 
 \item{output}{Output format: "gt" (default), "flextable", or "data" for
 the intermediate HyperionTable object.}
-
-\item{image}{logical, if TRUE then output will be image of table. output must
-be "gt" or "flextable"}
-
-\item{path}{Optional file path for the output PNG when \code{image = TRUE}. When
-NULL (default), uses knitr figure path during knit or a temp file
-interactively.}
 }
 \value{
 A gt table, flextable, or HyperionTable object depending on \code{output}

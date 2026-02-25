@@ -1,3 +1,15 @@
+# hyperion.tables 0.4.0
+
+## New Features
+
+* Added PNG image export support for both `gt` and `flextable` table outputs via `render_to_image()`.
+* Added `render_to_image()` S3 methods for `gt_tbl` and `flextable`, with optional `path` for writing files.
+
+## Improvements
+
+* Fixed description column ordering behavior when explicit column selections are used.
+* Improved flextable image snapshot trimming/rendering consistency.
+
 # hyperion.tables 0.3.0
 
 ## Breaking Changes

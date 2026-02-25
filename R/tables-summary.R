@@ -1163,29 +1163,14 @@ build_summary_label_map <- function() {
 #' @param data Data frame from apply_summary_spec()
 #' @param output Output format: "gt" (default), "flextable", or "data" for
 #'   the intermediate HyperionTable object.
-#' @param image logical, if TRUE then output will be image of table. output must
-#'   be "gt" or "flextable"
-#' @param path Optional file path for the output PNG when `image = TRUE`. When
-#'   NULL (default), uses knitr figure path during knit or a temp file
-#'   interactively.
 #'
 #' @return A gt table, flextable, or HyperionTable object depending on `output`
 #' @export
 make_summary_table <- function(
   data,
-  output = c("gt", "flextable", "data"),
-  image = FALSE,
-  path = NULL
+  output = c("gt", "flextable", "data")
 ) {
-  image_supplied <- !missing(image)
   output <- match.arg(output)
-
-  if (!is.null(path)) {
-    if (image_supplied && !isTRUE(image)) {
-      rlang::abort("`image` cannot be FALSE when `path` is set.")
-    }
-    image <- TRUE
-  }
 
   if (output == "flextable") {
     check_suggested("flextable", reason = "for flextable output.")
@@ -1209,17 +1194,7 @@ make_summary_table <- function(
     # default
     render_to_gt(htable)
   )
-
-  if (!isTRUE(image)) {
-    return(table)
-  }
-
-  if (output == "data") {
-    rlang::warn("image = TRUE ignored when output = 'data'")
-    return(table)
-  }
-
-  render_to_image(table, path = path)
+  table
 }
 
 #' Render summary table as gt (internal)

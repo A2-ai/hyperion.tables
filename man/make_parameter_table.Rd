@@ -4,12 +4,7 @@
 \alias{make_parameter_table}
 \title{Build parameter table}
 \usage{
-make_parameter_table(
-  params,
-  output = c("gt", "flextable", "data"),
-  image = FALSE,
-  path = NULL
-)
+make_parameter_table(params, output = c("gt", "flextable", "data"))
 }
 \arguments{
 \item{params}{Parameter data frame from \code{get_parameters()} or enriched via
@@ -17,13 +12,6 @@ make_parameter_table(
 
 \item{output}{Output format: "gt" (default), "flextable", or "data" for
 the intermediate HyperionTable object.}
-
-\item{image}{logical, if TRUE then output will be image of table. output must be
-"gt" or "flextable"}
-
-\item{path}{Optional file path for the output PNG when \code{image = TRUE}. When
-NULL (default), uses knitr figure path during knit or a temp file
-interactively.}
 }
 \value{
 A gt table, flextable, or HyperionTable object depending on \code{output}

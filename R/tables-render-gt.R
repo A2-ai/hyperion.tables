@@ -251,6 +251,7 @@ render_to_image.gt_tbl <- function(table, path = NULL) {
 
   # Intermediate HTML is always temp.
   html_path <- tempfile("hyperion-table-", fileext = ".html")
+  on.exit(unlink(html_path), add = TRUE)
 
   # PNG for display (knitr-relative or temp).
   if (isTRUE(getOption("knitr.in.progress"))) {
@@ -284,9 +285,20 @@ render_to_image.gt_tbl <- function(table, path = NULL) {
     quiet = TRUE
   )
 
+  if (!file.exists(png_path)) {
+    rlang::abort(
+      paste0("Failed to create PNG output at: ", png_path)
+    )
+  }
+
   if (!is.null(path)) {
     dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
-    file.copy(png_path, path, overwrite = TRUE)
+    copied <- file.copy(png_path, path, overwrite = TRUE)
+    if (!isTRUE(copied)) {
+      rlang::abort(
+        paste0("Failed to copy PNG output to: ", path)
+      )
+    }
   }
 
   knitr::include_graphics(png_path)
