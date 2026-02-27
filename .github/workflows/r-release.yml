@@ -12,7 +12,7 @@ on:
         type: string
 
 jobs:
-  build-src:
+  build-primary:
     runs-on: ubuntu-latest
     container:
       image: almalinux:8
@@ -136,9 +136,40 @@ jobs:
           path: manifest.json
           if-no-files-found: error
 
+      # ---- Binary build (R 4.5) ----
+      - name: Pin rproject.toml to R 4.5
+        run: |
+          sed -i 's|^r_version = ".*"$|r_version = "4.5"|' rproject.toml
+          cat rproject.toml
+
+      - name: Run R Releaser build-bin
+        id: releaser-bin
+        uses: A2-ai/r-releaser/build-bin@deploy-prism
+        with:
+          library: ${{ steps.library.outputs.result }}
+          src_tarball_path: ${{ steps.releaser.outputs.tarball_path }}
+          linking_to_deps: ${{ steps.releaser.outputs.linking_to_deps }}
+
+      - name: Upload binary to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ${{ steps.releaser-bin.outputs.binary_path }}
+          asset_name: ${{ steps.releaser-bin.outputs.binary_name }}
+          tag: ${{ steps.release-type.outputs.tag }}
+          overwrite: true
+          prerelease: ${{ steps.release-type.outputs.is_rc == 'true' }}
+
+      - name: Upload binary manifest as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: manifest-almalinux8-r4.5
+          path: manifest.json
+          if-no-files-found: error
+
   build-bin:
     name: build-bin (R ${{ matrix.config.r }})
-    needs: build-src
+    needs: build-primary
     runs-on: ubuntu-latest
     container:
       image: almalinux:8
@@ -146,7 +177,6 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {r: '4.5', target: 'x86_64-unknown-linux-gnu'}
           - {r: '4.4', target: 'x86_64-unknown-linux-gnu'}
     permissions:
       contents: write
@@ -215,7 +245,7 @@ jobs:
       - name: Verify source tarball path
         id: src-tarball
         run: |
-          SRC_PATH="$GITHUB_WORKSPACE/dist-src/${{ needs.build-src.outputs.tarball_name }}"
+          SRC_PATH="$GITHUB_WORKSPACE/dist-src/${{ needs.build-primary.outputs.tarball_name }}"
           test -f "$SRC_PATH"
           echo "path=$SRC_PATH" >> $GITHUB_OUTPUT
 
@@ -225,7 +255,7 @@ jobs:
         with:
           library: ${{ steps.library.outputs.result }}
           src_tarball_path: ${{ steps.src-tarball.outputs.path }}
-          linking_to_deps: ${{ needs.build-src.outputs.linking_to_deps }}
+          linking_to_deps: ${{ needs.build-primary.outputs.linking_to_deps }}
 
       - name: Upload binary to release
         uses: svenstaro/upload-release-action@v2
@@ -233,9 +263,9 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: ${{ steps.releaser-bin.outputs.binary_path }}
           asset_name: ${{ steps.releaser-bin.outputs.binary_name }}
-          tag: ${{ needs.build-src.outputs.tag }}
+          tag: ${{ needs.build-primary.outputs.tag }}
           overwrite: true
-          prerelease: ${{ needs.build-src.outputs.is_rc == 'true' }}
+          prerelease: ${{ needs.build-primary.outputs.is_rc == 'true' }}
 
       - name: Upload manifest as artifact
         uses: actions/upload-artifact@v4
@@ -246,8 +276,8 @@ jobs:
 
   finalize-manifest:
     name: Publish manifest to release
-    needs: [build-src, build-bin]
-    if: always() && needs.build-src.result == 'success'
+    needs: [build-primary, build-bin]
+    if: always() && needs.build-primary.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -273,6 +303,6 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: ${{ steps.merge.outputs.manifest_path }}
           asset_name: manifest.json
-          tag: ${{ needs.build-src.outputs.tag }}
+          tag: ${{ needs.build-primary.outputs.tag }}
           overwrite: true
 
