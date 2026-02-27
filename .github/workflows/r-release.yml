@@ -276,36 +276,3 @@ jobs:
           tag: ${{ needs.build-src.outputs.tag }}
           overwrite: true
 
-  deploy-prism:
-    name: Deploy to PRISM
-    needs: [build-src, build-bin, finalize-manifest]
-    if: always() && needs.build-src.result == 'success' && needs.finalize-manifest.result == 'success'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Deploy to PRISM
-        uses: A2-ai/r-releaser/deploy-prism@deploy-prism
-        with:
-          prism_api_url: ${{ vars.PRISM_API_URL }}
-          auth_token: ${{ secrets.PRISM_API_TOKEN }}
-          release_tag: ${{ needs.build-src.outputs.tag }}
-
-      # - name: Create PRISM edition
-      #   uses: A2-ai/r-releaser/create-edition@deploy-prism
-      #   with:
-      #     prism_api_url: ${{ vars.PRISM_API_URL }}
-      #     auth_token: ${{ secrets.PRISM_API_TOKEN }}
-      #     package_name: ${{ needs.build-src.outputs.package_name }}
-      #     package_version: ${{ needs.build-src.outputs.package_version }}
-      #     latest: ${{ inputs.latest_edition }}
-
-      - name: Update PRISM edition
-        uses: A2-ai/r-releaser/update-edition@deploy-prism
-        with:
-          prism_api_url: ${{ vars.PRISM_API_URL }}
-          auth_token: ${{ secrets.PRISM_API_TOKEN }}
-          registry: 'hyperion-eco'
-          edition: 'dev'
-          package_name: ${{ needs.build-src.outputs.package_name }}
-          package_version: ${{ needs.build-src.outputs.package_version }}
