@@ -22,7 +22,7 @@ on:
         default: false
         type: boolean
       latest_edition:
-        description: 'Mark the individual package edition as latest'
+        description: 'Include the individual package edition in the latest edition history'
         required: false
         default: false
         type: boolean
