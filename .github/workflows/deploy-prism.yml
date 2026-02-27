@@ -14,7 +14,7 @@ on:
       update_edition:
         description: 'Update an existing PRISM edition'
         required: false
-        default: true
+        default: false
         type: boolean
       create_edition:
         description: 'Create an individual package edition (package_name/package_version)'
@@ -27,14 +27,14 @@ on:
         default: false
         type: boolean
       registry:
-        description: 'PRISM registry name'
+        description: 'update registry name'
         required: false
-        default: 'hyperion-eco'
+        default: 'registry'
         type: string
       edition:
-        description: 'PRISM edition name'
+        description: 'update edition name'
         required: false
-        default: 'dev'
+        default: 'edition'
         type: string
 
 concurrency:
