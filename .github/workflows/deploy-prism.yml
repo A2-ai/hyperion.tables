@@ -1,0 +1,195 @@
+name: Deploy to PRISM
+
+on:
+  workflow_run:
+    workflows: ["R Release"]
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to deploy (e.g. v0.1.0)'
+        required: true
+        type: string
+      update_edition:
+        description: 'Update an existing PRISM edition'
+        required: false
+        default: false
+        type: boolean
+      create_edition:
+        description: 'Create an individual package edition (package_name/package_version)'
+        required: false
+        default: false
+        type: boolean
+      latest_edition:
+        description: 'Include the individual package edition in the latest edition history'
+        required: false
+        default: false
+        type: boolean
+      registry:
+        description: 'update registry name'
+        required: false
+        default: 'registry'
+        type: string
+      edition:
+        description: 'update edition name'
+        required: false
+        default: 'edition'
+        type: string
+
+concurrency:
+  group: deploy-prism-${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.event.workflow_run.id }}
+  cancel-in-progress: false
+
+env:
+  # ---- Auto-deploy configuration ----
+  # Edit these once for your repo.
+  # Manual dispatch overrides these via inputs.
+  AUTO_UPDATE_EDITION: 'true'
+  AUTO_CREATE_EDITION: 'false'    # individual package edition (package_name/package_version)
+  AUTO_LATEST_EDITION: 'false'    # mark the individual package edition as latest
+  REGISTRY: 'hyperion-eco'
+  EDITION: 'dev'
+
+jobs:
+  preflight:
+    name: Preflight
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    outputs:
+      config_ok: ${{ steps.check-config.outputs.config_ok }}
+    steps:
+      - name: Check PRISM configuration
+        id: check-config
+        env:
+          PRISM_API_URL: ${{ vars.PRISM_API_URL }}
+          PRISM_API_TOKEN: ${{ secrets.PRISM_API_TOKEN }}
+        run: |
+          MISSING=""
+          [ -z "$PRISM_API_URL" ] && MISSING="${MISSING}vars.PRISM_API_URL "
+          [ -z "$PRISM_API_TOKEN" ] && MISSING="${MISSING}secrets.PRISM_API_TOKEN "
+
+          if [ -n "$MISSING" ]; then
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              echo "::error::Missing required PRISM configuration: ${MISSING}"
+              exit 1
+            fi
+            echo "::notice::PRISM not configured (missing ${MISSING}). Skipping auto-deploy."
+            echo "config_ok=false" >> $GITHUB_OUTPUT
+          else
+            echo "config_ok=true" >> $GITHUB_OUTPUT
+          fi
+
+  resolve-inputs:
+    name: Resolve deploy inputs
+    needs: preflight
+    if: needs.preflight.outputs.config_ok == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+    outputs:
+      tag: ${{ steps.resolve.outputs.tag }}
+      package_name: ${{ steps.resolve.outputs.package_name }}
+      package_version: ${{ steps.resolve.outputs.package_version }}
+      update_edition: ${{ steps.resolve.outputs.update_edition }}
+      create_edition: ${{ steps.resolve.outputs.create_edition }}
+      latest_edition: ${{ steps.resolve.outputs.latest_edition }}
+      registry: ${{ steps.resolve.outputs.registry }}
+      edition: ${{ steps.resolve.outputs.edition }}
+    steps:
+      - name: Download manifest artifact (workflow_run)
+        if: github.event_name == 'workflow_run'
+        uses: actions/download-artifact@v4
+        with:
+          name: manifest-source
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout repository (workflow_dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+          sparse-checkout: DESCRIPTION
+          sparse-checkout-cone-mode: false
+
+      - name: Resolve inputs
+        id: resolve
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            SRC=$(jq -r '[to_entries[] | select(.value.type == "source")] | .[0].value' manifest.json)
+            PACKAGE_NAME=$(echo "$SRC" | jq -r '.package')
+            PACKAGE_VERSION=$(echo "$SRC" | jq -r '.version')
+
+            # Tag from PrismRemoteRef metadata, strip refs/tags/ prefix
+            TAG_RAW=$(echo "$SRC" | jq -r '.PrismRemoteRef // empty')
+            if [ -z "$TAG_RAW" ]; then
+              echo "::error::manifest-source missing PrismRemoteRef — cannot resolve release tag"
+              exit 1
+            fi
+            TAG="${TAG_RAW#refs/tags/}"
+
+            UPDATE_EDITION="${{ env.AUTO_UPDATE_EDITION }}"
+            CREATE_EDITION="${{ env.AUTO_CREATE_EDITION }}"
+            LATEST_EDITION="${{ env.AUTO_LATEST_EDITION }}"
+            REGISTRY="${{ env.REGISTRY }}"
+            EDITION="${{ env.EDITION }}"
+          else
+            TAG="${{ inputs.tag }}"
+            PACKAGE_NAME=$(grep '^Package:' DESCRIPTION | sed 's/^Package:[[:space:]]*//')
+            PACKAGE_VERSION=$(grep '^Version:' DESCRIPTION | sed 's/^Version:[[:space:]]*//')
+            UPDATE_EDITION="${{ inputs.update_edition }}"
+            CREATE_EDITION="${{ inputs.create_edition }}"
+            LATEST_EDITION="${{ inputs.latest_edition }}"
+            REGISTRY="${{ inputs.registry }}"
+            EDITION="${{ inputs.edition }}"
+          fi
+
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "package_name=${PACKAGE_NAME}" >> $GITHUB_OUTPUT
+          echo "package_version=${PACKAGE_VERSION}" >> $GITHUB_OUTPUT
+          echo "update_edition=${UPDATE_EDITION}" >> $GITHUB_OUTPUT
+          echo "create_edition=${CREATE_EDITION}" >> $GITHUB_OUTPUT
+          echo "latest_edition=${LATEST_EDITION}" >> $GITHUB_OUTPUT
+          echo "registry=${REGISTRY}" >> $GITHUB_OUTPUT
+          echo "edition=${EDITION}" >> $GITHUB_OUTPUT
+
+  deploy:
+    name: Deploy to PRISM
+    needs: resolve-inputs
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Publish release
+        uses: A2-ai/r-releaser/deploy-prism@deploy-prism
+        with:
+          prism_api_url: ${{ vars.PRISM_API_URL }}
+          auth_token: ${{ secrets.PRISM_API_TOKEN }}
+          release_tag: ${{ needs.resolve-inputs.outputs.tag }}
+
+      - name: Update shared edition
+        if: needs.resolve-inputs.outputs.update_edition == 'true'
+        uses: A2-ai/r-releaser/update-edition@deploy-prism
+        with:
+          prism_api_url: ${{ vars.PRISM_API_URL }}
+          auth_token: ${{ secrets.PRISM_API_TOKEN }}
+          registry: ${{ needs.resolve-inputs.outputs.registry }}
+          edition: ${{ needs.resolve-inputs.outputs.edition }}
+          package_name: ${{ needs.resolve-inputs.outputs.package_name }}
+          package_version: ${{ needs.resolve-inputs.outputs.package_version }}
+
+      # Package-scoped: creates an edition using package_name as registry
+      # and package_version as edition, independent of the shared registry/edition inputs.
+      - name: Create individual package edition
+        if: needs.resolve-inputs.outputs.create_edition == 'true'
+        uses: A2-ai/r-releaser/create-edition@deploy-prism
+        with:
+          prism_api_url: ${{ vars.PRISM_API_URL }}
+          auth_token: ${{ secrets.PRISM_API_TOKEN }}
+          package_name: ${{ needs.resolve-inputs.outputs.package_name }}
+          package_version: ${{ needs.resolve-inputs.outputs.package_version }}
+          latest: ${{ needs.resolve-inputs.outputs.latest_edition }}
