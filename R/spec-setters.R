@@ -1,43 +1,7 @@
 # ==============================================================================
 # Spec Modifier Functions
 # ==============================================================================
-# Pipe-friendly functions for modifying TableSpec and SummarySpec objects.
-
-# ==============================================================================
-# Internal Helpers
-# ==============================================================================
-
-#' @noRd
-assert_any_spec <- function(spec) {
-  if (
-    !S7::S7_inherits(spec, TableSpec) && !S7::S7_inherits(spec, SummarySpec)
-  ) {
-    rlang::abort(sprintf(
-      "spec must be a TableSpec or SummarySpec object. Got: %s",
-      class(spec)[1]
-    ))
-  }
-}
-
-#' @noRd
-assert_table_spec <- function(spec) {
-  if (!S7::S7_inherits(spec, TableSpec)) {
-    rlang::abort(sprintf(
-      "spec must be a TableSpec object. Got: %s",
-      class(spec)[1]
-    ))
-  }
-}
-
-#' @noRd
-assert_summary_spec <- function(spec) {
-  if (!S7::S7_inherits(spec, SummarySpec)) {
-    rlang::abort(sprintf(
-      "spec must be a SummarySpec object. Got: %s",
-      class(spec)[1]
-    ))
-  }
-}
+# S7 generics and methods for modifying TableSpec and SummarySpec objects.
 
 # ==============================================================================
 # Column Operations (Both Specs)
@@ -58,21 +22,18 @@ assert_summary_spec <- function(spec) {
 #'
 #' sum_spec <- SummarySpec() |>
 #'   add_spec_columns("estimation_time")
-add_spec_columns <- function(spec, ...) {
-  assert_any_spec(spec)
+add_spec_columns <- S7::new_generic("add_spec_columns", "spec")
 
-  cols <- c(...)
-  if (S7::S7_inherits(spec, TableSpec)) {
-    cols <- expand_ci_alias(cols)
-  }
-
+S7::method(add_spec_columns, TableSpec) <- function(spec, ...) {
+  cols <- expand_ci_alias(c(...))
   spec@add_columns <- unique(c(spec@add_columns, cols))
+  spec
+}
 
-  # SummarySpec merges add_columns into columns
-  if (S7::S7_inherits(spec, SummarySpec)) {
-    spec@columns <- merge_summary_columns(spec@columns, spec@add_columns)
-  }
-
+S7::method(add_spec_columns, SummarySpec) <- function(spec, ...) {
+  cols <- c(...)
+  spec@add_columns <- unique(c(spec@add_columns, cols))
+  spec@columns <- merge_summary_columns(spec@columns, spec@add_columns)
   spec
 }
 
@@ -91,8 +52,9 @@ add_spec_columns <- function(spec, ...) {
 #'
 #' sum_spec <- SummarySpec() |>
 #'   drop_spec_columns("description")
-drop_spec_columns <- function(spec, ...) {
-  assert_any_spec(spec)
+drop_spec_columns <- S7::new_generic("drop_spec_columns", "spec")
+
+S7::method(drop_spec_columns, AnySpec) <- function(spec, ...) {
   spec@drop_columns <- unique(c(spec@drop_columns, c(...)))
   spec
 }
@@ -109,15 +71,15 @@ drop_spec_columns <- function(spec, ...) {
 #' @examples
 #' spec <- TableSpec() |>
 #'   set_spec_columns("name", "estimate", "rse")
-set_spec_columns <- function(spec, ...) {
-  assert_any_spec(spec)
+set_spec_columns <- S7::new_generic("set_spec_columns", "spec")
 
-  cols <- c(...)
-  if (S7::S7_inherits(spec, TableSpec)) {
-    cols <- expand_ci_alias(cols)
-  }
+S7::method(set_spec_columns, TableSpec) <- function(spec, ...) {
+  spec@columns <- expand_ci_alias(c(...))
+  spec
+}
 
-  spec@columns <- cols
+S7::method(set_spec_columns, SummarySpec) <- function(spec, ...) {
+  spec@columns <- c(...)
   spec
 }
 
@@ -131,13 +93,19 @@ set_spec_columns <- function(spec, ...) {
 #'
 #' @param spec A TableSpec or SummarySpec object
 #' @param title Character string for the table title
+#' @param ... Additional arguments passed to methods.
 #' @return Modified spec
 #' @export
 #' @examples
 #' spec <- TableSpec() |>
 #'   set_spec_title("Parameter Estimates")
-set_spec_title <- function(spec, title) {
-  assert_any_spec(spec)
+set_spec_title <- S7::new_generic(
+  "set_spec_title",
+  "spec",
+  function(spec, title, ...) S7::S7_dispatch()
+)
+
+S7::method(set_spec_title, AnySpec) <- function(spec, title) {
   spec@title <- title
   spec
 }
@@ -148,13 +116,19 @@ set_spec_title <- function(spec, title) {
 #'
 #' @param spec A TableSpec or SummarySpec object
 #' @param n Positive integer for significant figures
+#' @param ... Additional arguments passed to methods.
 #' @return Modified spec
 #' @export
 #' @examples
 #' spec <- TableSpec() |>
 #'   set_spec_sigfig(4)
-set_spec_sigfig <- function(spec, n) {
-  assert_any_spec(spec)
+set_spec_sigfig <- S7::new_generic(
+  "set_spec_sigfig",
+  "spec",
+  function(spec, n, ...) S7::S7_dispatch()
+)
+
+S7::method(set_spec_sigfig, AnySpec) <- function(spec, n) {
   spec@n_sigfig <- n
   spec
 }
@@ -166,13 +140,19 @@ set_spec_sigfig <- function(spec, n) {
 #'
 #' @param spec A TableSpec or SummarySpec object
 #' @param n Non-negative integer or NA
+#' @param ... Additional arguments passed to methods.
 #' @return Modified spec
 #' @export
 #' @examples
 #' spec <- SummarySpec() |>
 #'   set_spec_ofv_decimals(2)
-set_spec_ofv_decimals <- function(spec, n) {
-  assert_any_spec(spec)
+set_spec_ofv_decimals <- S7::new_generic(
+  "set_spec_ofv_decimals",
+  "spec",
+  function(spec, n, ...) S7::S7_dispatch()
+)
+
+S7::method(set_spec_ofv_decimals, AnySpec) <- function(spec, n) {
   spec@n_decimals_ofv <- n
   spec
 }
@@ -183,13 +163,19 @@ set_spec_ofv_decimals <- function(spec, n) {
 #'
 #' @param spec A TableSpec or SummarySpec object
 #' @param hide Logical value
+#' @param ... Additional arguments passed to methods.
 #' @return Modified spec
 #' @export
 #' @examples
 #' spec <- TableSpec() |>
 #'   set_spec_hide_empty(FALSE)
-set_spec_hide_empty <- function(spec, hide) {
-  assert_any_spec(spec)
+set_spec_hide_empty <- S7::new_generic(
+  "set_spec_hide_empty",
+  "spec",
+  function(spec, hide, ...) S7::S7_dispatch()
+)
+
+S7::method(set_spec_hide_empty, AnySpec) <- function(spec, hide) {
   spec@hide_empty_columns <- hide
   spec
 }
@@ -199,6 +185,7 @@ set_spec_hide_empty <- function(spec, hide) {
 #' Controls how p-values are displayed in the table.
 #'
 #' @param spec A TableSpec or SummarySpec object
+#' @param ... Additional arguments passed to the methods.
 #' @param threshold Numeric threshold below which p-values display as "< threshold",
 #'   or NULL to disable threshold display
 #' @param scientific Logical. If TRUE, use scientific notation for p-values
@@ -207,16 +194,21 @@ set_spec_hide_empty <- function(spec, hide) {
 #' @examples
 #' spec <- TableSpec() |>
 #'   set_spec_pvalue(threshold = 0.001, scientific = TRUE)
-set_spec_pvalue <- function(spec, threshold, scientific) {
-  assert_any_spec(spec)
+set_spec_pvalue <- S7::new_generic(
+  "set_spec_pvalue",
+  "spec",
+  function(spec, ..., threshold, scientific) {
+    S7::S7_dispatch()
+  }
+)
 
+S7::method(set_spec_pvalue, AnySpec) <- function(spec, threshold, scientific) {
   if (!missing(threshold)) {
     spec@pvalue_threshold <- threshold
   }
   if (!missing(scientific)) {
     spec@pvalue_scientific <- scientific
   }
-
   spec
 }
 
@@ -228,6 +220,7 @@ set_spec_pvalue <- function(spec, threshold, scientific) {
 #' @param order Character vector of footnote sections in desired order, or NULL
 #'   to disable footnotes. For TableSpec: "summary_info", "equations", "abbreviations".
 #'   For SummarySpec: only "abbreviations" is valid.
+#' @param ... Additional arguments passed to methods.
 #' @return Modified spec
 #' @export
 #' @examples
@@ -237,8 +230,13 @@ set_spec_pvalue <- function(spec, threshold, scientific) {
 #' # Disable footnotes
 #' spec <- TableSpec() |>
 #'   set_spec_footnotes(NULL)
-set_spec_footnotes <- function(spec, order) {
-  assert_any_spec(spec)
+set_spec_footnotes <- S7::new_generic(
+  "set_spec_footnotes",
+  "spec",
+  function(spec, order, ...) S7::S7_dispatch()
+)
+
+S7::method(set_spec_footnotes, AnySpec) <- function(spec, order) {
   spec@footnote_order <- order
   spec
 }
@@ -261,13 +259,61 @@ set_spec_footnotes <- function(spec, order) {
 #'   )
 #' ) |>
 #'   set_spec_section_filter("Other")
-set_spec_section_filter <- function(spec, ...) {
-  assert_any_spec(spec)
+set_spec_section_filter <- S7::new_generic("set_spec_section_filter", "spec")
+
+S7::method(set_spec_section_filter, AnySpec) <- function(spec, ...) {
   values <- c(...)
   if (length(values) == 0) {
     spec@section_filter <- NULL
   } else {
     spec@section_filter <- as.character(values)
+  }
+  spec
+}
+
+# ==============================================================================
+# Section Rules (Both Specs)
+# ==============================================================================
+
+#' Set section rules for a spec
+#'
+#' Controls how rows are grouped into sections. Pass formula expressions
+#' where the LHS is a condition and the RHS is the section label.
+#'
+#' For TableSpec, rules are evaluated against parameter columns
+#' (e.g., `kind == "THETA" ~ "Structural Parameters"`).
+#'
+#' For SummarySpec, rules are evaluated row-by-row against summary columns
+#' including `tags` (e.g., `"base" %in% tags ~ "Base Models"`).
+#'
+#' @param spec A TableSpec or SummarySpec object
+#' @param ... Section rule formulas
+#' @param overwrite If FALSE (default), append to existing rules.
+#'   If TRUE, replace all existing rules.
+#' @return Modified spec
+#' @export
+#' @examples
+#' spec <- TableSpec() |>
+#'   set_spec_sections(
+#'     kind == "THETA" ~ "Structural",
+#'     kind == "OMEGA" ~ "IIV"
+#'   )
+set_spec_sections <- S7::new_generic(
+  "set_spec_sections",
+  "spec",
+  function(spec, ..., overwrite = FALSE) S7::S7_dispatch()
+)
+
+S7::method(set_spec_sections, AnySpec) <- function(
+  spec,
+  ...,
+  overwrite = FALSE
+) {
+  new_rules <- section_rules(...)
+  if (overwrite) {
+    spec@sections <- new_rules
+  } else {
+    spec@sections <- c(spec@sections, new_rules)
   }
   spec
 }
@@ -281,6 +327,7 @@ set_spec_section_filter <- function(spec, ...) {
 #' Controls how parameter names are displayed in the table.
 #'
 #' @param spec A TableSpec object
+#' @param ... Additional arguments passed to methods.
 #' @param source One of "name", "display", or "nonmem". If NULL, keeps current value.
 #' @param append_omega_with_theta Logical. If TRUE, append associated theta
 #'   names to omega parameters. If NULL, keeps current value.
@@ -289,13 +336,19 @@ set_spec_section_filter <- function(spec, ...) {
 #' @examples
 #' spec <- TableSpec() |>
 #'   set_spec_parameter_names(source = "nonmem", append_omega_with_theta = FALSE)
-set_spec_parameter_names <- function(
+set_spec_parameter_names <- S7::new_generic(
+  "set_spec_parameter_names",
+  "spec",
+  function(spec, ..., source = NULL, append_omega_with_theta = NULL) {
+    S7::S7_dispatch()
+  }
+)
+
+S7::method(set_spec_parameter_names, TableSpec) <- function(
   spec,
   source = NULL,
   append_omega_with_theta = NULL
 ) {
-  assert_table_spec(spec)
-
   opts <- spec@parameter_names
   if (!is.null(source)) {
     opts@source <- source
@@ -303,7 +356,6 @@ set_spec_parameter_names <- function(
   if (!is.null(append_omega_with_theta)) {
     opts@append_omega_with_theta <- append_omega_with_theta
   }
-
   spec@parameter_names <- opts
   spec
 }
@@ -313,6 +365,7 @@ set_spec_parameter_names <- function(
 #' Controls confidence interval rendering options.
 #'
 #' @param spec A TableSpec object
+#' @param ... Additional arguments passed to methods.
 #' @param level Confidence interval level (0-1, exclusive)
 #' @param merge Logical. If TRUE, merge CI bounds into a single column
 #' @param pattern sprintf pattern for merged CI display (must contain two %%s)
@@ -322,15 +375,28 @@ set_spec_parameter_names <- function(
 #' @examples
 #' spec <- TableSpec() |>
 #'   set_spec_ci(level = 0.90, merge = TRUE, pattern = "(%s, %s)")
-set_spec_ci <- function(
+set_spec_ci <- S7::new_generic(
+  "set_spec_ci",
+  "spec",
+  function(
+    spec,
+    ...,
+    level = NULL,
+    merge = NULL,
+    pattern = NULL,
+    missing_text = NULL
+  ) {
+    S7::S7_dispatch()
+  }
+)
+
+S7::method(set_spec_ci, TableSpec) <- function(
   spec,
   level = NULL,
   merge = NULL,
   pattern = NULL,
   missing_text = NULL
 ) {
-  assert_table_spec(spec)
-
   ci_args <- list(
     level = spec@ci@level,
     merge = spec@ci@merge,
@@ -360,6 +426,7 @@ set_spec_ci <- function(
 #' Controls how NA values are displayed in the table.
 #'
 #' @param spec A TableSpec object
+#' @param ... Additional arguments passed to methods.
 #' @param text Text to substitute for NA values
 #' @param apply_to Which columns to apply missing text to: "all", "numeric",
 #'   or "character"
@@ -368,16 +435,23 @@ set_spec_ci <- function(
 #' @examples
 #' spec <- TableSpec() |>
 #'   set_spec_missing("-", apply_to = "numeric")
-set_spec_missing <- function(spec, text = NULL, apply_to = NULL) {
-  assert_table_spec(spec)
+set_spec_missing <- S7::new_generic(
+  "set_spec_missing",
+  "spec",
+  function(spec, text = NULL, ..., apply_to = NULL) S7::S7_dispatch()
+)
 
+S7::method(set_spec_missing, TableSpec) <- function(
+  spec,
+  text = NULL,
+  apply_to = NULL
+) {
   if (!is.null(text)) {
     spec@missing_text <- text
   }
   if (!is.null(apply_to)) {
     spec@missing_apply_to <- apply_to
   }
-
   spec
 }
 
@@ -386,6 +460,7 @@ set_spec_missing <- function(spec, text = NULL, apply_to = NULL) {
 #' Controls which transforms are applied for display by parameter kind.
 #'
 #' @param spec A TableSpec object
+#' @param ... Additional arguments passed to methods.
 #' @param theta Columns to transform for theta parameters
 #' @param omega Columns to transform for omega parameters
 #' @param sigma Columns to transform for sigma parameters
@@ -394,14 +469,20 @@ set_spec_missing <- function(spec, text = NULL, apply_to = NULL) {
 #' @examples
 #' spec <- TableSpec() |>
 #'   set_spec_transforms(theta = "all", omega = c("estimate", "cv"))
-set_spec_transforms <- function(
+set_spec_transforms <- S7::new_generic(
+  "set_spec_transforms",
+  "spec",
+  function(spec, ..., theta = NULL, omega = NULL, sigma = NULL) {
+    S7::S7_dispatch()
+  }
+)
+
+S7::method(set_spec_transforms, TableSpec) <- function(
   spec,
   theta = NULL,
   omega = NULL,
   sigma = NULL
 ) {
-  assert_table_spec(spec)
-
   transforms <- spec@display_transforms
   if (!is.null(theta)) {
     transforms$theta <- theta
@@ -412,7 +493,6 @@ set_spec_transforms <- function(
   if (!is.null(sigma)) {
     transforms$sigma <- sigma
   }
-
   spec@display_transforms <- transforms
   spec
 }
@@ -420,42 +500,6 @@ set_spec_transforms <- function(
 # ==============================================================================
 # TableSpec Rule Modifiers
 # ==============================================================================
-
-#' Set section rules for a spec
-#'
-#' Controls how rows are grouped into sections. Pass formula expressions
-#' where the LHS is a condition and the RHS is the section label.
-#'
-#' For TableSpec, rules are evaluated against parameter columns
-#' (e.g., `kind == "THETA" ~ "Structural Parameters"`).
-#'
-#' For SummarySpec, rules are evaluated row-by-row against summary columns
-#' including `tags` (e.g., `"base" %in% tags ~ "Base Models"`).
-#'
-#' @param spec A TableSpec or SummarySpec object
-#' @param ... Section rule formulas
-#' @param overwrite If FALSE (default), append to existing rules.
-#'   If TRUE, replace all existing rules.
-#' @return Modified spec
-#' @export
-#' @examples
-#' spec <- TableSpec() |>
-#'   set_spec_sections(
-#'     kind == "THETA" ~ "Structural",
-#'     kind == "OMEGA" ~ "IIV"
-#'   )
-set_spec_sections <- function(spec, ..., overwrite = FALSE) {
-  assert_any_spec(spec)
-
-  new_rules <- section_rules(...)
-  if (overwrite) {
-    spec@sections <- new_rules
-  } else {
-    spec@sections <- c(spec@sections, new_rules)
-  }
-
-  spec
-}
 
 #' Set row filter rules for a TableSpec
 #'
@@ -471,16 +515,23 @@ set_spec_sections <- function(spec, ..., overwrite = FALSE) {
 #' @examples
 #' spec <- TableSpec() |>
 #'   set_spec_filter(!fixed, diagonal)
-set_spec_filter <- function(spec, ..., overwrite = FALSE) {
-  assert_table_spec(spec)
+set_spec_filter <- S7::new_generic(
+  "set_spec_filter",
+  "spec",
+  function(spec, ..., overwrite = FALSE) S7::S7_dispatch()
+)
 
+S7::method(set_spec_filter, TableSpec) <- function(
+  spec,
+  ...,
+  overwrite = FALSE
+) {
   new_rules <- filter_rules(...)
   if (overwrite) {
     spec@row_filter <- new_rules
   } else {
     spec@row_filter <- c(spec@row_filter, new_rules)
   }
-
   spec
 }
 
@@ -501,16 +552,23 @@ set_spec_filter <- function(spec, ..., overwrite = FALSE) {
 #'     !is.na(cv) ~ sprintf("CV = %s%%", cv),
 #'     TRUE ~ NA_character_
 #'   )
-set_spec_variability <- function(spec, ..., overwrite = FALSE) {
-  assert_table_spec(spec)
+set_spec_variability <- S7::new_generic(
+  "set_spec_variability",
+  "spec",
+  function(spec, ..., overwrite = FALSE) S7::S7_dispatch()
+)
 
+S7::method(set_spec_variability, TableSpec) <- function(
+  spec,
+  ...,
+  overwrite = FALSE
+) {
   new_rules <- variability_rules(...)
   if (overwrite) {
     spec@variability_rules <- new_rules
   } else {
     spec@variability_rules <- c(spec@variability_rules, new_rules)
   }
-
   spec
 }
 
@@ -524,13 +582,19 @@ set_spec_variability <- function(spec, ..., overwrite = FALSE) {
 #'
 #' @param spec A SummarySpec object
 #' @param format One of "seconds", "minutes", "hours", or "auto"
+#' @param ... Additional arguments passed to methods.
 #' @return Modified spec
 #' @export
 #' @examples
 #' spec <- SummarySpec() |>
 #'   set_spec_time_format("minutes")
-set_spec_time_format <- function(spec, format) {
-  assert_summary_spec(spec)
+set_spec_time_format <- S7::new_generic(
+  "set_spec_time_format",
+  "spec",
+  function(spec, format, ...) S7::S7_dispatch()
+)
+
+S7::method(set_spec_time_format, SummarySpec) <- function(spec, format) {
   spec@time_format <- format
   spec
 }
@@ -541,13 +605,19 @@ set_spec_time_format <- function(spec, format) {
 #'
 #' @param spec A SummarySpec object
 #' @param models Character vector of model names, or NULL for all models
+#' @param ... Additional arguments passed to methods.
 #' @return Modified spec
 #' @export
 #' @examples
 #' spec <- SummarySpec() |>
 #'   set_spec_models(c("run001", "run002", "run003"))
-set_spec_models <- function(spec, models) {
-  assert_summary_spec(spec)
+set_spec_models <- S7::new_generic(
+  "set_spec_models",
+  "spec",
+  function(spec, models, ...) S7::S7_dispatch()
+)
+
+S7::method(set_spec_models, SummarySpec) <- function(spec, models) {
   spec@models_to_include <- models
   spec
 }
@@ -557,6 +627,7 @@ set_spec_models <- function(spec, models) {
 #' Filters which models appear in the summary table by tags.
 #'
 #' @param spec A SummarySpec object
+#' @param ... Additional arguments passed to methods.
 #' @param tags Character vector of tags to include, or NULL for no inclusion
 #'   filter. Only models with at least one matching tag are kept.
 #' @param exclude Character vector of tags to exclude, or NULL for no exclusion
@@ -570,8 +641,13 @@ set_spec_models <- function(spec, models) {
 #' # Exclude models tagged "failed"
 #' spec <- SummarySpec() |>
 #'   set_spec_tag_filter(exclude = "failed")
-set_spec_tag_filter <- function(spec, tags, exclude) {
-  assert_summary_spec(spec)
+set_spec_tag_filter <- S7::new_generic(
+  "set_spec_tag_filter",
+  "spec",
+  function(spec, ..., tags, exclude) S7::S7_dispatch()
+)
+
+S7::method(set_spec_tag_filter, SummarySpec) <- function(spec, tags, exclude) {
   if (!missing(tags)) {
     spec@tag_filter <- tags
   }
@@ -587,13 +663,19 @@ set_spec_tag_filter <- function(spec, tags, exclude) {
 #'
 #' @param spec A SummarySpec object
 #' @param remove Logical value
+#' @param ... Additional arguments passed to methods.
 #' @return Modified spec
 #' @export
 #' @examples
 #' spec <- SummarySpec() |>
 #'   set_spec_remove_unrun(FALSE)
-set_spec_remove_unrun <- function(spec, remove) {
-  assert_summary_spec(spec)
+set_spec_remove_unrun <- S7::new_generic(
+  "set_spec_remove_unrun",
+  "spec",
+  function(spec, remove, ...) S7::S7_dispatch()
+)
+
+S7::method(set_spec_remove_unrun, SummarySpec) <- function(spec, remove) {
   spec@remove_unrun_models <- remove
   spec
 }
@@ -612,15 +694,22 @@ set_spec_remove_unrun <- function(spec, remove) {
 #' @examples
 #' spec <- SummarySpec() |>
 #'   set_spec_summary_filter(ofv < 1000)
-set_spec_summary_filter <- function(spec, ..., overwrite = FALSE) {
-  assert_summary_spec(spec)
+set_spec_summary_filter <- S7::new_generic(
+  "set_spec_summary_filter",
+  "spec",
+  function(spec, ..., overwrite = FALSE) S7::S7_dispatch()
+)
 
+S7::method(set_spec_summary_filter, SummarySpec) <- function(
+  spec,
+  ...,
+  overwrite = FALSE
+) {
   new_rules <- summary_filter_rules(...)
   if (overwrite) {
     spec@summary_filter <- new_rules
   } else {
     spec@summary_filter <- c(spec@summary_filter, new_rules)
   }
-
   spec
 }

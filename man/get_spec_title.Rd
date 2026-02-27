@@ -4,10 +4,12 @@
 \alias{get_spec_title}
 \title{Get title from a spec}
 \usage{
-get_spec_title(spec)
+get_spec_title(spec, ...)
 }
 \arguments{
 \item{spec}{A TableSpec or SummarySpec object}
+
+\item{...}{Additional arguments passed to methods.}
 }
 \value{
 Character string

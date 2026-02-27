@@ -49,7 +49,7 @@ summary_filter_rules <- function(...) {
 }
 
 # ==============================================================================
-# SummarySpec S7 Class
+# SummarySpec helpers
 # ==============================================================================
 
 #' @noRd
@@ -100,287 +100,6 @@ merge_summary_columns <- function(columns, add_columns) {
   }
   columns
 }
-
-#' Summary specification for run summary tables
-#'
-#' @param title Character. Title for the table header. Default is
-#'   "Run Summary".
-#' @param models_to_include Character vector of model names to include in the
-#'   table (with or without .mod/.ctl extensions), or NULL (default).
-#' @param tag_filter Character vector of tags, or NULL (default). Only models
-#'   with at least one matching tag are included.
-#' @param tag_exclude Character vector of tags to exclude, or NULL (default).
-#'   Models with any matching tag are removed. Applied after tag_filter.
-#' @param summary_filter Filter rules created with `summary_filter_rules()`.
-#' @param remove_unrun_models Logical. If TRUE (default), models without
-#'   completed runs are excluded from the table.
-#' @param sections Section rules created with `section_rules()`.
-#' @param section_filter Character vector of section labels to exclude from the
-#'   table. Use `NA` to also exclude models that don't match any section rule.
-#'   Default is NULL (no filtering). See `set_spec_section_filter()`.
-#' @param columns Character vector of columns to include. Valid columns:
-#'   "based_on", "description", "n_parameters", "problem",
-#'   "number_data_records", "number_subjects", "number_obs",
-#'   "estimation_method", "estimation_time", "covariance_time",
-#'   "postprocess_time", "function_evaluations", "significant_digits",
-#'   "ofv", "dofv", "condition_number", "termination_status", "pvalue", "df".
-#'   Note: "pvalue" and "df" require "dofv" to be calculated; pvalue uses the
-#'   Likelihood Ratio Test (LRT) assuming nested models.
-#' @param add_columns Character vector of columns to append to the default
-#'   `columns` list, or NULL (default).
-#' @param drop_columns Character vector of columns to exclude from output, or
-#'   NULL (default).
-#' @param hide_empty_columns Logical. If TRUE, columns with all NA values are
-#'   hidden. Default is TRUE.
-#' @param n_sigfig Number of significant figures for numeric formatting.
-#'   Default is 3.
-#' @param n_decimals_ofv Number of decimal places for OFV and dOFV values.
-#'   Default is 3.
-#' @param time_format Format for time columns. Options: "seconds" (default),
-#'   "minutes", "hours", "auto" (auto-scale based on magnitude).
-#' @param pvalue_scientific Logical. If TRUE, p-values are formatted
-#'   in scientific notation (e.g., 1.23e-04). If FALSE (default), uses significant figures
-#'   from n_sigfig.
-#' @param pvalue_threshold Numeric or NULL. If set, p-values below this threshold
-#'   are displayed as "< threshold" (e.g., "< 0.05"). Default is NULL (no threshold).
-#' @param footnote_order Character vector controlling the order of footnote sections,
-#'   or NULL to disable footnotes. Valid value for SummarySpec: "abbreviations".
-#'   Default is c("abbreviations").
-#'
-#' @export
-SummarySpec <- S7::new_class(
-  "SummarySpec",
-  properties = list(
-    title = S7::new_property(
-      class = S7::class_character,
-      default = "Run Summary"
-    ),
-    models_to_include = S7::new_property(
-      class = S7::class_character | NULL,
-      default = NULL
-    ),
-    tag_filter = S7::new_property(
-      class = S7::class_character | NULL,
-      default = NULL
-    ),
-    tag_exclude = S7::new_property(
-      class = S7::class_character | NULL,
-      default = NULL
-    ),
-    summary_filter = S7::new_property(
-      class = S7::class_list,
-      default = list()
-    ),
-    remove_unrun_models = S7::new_property(
-      class = S7::class_logical,
-      default = TRUE
-    ),
-    sections = sections_property(),
-    section_filter = S7::new_property(
-      class = S7::class_character | NULL,
-      default = NULL
-    ),
-    columns = S7::new_property(
-      class = S7::class_character,
-      default = c(
-        "based_on",
-        "description",
-        "n_parameters",
-        "condition_number",
-        "ofv",
-        "dofv",
-        "pvalue"
-      ),
-      setter = function(self, value) {
-        S7::prop(self, "columns") <- value
-        self
-      }
-    ),
-    add_columns = S7::new_property(
-      class = S7::class_character | NULL,
-      default = NULL,
-      setter = function(self, value) {
-        S7::prop(self, "add_columns") <- value
-        self
-      }
-    ),
-    drop_columns = S7::new_property(
-      class = S7::class_character | NULL,
-      default = NULL
-    ),
-    hide_empty_columns = S7::new_property(
-      class = S7::class_logical,
-      default = TRUE
-    ),
-    n_sigfig = S7::new_property(
-      class = S7::class_numeric,
-      default = 3
-    ),
-    n_decimals_ofv = S7::new_property(
-      class = S7::class_numeric,
-      default = 3
-    ),
-    time_format = S7::new_property(
-      class = S7::class_character,
-      default = "seconds"
-    ),
-    pvalue_scientific = S7::new_property(
-      class = S7::class_logical,
-      default = FALSE
-    ),
-    pvalue_threshold = S7::new_property(
-      class = S7::class_numeric | NULL,
-      default = NULL
-    ),
-    footnote_order = S7::new_property(
-      class = S7::class_character | NULL,
-      default = c("abbreviations")
-    )
-  ),
-  validator = function(self) {
-    if (
-      length(self@sections) > 0 &&
-        !all(vapply(self@sections, rlang::is_formula, logical(1)))
-    ) {
-      return("@section rules must be created with section_rules()")
-    }
-
-    valid_fields <- summary_spec_valid_columns()
-    columns_msg <- validate_columns_in_set(
-      self@columns,
-      valid_fields,
-      "@columns"
-    )
-    if (!is.null(columns_msg)) {
-      return(columns_msg)
-    }
-
-    if (!is.null(self@add_columns)) {
-      add_msg <- validate_columns_in_set(
-        self@add_columns,
-        valid_fields,
-        "@add_columns"
-      )
-      if (!is.null(add_msg)) {
-        return(add_msg)
-      }
-    }
-
-    if (!self@time_format %in% c("seconds", "minutes", "hours", "auto")) {
-      return(sprintf(
-        "@time_format must be 'seconds', 'minutes', 'hours', or 'auto'. Got: '%s'",
-        self@time_format
-      ))
-    }
-
-    if (
-      length(self@n_sigfig) != 1 ||
-        self@n_sigfig < 1 ||
-        self@n_sigfig != floor(self@n_sigfig)
-    ) {
-      return(sprintf(
-        "@n_sigfig must be a positive whole number. Got: %s",
-        self@n_sigfig
-      ))
-    }
-
-    ofv_msg <- validate_ofv_decimals(self@n_decimals_ofv, "@n_decimals_ofv")
-    if (!is.null(ofv_msg)) {
-      return(ofv_msg)
-    }
-
-    if (
-      length(self@hide_empty_columns) != 1 || is.na(self@hide_empty_columns)
-    ) {
-      return("@hide_empty_columns must be TRUE or FALSE")
-    }
-
-    if (
-      length(self@remove_unrun_models) != 1 || is.na(self@remove_unrun_models)
-    ) {
-      return("@remove_unrun_models must be TRUE or FALSE")
-    }
-
-    if (
-      length(self@summary_filter) > 0 &&
-        !all(vapply(self@summary_filter, rlang::is_quosure, logical(1)))
-    ) {
-      return(
-        "@summary_filter rules must be created with summary_filter_rules()"
-      )
-    }
-
-    drop_msg <- validate_columns_in_set(
-      self@drop_columns,
-      valid_fields,
-      "@drop_columns"
-    )
-    if (!is.null(drop_msg)) {
-      return(drop_msg)
-    }
-
-    if (length(self@pvalue_scientific) != 1 || is.na(self@pvalue_scientific)) {
-      return(sprintf(
-        "@pvalue_scientific must be TRUE or FALSE. Got: %s",
-        self@pvalue_scientific
-      ))
-    }
-
-    pvalue_msg <- validate_pvalue_threshold(self@pvalue_threshold)
-    if (!is.null(pvalue_msg)) {
-      return(pvalue_msg)
-    }
-
-    footnote_msg <- validate_summary_footnote_order(self@footnote_order)
-    if (!is.null(footnote_msg)) {
-      return(footnote_msg)
-    }
-  },
-  constructor = function(
-    title = "Run Summary",
-    models_to_include = NULL,
-    tag_filter = NULL,
-    tag_exclude = NULL,
-    summary_filter = summary_filter_rules(),
-    remove_unrun_models = TRUE,
-    columns = NULL,
-    add_columns = NULL,
-    drop_columns = NULL,
-    hide_empty_columns = TRUE,
-    n_sigfig = 3,
-    n_decimals_ofv = 3,
-    time_format = "seconds",
-    pvalue_scientific = FALSE,
-    pvalue_threshold = NULL,
-    sections = section_rules(),
-    section_filter = NULL,
-    footnote_order = "abbreviations"
-  ) {
-    columns <- merge_summary_columns(columns, add_columns)
-
-    S7::new_object(
-      S7::S7_object(),
-      summary_filter = summary_filter,
-      models_to_include = models_to_include,
-      add_columns = add_columns,
-      columns = columns,
-      drop_columns = drop_columns,
-      n_sigfig = n_sigfig,
-      n_decimals_ofv = n_decimals_ofv,
-      time_format = time_format,
-      title = title,
-      hide_empty_columns = hide_empty_columns,
-      remove_unrun_models = remove_unrun_models,
-      tag_filter = tag_filter,
-      tag_exclude = tag_exclude,
-      pvalue_scientific = pvalue_scientific,
-      pvalue_threshold = pvalue_threshold,
-      sections = sections,
-      section_filter = section_filter,
-      footnote_order = footnote_order
-    )
-  }
-)
 
 # ==============================================================================
 # Apply spec to lineage tree
@@ -1253,4 +972,133 @@ get_time_suffix <- function(time_format, data) {
   }
 
   NULL
+}
+
+# ==============================================================================
+# HyperionTable Constructor for Summary Tables
+# ==============================================================================
+
+#' Create HyperionTable from summary table data
+#'
+#' @param data Data frame from apply_summary_spec()
+#' @param spec SummarySpec object
+#' @return HyperionTable object
+#' @noRd
+hyperion_summary_table <- function(data, spec) {
+  # Build label map
+  label_map <- build_summary_label_map()
+  label_map <- label_map[intersect(names(label_map), names(data))]
+
+  # Add time format suffix
+  time_suffix <- get_time_suffix(spec@time_format, data)
+  if (!is.null(time_suffix)) {
+    time_cols <- intersect(
+      c("estimation_time", "covariance_time", "postprocess_time"),
+      names(data)
+    )
+    for (col in time_cols) {
+      if (col %in% names(label_map)) {
+        label_map[[col]] <- paste0(label_map[[col]], " (", time_suffix, ")")
+      }
+    }
+  }
+
+  # Find empty columns to hide
+  empty_cols <- if (spec@hide_empty_columns) {
+    find_empty_columns(data)
+  } else {
+    character(0)
+  }
+
+  # Build footnotes
+  footnotes <- build_summary_footnotes(data, spec)
+
+  # Numeric columns
+  ofv_cols <- intersect(c("ofv", "dofv"), names(data))
+  sigfig_cols <- intersect(
+    c(
+      "condition_number",
+      "estimation_time",
+      "covariance_time",
+      "postprocess_time"
+    ),
+    names(data)
+  )
+
+  # Determine section grouping
+  has_sections <- "section" %in% names(data) && !all(is.na(data$section))
+  groupname_col <- if (has_sections) "section" else NULL
+  bold_locs <- c("column_labels", "title")
+  if (has_sections) {
+    bold_locs <- c(bold_locs, "row_groups")
+  }
+
+  HyperionTable(
+    data = data,
+    table_type = "summary",
+    groupname_col = groupname_col,
+    hide_cols = empty_cols,
+    col_labels = label_map,
+    title = spec@title,
+    spanners = list(),
+    numeric_cols = c(ofv_cols, sigfig_cols),
+    n_sigfig = spec@n_sigfig,
+    ci_merges = list(),
+    ci_missing_rows = integer(0),
+    bold_locations = bold_locs,
+    borders = list(),
+    footnotes = footnotes,
+    source_spec = spec
+  )
+}
+
+#' Build footnotes for summary table
+#' @noRd
+build_summary_footnotes <- function(data, spec) {
+  footnotes <- list()
+
+  footnote_order <- spec@footnote_order
+  if (is.null(footnote_order)) {
+    return(list())
+  }
+
+  # Summary stats for conditional footnotes
+  summary_stats <- list(
+    has_ofv = "ofv" %in% names(data) && any(!is.na(data$ofv)),
+    has_dofv = "dofv" %in% names(data) && any(!is.na(data$dofv)),
+    has_cond_num = "condition_number" %in%
+      names(data) &&
+      any(!is.na(data$condition_number)),
+    has_pvalue = "pvalue" %in% names(data) && any(!is.na(data$pvalue))
+  )
+
+  # Detect table statistics (empty for summary tables)
+  stats <- list(
+    has_ci = FALSE,
+    has_rse = FALSE,
+    has_stderr = FALSE,
+    has_cv = FALSE,
+    has_sd = FALSE,
+    has_corr = FALSE,
+    has_shrinkage = FALSE,
+    has_theta_logadderr_cv = FALSE,
+    has_omega_lognormal_cv = FALSE,
+    has_omega_proportional_cv = FALSE,
+    has_sigma_lognormal_cv = FALSE,
+    has_sigma_proportional_cv = FALSE
+  )
+
+  # Build abbreviations
+  abbreviations <- build_abbreviations_footnote(stats, NULL, summary_stats)
+
+  # Assemble footnotes
+  for (section in footnote_order) {
+    if (section == "abbreviations" && !is.null(abbreviations)) {
+      for (line in abbreviations) {
+        footnotes <- c(footnotes, list(footnote_spec(line, FALSE)))
+      }
+    }
+  }
+
+  footnotes
 }

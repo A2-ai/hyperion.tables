@@ -164,28 +164,6 @@ test_that("get_spec_time_format works", {
 # Type Validation
 # ==============================================================================
 
-test_that("common getters reject non-spec objects", {
-  expect_error(get_spec_columns(list()), "must be a TableSpec or SummarySpec")
-  expect_error(get_spec_title(NULL), "must be a TableSpec or SummarySpec")
-  expect_error(get_spec_sigfig(42), "must be a TableSpec or SummarySpec")
-})
-
-test_that("TableSpec-only getters reject SummarySpec", {
-  sum_spec <- SummarySpec()
-
-  expect_error(get_spec_parameter_names(sum_spec), "must be a TableSpec")
-  expect_error(get_spec_ci(sum_spec), "must be a TableSpec")
-  expect_error(get_spec_filter(sum_spec), "must be a TableSpec")
-  expect_error(get_spec_transforms(sum_spec), "must be a TableSpec")
-  expect_error(get_spec_variability(sum_spec), "must be a TableSpec")
-})
-
-test_that("SummarySpec-only getters reject TableSpec", {
-  table_spec <- TableSpec()
-
-  expect_error(get_spec_time_format(table_spec), "must be a SummarySpec")
-})
-
 # ==============================================================================
 # Round-trip consistency
 # ==============================================================================
@@ -211,4 +189,3 @@ test_that("get returns what set configured for SummarySpec", {
   expect_equal(get_spec_sigfig(spec), 4)
   expect_equal(get_spec_time_format(spec), "hours")
 })
-

@@ -631,7 +631,11 @@ test_that("format_condition_number_footnote returns correct string or NULL", {
   right <- list(condition_number = 45.6)
 
   result <- hyperion.tables:::format_condition_number_footnote(
-    left, right, "A", "B", 3
+    left,
+    right,
+    "A",
+    "B",
+    3
   )
   expect_match(result, "Condition Number")
   expect_match(result, "\\(A\\)")
@@ -639,12 +643,20 @@ test_that("format_condition_number_footnote returns correct string or NULL", {
 
   # Both NULL summaries
   expect_null(hyperion.tables:::format_condition_number_footnote(
-    NULL, NULL, "A", "B", 3
+    NULL,
+    NULL,
+    "A",
+    "B",
+    3
   ))
 
   # One NULL
   result2 <- hyperion.tables:::format_condition_number_footnote(
-    left, NULL, "A", "B", 3
+    left,
+    NULL,
+    "A",
+    "B",
+    3
   )
   expect_match(result2, "N/A")
   expect_match(result2, "\\(B\\)")
@@ -690,16 +702,38 @@ test_that("format_ofv_lrt_footnote returns OFV line or NULL", {
   right_sum <- list(run_name = "run002", ofv = 90, number_obs = 10)
 
   result <- hyperion.tables:::format_ofv_lrt_footnote(
-    comp, 1, 2, left_sum, right_sum, "A", "B",
-    10, 10, 3, 3, FALSE, NULL
+    comp,
+    1,
+    2,
+    left_sum,
+    right_sum,
+    "A",
+    "B",
+    10,
+    10,
+    3,
+    3,
+    FALSE,
+    NULL
   )
   expect_match(result, "OFV")
   expect_match(result, "LRT p-value")
 
   # Both NULL summaries -> NULL
   expect_null(hyperion.tables:::format_ofv_lrt_footnote(
-    comp, 1, 2, NULL, NULL, "A", "B",
-    NA, NA, 3, 3, FALSE, NULL
+    comp,
+    1,
+    2,
+    NULL,
+    NULL,
+    "A",
+    "B",
+    NA,
+    NA,
+    3,
+    3,
+    FALSE,
+    NULL
   ))
 })
 
@@ -932,7 +966,7 @@ test_that("compute_pct_change adds correct columns", {
   expect_true("pct_change" %in% names(result))
   expect_equal(result$pct_change_2[1], 50)
   expect_equal(result$pct_change_2[2], 0)
-  expect_true(is.na(result$pct_change_2[3]))  # ref == 0
+  expect_true(is.na(result$pct_change_2[3])) # ref == 0
 })
 
 test_that("validate_comparison_renderable aborts on empty model_cols", {
@@ -1067,7 +1101,10 @@ test_that("join_comparison_params produces correct columns for initial join", {
   suffix_cols <- hyperion.tables:::resolve_suffix_cols_for_comparison(p1)
   positions <- hyperion.tables:::compute_model_positions(p1, p2, suffix_cols)
   result <- hyperion.tables:::join_comparison_params(
-    p1, p2, suffix_cols, positions
+    p1,
+    p2,
+    suffix_cols,
+    positions
   )
 
   # Should have suffixed columns for both models
@@ -1112,7 +1149,10 @@ test_that("join_comparison_params produces correct columns for chained join", {
   suffix_cols <- hyperion.tables:::resolve_suffix_cols_for_comparison(comp)
   positions <- hyperion.tables:::compute_model_positions(comp, p3, suffix_cols)
   result <- hyperion.tables:::join_comparison_params(
-    comp, p3, suffix_cols, positions
+    comp,
+    p3,
+    suffix_cols,
+    positions
   )
 
   # Should have estimate_1, estimate_2 (from existing), estimate_3 (new)

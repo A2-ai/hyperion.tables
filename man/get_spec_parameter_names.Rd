@@ -4,10 +4,12 @@
 \alias{get_spec_parameter_names}
 \title{Get parameter name options from a TableSpec}
 \usage{
-get_spec_parameter_names(spec)
+get_spec_parameter_names(spec, ...)
 }
 \arguments{
 \item{spec}{A TableSpec object}
+
+\item{...}{Additional arguments passed to methods.}
 }
 \value{
 ParameterNameOptions object

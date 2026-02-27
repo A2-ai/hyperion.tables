@@ -4,10 +4,12 @@
 \alias{get_spec_variability}
 \title{Get variability rules from a TableSpec}
 \usage{
-get_spec_variability(spec)
+get_spec_variability(spec, ...)
 }
 \arguments{
 \item{spec}{A TableSpec object}
+
+\item{...}{Additional arguments passed to methods.}
 }
 \value{
 List of quosures

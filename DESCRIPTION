@@ -35,3 +35,22 @@ Imports:
     rlang,
     S7 (>= 0.2.1)
 VignetteBuilder: knitr
+Collate: 
+    'spec.R'
+    'classes.R'
+    'compare-table.R'
+    'compare.R'
+    'format.R'
+    'hyperion.tables-package.R'
+    'parameter-apply.R'
+    'parameter-table.R'
+    'render-common.R'
+    'render-flextable.R'
+    'render-gt.R'
+    'spec-getters.R'
+    'spec-setters.R'
+    'spec-validation.R'
+    'summary.R'
+    'utils.R'
+    'variability.R'
+    'zzz.R'

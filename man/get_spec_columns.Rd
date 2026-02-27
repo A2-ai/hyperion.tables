@@ -4,10 +4,12 @@
 \alias{get_spec_columns}
 \title{Get columns from a spec}
 \usage{
-get_spec_columns(spec)
+get_spec_columns(spec, ...)
 }
 \arguments{
 \item{spec}{A TableSpec or SummarySpec object}
+
+\item{...}{Additional arguments passed to methods.}
 }
 \value{
 Character vector of column names

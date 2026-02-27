@@ -6,7 +6,9 @@ test_that("tag-based sections render correctly (gt + flextable)", {
   testthat::skip_if_not_installed("gt")
 
   model_dir <- system.file(
-    "extdata", "models", "onecmt",
+    "extdata",
+    "models",
+    "onecmt",
     package = "hyperion.tables"
   )
   tree <- hyperion::get_model_lineage(model_dir)
@@ -34,46 +36,53 @@ test_that("tag-based sections render correctly (gt + flextable)", {
 
 test_that("section_filter multi-section", {
   model_dir <- system.file(
-    "extdata", "models", "onecmt",
+    "extdata",
+    "models",
+    "onecmt",
     package = "hyperion.tables"
   )
 
   tree <- hyperion::get_model_lineage(model_dir)
-	
-	tree$nodes$run001.mod$tags <- c(tree$nodes$run001.mod$tags, "one-comp")
-	tree$nodes$run002.mod$tags <- c(tree$nodes$run002.mod$tags, "two-comp")
-	tree$nodes$run003.mod$tags <- c(tree$nodes$run003.mod$tags, "two-comp")
+
+  tree$nodes$run001.mod$tags <- c(tree$nodes$run001.mod$tags, "one-comp")
+  tree$nodes$run002.mod$tags <- c(tree$nodes$run002.mod$tags, "two-comp")
+  tree$nodes$run003.mod$tags <- c(tree$nodes$run003.mod$tags, "two-comp")
 
   # No catch-all: untagged models get NA section
   # Filter both "Key Models" and NA — only "Base Models" (run001) survives
   spec <- SummarySpec() |>
-		set_spec_sections(
+    set_spec_sections(
       "one-comp" %in% tags ~ "One Compartment",
-			"base" %in% tags ~ "Base Model",
-			"two-comp" %in% tags ~ "Two Compartment",
-			TRUE ~ "Other"
+      "base" %in% tags ~ "Base Model",
+      "two-comp" %in% tags ~ "Two Compartment",
+      TRUE ~ "Other"
     ) |>
-		set_spec_section_filter("Other")
-	
-	# Multiple sections for single model warning
-	expect_warning(table <- tree |>
-    apply_summary_spec(spec) |>
-    make_summary_table())
+    set_spec_section_filter("Other")
+
+  # Multiple sections for single model warning
+  expect_warning(
+    table <- tree |>
+      apply_summary_spec(spec) |>
+      make_summary_table()
+  )
 
   snapshot_gt(table, "multi-section-gt")
 
-	# Multiple sections for single model warning
-  expect_warning(table_ft <- tree |>
-    apply_summary_spec(spec) |>
-    make_summary_table(output = "flextable"))
+  # Multiple sections for single model warning
+  expect_warning(
+    table_ft <- tree |>
+      apply_summary_spec(spec) |>
+      make_summary_table(output = "flextable")
+  )
 
   snapshot_flextable(table_ft, "multi-sections-ft")
-
 })
 
 test_that("section_filter drops sections from parameter table", {
   model_dir <- system.file(
-    "extdata", "models", "onecmt",
+    "extdata",
+    "models",
+    "onecmt",
     package = "hyperion.tables"
   )
   mod <- hyperion::read_model(file.path(model_dir, "run001.mod"))
@@ -97,7 +106,9 @@ test_that("section_filter drops sections from parameter table", {
 
 test_that("multi-match warning fires for parameter table sections", {
   model_dir <- system.file(
-    "extdata", "models", "onecmt",
+    "extdata",
+    "models",
+    "onecmt",
     package = "hyperion.tables"
   )
   mod <- hyperion::read_model(file.path(model_dir, "run001.mod"))
@@ -130,9 +141,13 @@ test_that("SummarySpec accumulates section rules across calls", {
     )
 
   rules <- get_spec_sections(spec)
-  labels <- vapply(rules, function(r) {
-    rlang::f_rhs(rlang::eval_tidy(r))
-  }, character(1))
+  labels <- vapply(
+    rules,
+    function(r) {
+      rlang::f_rhs(rlang::eval_tidy(r))
+    },
+    character(1)
+  )
   expect_equal(sum(labels == "Base Models"), 2)
   expect_length(rules, 3)
 })

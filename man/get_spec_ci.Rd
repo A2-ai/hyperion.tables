@@ -4,10 +4,12 @@
 \alias{get_spec_ci}
 \title{Get CI options from a TableSpec}
 \usage{
-get_spec_ci(spec)
+get_spec_ci(spec, ...)
 }
 \arguments{
 \item{spec}{A TableSpec object}
+
+\item{...}{Additional arguments passed to methods.}
 }
 \value{
 CIOptions object

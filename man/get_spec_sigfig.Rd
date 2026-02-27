@@ -4,10 +4,12 @@
 \alias{get_spec_sigfig}
 \title{Get significant figures from a spec}
 \usage{
-get_spec_sigfig(spec)
+get_spec_sigfig(spec, ...)
 }
 \arguments{
 \item{spec}{A TableSpec or SummarySpec object}
+
+\item{...}{Additional arguments passed to methods.}
 }
 \value{
 Numeric value

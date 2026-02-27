@@ -4,10 +4,12 @@
 \alias{get_spec_transforms}
 \title{Get display transforms from a TableSpec}
 \usage{
-get_spec_transforms(spec)
+get_spec_transforms(spec, ...)
 }
 \arguments{
 \item{spec}{A TableSpec object}
+
+\item{...}{Additional arguments passed to methods.}
 }
 \value{
 Named list with theta, omega, sigma entries

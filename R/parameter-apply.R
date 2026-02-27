@@ -322,9 +322,9 @@ warn_multi_match_sections <- function(formulas, data) {
 
 #' Get section order from spec
 #' @noRd
-get_section_order <- function(spec) {
-  assert_any_spec(spec)
+get_section_order <- S7::new_generic("get_section_order", "spec")
 
+S7::method(get_section_order, AnySpec) <- function(spec) {
   vapply(
     spec@sections,
     function(rule) {
