@@ -14,7 +14,7 @@ on:
       update_edition:
         description: 'Update an existing PRISM edition'
         required: false
-        default: false
+        default: true
         type: boolean
       create_edition:
         description: 'Create an individual package edition (package_name/package_version)'
@@ -45,7 +45,7 @@ env:
   # ---- Auto-deploy configuration ----
   # Edit these once for your repo.
   # Manual dispatch overrides these via inputs.
-  AUTO_UPDATE_EDITION: 'false'
+  AUTO_UPDATE_EDITION: 'true'
   AUTO_CREATE_EDITION: 'false'    # individual package edition (package_name/package_version)
   AUTO_LATEST_EDITION: 'false'    # mark the individual package edition as latest
   REGISTRY: 'hyperion-eco'
