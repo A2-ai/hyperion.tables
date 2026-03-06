@@ -247,8 +247,12 @@ S7::method(set_spec_footnotes, AnySpec) <- function(spec, order) {
 #' filter unmatched rows (those that didn't match any section rule).
 #'
 #' @param spec A TableSpec or SummarySpec object
-#' @param ... Section labels to exclude. Pass `NA` to exclude unmatched rows.
-#'   Call with no arguments to clear the filter.
+#' @param ... Additional arguments passed to methods.
+#' @details
+#' Built-in methods for `TableSpec` and `SummarySpec` interpret values in
+#' `...` as section labels to exclude. Pass `NA` to also exclude unmatched rows
+#' (those that did not match any section rule). Call with no arguments to clear
+#' the filter. Named arguments in `...` are ignored with a warning.
 #' @return Modified spec
 #' @export
 #' @examples
@@ -262,7 +266,12 @@ S7::method(set_spec_footnotes, AnySpec) <- function(spec, order) {
 set_spec_section_filter <- S7::new_generic("set_spec_section_filter", "spec")
 
 S7::method(set_spec_section_filter, AnySpec) <- function(spec, ...) {
-  values <- c(...)
+  dots <- capture_unnamed_rule_dots(...)
+  values <- unlist(
+    lapply(dots, function(dot) rlang::eval_tidy(dot)),
+    recursive = FALSE,
+    use.names = FALSE
+  )
   if (length(values) == 0) {
     spec@section_filter <- NULL
   } else {
@@ -274,6 +283,27 @@ S7::method(set_spec_section_filter, AnySpec) <- function(spec, ...) {
 # ==============================================================================
 # Section Rules (Both Specs)
 # ==============================================================================
+
+#' @noRd
+capture_unnamed_rule_dots <- function(...) {
+  dots <- rlang::enquos(...)
+  dot_names <- rlang::names2(dots)
+  unnamed <- dot_names == ""
+
+  if (any(!unnamed)) {
+    ignored <- unique(dot_names[!unnamed])
+    rlang::warn(
+      paste0(
+        "Ignoring named argument",
+        if (length(ignored) == 1) "" else "s",
+        " in `...`: ",
+        paste(ignored, collapse = ", ")
+      )
+    )
+  }
+
+  unname(dots[unnamed])
+}
 
 #' Set section rules for a spec
 #'
@@ -287,9 +317,13 @@ S7::method(set_spec_section_filter, AnySpec) <- function(spec, ...) {
 #' including `tags` (e.g., `"base" %in% tags ~ "Base Models"`).
 #'
 #' @param spec A TableSpec or SummarySpec object
-#' @param ... Section rule formulas
+#' @param ... Additional arguments passed to methods.
 #' @param overwrite If FALSE (default), append to existing rules.
 #'   If TRUE, replace all existing rules.
+#' @details
+#' Built-in methods for `TableSpec` and `SummarySpec` interpret unnamed
+#' arguments in `...` as section rule formulas. Named arguments in `...` are
+#' ignored with a warning.
 #' @return Modified spec
 #' @export
 #' @examples
@@ -309,7 +343,9 @@ S7::method(set_spec_sections, AnySpec) <- function(
   ...,
   overwrite = FALSE
 ) {
-  new_rules <- section_rules(...)
+  rule_dots <- capture_unnamed_rule_dots(...)
+  new_rules <- section_rules(!!!rule_dots)
+
   if (overwrite) {
     spec@sections <- new_rules
   } else {
@@ -507,9 +543,12 @@ S7::method(set_spec_transforms, TableSpec) <- function(
 #' expressions like `!fixed`, `diagonal`.
 #'
 #' @param spec A TableSpec object
-#' @param ... Filter rule expressions
+#' @param ... Additional arguments passed to methods.
 #' @param overwrite If FALSE (default), append to existing rules.
 #'   If TRUE, replace all existing rules.
+#' @details
+#' The built-in `TableSpec` method interprets unnamed arguments in `...` as
+#' filter rule expressions. Named arguments in `...` are ignored with a warning.
 #' @return Modified spec
 #' @export
 #' @examples
@@ -526,7 +565,8 @@ S7::method(set_spec_filter, TableSpec) <- function(
   ...,
   overwrite = FALSE
 ) {
-  new_rules <- filter_rules(...)
+  rule_dots <- capture_unnamed_rule_dots(...)
+  new_rules <- filter_rules(!!!rule_dots)
   if (overwrite) {
     spec@row_filter <- new_rules
   } else {
@@ -540,9 +580,13 @@ S7::method(set_spec_filter, TableSpec) <- function(
 #' Controls how the variability display column is constructed.
 #'
 #' @param spec A TableSpec object
-#' @param ... Variability rule formulas
+#' @param ... Additional arguments passed to methods.
 #' @param overwrite If FALSE (default), append to existing rules.
 #'   If TRUE, replace all existing rules.
+#' @details
+#' The built-in `TableSpec` method interprets unnamed arguments in `...` as
+#' variability rule formulas. Named arguments in `...` are ignored with a
+#' warning.
 #' @return Modified spec
 #' @export
 #' @examples
@@ -563,7 +607,8 @@ S7::method(set_spec_variability, TableSpec) <- function(
   ...,
   overwrite = FALSE
 ) {
-  new_rules <- variability_rules(...)
+  rule_dots <- capture_unnamed_rule_dots(...)
+  new_rules <- variability_rules(!!!rule_dots)
   if (overwrite) {
     spec@variability_rules <- new_rules
   } else {
@@ -686,9 +731,13 @@ S7::method(set_spec_remove_unrun, SummarySpec) <- function(spec, remove) {
 #' expressions evaluated against summary columns.
 #'
 #' @param spec A SummarySpec object
-#' @param ... Filter rule expressions
+#' @param ... Additional arguments passed to methods.
 #' @param overwrite If FALSE (default), append to existing rules.
 #'   If TRUE, replace all existing rules.
+#' @details
+#' The built-in `SummarySpec` method interprets unnamed arguments in `...` as
+#' summary filter rule expressions. Named arguments in `...` are ignored with a
+#' warning.
 #' @return Modified spec
 #' @export
 #' @examples
@@ -705,7 +754,8 @@ S7::method(set_spec_summary_filter, SummarySpec) <- function(
   ...,
   overwrite = FALSE
 ) {
-  new_rules <- summary_filter_rules(...)
+  rule_dots <- capture_unnamed_rule_dots(...)
+  new_rules <- summary_filter_rules(!!!rule_dots)
   if (overwrite) {
     spec@summary_filter <- new_rules
   } else {

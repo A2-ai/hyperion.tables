@@ -9,7 +9,7 @@ set_spec_filter(spec, ..., overwrite = FALSE)
 \arguments{
 \item{spec}{A TableSpec object}
 
-\item{...}{Filter rule expressions}
+\item{...}{Additional arguments passed to methods.}
 
 \item{overwrite}{If FALSE (default), append to existing rules.
 If TRUE, replace all existing rules.}
@@ -20,6 +20,10 @@ Modified spec
 \description{
 Controls which parameters appear in the output table. Pass filter
 expressions like \code{!fixed}, \code{diagonal}.
+}
+\details{
+The built-in \code{TableSpec} method interprets unnamed arguments in \code{...} as
+filter rule expressions. Named arguments in \code{...} are ignored with a warning.
 }
 \examples{
 spec <- TableSpec() |>

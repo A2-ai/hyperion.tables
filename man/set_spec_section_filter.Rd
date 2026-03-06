@@ -9,8 +9,7 @@ set_spec_section_filter(spec, ...)
 \arguments{
 \item{spec}{A TableSpec or SummarySpec object}
 
-\item{...}{Section labels to exclude. Pass \code{NA} to exclude unmatched rows.
-Call with no arguments to clear the filter.}
+\item{...}{Additional arguments passed to methods.}
 }
 \value{
 Modified spec
@@ -18,6 +17,12 @@ Modified spec
 \description{
 Filters out rows belonging to specified sections. Use \code{NA} to also
 filter unmatched rows (those that didn't match any section rule).
+}
+\details{
+Built-in methods for \code{TableSpec} and \code{SummarySpec} interpret values in
+\code{...} as section labels to exclude. Pass \code{NA} to also exclude unmatched rows
+(those that did not match any section rule). Call with no arguments to clear
+the filter. Named arguments in \code{...} are ignored with a warning.
 }
 \examples{
 spec <- SummarySpec(

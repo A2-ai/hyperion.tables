@@ -550,7 +550,7 @@ build_footnote_paragraph <- function(content) {
   chunks <- parse_subscripts_to_chunks(result)
 
   # Build the paragraph from chunks
-  do.call(flextable::as_paragraph, chunks)
+  flextable::as_paragraph(!!!chunks)
 }
 
 #' Parse text with subscripts into flextable chunks

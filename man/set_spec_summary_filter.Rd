@@ -9,7 +9,7 @@ set_spec_summary_filter(spec, ..., overwrite = FALSE)
 \arguments{
 \item{spec}{A SummarySpec object}
 
-\item{...}{Filter rule expressions}
+\item{...}{Additional arguments passed to methods.}
 
 \item{overwrite}{If FALSE (default), append to existing rules.
 If TRUE, replace all existing rules.}
@@ -20,6 +20,11 @@ Modified spec
 \description{
 Controls which models appear in the summary table based on filter
 expressions evaluated against summary columns.
+}
+\details{
+The built-in \code{SummarySpec} method interprets unnamed arguments in \code{...} as
+summary filter rule expressions. Named arguments in \code{...} are ignored with a
+warning.
 }
 \examples{
 spec <- SummarySpec() |>

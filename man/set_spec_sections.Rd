@@ -9,7 +9,7 @@ set_spec_sections(spec, ..., overwrite = FALSE)
 \arguments{
 \item{spec}{A TableSpec or SummarySpec object}
 
-\item{...}{Section rule formulas}
+\item{...}{Additional arguments passed to methods.}
 
 \item{overwrite}{If FALSE (default), append to existing rules.
 If TRUE, replace all existing rules.}
@@ -27,6 +27,10 @@ For TableSpec, rules are evaluated against parameter columns
 
 For SummarySpec, rules are evaluated row-by-row against summary columns
 including \code{tags} (e.g., \code{"base" \%in\% tags ~ "Base Models"}).
+
+Built-in methods for \code{TableSpec} and \code{SummarySpec} interpret unnamed
+arguments in \code{...} as section rule formulas. Named arguments in \code{...} are
+ignored with a warning.
 }
 \examples{
 spec <- TableSpec() |>
