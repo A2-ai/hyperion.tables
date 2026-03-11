@@ -21,7 +21,6 @@ Suggests:
     ftExtra,
     htmltools,
 		katex,
-    knitr,
     officer,
     rmarkdown,
     testthat (>= 3.0.0),
@@ -32,6 +31,7 @@ Imports:
     dplyr,
     gt (>= 1.0.0),
     hyperion,
+    knitr,
     rlang,
     S7 (>= 0.2.1)
 VignetteBuilder: knitr

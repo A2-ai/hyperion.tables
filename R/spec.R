@@ -8,7 +8,7 @@
 #' Rules are evaluated after name transformation, so you can match on the final
 #' display name or use the preserved `nonmem_name` and `user_name` columns.
 #'
-#' @param ... Formula expressions like `kind == "THETA" ~ "Structural Parameters"`
+#' @param ... Formula expressions following [dplyr::case_when()] syntax, `kind == "THETA" ~ "Structural Parameters"`
 #'
 #' @section Available columns:
 #' The following columns are available for use in section rules:

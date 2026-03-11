@@ -7,7 +7,7 @@
 section_rules(...)
 }
 \arguments{
-\item{...}{Formula expressions like \code{kind == "THETA" ~ "Structural Parameters"}}
+\item{...}{Formula expressions following \code{\link[dplyr:case_when]{dplyr::case_when()}} syntax, \code{kind == "THETA" ~ "Structural Parameters"}}
 }
 \value{
 List of quosures for use in TableSpec
