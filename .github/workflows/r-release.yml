@@ -144,6 +144,7 @@ jobs:
       - name: rv-sysdeps-install (Linux)
         if: runner.os == 'Linux'
         run: |
+          dnf install -y jq
           MISSING_DEPS=$(rv plan --json | jq -r '.installed[].sys_deps[]? | select(.status == "absent") | .name')
           if [ -n "$MISSING_DEPS" ]; then
             echo "Found missing system dependencies:"
@@ -319,6 +320,7 @@ jobs:
       - name: rv-sysdeps-install (Linux)
         if: runner.os == 'Linux'
         run: |
+          dnf install -y jq
           MISSING_DEPS=$(rv plan --json | jq -r '.installed[].sys_deps[]? | select(.status == "absent") | .name')
           if [ -n "$MISSING_DEPS" ]; then
             echo "Found missing system dependencies:"
