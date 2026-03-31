@@ -13,7 +13,11 @@
 #' added to the default column set.
 #'
 #' @param spec A TableSpec or SummarySpec object
-#' @param ... Column names to add (character strings)
+#' @param ... Additional arguments passed to methods.
+#' @details
+#' Built-in methods for `TableSpec` and `SummarySpec` interpret unnamed
+#' arguments in `...` as column names (character strings). Named arguments in
+#' `...` are ignored with a warning.
 #' @return Modified spec
 #' @export
 #' @examples
@@ -25,13 +29,15 @@
 add_spec_columns <- S7::new_generic("add_spec_columns", "spec")
 
 S7::method(add_spec_columns, TableSpec) <- function(spec, ...) {
-  cols <- expand_ci_alias(c(...))
+  dots <- capture_unnamed_dots(..., .enquo = FALSE)
+  cols <- expand_ci_alias(unlist(dots))
   spec@add_columns <- unique(c(spec@add_columns, cols))
   spec
 }
 
 S7::method(add_spec_columns, SummarySpec) <- function(spec, ...) {
-  cols <- c(...)
+  dots <- capture_unnamed_dots(..., .enquo = FALSE)
+  cols <- unlist(dots)
   spec@add_columns <- unique(c(spec@add_columns, cols))
   spec@columns <- merge_summary_columns(spec@columns, spec@add_columns)
   spec
@@ -43,7 +49,11 @@ S7::method(add_spec_columns, SummarySpec) <- function(spec, ...) {
 #' excluded from the output table.
 #'
 #' @param spec A TableSpec or SummarySpec object
-#' @param ... Column names to drop (character strings)
+#' @param ... Additional arguments passed to methods.
+#' @details
+#' Built-in methods for `TableSpec` and `SummarySpec` interpret unnamed
+#' arguments in `...` as column names (character strings). Named arguments in
+#' `...` are ignored with a warning.
 #' @return Modified spec
 #' @export
 #' @examples
@@ -55,7 +65,9 @@ S7::method(add_spec_columns, SummarySpec) <- function(spec, ...) {
 drop_spec_columns <- S7::new_generic("drop_spec_columns", "spec")
 
 S7::method(drop_spec_columns, AnySpec) <- function(spec, ...) {
-  spec@drop_columns <- unique(c(spec@drop_columns, c(...)))
+  dots <- capture_unnamed_dots(..., .enquo = FALSE)
+  cols <- unlist(dots)
+  spec@drop_columns <- unique(c(spec@drop_columns, cols))
   spec
 }
 
@@ -65,7 +77,11 @@ S7::method(drop_spec_columns, AnySpec) <- function(spec, ...) {
 #' column set.
 #'
 #' @param spec A TableSpec or SummarySpec object
-#' @param ... Column names to include (character strings)
+#' @param ... Additional arguments passed to methods.
+#' @details
+#' Built-in methods for `TableSpec` and `SummarySpec` interpret unnamed
+#' arguments in `...` as column names (character strings). Named arguments in
+#' `...` are ignored with a warning.
 #' @return Modified spec
 #' @export
 #' @examples
@@ -74,12 +90,15 @@ S7::method(drop_spec_columns, AnySpec) <- function(spec, ...) {
 set_spec_columns <- S7::new_generic("set_spec_columns", "spec")
 
 S7::method(set_spec_columns, TableSpec) <- function(spec, ...) {
-  spec@columns <- expand_ci_alias(c(...))
+  dots <- capture_unnamed_dots(..., .enquo = FALSE)
+  cols <- expand_ci_alias(unlist(dots))
+  spec@columns <- cols
   spec
 }
 
 S7::method(set_spec_columns, SummarySpec) <- function(spec, ...) {
-  spec@columns <- c(...)
+  dots <- capture_unnamed_dots(..., .enquo = FALSE)
+  spec@columns <- unlist(dots)
   spec
 }
 
@@ -185,7 +204,7 @@ S7::method(set_spec_hide_empty, AnySpec) <- function(spec, hide) {
 #' Controls how p-values are displayed in the table.
 #'
 #' @param spec A TableSpec or SummarySpec object
-#' @param ... Additional arguments passed to the methods.
+#' @param ... Additional arguments passed to methods.
 #' @param threshold Numeric threshold below which p-values display as "< threshold",
 #'   or NULL to disable threshold display
 #' @param scientific Logical. If TRUE, use scientific notation for p-values
@@ -266,7 +285,7 @@ S7::method(set_spec_footnotes, AnySpec) <- function(spec, order) {
 set_spec_section_filter <- S7::new_generic("set_spec_section_filter", "spec")
 
 S7::method(set_spec_section_filter, AnySpec) <- function(spec, ...) {
-  dots <- capture_unnamed_rule_dots(...)
+  dots <- capture_unnamed_dots(...)
   values <- unlist(
     lapply(dots, function(dot) rlang::eval_tidy(dot)),
     recursive = FALSE,
@@ -285,8 +304,8 @@ S7::method(set_spec_section_filter, AnySpec) <- function(spec, ...) {
 # ==============================================================================
 
 #' @noRd
-capture_unnamed_rule_dots <- function(...) {
-  dots <- rlang::enquos(...)
+capture_unnamed_dots <- function(..., .enquo = TRUE) {
+  dots <- if (.enquo) rlang::enquos(...) else rlang::list2(...)
   dot_names <- rlang::names2(dots)
   unnamed <- dot_names == ""
 
@@ -343,7 +362,7 @@ S7::method(set_spec_sections, AnySpec) <- function(
   ...,
   overwrite = FALSE
 ) {
-  rule_dots <- capture_unnamed_rule_dots(...)
+  rule_dots <- capture_unnamed_dots(...)
   new_rules <- section_rules(!!!rule_dots)
 
   if (overwrite) {
@@ -565,7 +584,7 @@ S7::method(set_spec_filter, TableSpec) <- function(
   ...,
   overwrite = FALSE
 ) {
-  rule_dots <- capture_unnamed_rule_dots(...)
+  rule_dots <- capture_unnamed_dots(...)
   new_rules <- filter_rules(!!!rule_dots)
   if (overwrite) {
     spec@row_filter <- new_rules
@@ -607,7 +626,7 @@ S7::method(set_spec_variability, TableSpec) <- function(
   ...,
   overwrite = FALSE
 ) {
-  rule_dots <- capture_unnamed_rule_dots(...)
+  rule_dots <- capture_unnamed_dots(...)
   new_rules <- variability_rules(!!!rule_dots)
   if (overwrite) {
     spec@variability_rules <- new_rules
@@ -754,7 +773,7 @@ S7::method(set_spec_summary_filter, SummarySpec) <- function(
   ...,
   overwrite = FALSE
 ) {
-  rule_dots <- capture_unnamed_rule_dots(...)
+  rule_dots <- capture_unnamed_dots(...)
   new_rules <- summary_filter_rules(!!!rule_dots)
   if (overwrite) {
     spec@summary_filter <- new_rules

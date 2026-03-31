@@ -9,7 +9,7 @@ drop_spec_columns(spec, ...)
 \arguments{
 \item{spec}{A TableSpec or SummarySpec object}
 
-\item{...}{Column names to drop (character strings)}
+\item{...}{Additional arguments passed to methods.}
 }
 \value{
 Modified spec
@@ -17,6 +17,11 @@ Modified spec
 \description{
 Adds columns to the spec's drop_columns list. These columns will be
 excluded from the output table.
+}
+\details{
+Built-in methods for \code{TableSpec} and \code{SummarySpec} interpret unnamed
+arguments in \code{...} as column names (character strings). Named arguments in
+\code{...} are ignored with a warning.
 }
 \examples{
 spec <- TableSpec() |>

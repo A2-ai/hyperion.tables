@@ -9,7 +9,7 @@ set_spec_pvalue(spec, ..., threshold, scientific)
 \arguments{
 \item{spec}{A TableSpec or SummarySpec object}
 
-\item{...}{Additional arguments passed to the methods.}
+\item{...}{Additional arguments passed to methods.}
 
 \item{threshold}{Numeric threshold below which p-values display as "< threshold",
 or NULL to disable threshold display}

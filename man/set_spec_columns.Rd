@@ -9,7 +9,7 @@ set_spec_columns(spec, ...)
 \arguments{
 \item{spec}{A TableSpec or SummarySpec object}
 
-\item{...}{Column names to include (character strings)}
+\item{...}{Additional arguments passed to methods.}
 }
 \value{
 Modified spec
@@ -17,6 +17,11 @@ Modified spec
 \description{
 Replaces the spec's columns list entirely. This overrides the default
 column set.
+}
+\details{
+Built-in methods for \code{TableSpec} and \code{SummarySpec} interpret unnamed
+arguments in \code{...} as column names (character strings). Named arguments in
+\code{...} are ignored with a warning.
 }
 \examples{
 spec <- TableSpec() |>
