@@ -144,8 +144,8 @@ jobs:
       - name: rv-sysdeps-install (Linux)
         if: runner.os == 'Linux'
         run: |
-          dnf install -y jq
-          MISSING_DEPS=$(rv plan --json | jq -r '.installed[].sys_deps[]? | select(.status == "absent") | .name')
+          dnf install -y jq e
+          MISSING_DEPS="$(rv sysdeps --only-absent --ignore 'libgit2_1.7-devel' --ignore pandoc) libgit2-devel libcurl-devel"
           if [ -n "$MISSING_DEPS" ]; then
             echo "Found missing system dependencies:"
             echo "$MISSING_DEPS"
@@ -320,8 +320,8 @@ jobs:
       - name: rv-sysdeps-install (Linux)
         if: runner.os == 'Linux'
         run: |
-          dnf install -y jq
-          MISSING_DEPS=$(rv plan --json | jq -r '.installed[].sys_deps[]? | select(.status == "absent") | .name')
+          dnf install -y jq e
+          MISSING_DEPS="$(rv sysdeps --only-absent --ignore 'libgit2_1.7-devel' --ignore pandoc) libgit2-devel libcurl-devel"
           if [ -n "$MISSING_DEPS" ]; then
             echo "Found missing system dependencies:"
             echo "$MISSING_DEPS"
