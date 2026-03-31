@@ -591,7 +591,8 @@ hyperion_comparison_table <- function(
 
   # CI merges per model
   ci_merges <- list()
-  if (!is.null(spec) && all(c("ci_low", "ci_high") %in% spec@columns)) {
+  effective_cols <- c(spec@columns, spec@add_columns %||% character(0))
+  if (!is.null(spec) && all(c("ci_low", "ci_high") %in% effective_cols)) {
     for (idx in model_indices) {
       ci_low <- paste0("ci_low_", idx)
       ci_high <- paste0("ci_high_", idx)
@@ -860,7 +861,8 @@ compute_comparison_layout <- function(
   )
   suffixed_cols <- grep("_(\\d+)$", names(comparison), value = TRUE)
   hide_cols <- unique(c(hide_cols, setdiff(suffixed_cols, allowed_suffixed)))
-  if (!is.null(spec) && all(c("ci_low", "ci_high") %in% spec@columns)) {
+  effective_cols <- c(spec@columns, spec@add_columns %||% character(0))
+  if (!is.null(spec) && all(c("ci_low", "ci_high") %in% effective_cols)) {
     hide_cols <- unique(c(
       hide_cols,
       grep("^ci_high_\\d+$", names(comparison), value = TRUE)
@@ -958,7 +960,8 @@ compute_comparison_model_cols <- function(
     cols <- paste0(display_cols, "_", idx)
     cols <- intersect(cols, names(comparison))
     cols <- cols[!cols %in% hide_cols]
-    if (!is.null(spec) && all(c("ci_low", "ci_high") %in% spec@columns)) {
+    effective_cols <- c(spec@columns, spec@add_columns %||% character(0))
+    if (!is.null(spec) && all(c("ci_low", "ci_high") %in% effective_cols)) {
       cols <- cols[cols != paste0("ci_high_", idx)]
     }
 

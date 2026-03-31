@@ -302,7 +302,8 @@ make_parameter_table <- function(
 #' @noRd
 hyperion_parameter_table <- function(params, layout, spec) {
   # Determine CI merge columns
-  ci_in_spec <- all(c("ci_low", "ci_high") %in% spec@columns)
+  effective_cols <- c(spec@columns, spec@add_columns %||% character(0))
+  ci_in_spec <- all(c("ci_low", "ci_high") %in% effective_cols)
   ci_in_data <- all(c("ci_low", "ci_high") %in% names(params))
   ci_merges <- if (ci_in_spec && ci_in_data) {
     list(ci_merge_spec("ci_low", "ci_high"))
