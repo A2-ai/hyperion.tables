@@ -136,7 +136,16 @@ jobs:
       # TODO: If your package requires a compiled-language toolchain, add
       # the installation steps here.
       # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      
+      - name: Install Rust
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Add Rust target
+        run: |
+          . "$HOME/.cargo/env"
+          rustup target add x86_64-unknown-linux-gnu
+
       # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       # TODO: If your package relies on system libraries, add
       # the installation steps here.
@@ -304,6 +313,15 @@ jobs:
       #   if: matrix.config.os_name == 'ubuntu-noble'
       #   run: apt-get update && apt-get install -y build-essential
       # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      - name: Install Rust
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Add Rust target
+        run: |
+          . "$HOME/.cargo/env"
+          rustup target add x86_64-unknown-linux-gnu
 
       # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
       # TODO: If your package relies on system libraries, add steps here.
