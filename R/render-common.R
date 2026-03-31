@@ -324,10 +324,17 @@ apply_missing_text_policy <- function(
 
 #' Render a table to a PNG image
 #'
+#' Converts a rendered gt or flextable object to a PNG screenshot.
+#' The primary output is always placed at a knitr-relative path (during knit)
+#' or a temporary file (interactively). When `path` is provided, a copy is
+#' saved to that location as a side effect.
+#'
 #' @param table A gt or flextable object
-#' @param path Optional file path for the output PNG. When NULL (default),
-#'   uses knitr figure path during knit or a temp file interactively.
-#' @return A `knitr::include_graphics()` object
+#' @param path Optional file path to save a copy of the PNG. This is a
+#'   convenience for persisting the image; the returned object still
+#'   references the primary (knitr or temp) path.
+#' @return A `knitr::include_graphics()` object pointing to the primary
+#'   PNG path (not `path`).
 #' @export
 render_to_image <- function(table, path = NULL) {
   UseMethod("render_to_image")

@@ -9,12 +9,17 @@ render_to_image(table, path = NULL)
 \arguments{
 \item{table}{A gt or flextable object}
 
-\item{path}{Optional file path for the output PNG. When NULL (default),
-uses knitr figure path during knit or a temp file interactively.}
+\item{path}{Optional file path to save a copy of the PNG. This is a
+convenience for persisting the image; the returned object still
+references the primary (knitr or temp) path.}
 }
 \value{
-A \code{knitr::include_graphics()} object
+A \code{knitr::include_graphics()} object pointing to the primary
+PNG path (not \code{path}).
 }
 \description{
-Render a table to a PNG image
+Converts a rendered gt or flextable object to a PNG screenshot.
+The primary output is always placed at a knitr-relative path (during knit)
+or a temporary file (interactively). When \code{path} is provided, a copy is
+saved to that location as a side effect.
 }
