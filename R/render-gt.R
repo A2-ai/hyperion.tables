@@ -239,3 +239,67 @@ apply_gt_footnotes <- function(gt_table, table) {
   }
   gt_table
 }
+
+#' @export
+render_to_image.gt_tbl <- function(table, path = NULL) {
+  check_suggested("webshot2", reason = "for image output.")
+  check_suggested(
+    "katex",
+    reason = "to render LaTeX symbols in gt tables.",
+    severity = "warn"
+  )
+
+  # Intermediate HTML is always temp.
+  html_path <- tempfile("hyperion-table-", fileext = ".html")
+  on.exit(unlink(html_path), add = TRUE)
+
+  # PNG for display (knitr-relative or temp).
+  if (isTRUE(getOption("knitr.in.progress"))) {
+    png_path <- knitr::fig_path(suffix = ".png")
+    dir.create(dirname(png_path), recursive = TRUE, showWarnings = FALSE)
+  } else {
+    png_path <- tempfile("hyperion-table-", fileext = ".png")
+  }
+
+  # Temporarily hide Quarto env so gt uses katex (not data-qmd-base64)
+  old_quarto <- Sys.getenv("QUARTO_BIN_PATH", unset = NA)
+  Sys.unsetenv("QUARTO_BIN_PATH")
+  on.exit(
+    {
+      if (!is.na(old_quarto)) Sys.setenv(QUARTO_BIN_PATH = old_quarto)
+    },
+    add = TRUE
+  )
+
+  table |>
+    gt::gtsave(filename = html_path)
+
+  webshot2::webshot(
+    url = html_path,
+    file = png_path,
+    selector = "table.gt_table",
+    vwidth = 4000,
+    vheight = 3000,
+    zoom = 1,
+    delay = 1,
+    quiet = TRUE
+  )
+
+  if (!file.exists(png_path)) {
+    rlang::abort(
+      paste0("Failed to create PNG output at: ", png_path)
+    )
+  }
+
+  if (!is.null(path)) {
+    dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+    copied <- file.copy(png_path, path, overwrite = TRUE)
+    if (!isTRUE(copied)) {
+      rlang::abort(
+        paste0("Failed to copy PNG output to: ", path)
+      )
+    }
+  }
+
+  knitr::include_graphics(png_path)
+}

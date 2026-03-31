@@ -4,10 +4,12 @@
 \alias{get_spec_filter}
 \title{Get row filter rules from a TableSpec}
 \usage{
-get_spec_filter(spec)
+get_spec_filter(spec, ...)
 }
 \arguments{
 \item{spec}{A TableSpec object}
+
+\item{...}{Additional arguments passed to methods.}
 }
 \value{
 List of quosures

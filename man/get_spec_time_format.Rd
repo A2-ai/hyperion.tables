@@ -4,10 +4,12 @@
 \alias{get_spec_time_format}
 \title{Get time format from a SummarySpec}
 \usage{
-get_spec_time_format(spec)
+get_spec_time_format(spec, ...)
 }
 \arguments{
 \item{spec}{A SummarySpec object}
+
+\item{...}{Additional arguments passed to methods.}
 }
 \value{
 Character string: "seconds", "minutes", "hours", or "auto"

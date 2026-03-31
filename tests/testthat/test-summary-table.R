@@ -57,7 +57,8 @@ test_that("tag_exclude removes tagged models", {
   tree <- hyperion::get_model_lineage(model_dir)
   # Tag one model as "failed"
   tree$nodes[["run001.mod"]]$tags <- c(
-    tree$nodes[["run001.mod"]]$tags, "failed"
+    tree$nodes[["run001.mod"]]$tags,
+    "failed"
   )
 
   spec <- SummarySpec(tag_exclude = "failed", columns = "ofv")

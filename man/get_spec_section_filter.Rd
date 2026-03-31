@@ -4,10 +4,12 @@
 \alias{get_spec_section_filter}
 \title{Get section filter from a spec}
 \usage{
-get_spec_section_filter(spec)
+get_spec_section_filter(spec, ...)
 }
 \arguments{
 \item{spec}{A TableSpec or SummarySpec object}
+
+\item{...}{Additional arguments passed to methods.}
 }
 \value{
 Character vector or NULL

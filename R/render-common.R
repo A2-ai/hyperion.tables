@@ -117,7 +117,9 @@ apply_summary_render_overrides <- function(table, data, numeric_cols) {
           use_scientific,
           pval_threshold
         )
-        if (!merge_df) return(format_p)
+        if (!merge_df) {
+          return(format_p)
+        }
         df_val <- data$df[i]
         if (is.na(df_val)) {
           return(NA_character_)
@@ -138,7 +140,9 @@ apply_summary_render_overrides <- function(table, data, numeric_cols) {
         data[[col]] <- vapply(
           data[[col]],
           function(x) {
-            if (is.na(x)) return("")
+            if (is.na(x)) {
+              return("")
+            }
             formatC(x, digits = spec@n_decimals_ofv, format = "f")
           },
           character(1)
@@ -251,7 +255,9 @@ format_numeric_columns_shared <- function(
   }
 
   format_numeric_value <- function(x) {
-    if (is.na(x)) return(NA_character_)
+    if (is.na(x)) {
+      return(NA_character_)
+    }
     if (!is.null(formatter)) {
       return(formatter(x, n_sigfig))
     }
@@ -259,9 +265,15 @@ format_numeric_columns_shared <- function(
   }
 
   for (col in numeric_cols) {
-    if (!col %in% names(data)) next
-    if (col %in% skip_cols) next
-    if (!is.numeric(data[[col]])) next
+    if (!col %in% names(data)) {
+      next
+    }
+    if (col %in% skip_cols) {
+      next
+    }
+    if (!is.numeric(data[[col]])) {
+      next
+    }
 
     data[[col]] <- vapply(
       data[[col]],
@@ -304,4 +316,109 @@ apply_missing_text_policy <- function(
   }
 
   data
+}
+
+# ==============================================================================
+# Render to image
+# ==============================================================================
+
+#' Render a table to a PNG image
+#'
+#' Converts a rendered gt or flextable object to a PNG screenshot.
+#' The primary output is always placed at a knitr-relative path (during knit)
+#' or a temporary file (interactively). When `path` is provided, a copy is
+#' saved to that location as a side effect.
+#'
+#' @param table A gt or flextable object
+#' @param path Optional file path to save a copy of the PNG. This is a
+#'   convenience for persisting the image; the returned object still
+#'   references the primary (knitr or temp) path.
+#' @return A `knitr::include_graphics()` object pointing to the primary
+#'   PNG path (not `path`).
+#' @export
+render_to_image <- function(table, path = NULL) {
+  UseMethod("render_to_image")
+}
+
+#' @export
+render_to_image.default <- function(table, path = NULL) {
+  class_txt <- paste(class(table), collapse = "/")
+  rlang::abort(
+    paste0(
+      "`render_to_image()` supports `gt_tbl` and `flextable` objects. ",
+      "Got: ",
+      class_txt
+    )
+  )
+}
+
+# ==============================================================================
+# Spec helpers for HyperionTable construction
+# ==============================================================================
+
+#' Border specification for table styling
+#'
+#' @param sides Character vector of sides ("top", "bottom", "left", "right")
+#' @param color Border color (default "#D3D3D3")
+#' @param columns Character vector of column names to apply border to
+#' @param part Table part ("body", "header", "all")
+#' @return List with border specification
+#' @noRd
+border_spec <- function(
+  sides = "right",
+  color = "#D3D3D3",
+  columns = character(0),
+  part = "body"
+) {
+  list(
+    sides = sides,
+    color = color,
+    columns = columns,
+    part = part
+  )
+}
+
+#' Spanner specification for column grouping
+#'
+#' @param label Spanner label text
+#' @param columns Character vector of column names under this spanner
+#' @return List with spanner specification
+#' @noRd
+spanner_spec <- function(label, columns) {
+  list(
+    label = label,
+    columns = columns
+  )
+}
+
+#' Footnote specification
+#'
+#' @param content Footnote text (can be plain text or markdown)
+#' @param is_markdown Whether content should be rendered as markdown
+#' @return List with footnote specification
+#' @noRd
+footnote_spec <- function(content, is_markdown = FALSE) {
+  list(
+    content = content,
+    is_markdown = is_markdown
+  )
+}
+
+#' CI merge specification
+#'
+#' @param ci_low Name of the lower CI column
+#' @param ci_high Name of the upper CI column
+#' @param pattern Merge pattern (default `"[{1}, {2}]"`)
+#' @return List with CI merge specification
+#' @noRd
+ci_merge_spec <- function(
+  ci_low = "ci_low",
+  ci_high = "ci_high",
+  pattern = "[{1}, {2}]"
+) {
+  list(
+    ci_low = ci_low,
+    ci_high = ci_high,
+    pattern = pattern
+  )
 }

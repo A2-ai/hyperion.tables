@@ -176,11 +176,17 @@ render_symbol_equations <- function(
   symbol_col = "symbol",
   row_indices = NULL
 ) {
-  if (is.null(original_symbol)) return(ft)
-  if (!requireNamespace("equatags", quietly = TRUE)) return(ft)
+  if (is.null(original_symbol)) {
+    return(ft)
+  }
+  if (!requireNamespace("equatags", quietly = TRUE)) {
+    return(ft)
+  }
 
   col_idx <- which(names(ft$body$dataset) == symbol_col)
-  if (length(col_idx) == 0) return(ft)
+  if (length(col_idx) == 0) {
+    return(ft)
+  }
 
   # Default: row indices match 1:n
 
@@ -190,7 +196,9 @@ render_symbol_equations <- function(
 
   for (i in seq_along(original_symbol)) {
     val <- original_symbol[i]
-    if (is.na(val) || !grepl("\\$", val)) next
+    if (is.na(val) || !grepl("\\$", val)) {
+      next
+    }
 
     # Extract LaTeX from $...$
     latex <- gsub("^\\$|\\$$", "", val)
@@ -342,7 +350,9 @@ apply_flextable_title <- function(ft, table) {
 apply_flextable_borders <- function(ft, table, visible_cols) {
   for (border in table@borders) {
     cols <- intersect(border$columns, visible_cols)
-    if (length(cols) == 0) next
+    if (length(cols) == 0) {
+      next
+    }
 
     # Map column names to indices
     col_indices <- which(visible_cols %in% cols)
@@ -540,7 +550,7 @@ build_footnote_paragraph <- function(content) {
   chunks <- parse_subscripts_to_chunks(result)
 
   # Build the paragraph from chunks
-  do.call(flextable::as_paragraph, chunks)
+  flextable::as_paragraph(!!!chunks)
 }
 
 #' Parse text with subscripts into flextable chunks
@@ -628,4 +638,72 @@ convert_footnote_to_text <- function(content) {
   result <- trimws(result)
 
   result
+}
+
+#' @export
+render_to_image.flextable <- function(table, path = NULL) {
+  check_suggested("webshot2", reason = "for image output.")
+  check_suggested(
+    "equatags",
+    reason = "to render LaTeX symbols in flextable tables.",
+    severity = "warn"
+  )
+  check_suggested(
+    "htmltools",
+    reason = "to save intermediary html file for equation rendering",
+    severity = "abort"
+  )
+
+  # Intermediate HTML is always temp.
+  html_path <- tempfile("hyperion-table-", fileext = ".html")
+  on.exit(unlink(html_path), add = TRUE)
+
+  # PNG for display (knitr-relative or temp).
+  if (isTRUE(getOption("knitr.in.progress"))) {
+    png_path <- knitr::fig_path(suffix = ".png")
+    dir.create(dirname(png_path), recursive = TRUE, showWarnings = FALSE)
+  } else {
+    png_path <- tempfile("hyperion-table-", fileext = ".png")
+  }
+
+  html_tag <- flextable::htmltools_value(table)
+  # Inject CSS to ensure white background and prevent the shadow host div
+  # (created by tabwid.js) from stretching to full viewport width
+  custom_css <- htmltools::tags$style(
+    "body { background-color: white; }
+     .flextable-shadow-host { display: inline-block; }"
+  )
+
+  # Bundle the custom CSS and the flextable HTML together
+  html_content <- htmltools::tagList(custom_css, html_tag)
+  htmltools::save_html(html_content, file = html_path)
+
+  webshot2::webshot(
+    url = html_path,
+    file = png_path,
+    selector = "div.flextable-shadow-host",
+    delay = 1, # Allow time for KaTeX CSS to load from CDN
+    vwidth = 4000,
+    vheight = 3000,
+    quiet = TRUE,
+    zoom = 1
+  )
+
+  if (!file.exists(png_path)) {
+    rlang::abort(
+      paste0("Failed to create PNG output at: ", png_path)
+    )
+  }
+
+  if (!is.null(path)) {
+    dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+    copied <- file.copy(png_path, path, overwrite = TRUE)
+    if (!isTRUE(copied)) {
+      rlang::abort(
+        paste0("Failed to copy PNG output to: ", path)
+      )
+    }
+  }
+
+  knitr::include_graphics(png_path)
 }

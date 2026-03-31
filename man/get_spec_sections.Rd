@@ -4,10 +4,12 @@
 \alias{get_spec_sections}
 \title{Get section rules from a spec}
 \usage{
-get_spec_sections(spec)
+get_spec_sections(spec, ...)
 }
 \arguments{
 \item{spec}{A TableSpec or SummarySpec object}
+
+\item{...}{Additional arguments passed to methods.}
 }
 \value{
 List of quosures

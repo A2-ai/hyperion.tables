@@ -6,10 +6,16 @@ description = "Publication-ready parameter tables, model comparison tables, and 
 [output]
 dir = "../Docs/hyperion-tables-docs"
 
+[reference]
+skip_sections = ["title", "name", "alias", "doc type", "keyword"]
+section_order = ["Description", "Details"]
+include_pagefind = true
+
 [versions]
 enabled = true
 list = [
-	{ tag = "0.3.0", label = "v0.3.0", default = true },
+	{ tag = "0.4.0", label = "v0.4.0", default = true },
+	{ tag = "0.3.0", label = "v0.3.0" },
 	{ tag = "0.2.1", label = "v0.2.1" },
 	{ tag = "0.2.0", label = "v0.2.0" },
 	{ tag = "0.1.0", label = "v0.1.0" },
@@ -59,45 +65,41 @@ reference = [
 		"get_summary_spec",
 	] },
 	{ label = "Spec Getters", contents = [
-		"get_spec_columns",
-		"get_spec_title",
-		"get_spec_sigfig",
 		"get_spec_ci",
-		"get_spec_parameter_names",
-		"get_spec_sections",
+		"get_spec_columns",
 		"get_spec_filter",
+		"get_spec_parameter_names",
+		"get_spec_section_filter",
+		"get_spec_sections",
+		"get_spec_sigfig",
+		"get_spec_time_format",
+		"get_spec_title",
 		"get_spec_transforms",
 		"get_spec_variability",
-		"get_spec_time_format",
 	] },
-	{ label = "Spec Modifiers - Columns", contents = [
+	{ label = "Spec Setters", contents = [
 		"add_spec_columns",
 		"drop_spec_columns",
-		"set_spec_columns",
-	] },
-	{ label = "Spec Modifiers - Common", contents = [
-		"set_spec_title",
-		"set_spec_sigfig",
-		"set_spec_ofv_decimals",
-		"set_spec_hide_empty",
-		"set_spec_pvalue",
-		"set_spec_footnotes",
-	] },
-	{ label = "Spec Modifiers - TableSpec", contents = [
-		"set_spec_parameter_names",
 		"set_spec_ci",
-		"set_spec_missing",
-		"set_spec_transforms",
-		"set_spec_sections",
+		"set_spec_columns",
 		"set_spec_filter",
-		"set_spec_variability",
-	] },
-	{ label = "Spec Modifiers - SummarySpec", contents = [
-		"set_spec_time_format",
+		"set_spec_footnotes",
+		"set_spec_hide_empty",
+		"set_spec_missing",
 		"set_spec_models",
-		"set_spec_tag_filter",
+		"set_spec_ofv_decimals",
+		"set_spec_parameter_names",
+		"set_spec_pvalue",
 		"set_spec_remove_unrun",
+		"set_spec_section_filter",
+		"set_spec_sections",
+		"set_spec_sigfig",
 		"set_spec_summary_filter",
+		"set_spec_tag_filter",
+		"set_spec_time_format",
+		"set_spec_title",
+		"set_spec_transforms",
+		"set_spec_variability",
 	] },
 	{ label = "Rule Builders", contents = [
 		"section_rules",
@@ -108,6 +110,7 @@ reference = [
 	{ label = "Rendering", contents = [
 		"render_to_gt",
 		"render_to_flextable",
+		"render_to_image",
 	] },
 	{ label = "Model Comparison", contents = [
 		"compare_with",
