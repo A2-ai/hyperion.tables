@@ -150,7 +150,7 @@ jobs:
             echo "Found missing system dependencies:"
             echo "$MISSING_DEPS"
             echo "Installing..."
-            echo "$MISSING_DEPS" | xargs sudo apt install
+            echo "$MISSING_DEPS" | xargs dnf install -y
           else
             echo "All system dependencies are present"
           fi
@@ -326,7 +326,7 @@ jobs:
             echo "Found missing system dependencies:"
             echo "$MISSING_DEPS"
             echo "Installing..."
-            echo "$MISSING_DEPS" | xargs sudo apt install
+            echo "$MISSING_DEPS" | xargs dnf install -y
           else
             echo "All system dependencies are present"
           fi
