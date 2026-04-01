@@ -60,13 +60,14 @@ params <- get_parameters(model)
 info <- get_model_parameter_info(model)
 mod_sum <- summary(model)
 
-param_gt <- params |>
+params |>
   apply_table_spec(spec, info) |>
   add_summary_info(mod_sum) |>
-  make_parameter_table()
+  make_parameter_table() |>
+  render_to_image()
 ```
 
-![](man/figures/README-param-table.png)
+<img src="man/figures/README-parameter-table-1.png" alt="" width="100%" />
 
 ### Comparison table
 
@@ -88,7 +89,7 @@ spec <- TableSpec(
 run002 <- read_model(file.path(model_dir, "run002.mod"))
 run003 <- read_model(file.path(model_dir, "run003.mod"))
 
-comp_gt <- get_parameters(run002) |>
+get_parameters(run002) |>
   apply_table_spec(spec, get_model_parameter_info(run002)) |>
   add_summary_info(summary(run002)) |>
   compare_with(
@@ -98,10 +99,11 @@ comp_gt <- get_parameters(run002) |>
     labels = c("run002", "run003")
   ) |>
   add_model_lineage(get_model_lineage(run002)) |>
-  make_comparison_table()
+  make_comparison_table() |>
+  render_to_image()
 ```
 
-![](man/figures/README-comparison-table.png)
+<img src="man/figures/README-comparison-table-1.png" alt="" width="100%" />
 
 ### Summary table
 
@@ -109,12 +111,13 @@ comp_gt <- get_parameters(run002) |>
 model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
 tree <- get_model_lineage(model_dir)
 
-summary_gt <- tree |>
+tree |>
   apply_summary_spec(SummarySpec()) |>
-  make_summary_table()
+  make_summary_table() |>
+  render_to_image()
 ```
 
-![](man/figures/README-summary-table.png)
+<img src="man/figures/README-summary-table-1.png" alt="" width="100%" />
 
 ### Custom renderers
 

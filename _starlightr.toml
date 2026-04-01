@@ -44,27 +44,27 @@ articles = [
 ]
 reference = [
 	"hyperion.tables-package",
-	{ label = "Spec Classes", contents = [
+	{ label = "Spec Classes", collapsed = true, contents = [
 		"TableSpec",
 		"SummarySpec",
 		"CIOptions",
 		"ParameterNameOptions",
 	] },
-	{ label = "Table Creation", contents = [
+	{ label = "Table Creation", collapsed = true, contents = [
 		"make_parameter_table",
 		"make_summary_table",
 		"make_comparison_table",
 	] },
-	{ label = "Spec Application", contents = [
+	{ label = "Spec Application", collapsed = true, contents = [
 		"apply_table_spec",
 		"apply_summary_spec",
 		"apply_formatting",
 	] },
-	{ label = "Spec Extraction", contents = [
+	{ label = "Spec Extraction", collapsed = true, contents = [
 		"get_table_spec",
 		"get_summary_spec",
 	] },
-	{ label = "Spec Getters", contents = [
+	{ label = "Spec Getters", collapsed = true, contents = [
 		"get_spec_ci",
 		"get_spec_columns",
 		"get_spec_filter",
@@ -77,7 +77,7 @@ reference = [
 		"get_spec_transforms",
 		"get_spec_variability",
 	] },
-	{ label = "Spec Setters", contents = [
+	{ label = "Spec Setters", collapsed = true, contents = [
 		"add_spec_columns",
 		"drop_spec_columns",
 		"set_spec_ci",
@@ -101,18 +101,18 @@ reference = [
 		"set_spec_transforms",
 		"set_spec_variability",
 	] },
-	{ label = "Rule Builders", contents = [
+	{ label = "Rule Builders", collapsed = true, contents = [
 		"section_rules",
 		"filter_rules",
 		"variability_rules",
 		"summary_filter_rules",
 	] },
-	{ label = "Rendering", contents = [
+	{ label = "Rendering", collapsed = true, contents = [
 		"render_to_gt",
 		"render_to_flextable",
 		"render_to_image",
 	] },
-	{ label = "Model Comparison", contents = [
+	{ label = "Model Comparison", collapsed = true, contents = [
 		"compare_with",
 		"add_model_lineage",
 		"add_summary_info",

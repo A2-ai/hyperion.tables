@@ -36,7 +36,8 @@ Create a summary table with default columns:
 ```{r}
 tree |>
   apply_summary_spec(SummarySpec()) |>
-  make_summary_table()
+  make_summary_table() |>
+	render_to_image()
 ```
 
 ## Customizing Columns
@@ -55,7 +56,8 @@ spec <- SummarySpec() |>
 
 tree |>
   apply_summary_spec(spec) |>
-  make_summary_table()
+  make_summary_table() |>
+	render_to_image()
 ```
 
 Available columns include: `based_on`, `description`, `n_parameters`, `problem`, `number_data_records`, `number_subjects`, `number_obs`, `estimation_method`, `estimation_time`, `covariance_time`, `ofv`, `dofv`, `condition_number`, `termination_status`, `pvalue`, `df`.
@@ -69,7 +71,8 @@ spec <- SummarySpec(models_to_include = c("run002", "run003"))
 
 tree |>
   apply_summary_spec(spec) |>
-  make_summary_table()
+  make_summary_table() |>
+	render_to_image()
 ```
 
 Or use custom filter rules:
@@ -80,7 +83,8 @@ spec <- SummarySpec() |>
 
 tree |>
   apply_summary_spec(spec) |>
-  make_summary_table()
+  make_summary_table() |>
+	render_to_image()
 ```
 
 ## P-value Formatting
@@ -93,7 +97,8 @@ spec <- SummarySpec() |>
 
 tree |>
   apply_summary_spec(spec) |>
-  make_summary_table()
+  make_summary_table() |>
+	render_to_image()
 ```
 
 ```{r}
@@ -102,7 +107,8 @@ spec <- SummarySpec() |>
 
 tree |>
   apply_summary_spec(spec) |>
-  make_summary_table()
+  make_summary_table() |> 
+	render_to_image()
 ```
 
 ## Table Title
@@ -113,5 +119,6 @@ spec <- SummarySpec() |>
 
 tree |>
   apply_summary_spec(spec) |>
-  make_summary_table()
+  make_summary_table() |>
+	render_to_image()
 ```

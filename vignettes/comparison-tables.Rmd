@@ -58,7 +58,8 @@ get_parameters(parent_mod) |>
       add_summary_info(child_sum),
     labels = c("run002", "run003")
   ) |>
-  make_comparison_table()
+  make_comparison_table() |>
+	render_to_image()
 ```
 
 ### Multiple Comparison Table
@@ -106,7 +107,8 @@ comp <- get_parameters(mod1) |>
   )
 
 comp |>
-  make_comparison_table()
+  make_comparison_table() |>
+	render_to_image()
 ```
 
 ### Structural model comparison
@@ -163,5 +165,6 @@ comp <- get_parameters(mod1) |>
     labels = c("run004")
   )
 comp |>
-  make_comparison_table()
+  make_comparison_table() |>
+	render_to_image()
 ```

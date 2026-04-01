@@ -5,10 +5,8 @@ name = "hyperion.tables"
 r_version = "4.5"
 
 repositories = [
-  { alias = "prism", url = "https://prism.dev.a2-ai.cloud/rpkgs/stratus/2026-01-14" },
+  { alias = "prism", url = "https://prism.dev.a2-ai.cloud/rpkgs/stratus/2026-03-18" },
   { alias = "hyp-eco", url = "https://prism.dev.a2-ai.cloud/rpkgs/hyperion-eco/v1/" },
-  { alias = "ppm", url = "https://packagemanager.posit.co/cran/latest" },
-  { alias = "CRAN", url = "https://cran.r-project.org" },
 ]
 
 dependencies = [

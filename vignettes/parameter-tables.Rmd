@@ -54,7 +54,8 @@ mod_sum <- summary(mod)
 get_parameters(mod) |>
   apply_table_spec(spec, info) |>
   add_summary_info(mod_sum) |>
-  make_parameter_table()
+  make_parameter_table() |>
+	render_to_image()
 ```
 
 
@@ -72,7 +73,8 @@ mod_sum <- summary(mod)
 get_parameters(mod) |>
   apply_table_spec(spec, info) |>
   add_summary_info(mod_sum) |>
-  make_parameter_table()
+  make_parameter_table() |>
+	render_to_image()
 ```
 
 ```{r}
@@ -81,7 +83,8 @@ spec <- spec |> set_spec_parameter_names(source = "nonmem")
 get_parameters(mod) |>
   apply_table_spec(spec, info) |>
   add_summary_info(mod_sum) |>
-  make_parameter_table()
+  make_parameter_table() |>
+	render_to_image()
 ```
 
 ### Adding descriptions with `add_spec_columns()`
@@ -94,7 +97,8 @@ spec <- spec |>
 get_parameters(mod) |>
   apply_table_spec(spec, info) |>
   add_summary_info(mod_sum) |>
-  make_parameter_table()
+  make_parameter_table() |>
+	render_to_image()
 ```
 
 ### Removing columns with `drop_spec_columns()`
@@ -116,7 +120,8 @@ spec <- TableSpec() |>
 get_parameters(mod) |>
   apply_table_spec(spec, info) |>
   add_summary_info(mod_sum) |>
-  make_parameter_table()
+  make_parameter_table() |> 
+	render_to_image()
 ```
 
 ```{r}
@@ -126,7 +131,8 @@ spec <- spec |> drop_spec_columns("shrinkage")
 get_parameters(mod) |>
   apply_table_spec(spec, info) |>
   add_summary_info(mod_sum) |>
-  make_parameter_table()
+  make_parameter_table() |>
+	render_to_image()
 ```
 
 ## Structural parameters only
@@ -142,7 +148,8 @@ sp_spec <- TableSpec() |>
 
 get_parameters(mod) |>
   apply_table_spec(sp_spec, info) |>
-  make_parameter_table()
+  make_parameter_table() |>
+	render_to_image()
 ```
 
 ## Random Effect Parameters only
@@ -158,7 +165,8 @@ re_spec <- TableSpec() |>
 
 get_parameters(mod) |>
   apply_table_spec(re_spec, info) |>
-  make_parameter_table()
+  make_parameter_table() |>
+	render_to_image()
 ```
 
 ## Confidence Interval level
@@ -181,7 +189,8 @@ info <- get_model_parameter_info(mod)
 get_parameters(mod) |>
   apply_table_spec(spec, info) |>
   add_summary_info(mod_sum) |>
-  make_parameter_table()
+  make_parameter_table() |>
+	render_to_image()
 ```
 
 ## Changing summary info shown
@@ -206,21 +215,24 @@ info <- get_model_parameter_info(mod, lookup_path = normalizePath("../inst/looku
 get_parameters(mod) |>
   apply_table_spec(spec, info) |>
   add_summary_info(mod_sum, show_cond_num = FALSE) |>
-  make_parameter_table()
+  make_parameter_table() |>
+	render_to_image()
 ```
 
 ```{r}
 get_parameters(mod) |>
   apply_table_spec(spec, info) |>
   add_summary_info(mod_sum, show_cond_num = FALSE, show_ofv = FALSE) |>
-  make_parameter_table()
+  make_parameter_table() |>
+	render_to_image()
 ```
 
 ```{r}
 get_parameters(mod) |>
   apply_table_spec(spec, info) |>
   add_summary_info(mod_sum, show_method = FALSE) |>
-  make_parameter_table()
+  make_parameter_table() |>
+	render_to_image()
 ```
 
 
@@ -347,5 +359,6 @@ spec <- SummarySpec() |>
 
 example_tree |>
   apply_summary_spec(spec) |>
-  make_summary_table()
+  make_summary_table() |> 
+	render_to_image()
 ```

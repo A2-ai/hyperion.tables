@@ -45,7 +45,8 @@ Here’s what happens when you run:
 params |>
   apply_table_spec(spec, info) |>
   add_summary_info(mod_sum) |>
-  make_parameter_table()
+  make_parameter_table() |>
+	render_to_image()
 ```
 
 1. **`apply_table_spec()`** enriches the raw parameter data with transforms,
@@ -96,14 +97,13 @@ hyperion_table
 `hyperion.tables` includes two built-in renderers:
 
 ```{r}
-render_to_gt(hyperion_table)
+render_to_gt(hyperion_table) |>
+	render_to_image()
 ```
-```{r results="asis"}
-# saving flextable as images strips equations 
-render_to_flextable(hyperion_table) |> 
-	autofit() |> 
-	to_html(type = "table") |> 
-	cat()
+```{r}
+hyperion_table |>
+	render_to_flextable() |>
+	render_to_image()
 ```
 
 ## Update render rules and re-render
@@ -141,7 +141,8 @@ names(formatted)
 ```
 
 ```{r}
-render_to_gt(hyperion_table)
+render_to_gt(hyperion_table) |>
+	render_to_image()
 ```
 
 ```{r}
@@ -160,7 +161,8 @@ render_custom <- function(table) {
 	gt::gt(data, groupname_col = table@groupname_col)
 }
 
-render_custom(hyperion_table)
+render_custom(hyperion_table) |>
+	render_to_image()
 ```
 
 ## What if you skip `apply_formatting()`?
