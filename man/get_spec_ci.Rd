@@ -7,17 +7,20 @@
 get_spec_ci(spec, ...)
 }
 \arguments{
-\item{spec}{A TableSpec object}
+\item{spec}{A TableSpec object.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Not used.}
 }
 \value{
-CIOptions object
+CIOptions object.
 }
 \description{
-Returns the CIOptions object.
+\code{get_spec_ci()} is an S7 generic that returns the CIOptions object.
 }
 \examples{
 spec <- TableSpec()
 get_spec_ci(spec)
+}
+\seealso{
+\code{\link[=set_spec_ci]{set_spec_ci()}}.
 }

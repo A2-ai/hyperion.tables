@@ -7,23 +7,27 @@
 set_spec_transforms(spec, ..., theta = NULL, omega = NULL, sigma = NULL)
 }
 \arguments{
-\item{spec}{A TableSpec object}
+\item{spec}{A TableSpec object.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Not used.}
 
-\item{theta}{Columns to transform for theta parameters}
+\item{theta}{Columns to transform for theta parameters.}
 
-\item{omega}{Columns to transform for omega parameters}
+\item{omega}{Columns to transform for omega parameters.}
 
-\item{sigma}{Columns to transform for sigma parameters}
+\item{sigma}{Columns to transform for sigma parameters.}
 }
 \value{
-Modified spec
+Modified spec.
 }
 \description{
-Controls which transforms are applied for display by parameter kind.
+\code{set_spec_transforms()} is an S7 generic that controls which transforms are
+applied for display by parameter kind.
 }
 \examples{
 spec <- TableSpec() |>
   set_spec_transforms(theta = "all", omega = c("estimate", "cv"))
+}
+\seealso{
+\code{\link[=get_spec_transforms]{get_spec_transforms()}}.
 }

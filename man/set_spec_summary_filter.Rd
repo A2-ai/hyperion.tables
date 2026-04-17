@@ -7,24 +7,20 @@
 set_spec_summary_filter(spec, ..., overwrite = FALSE)
 }
 \arguments{
-\item{spec}{A SummarySpec object}
+\item{spec}{A SummarySpec object.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{See methods.}
 
 \item{overwrite}{If FALSE (default), append to existing rules.
 If TRUE, replace all existing rules.}
 }
 \value{
-Modified spec
+Modified spec.
 }
 \description{
-Controls which models appear in the summary table based on filter
-expressions evaluated against summary columns.
-}
-\details{
-The built-in \code{SummarySpec} method interprets unnamed arguments in \code{...} as
-summary filter rule expressions. Named arguments in \code{...} are ignored with a
-warning.
+\code{set_spec_summary_filter()} is an S7 generic that controls which models
+appear in the summary table based on filter expressions evaluated against
+summary columns.
 }
 \examples{
 spec <- SummarySpec() |>

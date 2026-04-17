@@ -7,17 +7,18 @@
 set_spec_models(spec, models, ...)
 }
 \arguments{
-\item{spec}{A SummarySpec object}
+\item{spec}{A SummarySpec object.}
 
-\item{models}{Character vector of model names, or NULL for all models}
+\item{models}{Character vector of model names, or NULL for all models.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Not used.}
 }
 \value{
-Modified spec
+Modified spec.
 }
 \description{
-Filters which models appear in the summary table by name.
+\code{set_spec_models()} is an S7 generic that filters which models appear in
+the summary table by name.
 }
 \examples{
 spec <- SummarySpec() |>

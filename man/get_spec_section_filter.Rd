@@ -7,13 +7,24 @@
 get_spec_section_filter(spec, ...)
 }
 \arguments{
-\item{spec}{A TableSpec or SummarySpec object}
+\item{spec}{A TableSpec or SummarySpec object.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Not used.}
 }
 \value{
-Character vector or NULL
+Character vector or \code{NULL}.
 }
 \description{
-Returns the section labels being filtered out, or NULL if no filter is set.
+\code{get_spec_section_filter()} is an S7 generic that returns the section labels
+being filtered out, or \code{NULL} if no filter is set.
+
+Methods are available for the following classes:
+
+\itemize{
+\item \code{hyperion.tables::SummarySpec}
+\item \code{hyperion.tables::TableSpec}
+}
+}
+\seealso{
+\code{\link[=set_spec_section_filter]{set_spec_section_filter()}}.
 }

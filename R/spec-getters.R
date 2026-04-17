@@ -9,13 +9,20 @@
 
 #' Get columns from a spec
 #'
-#' Returns the current columns list from the spec. For TableSpec, this includes
-#' the base columns plus any add_columns. For SummarySpec, columns are already
-#' merged with add_columns in construction.
+#' @description
+#' `get_spec_columns()` is an S7 generic that returns the current columns list
+#' from the spec. For TableSpec, this includes the base columns plus any
+#' add_columns. For SummarySpec, columns are already merged with add_columns in
+#' construction.
 #'
-#' @param spec A TableSpec or SummarySpec object
-#' @param ... Additional arguments passed to methods.
-#' @return Character vector of column names
+#' Methods are available for the following classes:
+#'
+#' `r doclisting::methods_list("get_spec_columns")`
+#'
+#' @param spec A TableSpec or SummarySpec object.
+#' @param ... Not used.
+#' @return Character vector of column names.
+#' @seealso [set_spec_columns()], [add_spec_columns()], [drop_spec_columns()].
 #' @export
 #' @examples
 #' spec <- TableSpec()
@@ -36,11 +43,17 @@ S7::method(get_spec_columns, SummarySpec) <- function(spec) {
 
 #' Get title from a spec
 #'
-#' Returns the table header title.
+#' @description
+#' `get_spec_title()` is an S7 generic that returns the table header title.
 #'
-#' @param spec A TableSpec or SummarySpec object
-#' @param ... Additional arguments passed to methods.
-#' @return Character string
+#' Methods are available for the following classes:
+#'
+#' `r doclisting::methods_list("get_spec_title")`
+#'
+#' @param spec A TableSpec or SummarySpec object.
+#' @param ... Not used.
+#' @return Character string.
+#' @seealso [set_spec_title()].
 #' @export
 #' @examples
 #' spec <- TableSpec()
@@ -53,11 +66,18 @@ S7::method(get_spec_title, AnySpec) <- function(spec) {
 
 #' Get significant figures from a spec
 #'
-#' Returns the number of significant figures for numeric formatting.
+#' @description
+#' `get_spec_sigfig()` is an S7 generic that returns the number of significant
+#' figures used for numeric formatting.
 #'
-#' @param spec A TableSpec or SummarySpec object
-#' @param ... Additional arguments passed to methods.
-#' @return Numeric value
+#' Methods are available for the following classes:
+#'
+#' `r doclisting::methods_list("get_spec_sigfig")`
+#'
+#' @param spec A TableSpec or SummarySpec object.
+#' @param ... Not used.
+#' @return Numeric value.
+#' @seealso [set_spec_sigfig()].
 #' @export
 #' @examples
 #' spec <- TableSpec()
@@ -74,12 +94,13 @@ S7::method(get_spec_sigfig, AnySpec) <- function(spec) {
 
 #' Get parameter name options from a TableSpec
 #'
-#' Returns the ParameterNameOptions object controlling how parameter names
-#' are displayed.
+#' `get_spec_parameter_names()` is an S7 generic that returns the
+#' ParameterNameOptions object controlling how parameter names are displayed.
 #'
-#' @param spec A TableSpec object
-#' @param ... Additional arguments passed to methods.
-#' @return ParameterNameOptions object
+#' @param spec A TableSpec object.
+#' @param ... Not used.
+#' @return ParameterNameOptions object.
+#' @seealso [set_spec_parameter_names()].
 #' @export
 #' @examples
 #' spec <- TableSpec()
@@ -92,11 +113,12 @@ S7::method(get_spec_parameter_names, TableSpec) <- function(spec) {
 
 #' Get CI options from a TableSpec
 #'
-#' Returns the CIOptions object.
+#' `get_spec_ci()` is an S7 generic that returns the CIOptions object.
 #'
-#' @param spec A TableSpec object
-#' @param ... Additional arguments passed to methods.
-#' @return CIOptions object
+#' @param spec A TableSpec object.
+#' @param ... Not used.
+#' @return CIOptions object.
+#' @seealso [set_spec_ci()].
 #' @export
 #' @examples
 #' spec <- TableSpec()
@@ -109,11 +131,18 @@ S7::method(get_spec_ci, TableSpec) <- function(spec) {
 
 #' Get section rules from a spec
 #'
-#' Returns the list of section assignment rules.
+#' @description
+#' `get_spec_sections()` is an S7 generic that returns the list of section
+#' assignment rules.
 #'
-#' @param spec A TableSpec or SummarySpec object
-#' @param ... Additional arguments passed to methods.
-#' @return List of quosures
+#' Methods are available for the following classes:
+#'
+#' `r doclisting::methods_list("get_spec_sections")`
+#'
+#' @param spec A TableSpec or SummarySpec object.
+#' @param ... Not used.
+#' @return List of quosures.
+#' @seealso [set_spec_sections()].
 #' @export
 #' @examples
 #' spec <- TableSpec()
@@ -126,11 +155,18 @@ S7::method(get_spec_sections, AnySpec) <- function(spec) {
 
 #' Get section filter from a spec
 #'
-#' Returns the section labels being filtered out, or NULL if no filter is set.
+#' @description
+#' `get_spec_section_filter()` is an S7 generic that returns the section labels
+#' being filtered out, or `NULL` if no filter is set.
 #'
-#' @param spec A TableSpec or SummarySpec object
-#' @param ... Additional arguments passed to methods.
-#' @return Character vector or NULL
+#' Methods are available for the following classes:
+#'
+#' `r doclisting::methods_list("get_spec_section_filter")`
+#'
+#' @param spec A TableSpec or SummarySpec object.
+#' @param ... Not used.
+#' @return Character vector or `NULL`.
+#' @seealso [set_spec_section_filter()].
 #' @export
 get_spec_section_filter <- S7::new_generic("get_spec_section_filter", "spec")
 
@@ -140,11 +176,13 @@ S7::method(get_spec_section_filter, AnySpec) <- function(spec) {
 
 #' Get row filter rules from a TableSpec
 #'
-#' Returns the list of row filter rules.
+#' `get_spec_filter()` is an S7 generic that returns the list of row filter
+#' rules.
 #'
-#' @param spec A TableSpec object
-#' @param ... Additional arguments passed to methods.
-#' @return List of quosures
+#' @param spec A TableSpec object.
+#' @param ... Not used.
+#' @return List of quosures.
+#' @seealso [set_spec_filter()].
 #' @export
 #' @examples
 #' spec <- TableSpec()
@@ -157,11 +195,13 @@ S7::method(get_spec_filter, TableSpec) <- function(spec) {
 
 #' Get display transforms from a TableSpec
 #'
-#' Returns the display transforms configuration.
+#' `get_spec_transforms()` is an S7 generic that returns the display transforms
+#' configuration.
 #'
-#' @param spec A TableSpec object
-#' @param ... Additional arguments passed to methods.
-#' @return Named list with theta, omega, sigma entries
+#' @param spec A TableSpec object.
+#' @param ... Not used.
+#' @return Named list with theta, omega, sigma entries.
+#' @seealso [set_spec_transforms()].
 #' @export
 #' @examples
 #' spec <- TableSpec()
@@ -174,11 +214,13 @@ S7::method(get_spec_transforms, TableSpec) <- function(spec) {
 
 #' Get variability rules from a TableSpec
 #'
-#' Returns the list of variability display rules.
+#' `get_spec_variability()` is an S7 generic that returns the list of
+#' variability display rules.
 #'
-#' @param spec A TableSpec object
-#' @param ... Additional arguments passed to methods.
-#' @return List of quosures
+#' @param spec A TableSpec object.
+#' @param ... Not used.
+#' @return List of quosures.
+#' @seealso [set_spec_variability()].
 #' @export
 #' @examples
 #' spec <- TableSpec()
@@ -195,11 +237,13 @@ S7::method(get_spec_variability, TableSpec) <- function(spec) {
 
 #' Get time format from a SummarySpec
 #'
-#' Returns the time format setting.
+#' `get_spec_time_format()` is an S7 generic that returns the time format
+#' setting.
 #'
-#' @param spec A SummarySpec object
-#' @param ... Additional arguments passed to methods.
-#' @return Character string: "seconds", "minutes", "hours", or "auto"
+#' @param spec A SummarySpec object.
+#' @param ... Not used.
+#' @return Character string: "seconds", "minutes", "hours", or "auto".
+#' @seealso [set_spec_time_format()].
 #' @export
 #' @examples
 #' spec <- SummarySpec()

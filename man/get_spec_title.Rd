@@ -7,17 +7,27 @@
 get_spec_title(spec, ...)
 }
 \arguments{
-\item{spec}{A TableSpec or SummarySpec object}
+\item{spec}{A TableSpec or SummarySpec object.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Not used.}
 }
 \value{
-Character string
+Character string.
 }
 \description{
-Returns the table header title.
+\code{get_spec_title()} is an S7 generic that returns the table header title.
+
+Methods are available for the following classes:
+
+\itemize{
+\item \code{hyperion.tables::SummarySpec}
+\item \code{hyperion.tables::TableSpec}
+}
 }
 \examples{
 spec <- TableSpec()
 get_spec_title(spec)
+}
+\seealso{
+\code{\link[=set_spec_title]{set_spec_title()}}.
 }

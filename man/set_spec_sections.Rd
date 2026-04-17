@@ -7,30 +7,33 @@
 set_spec_sections(spec, ..., overwrite = FALSE)
 }
 \arguments{
-\item{spec}{A TableSpec or SummarySpec object}
+\item{spec}{A TableSpec or SummarySpec object.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{See methods.}
 
 \item{overwrite}{If FALSE (default), append to existing rules.
 If TRUE, replace all existing rules.}
 }
 \value{
-Modified spec
+Modified spec.
 }
 \description{
-Controls how rows are grouped into sections. Pass formula expressions
-where the LHS is a condition and the RHS is the section label.
-}
-\details{
+\code{set_spec_sections()} is an S7 generic that controls how rows are grouped
+into sections. Pass formula expressions where the LHS is a condition and
+the RHS is the section label.
+
 For TableSpec, rules are evaluated against parameter columns
 (e.g., \code{kind == "THETA" ~ "Structural Parameters"}).
 
 For SummarySpec, rules are evaluated row-by-row against summary columns
 including \code{tags} (e.g., \code{"base" \%in\% tags ~ "Base Models"}).
 
-Built-in methods for \code{TableSpec} and \code{SummarySpec} interpret unnamed
-arguments in \code{...} as section rule formulas. Named arguments in \code{...} are
-ignored with a warning.
+Methods are available for the following classes:
+
+\itemize{
+\item \code{hyperion.tables::SummarySpec}
+\item \code{hyperion.tables::TableSpec}
+}
 }
 \examples{
 spec <- TableSpec() |>
@@ -38,4 +41,7 @@ spec <- TableSpec() |>
     kind == "THETA" ~ "Structural",
     kind == "OMEGA" ~ "IIV"
   )
+}
+\seealso{
+\code{\link[=get_spec_sections]{get_spec_sections()}}.
 }

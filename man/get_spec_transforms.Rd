@@ -7,17 +7,21 @@
 get_spec_transforms(spec, ...)
 }
 \arguments{
-\item{spec}{A TableSpec object}
+\item{spec}{A TableSpec object.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Not used.}
 }
 \value{
-Named list with theta, omega, sigma entries
+Named list with theta, omega, sigma entries.
 }
 \description{
-Returns the display transforms configuration.
+\code{get_spec_transforms()} is an S7 generic that returns the display transforms
+configuration.
 }
 \examples{
 spec <- TableSpec()
 get_spec_transforms(spec)
+}
+\seealso{
+\code{\link[=set_spec_transforms]{set_spec_transforms()}}.
 }

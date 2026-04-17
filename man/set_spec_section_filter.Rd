@@ -7,22 +7,24 @@
 set_spec_section_filter(spec, ...)
 }
 \arguments{
-\item{spec}{A TableSpec or SummarySpec object}
+\item{spec}{A TableSpec or SummarySpec object.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{See methods.}
 }
 \value{
-Modified spec
+Modified spec.
 }
 \description{
-Filters out rows belonging to specified sections. Use \code{NA} to also
-filter unmatched rows (those that didn't match any section rule).
+\code{set_spec_section_filter()} is an S7 generic that filters out rows belonging
+to specified sections. Use \code{NA} to also filter unmatched rows (those that
+didn't match any section rule). Call with no arguments to clear the filter.
+
+Methods are available for the following classes:
+
+\itemize{
+\item \code{hyperion.tables::SummarySpec}
+\item \code{hyperion.tables::TableSpec}
 }
-\details{
-Built-in methods for \code{TableSpec} and \code{SummarySpec} interpret values in
-\code{...} as section labels to exclude. Pass \code{NA} to also exclude unmatched rows
-(those that did not match any section rule). Call with no arguments to clear
-the filter. Named arguments in \code{...} are ignored with a warning.
 }
 \examples{
 spec <- SummarySpec(
@@ -32,4 +34,7 @@ spec <- SummarySpec(
   )
 ) |>
   set_spec_section_filter("Other")
+}
+\seealso{
+\code{\link[=get_spec_section_filter]{get_spec_section_filter()}}.
 }

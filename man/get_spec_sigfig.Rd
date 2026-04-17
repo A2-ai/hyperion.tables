@@ -7,17 +7,28 @@
 get_spec_sigfig(spec, ...)
 }
 \arguments{
-\item{spec}{A TableSpec or SummarySpec object}
+\item{spec}{A TableSpec or SummarySpec object.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Not used.}
 }
 \value{
-Numeric value
+Numeric value.
 }
 \description{
-Returns the number of significant figures for numeric formatting.
+\code{get_spec_sigfig()} is an S7 generic that returns the number of significant
+figures used for numeric formatting.
+
+Methods are available for the following classes:
+
+\itemize{
+\item \code{hyperion.tables::SummarySpec}
+\item \code{hyperion.tables::TableSpec}
+}
 }
 \examples{
 spec <- TableSpec()
 get_spec_sigfig(spec)
+}
+\seealso{
+\code{\link[=set_spec_sigfig]{set_spec_sigfig()}}.
 }

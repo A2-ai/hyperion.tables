@@ -7,19 +7,27 @@
 set_spec_footnotes(spec, order, ...)
 }
 \arguments{
-\item{spec}{A TableSpec or SummarySpec object}
+\item{spec}{A TableSpec or SummarySpec object.}
 
 \item{order}{Character vector of footnote sections in desired order, or NULL
 to disable footnotes. For TableSpec: "summary_info", "equations", "abbreviations".
 For SummarySpec: only "abbreviations" is valid.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Not used.}
 }
 \value{
-Modified spec
+Modified spec.
 }
 \description{
-Controls the order of footnote sections, or disables footnotes entirely.
+\code{set_spec_footnotes()} is an S7 generic that controls the order of footnote
+sections, or disables footnotes entirely.
+
+Methods are available for the following classes:
+
+\itemize{
+\item \code{hyperion.tables::SummarySpec}
+\item \code{hyperion.tables::TableSpec}
+}
 }
 \examples{
 spec <- TableSpec() |>

@@ -7,19 +7,30 @@
 set_spec_sigfig(spec, n, ...)
 }
 \arguments{
-\item{spec}{A TableSpec or SummarySpec object}
+\item{spec}{A TableSpec or SummarySpec object.}
 
-\item{n}{Positive integer for significant figures}
+\item{n}{Positive integer for significant figures.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Not used.}
 }
 \value{
-Modified spec
+Modified spec.
 }
 \description{
-Sets the number of significant figures for numeric formatting.
+\code{set_spec_sigfig()} is an S7 generic that sets the number of significant
+figures for numeric formatting.
+
+Methods are available for the following classes:
+
+\itemize{
+\item \code{hyperion.tables::SummarySpec}
+\item \code{hyperion.tables::TableSpec}
+}
 }
 \examples{
 spec <- TableSpec() |>
   set_spec_sigfig(4)
+}
+\seealso{
+\code{\link[=get_spec_sigfig]{get_spec_sigfig()}}.
 }

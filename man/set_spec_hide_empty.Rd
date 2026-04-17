@@ -7,17 +7,25 @@
 set_spec_hide_empty(spec, hide, ...)
 }
 \arguments{
-\item{spec}{A TableSpec or SummarySpec object}
+\item{spec}{A TableSpec or SummarySpec object.}
 
-\item{hide}{Logical value}
+\item{hide}{Logical value.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Not used.}
 }
 \value{
-Modified spec
+Modified spec.
 }
 \description{
-Controls whether empty columns are automatically hidden.
+\code{set_spec_hide_empty()} is an S7 generic that controls whether empty
+columns are automatically hidden.
+
+Methods are available for the following classes:
+
+\itemize{
+\item \code{hyperion.tables::SummarySpec}
+\item \code{hyperion.tables::TableSpec}
+}
 }
 \examples{
 spec <- TableSpec() |>

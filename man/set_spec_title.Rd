@@ -7,19 +7,29 @@
 set_spec_title(spec, title, ...)
 }
 \arguments{
-\item{spec}{A TableSpec or SummarySpec object}
+\item{spec}{A TableSpec or SummarySpec object.}
 
-\item{title}{Character string for the table title}
+\item{title}{Character string for the table title.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Not used.}
 }
 \value{
-Modified spec
+Modified spec.
 }
 \description{
-Sets the table header title.
+\code{set_spec_title()} is an S7 generic that sets the table header title.
+
+Methods are available for the following classes:
+
+\itemize{
+\item \code{hyperion.tables::SummarySpec}
+\item \code{hyperion.tables::TableSpec}
+}
 }
 \examples{
 spec <- TableSpec() |>
   set_spec_title("Parameter Estimates")
+}
+\seealso{
+\code{\link[=get_spec_title]{get_spec_title()}}.
 }

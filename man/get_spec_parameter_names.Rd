@@ -7,18 +7,21 @@
 get_spec_parameter_names(spec, ...)
 }
 \arguments{
-\item{spec}{A TableSpec object}
+\item{spec}{A TableSpec object.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Not used.}
 }
 \value{
-ParameterNameOptions object
+ParameterNameOptions object.
 }
 \description{
-Returns the ParameterNameOptions object controlling how parameter names
-are displayed.
+\code{get_spec_parameter_names()} is an S7 generic that returns the
+ParameterNameOptions object controlling how parameter names are displayed.
 }
 \examples{
 spec <- TableSpec()
 get_spec_parameter_names(spec)
+}
+\seealso{
+\code{\link[=set_spec_parameter_names]{set_spec_parameter_names()}}.
 }

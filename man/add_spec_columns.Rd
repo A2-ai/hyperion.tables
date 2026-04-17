@@ -7,21 +7,23 @@
 add_spec_columns(spec, ...)
 }
 \arguments{
-\item{spec}{A TableSpec or SummarySpec object}
+\item{spec}{A TableSpec or SummarySpec object.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{See methods.}
 }
 \value{
-Modified spec
+Modified spec.
 }
 \description{
-Appends columns to the spec's add_columns list. These columns will be
-added to the default column set.
+\code{add_spec_columns()} is an S7 generic that appends columns to the spec's
+\code{add_columns} list. These columns will be added to the default column set.
+
+Methods are available for the following classes:
+
+\itemize{
+\item \code{hyperion.tables::SummarySpec}
+\item \code{hyperion.tables::TableSpec}
 }
-\details{
-Built-in methods for \code{TableSpec} and \code{SummarySpec} interpret unnamed
-arguments in \code{...} as column names (character strings). Named arguments in
-\code{...} are ignored with a warning.
 }
 \examples{
 spec <- TableSpec() |>
@@ -29,4 +31,7 @@ spec <- TableSpec() |>
 
 sum_spec <- SummarySpec() |>
   add_spec_columns("estimation_time")
+}
+\seealso{
+\code{\link[=get_spec_columns]{get_spec_columns()}}, \code{\link[=set_spec_columns]{set_spec_columns()}}, \code{\link[=drop_spec_columns]{drop_spec_columns()}}.
 }

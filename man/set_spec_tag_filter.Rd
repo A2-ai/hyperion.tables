@@ -7,9 +7,9 @@
 set_spec_tag_filter(spec, ..., tags, exclude)
 }
 \arguments{
-\item{spec}{A SummarySpec object}
+\item{spec}{A SummarySpec object.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Not used.}
 
 \item{tags}{Character vector of tags to include, or NULL for no inclusion
 filter. Only models with at least one matching tag are kept.}
@@ -18,10 +18,11 @@ filter. Only models with at least one matching tag are kept.}
 filter. Models with any matching tag are removed. Applied after \code{tags}.}
 }
 \value{
-Modified spec
+Modified spec.
 }
 \description{
-Filters which models appear in the summary table by tags.
+\code{set_spec_tag_filter()} is an S7 generic that filters which models appear
+in the summary table by tags.
 }
 \examples{
 spec <- SummarySpec() |>

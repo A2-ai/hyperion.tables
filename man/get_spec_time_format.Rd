@@ -7,17 +7,21 @@
 get_spec_time_format(spec, ...)
 }
 \arguments{
-\item{spec}{A SummarySpec object}
+\item{spec}{A SummarySpec object.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Not used.}
 }
 \value{
-Character string: "seconds", "minutes", "hours", or "auto"
+Character string: "seconds", "minutes", "hours", or "auto".
 }
 \description{
-Returns the time format setting.
+\code{get_spec_time_format()} is an S7 generic that returns the time format
+setting.
 }
 \examples{
 spec <- SummarySpec()
 get_spec_time_format(spec)
+}
+\seealso{
+\code{\link[=set_spec_time_format]{set_spec_time_format()}}.
 }

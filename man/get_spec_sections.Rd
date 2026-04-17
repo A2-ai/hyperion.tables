@@ -7,17 +7,28 @@
 get_spec_sections(spec, ...)
 }
 \arguments{
-\item{spec}{A TableSpec or SummarySpec object}
+\item{spec}{A TableSpec or SummarySpec object.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Not used.}
 }
 \value{
-List of quosures
+List of quosures.
 }
 \description{
-Returns the list of section assignment rules.
+\code{get_spec_sections()} is an S7 generic that returns the list of section
+assignment rules.
+
+Methods are available for the following classes:
+
+\itemize{
+\item \code{hyperion.tables::SummarySpec}
+\item \code{hyperion.tables::TableSpec}
+}
 }
 \examples{
 spec <- TableSpec()
 get_spec_sections(spec)
+}
+\seealso{
+\code{\link[=set_spec_sections]{set_spec_sections()}}.
 }

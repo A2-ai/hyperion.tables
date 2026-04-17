@@ -7,17 +7,21 @@
 get_spec_variability(spec, ...)
 }
 \arguments{
-\item{spec}{A TableSpec object}
+\item{spec}{A TableSpec object.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Not used.}
 }
 \value{
-List of quosures
+List of quosures.
 }
 \description{
-Returns the list of variability display rules.
+\code{get_spec_variability()} is an S7 generic that returns the list of
+variability display rules.
 }
 \examples{
 spec <- TableSpec()
 get_spec_variability(spec)
+}
+\seealso{
+\code{\link[=set_spec_variability]{set_spec_variability()}}.
 }

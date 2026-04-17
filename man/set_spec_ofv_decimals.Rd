@@ -7,18 +7,26 @@
 set_spec_ofv_decimals(spec, n, ...)
 }
 \arguments{
-\item{spec}{A TableSpec or SummarySpec object}
+\item{spec}{A TableSpec or SummarySpec object.}
 
-\item{n}{Non-negative integer or NA}
+\item{n}{Non-negative integer or NA.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Not used.}
 }
 \value{
-Modified spec
+Modified spec.
 }
 \description{
-Controls the number of decimal places for OFV and dOFV values. Use NA to
-keep significant-figure formatting.
+\code{set_spec_ofv_decimals()} is an S7 generic that controls the number of
+decimal places for OFV and dOFV values. Use \code{NA} to keep significant-figure
+formatting.
+
+Methods are available for the following classes:
+
+\itemize{
+\item \code{hyperion.tables::SummarySpec}
+\item \code{hyperion.tables::TableSpec}
+}
 }
 \examples{
 spec <- SummarySpec() |>

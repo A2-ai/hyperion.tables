@@ -7,19 +7,30 @@
 get_spec_columns(spec, ...)
 }
 \arguments{
-\item{spec}{A TableSpec or SummarySpec object}
+\item{spec}{A TableSpec or SummarySpec object.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Not used.}
 }
 \value{
-Character vector of column names
+Character vector of column names.
 }
 \description{
-Returns the current columns list from the spec. For TableSpec, this includes
-the base columns plus any add_columns. For SummarySpec, columns are already
-merged with add_columns in construction.
+\code{get_spec_columns()} is an S7 generic that returns the current columns list
+from the spec. For TableSpec, this includes the base columns plus any
+add_columns. For SummarySpec, columns are already merged with add_columns in
+construction.
+
+Methods are available for the following classes:
+
+\itemize{
+\item \code{hyperion.tables::SummarySpec}
+\item \code{hyperion.tables::TableSpec}
+}
 }
 \examples{
 spec <- TableSpec()
 get_spec_columns(spec)
+}
+\seealso{
+\code{\link[=set_spec_columns]{set_spec_columns()}}, \code{\link[=add_spec_columns]{add_spec_columns()}}, \code{\link[=drop_spec_columns]{drop_spec_columns()}}.
 }

@@ -12,9 +12,9 @@ set_spec_parameter_names(
 )
 }
 \arguments{
-\item{spec}{A TableSpec object}
+\item{spec}{A TableSpec object.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Not used.}
 
 \item{source}{One of "name", "display", or "nonmem". If NULL, keeps current value.}
 
@@ -22,12 +22,16 @@ set_spec_parameter_names(
 names to omega parameters. If NULL, keeps current value.}
 }
 \value{
-Modified spec
+Modified spec.
 }
 \description{
-Controls how parameter names are displayed in the table.
+\code{set_spec_parameter_names()} is an S7 generic that controls how parameter
+names are displayed in the table.
 }
 \examples{
 spec <- TableSpec() |>
   set_spec_parameter_names(source = "nonmem", append_omega_with_theta = FALSE)
+}
+\seealso{
+\code{\link[=get_spec_parameter_names]{get_spec_parameter_names()}}.
 }

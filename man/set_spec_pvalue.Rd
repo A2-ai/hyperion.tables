@@ -7,20 +7,28 @@
 set_spec_pvalue(spec, ..., threshold, scientific)
 }
 \arguments{
-\item{spec}{A TableSpec or SummarySpec object}
+\item{spec}{A TableSpec or SummarySpec object.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Not used.}
 
 \item{threshold}{Numeric threshold below which p-values display as "< threshold",
-or NULL to disable threshold display}
+or NULL to disable threshold display.}
 
-\item{scientific}{Logical. If TRUE, use scientific notation for p-values}
+\item{scientific}{Logical. If TRUE, use scientific notation for p-values.}
 }
 \value{
-Modified spec
+Modified spec.
 }
 \description{
-Controls how p-values are displayed in the table.
+\code{set_spec_pvalue()} is an S7 generic that controls how p-values are
+displayed in the table.
+
+Methods are available for the following classes:
+
+\itemize{
+\item \code{hyperion.tables::SummarySpec}
+\item \code{hyperion.tables::TableSpec}
+}
 }
 \examples{
 spec <- TableSpec() |>

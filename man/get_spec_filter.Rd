@@ -7,17 +7,21 @@
 get_spec_filter(spec, ...)
 }
 \arguments{
-\item{spec}{A TableSpec object}
+\item{spec}{A TableSpec object.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Not used.}
 }
 \value{
-List of quosures
+List of quosures.
 }
 \description{
-Returns the list of row filter rules.
+\code{get_spec_filter()} is an S7 generic that returns the list of row filter
+rules.
 }
 \examples{
 spec <- TableSpec()
 get_spec_filter(spec)
+}
+\seealso{
+\code{\link[=set_spec_filter]{set_spec_filter()}}.
 }
