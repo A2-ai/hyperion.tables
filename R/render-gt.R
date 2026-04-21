@@ -332,7 +332,9 @@ sanitize_gt_docx <- function(path) {
 
   ensure_math_namespace(doc, ns)
   fix_caption_style(doc, ns)
+  strip_tc_borders(doc, ns)
   strip_seq_table_field(doc, ns)
+  bold_header_rows(doc, ns)
   fill_empty_cells(doc, ns)
   inject_table_grids(doc, ns)
   reorder_ooxml_sequences(doc, ns)
@@ -340,6 +342,7 @@ sanitize_gt_docx <- function(path) {
 
   xml2::write_xml(doc, doc_path)
   dedupe_xmlns_w(doc_path, ns)
+  set_word_compat_mode(stage, ns)
 
   unlink(path)
   zip_dir_contents(stage, path)
@@ -355,6 +358,53 @@ ensure_math_namespace <- function(doc, ns) {
   }
 }
 
+# Word opens the document in "Compatibility Mode" unless word/settings.xml
+# declares compatibilityMode=15 in a <w:compat> block, AND the <w:settings>
+# root declares the modern Microsoft namespaces with mc:Ignorable so they
+# can be referenced safely.
+#' @noRd
+set_word_compat_mode <- function(stage, ns) {
+  settings_path <- file.path(stage, "word", "settings.xml")
+  if (!file.exists(settings_path)) {
+    return(invisible())
+  }
+  settings <- xml2::read_xml(settings_path)
+  root <- xml2::xml_root(settings)
+  modern_ns <- c(
+    mc = "http://schemas.openxmlformats.org/markup-compatibility/2006",
+    w14 = "http://schemas.microsoft.com/office/word/2010/wordml",
+    w15 = "http://schemas.microsoft.com/office/word/2012/wordml",
+    w16se = "http://schemas.microsoft.com/office/word/2015/wordml/symex",
+    w16cid = "http://schemas.microsoft.com/office/word/2016/wordml/cid",
+    w16 = "http://schemas.microsoft.com/office/word/2018/wordml",
+    w16cex = "http://schemas.microsoft.com/office/word/2018/wordml/cex"
+  )
+  for (prefix in names(modern_ns)) {
+    attr_name <- paste0("xmlns:", prefix)
+    if (is.na(xml2::xml_attr(root, attr_name))) {
+      xml2::xml_set_attr(root, attr_name, modern_ns[[prefix]])
+    }
+  }
+  xml2::xml_set_attr(
+    root,
+    "mc:Ignorable",
+    "w14 w15 w16se w16cid w16 w16cex"
+  )
+  if (length(xml2::xml_find_all(settings, ".//w:compat", ns = ns)) == 0) {
+    compat_xml <- paste0(
+      "<w:compat xmlns:w=\"",
+      ns[["w"]],
+      "\">",
+      "<w:compatSetting w:name=\"compatibilityMode\"",
+      " w:uri=\"http://schemas.microsoft.com/office/word\" w:val=\"15\"/>",
+      "</w:compat>"
+    )
+    xml2::xml_add_child(root, xml2::xml_root(xml2::read_xml(compat_xml)))
+  }
+  xml2::write_xml(settings, settings_path)
+  dedupe_xmlns_w(settings_path, ns)
+}
+
 # gt emits <w:pStyle w:val="caption"/> but the styles template defines the
 # style as "Caption". Style IDs are case-sensitive, so Word rejects the
 # reference and prompts "unreadable content".
@@ -366,6 +416,42 @@ fix_caption_style <- function(doc, ns) {
     ns = ns
   )) {
     xml2::xml_set_attr(node, "w:val", "Caption")
+  }
+}
+
+# Strip cell borders. gt emits them but in complex tables they look noisy;
+# users can add borders in Word after opening if desired.
+#' @noRd
+strip_tc_borders <- function(doc, ns) {
+  for (tcb in xml2::xml_find_all(doc, ".//w:tcBorders", ns = ns)) {
+    xml2::xml_remove(tcb)
+  }
+}
+
+# Pandoc's docx backend emits column-label bold styling correctly for row
+# groups (`<w:b w:val="true"/>`) but not for column labels — every run in the
+# header row ships without <w:b>. Add it ourselves to every run inside any
+# <w:tr> that carries <w:tblHeader/>.
+#' @noRd
+bold_header_rows <- function(doc, ns) {
+  rows <- xml2::xml_find_all(
+    doc,
+    ".//w:tr[w:trPr/w:tblHeader]",
+    ns = ns
+  )
+  for (run in xml2::xml_find_all(rows, ".//w:r", ns = ns)) {
+    rpr <- xml2::xml_find_first(run, "./w:rPr", ns = ns)
+    if (inherits(rpr, "xml_missing")) {
+      rpr_xml <- paste0("<w:rPr xmlns:w=\"", ns[["w"]], "\"><w:b/></w:rPr>")
+      xml2::xml_add_child(
+        run,
+        xml2::xml_root(xml2::read_xml(rpr_xml)),
+        .where = 0
+      )
+    } else if (length(xml2::xml_find_all(rpr, "./w:b", ns = ns)) == 0) {
+      b_xml <- paste0("<w:b xmlns:w=\"", ns[["w"]], "\"/>")
+      xml2::xml_add_child(rpr, xml2::xml_root(xml2::read_xml(b_xml)))
+    }
   }
 }
 
