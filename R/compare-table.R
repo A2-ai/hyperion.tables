@@ -687,14 +687,8 @@ build_comparison_footnotes <- function(comparison, spec, layout) {
   )
 
   # Detect statistics
-  stats <- detect_table_statistics(comparison)
+  stats <- detect_table_statistics(comparison, spec)
   comparison_stats <- detect_comparison_statistics(comparison)
-
-  # Check if CI dropped
-  expanded_drop <- expand_ci_drop_columns(spec@drop_columns)
-  if (all(c("ci_low", "ci_high") %in% expanded_drop)) {
-    stats$has_ci <- FALSE
-  }
 
   # Build equations
   equations <- build_equations_footnote(stats, ci_pct, comparison_stats, NULL)

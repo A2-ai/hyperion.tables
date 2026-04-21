@@ -13,12 +13,12 @@ dependencies = [
   # dev dependencies
   "devtools",
   { name = "covr", install_suggestions = true },
-  #{ name = "pkgload", path = "../pkgload" },
+  { name = "pkgload", path = "../pkgload" },
   { name = "roxygen2", git = "https://github.com/r-lib/roxygen2", branch = "main" },
   { name = "doclisting", git = "https://github.com/r-lib/doclisting", branch = "main" },
   #{ name = "starlightr", git = "https://github.com/a2-ai/starlightr", branch = "main" },
 
-  "hyperion",
+  { name = "hyperion", git = "https://github.com/a2-ai/hyperion", branch = "nmparser" },
   { name = "hyperion.tables", path = ".", dependencies_only = false, install_suggestions = true },
   "lobstr",
 ]

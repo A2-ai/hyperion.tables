@@ -31,8 +31,8 @@ TableSpec(
 "Model Parameters".}
 
 \item{parameter_names}{ParameterNameOptions object controlling how parameter names
-are displayed. Controls which name field to use ("name", "display", or "nonmem")
-and whether to append theta info to omega names. Defaults to \code{ParameterNameOptions()}.}
+are displayed. Controls which name field to use ("name", "display", or "nonmem").
+Defaults to \code{ParameterNameOptions()}.}
 
 \item{columns}{Character vector of columns to include in output.}
 

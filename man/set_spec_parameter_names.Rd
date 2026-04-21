@@ -4,12 +4,7 @@
 \alias{set_spec_parameter_names}
 \title{Set parameter name options for a TableSpec}
 \usage{
-set_spec_parameter_names(
-  spec,
-  ...,
-  source = NULL,
-  append_omega_with_theta = NULL
-)
+set_spec_parameter_names(spec, ..., source = NULL)
 }
 \arguments{
 \item{spec}{A TableSpec object.}
@@ -17,9 +12,6 @@ set_spec_parameter_names(
 \item{...}{Not used.}
 
 \item{source}{One of "name", "display", or "nonmem". If NULL, keeps current value.}
-
-\item{append_omega_with_theta}{Logical. If TRUE, append associated theta
-names to omega parameters. If NULL, keeps current value.}
 }
 \value{
 Modified spec.
@@ -30,7 +22,7 @@ names are displayed in the table.
 }
 \examples{
 spec <- TableSpec() |>
-  set_spec_parameter_names(source = "nonmem", append_omega_with_theta = FALSE)
+  set_spec_parameter_names(source = "nonmem")
 }
 \seealso{
 \code{\link[=get_spec_parameter_names]{get_spec_parameter_names()}}.

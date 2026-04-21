@@ -28,7 +28,7 @@ Y = IPRED * (1 + EPS(1)) + EPS(2)
 
 $THETA
 (0, 1.768615)     ;TVCL (L/hr)
-(0.5, 5)           ;WT-on-CL ()
+(0.5, 5)           ;WT-on-CL
 (0, 34.80303)    ;TVV (L)
 (0, 0.939213)     ;TVKA (1/hr)
 
@@ -40,8 +40,8 @@ $OMEGA
 0.099       ;OM3 TVKA :EXP
 
 $SIGMA
-0.03464956    ;SIG1 Proportional error (variance, 20% CV)
-0.00602      ;SIG2 Additive error (variance, 0.01 mg/L SD)
+0.04    ; 1. Proportional 
+0.01 FIX ; 2. Additive  (mg/L) :AddErr
 
 
 $ESTIMATION METHOD=1 INTERACTION MAXEVAL=9999 PRINT=5 MSFO=run003b1.msf

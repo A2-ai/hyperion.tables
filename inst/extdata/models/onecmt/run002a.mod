@@ -36,8 +36,8 @@ $OMEGA
 0.112       ;OM3 TVKA :EXP
 
 $SIGMA
-0.039616    ;SIG1 Proportional error (variance, 20% CV)
-0.0068      ;SIG2 Additive error (variance, 0.01 mg/L SD)
+0.039616    ;1. Proportional 
+0.0068      ;SIG2 Additive (mg/L) :AddErr  
 
 
 $ESTIMATION METHOD=1 INTERACTION MAXEVAL=9999 PRINT=5 MSFO=run002a.msf

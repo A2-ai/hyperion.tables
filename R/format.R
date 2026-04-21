@@ -18,16 +18,6 @@ find_empty_columns <- function(df) {
   names(df)[vapply(df, is_all_empty, logical(1))]
 }
 
-#' Apply standard missing value formatting to gt tables
-#' @noRd
-apply_gt_missing_text <- function(table, missing_text = "", columns = NULL) {
-  if (is.null(columns)) {
-    columns <- dplyr::everything()
-  }
-  table |>
-    gt::sub_missing(columns = columns, missing_text = missing_text)
-}
-
 #' Merge CI columns into single bracketed format
 #'
 #' @param table A gt table object
@@ -303,10 +293,29 @@ adjust_ci_labels <- function(label_map, spec, ci_pct) {
 #' Detect which statistics are used in a parameter table
 #'
 #' @param params Parameter data frame (after apply_table_spec or comparison)
+#' @param spec Optional TableSpec; when supplied, flags for ci/cv/sd/corr are
+#'   suppressed when the corresponding columns won't render, so footnotes don't
+#'   reference columns the reader can't see.
 #' @return Named list of logicals indicating which stats are present
 #' @noRd
-detect_table_statistics <- function(params) {
-  has_cv_col <- "cv" %in% names(params)
+detect_table_statistics <- function(params, spec = NULL) {
+  if (is.null(spec)) {
+    ci_ok <- cv_ok <- sd_ok <- corr_ok <- TRUE
+  } else {
+    effective <- setdiff(
+      c(spec@columns %||% character(0), spec@add_columns %||% character(0)),
+      spec@drop_columns %||% character(0)
+    )
+    vary <- "variability" %in% effective
+    cv_ok <- vary || "cv" %in% effective
+    sd_ok <- vary || "sd" %in% effective
+    corr_ok <- vary || "corr" %in% effective
+    dropped <- expand_ci_drop_columns(spec@drop_columns %||% character(0))
+    ci_ok <- !all(c("ci_low", "ci_high") %in% dropped)
+  }
+  has_cv_col <- "cv" %in% names(params) && cv_ok
+  has_sd_col <- "sd" %in% names(params) && sd_ok
+  has_corr_col <- "corr" %in% names(params) && corr_ok
   has_transforms <- "transforms" %in% names(params)
   col_names <- names(params)
 
@@ -323,7 +332,8 @@ detect_table_statistics <- function(params) {
 
   # Check for any CI columns (ci_low, ci_high, ci_low_1, ci_high_2, etc.)
   ci_cols <- grep("^ci_(low|high)", col_names, value = TRUE)
-  has_ci <- length(ci_cols) > 0 &&
+  has_ci <- ci_ok &&
+    length(ci_cols) > 0 &&
     any(vapply(ci_cols, function(col) any(!is.na(params[[col]])), logical(1)))
 
   # Check for RSE columns (handle both regular and comparison table column names)
@@ -342,10 +352,9 @@ detect_table_statistics <- function(params) {
 
     # Merged column statistics (cv/sd/corr)
     has_cv = has_cv_col && any(!is.na(params$cv)),
-    has_sd = "sd" %in%
-      names(params) &&
+    has_sd = has_sd_col &&
       any(!is.na(params$sd) & is.na(params$cv) & is.na(params$corr)),
-    has_corr = "corr" %in% names(params) && any(!is.na(params$corr)),
+    has_corr = has_corr_col && any(!is.na(params$corr)),
 
     # CV formula detection by kind and transform
     # Theta LogAddErr: sqrt(exp(Est^2) - 1) * 100
@@ -621,15 +630,7 @@ add_conditional_footnotes <- function(
   summary_stats = NULL,
   summary_note = NULL
 ) {
-  stats <- detect_table_statistics(params)
-
-  # Check if CI columns are dropped via spec
-  if (!is.null(spec) && "drop_columns" %in% names(S7::props(spec))) {
-    expanded_drop <- expand_ci_drop_columns(spec@drop_columns)
-    if (all(c("ci_low", "ci_high") %in% expanded_drop)) {
-      stats$has_ci <- FALSE
-    }
-  }
+  stats <- detect_table_statistics(params, spec)
 
   ci_pct <- if (!is.null(spec) && "ci" %in% names(S7::props(spec))) {
     round(spec@ci@level * 100)

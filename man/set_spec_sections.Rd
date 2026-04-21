@@ -31,8 +31,8 @@ including \code{tags} (e.g., \code{"base" \%in\% tags ~ "Base Models"}).
 Methods are available for the following classes:
 
 \itemize{
-\item \code{hyperion.tables::SummarySpec}
-\item \code{hyperion.tables::TableSpec}
+\item \code{\link[=set_spec_sections-hyperion.tables-TableSpec-slash-hyperion.tables-SummarySpec-method]{hyperion.tables::SummarySpec}}
+\item \code{\link[=set_spec_sections-hyperion.tables-TableSpec-slash-hyperion.tables-SummarySpec-method]{hyperion.tables::TableSpec}}
 }
 }
 \examples{

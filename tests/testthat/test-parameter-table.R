@@ -500,50 +500,6 @@ test_that("parameter table: nonmem name source", {
   snapshot_gt(table, "param-nonmem-name-gt")
 })
 
-test_that("parameter table: nonmem source without theta append", {
-  model_dir <- system.file(
-    "extdata",
-    "models",
-    "onecmt",
-    package = "hyperion.tables"
-  )
-
-  model_run <- "run003"
-  lookup_path <- system.file("lookup.toml", package = "hyperion.tables")
-  mod <- hyperion::read_model(file.path(model_dir, paste0(model_run, ".mod")))
-
-  spec <- TableSpec(
-    display_transforms = list(omega = c("cv")),
-    sections = section_rules(
-      kind == "THETA" ~ "Structural model parameters",
-      kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
-      kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
-      kind == "SIGMA" ~ "Residual error",
-      TRUE ~ "Other"
-    ),
-    drop_columns = "rse",
-    title = paste(model_run, "Parameters")
-  ) |>
-    set_spec_parameter_names(source = "nonmem", append_omega_with_theta = FALSE)
-
-  info <- hyperion::get_model_parameter_info(mod, lookup_path)
-  info@sigma$`SIGMA(1,1)`@parameterization <- "Proportional"
-
-  mod_sum <- summary(mod)
-
-  table_gt <- hyperion::get_parameters(mod) |>
-    apply_table_spec(spec, info) |>
-    add_summary_info(mod_sum) |>
-    make_parameter_table()
-  snapshot_gt(table_gt, "param-nonmem-no-theta-gt")
-
-  table_ft <- hyperion::get_parameters(mod) |>
-    apply_table_spec(spec, info) |>
-    add_summary_info(mod_sum) |>
-    make_parameter_table(output = "flextable")
-  snapshot_flextable(table_ft, "param-nonmem-no-theta-ft")
-})
-
 test_that("parameter table: description column", {
   model_dir <- system.file(
     "extdata",

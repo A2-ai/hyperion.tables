@@ -31,7 +31,8 @@ apply_formatting <- function(table) {
   data <- apply_missing_text_policy(
     data,
     missing_text = table@missing_text,
-    apply_to = table@missing_apply_to
+    apply_to = table@missing_apply_to,
+    numeric_cols = table@numeric_cols
   )
 
   groupname_col <- normalize_groupname_col(table@groupname_col, names(data))
@@ -287,32 +288,41 @@ format_numeric_columns_shared <- function(
 
 #' Apply missing text substitution
 #'
+#' In-scope columns get `missing_text` substituted for NA; out-of-scope columns
+#' get their NAs blanked so the renderer doesn't fall back to a default glyph.
+#' Column types are identified via `numeric_cols` because by the time this runs,
+#' numeric columns have already been formatted to character strings.
+#'
 #' @param data Data frame
 #' @param missing_text Text to substitute for NA values
 #' @param apply_to "all", "numeric", or "character"
+#' @param numeric_cols Names of columns that originated as numeric
 #' @return Data frame with missing text applied
 #' @noRd
 apply_missing_text_policy <- function(
   data,
   missing_text = "",
-  apply_to = "all"
+  apply_to = "all",
+  numeric_cols = character(0)
 ) {
   if (is.null(missing_text)) {
     return(data)
   }
 
-  target_cols <- names(data)
-  if (apply_to == "numeric") {
-    target_cols <- names(data)[vapply(data, is.numeric, logical(1))]
-  } else if (apply_to == "character") {
-    target_cols <- names(data)[vapply(data, is.character, logical(1))]
-  }
+  all_cols <- names(data)
+  in_scope <- switch(
+    apply_to,
+    numeric = intersect(numeric_cols, all_cols),
+    character = setdiff(all_cols, numeric_cols),
+    all_cols
+  )
 
-  for (col in target_cols) {
+  for (col in all_cols) {
     if (is.factor(data[[col]])) {
       data[[col]] <- as.character(data[[col]])
     }
-    data[[col]][is.na(data[[col]])] <- missing_text
+    text <- if (col %in% in_scope) missing_text else ""
+    data[[col]][is.na(data[[col]])] <- text
   }
 
   data

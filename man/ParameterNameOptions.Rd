@@ -4,13 +4,10 @@
 \alias{ParameterNameOptions}
 \title{Parameter name display options}
 \usage{
-ParameterNameOptions(source = "name", append_omega_with_theta = TRUE)
+ParameterNameOptions(source = "name")
 }
 \arguments{
 \item{source}{Which name field to use: "name" (default), "display", or "nonmem"}
-
-\item{append_omega_with_theta}{Logical. If TRUE (default), append associated theta
-names to omega parameters (e.g., "OM1 TVCL" or "OMEGA(1,1)-THETA1")}
 }
 \description{
 Controls how parameter names are displayed in tables.
@@ -20,7 +17,6 @@ Controls how parameter names are displayed in tables.
 The following properties are available on a \code{ParameterNameOptions} object:
 \itemize{
 \item \code{source} - Which name field to use ("name", "display", or "nonmem").
-\item \code{append_omega_with_theta} - Whether to append theta info to omega names.
 }
 }
 

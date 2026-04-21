@@ -361,7 +361,6 @@ comment_keys_for <- function(nonmem, comment, include_associated_theta = TRUE) {
 #' @noRd
 build_name_lookup <- function(info, parameter_names) {
   source <- parameter_names@source
-  append_omega <- parameter_names@append_omega_with_theta
 
   # Helper to get raw name from a comment based on source
   get_raw_name <- function(cmt, nonmem_name) {
@@ -380,64 +379,10 @@ build_name_lookup <- function(info, parameter_names) {
     }
   }
 
-  # Helper to get theta label based on source
-  # theta_name is the @name from associated_theta (e.g., "TVV")
-  get_theta_label <- function(theta_name) {
-    # Find the theta comment by searching for matching @name
-    theta_cmt <- NULL
-    theta_nonmem <- NULL
-    for (nm in names(info@theta)) {
-      if (
-        !is.na(info@theta[[nm]]@name) && info@theta[[nm]]@name == theta_name
-      ) {
-        theta_cmt <- info@theta[[nm]]
-        theta_nonmem <- nm
-        break
-      }
-    }
-
-    if (is.null(theta_cmt)) {
-      # Not found - return as-is
-
-      return(theta_name)
-    }
-
-    if (source == "nonmem") {
-      return(theta_nonmem)
-    } else if (source == "display") {
-      # Use display if available, otherwise name
-      if (!is.null(theta_cmt@display) && !is.na(theta_cmt@display)) {
-        return(theta_cmt@display)
-      }
-    }
-    # Default: use the theta's @name
-    theta_name
-  }
-
   build_lookup_rows <- function(comments, kind_label) {
     lapply(names(comments), function(nonmem) {
       cmt <- comments[[nonmem]]
       target <- get_raw_name(cmt, nonmem)
-
-      # For omega with append_omega_with_theta = TRUE, add theta info
-      if (
-        append_omega &&
-          S7::S7_inherits(cmt, OmegaComment) &&
-          !is.null(cmt@associated_theta)
-      ) {
-        theta_lbls <- vapply(
-          cmt@associated_theta,
-          get_theta_label,
-          character(1)
-        )
-        names(theta_lbls) <- cmt@associated_theta
-
-        target <- format_omega_display_name(
-          name = target,
-          associated_theta = cmt@associated_theta,
-          theta_labels = theta_lbls
-        )
-      }
 
       keys <- comment_keys_for(nonmem, cmt, include_associated_theta = TRUE)
 

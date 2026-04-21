@@ -21,8 +21,8 @@ Modified spec.
 Methods are available for the following classes:
 
 \itemize{
-\item \code{hyperion.tables::SummarySpec}
-\item \code{hyperion.tables::TableSpec}
+\item \code{\link[=drop_spec_columns-hyperion.tables-TableSpec-slash-hyperion.tables-SummarySpec-method]{hyperion.tables::SummarySpec}}
+\item \code{\link[=drop_spec_columns-hyperion.tables-TableSpec-slash-hyperion.tables-SummarySpec-method]{hyperion.tables::TableSpec}}
 }
 }
 \examples{

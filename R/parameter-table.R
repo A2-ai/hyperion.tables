@@ -367,14 +367,8 @@ build_parameter_footnotes <- function(params, spec, layout) {
   summary_note <- build_summary_footnote(params, spec@n_sigfig, ofv_decimals)
 
   # Detect statistics
-  stats <- detect_table_statistics(params)
+  stats <- detect_table_statistics(params, spec)
   ci_pct <- round(spec@ci@level * 100)
-
-  # Check if CI dropped
-  expanded_drop <- expand_ci_drop_columns(spec@drop_columns)
-  if (all(c("ci_low", "ci_high") %in% expanded_drop)) {
-    stats$has_ci <- FALSE
-  }
 
   # Build equations
   equations <- build_equations_footnote(stats, ci_pct, NULL, NULL)

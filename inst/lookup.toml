@@ -52,49 +52,49 @@ desc = "Estimated Scaling LogNormalonent for Vc and Vp"
 unit = "none"
 parameterization = "none"
 
-[OM1]
+["OM1 (TVCL)"]
 display = "IIV-CL"
 desc = "Interindividual variability on CL"
 unit = "none"
 parameterization = "LogNormal"
 
-[OM2]
+["OM2 (TVV)"]
 display = "IIV-Vc"
 desc = "Interindividual variability on Vc"
 unit = "none"
 parameterization = "LogNormal"
 
-["OM1,2"]
+["OM1,2 (TVCL:TVV)"]
 display = "IIV-CL-Vc"
 desc = "Interindividual covariance for CL-Vc"
 unit = "none"
 parameterization = "Corr"
 
-[OM3]
+["OM3 (TVKA)"]
 display = "IIV-KA"
 desc = "Interindividual variability on KA"
 unit = "none"
 parameterization = "LogNormal"
 
-[OM4]
+["OM4 (TVVP)"]
 display = "IIV-Vp"
 desc = "Interindividual variability on Vp"
 unit = "none"
 parameterization = "LogNormal"
 
-[OM5]
+["OM5 (TVQ)"]
 display = "IIV-Q"
 desc = "Interindividual variability on Q"
 unit = "none"
 parameterization = "LogNormal"
 
-[SIG1]
+["Proportional"]
 display = "PropErr"
 desc = "Proportional Error"
 unit = "none"
 parameterization = "Proportional"
 
-[SIG2]
+["Additive"]
 display = "AddErr"
 desc = "Additive Error"
 unit = "CONC"

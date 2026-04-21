@@ -496,33 +496,27 @@ S7::method(set_spec_sections, AnySpec) <- function(
 #' @param spec A TableSpec object.
 #' @param ... Not used.
 #' @param source One of "name", "display", or "nonmem". If NULL, keeps current value.
-#' @param append_omega_with_theta Logical. If TRUE, append associated theta
-#'   names to omega parameters. If NULL, keeps current value.
 #' @return Modified spec.
 #' @seealso [get_spec_parameter_names()].
 #' @export
 #' @examples
 #' spec <- TableSpec() |>
-#'   set_spec_parameter_names(source = "nonmem", append_omega_with_theta = FALSE)
+#'   set_spec_parameter_names(source = "nonmem")
 set_spec_parameter_names <- S7::new_generic(
   "set_spec_parameter_names",
   "spec",
-  function(spec, ..., source = NULL, append_omega_with_theta = NULL) {
+  function(spec, ..., source = NULL) {
     S7::S7_dispatch()
   }
 )
 
 S7::method(set_spec_parameter_names, TableSpec) <- function(
   spec,
-  source = NULL,
-  append_omega_with_theta = NULL
+  source = NULL
 ) {
   opts <- spec@parameter_names
   if (!is.null(source)) {
     opts@source <- source
-  }
-  if (!is.null(append_omega_with_theta)) {
-    opts@append_omega_with_theta <- append_omega_with_theta
   }
   spec@parameter_names <- opts
   spec

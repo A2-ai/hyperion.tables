@@ -118,16 +118,6 @@ apply_gt_numeric_format <- function(gt_table, table) {
     )
 }
 
-#' Apply missing text substitution to gt table
-#' @noRd
-apply_gt_missing <- function(gt_table, table) {
-  gt_table |>
-    gt::sub_missing(
-      columns = dplyr::everything(),
-      missing_text = table@missing_text
-    )
-}
-
 #' Add title to gt table
 #' @noRd
 apply_gt_title <- function(gt_table, table) {

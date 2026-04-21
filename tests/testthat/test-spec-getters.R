@@ -66,13 +66,11 @@ test_that("get_spec_parameter_names works", {
 
   expect_true(S7::S7_inherits(opts, ParameterNameOptions))
   expect_equal(opts@source, "name")
-  expect_true(opts@append_omega_with_theta)
 
   modified <- spec |>
-    set_spec_parameter_names(source = "nonmem", append_omega_with_theta = FALSE)
+    set_spec_parameter_names(source = "nonmem")
   opts2 <- get_spec_parameter_names(modified)
   expect_equal(opts2@source, "nonmem")
-  expect_false(opts2@append_omega_with_theta)
 })
 
 test_that("get_spec_ci returns CIOptions", {

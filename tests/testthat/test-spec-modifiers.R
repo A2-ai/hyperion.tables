@@ -175,33 +175,10 @@ test_that("set_spec_parameter_names sets source", {
   expect_equal(spec@parameter_names@source, "nonmem")
 })
 
-test_that("set_spec_parameter_names sets append_omega_with_theta", {
-  spec <- TableSpec() |>
-    set_spec_parameter_names(append_omega_with_theta = FALSE)
-  expect_false(spec@parameter_names@append_omega_with_theta)
-})
-
-test_that("set_spec_parameter_names sets both options", {
-  spec <- TableSpec() |>
-    set_spec_parameter_names(
-      source = "display",
-      append_omega_with_theta = FALSE
-    )
-  expect_equal(spec@parameter_names@source, "display")
-  expect_false(spec@parameter_names@append_omega_with_theta)
-})
-
 test_that("set_spec_parameter_names validates source", {
   expect_error(
     TableSpec() |> set_spec_parameter_names(source = "invalid"),
     "@source must be"
-  )
-})
-
-test_that("set_spec_parameter_names validates append_omega_with_theta", {
-  expect_error(
-    TableSpec() |> set_spec_parameter_names(append_omega_with_theta = "yes"),
-    "must be.*logical"
   )
 })
 

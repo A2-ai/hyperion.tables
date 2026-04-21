@@ -22,8 +22,8 @@ didn't match any section rule). Call with no arguments to clear the filter.
 Methods are available for the following classes:
 
 \itemize{
-\item \code{hyperion.tables::SummarySpec}
-\item \code{hyperion.tables::TableSpec}
+\item \code{\link[=set_spec_section_filter-hyperion.tables-TableSpec-slash-hyperion.tables-SummarySpec-method]{hyperion.tables::SummarySpec}}
+\item \code{\link[=set_spec_section_filter-hyperion.tables-TableSpec-slash-hyperion.tables-SummarySpec-method]{hyperion.tables::TableSpec}}
 }
 }
 \examples{
