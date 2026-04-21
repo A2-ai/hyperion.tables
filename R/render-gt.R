@@ -293,3 +293,150 @@ render_to_image.gt_tbl <- function(table, path = NULL) {
 
   knitr::include_graphics(png_path)
 }
+
+#' @export
+render_to_word.gt_tbl <- function(table, path) {
+  if (!grepl("\\.docx$", path, ignore.case = TRUE)) {
+    rlang::abort("`path` must end in `.docx`.")
+  }
+  rlang::check_installed(c("xml2", "equatags", "zip"))
+  dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+
+  gt::gtsave(table, path)
+  rewrite_latex_math_in_docx(path)
+  invisible(path)
+}
+
+#' @noRd
+rewrite_latex_math_in_docx <- function(path) {
+  stage <- tempfile("gt-docx-")
+  dir.create(stage)
+  on.exit(unlink(stage, recursive = TRUE), add = TRUE)
+  utils::unzip(path, exdir = stage)
+
+  doc_path <- file.path(stage, "word", "document.xml")
+  doc <- xml2::read_xml(doc_path)
+  ns <- c(
+    w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main",
+    m = "http://schemas.openxmlformats.org/officeDocument/2006/math"
+  )
+
+  # Ensure the math namespace is declared on <w:document>
+  root <- xml2::xml_root(doc)
+  if (is.na(xml2::xml_attr(root, "xmlns:m"))) {
+    xml2::xml_set_attr(root, "xmlns:m", ns[["m"]])
+  }
+
+  t_nodes <- xml2::xml_find_all(doc, ".//w:t", ns = ns)
+  for (t_node in t_nodes) {
+    txt <- xml2::xml_text(t_node)
+    if (!grepl("\\$[^$]+\\$", txt)) {
+      next
+    }
+
+    run <- xml2::xml_parent(t_node)
+    if (xml2::xml_name(run) != "r") {
+      next
+    }
+    rpr <- xml2::xml_find_first(run, "./w:rPr", ns = ns)
+    rpr_xml <- if (!inherits(rpr, "xml_missing")) as.character(rpr) else ""
+
+    parts <- split_on_dollar_math(txt)
+    frag <- vapply(parts, render_latex_part, character(1), rpr_xml = rpr_xml)
+
+    wrapper <- xml2::read_xml(paste0(
+      "<root xmlns:w=\"",
+      ns[["w"]],
+      "\" xmlns:m=\"",
+      ns[["m"]],
+      "\">",
+      paste(frag, collapse = ""),
+      "</root>"
+    ))
+    for (child in xml2::xml_children(wrapper)) {
+      xml2::xml_add_sibling(run, child, .where = "before")
+    }
+    xml2::xml_remove(run)
+  }
+
+  xml2::write_xml(doc, doc_path)
+
+  files <- list.files(stage, recursive = TRUE, all.files = TRUE, no.. = TRUE)
+  unlink(path)
+  old <- setwd(stage)
+  on.exit(setwd(old), add = TRUE)
+  zip::zipr(path, files = files)
+}
+
+#' @noRd
+split_on_dollar_math <- function(txt) {
+  m <- gregexpr("\\$[^$]+\\$", txt, perl = TRUE)[[1]]
+  if (m[1] == -1) {
+    return(list(list(type = "text", value = txt)))
+  }
+  starts <- as.integer(m)
+  ends <- starts + attr(m, "match.length") - 1L
+  out <- list()
+  cur <- 1L
+  for (i in seq_along(starts)) {
+    if (starts[i] > cur) {
+      out[[length(out) + 1L]] <- list(
+        type = "text",
+        value = substr(txt, cur, starts[i] - 1L)
+      )
+    }
+    out[[length(out) + 1L]] <- list(
+      type = "eq",
+      value = substr(txt, starts[i] + 1L, ends[i] - 1L)
+    )
+    cur <- ends[i] + 1L
+  }
+  if (cur <= nchar(txt)) {
+    out[[length(out) + 1L]] <- list(
+      type = "text",
+      value = substr(txt, cur, nchar(txt))
+    )
+  }
+  out
+}
+
+#' @noRd
+render_latex_part <- function(part, rpr_xml) {
+  if (part$type == "text") {
+    if (!nzchar(part$value)) {
+      return("")
+    }
+    paste0(
+      "<w:r>",
+      rpr_xml,
+      "<w:t xml:space=\"preserve\">",
+      xml_escape(part$value),
+      "</w:t>",
+      "</w:r>"
+    )
+  } else {
+    mml <- tryCatch(
+      equatags::transform_mathjax(part$value, to = "mml"),
+      error = function(e) NA_character_
+    )
+    if (is.na(mml) || !nzchar(mml)) {
+      paste0(
+        "<w:r>",
+        rpr_xml,
+        "<w:t xml:space=\"preserve\">$",
+        xml_escape(part$value),
+        "$</w:t>",
+        "</w:r>"
+      )
+    } else {
+      mml
+    }
+  }
+}
+
+#' @noRd
+xml_escape <- function(x) {
+  x <- gsub("&", "&amp;", x, fixed = TRUE)
+  x <- gsub("<", "&lt;", x, fixed = TRUE)
+  gsub(">", "&gt;", x, fixed = TRUE)
+}

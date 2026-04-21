@@ -24,7 +24,9 @@ Suggests:
     officer,
     rmarkdown,
     testthat (>= 3.0.0),
-    webshot2
+    webshot2,
+    xml2,
+    zip
 Config/testthat/edition: 3
 Imports:
     dplyr,

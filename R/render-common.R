@@ -363,6 +363,37 @@ render_to_image.default <- function(table, path = NULL) {
 }
 
 # ==============================================================================
+# Render to Word
+# ==============================================================================
+
+#' Render a table to a Word `.docx` file
+#'
+#' Saves a rendered gt or flextable object to Word. For flextable output the
+#' table is fitted to the page via [flextable::fit_to_width()] before saving.
+#' For gt output, inline LaTeX math (`$...$`) is converted to Word's native
+#' OMML equations so Word renders them as equations rather than plain text.
+#'
+#' @param table A gt or flextable object.
+#' @param path Output `.docx` path.
+#' @return `path`, invisibly.
+#' @export
+render_to_word <- function(table, path) {
+  UseMethod("render_to_word")
+}
+
+#' @export
+render_to_word.default <- function(table, path) {
+  class_txt <- paste(class(table), collapse = "/")
+  rlang::abort(
+    paste0(
+      "`render_to_word()` supports `gt_tbl` and `flextable` objects. ",
+      "Got: ",
+      class_txt
+    )
+  )
+}
+
+# ==============================================================================
 # Spec helpers for HyperionTable construction
 # ==============================================================================
 

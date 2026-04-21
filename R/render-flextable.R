@@ -707,3 +707,16 @@ render_to_image.flextable <- function(table, path = NULL) {
 
   knitr::include_graphics(png_path)
 }
+
+#' @export
+render_to_word.flextable <- function(table, path) {
+  check_suggested("flextable", reason = "for Word output.")
+  if (!grepl("\\.docx$", path, ignore.case = TRUE)) {
+    rlang::abort("`path` must end in `.docx`.")
+  }
+  dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+  table |>
+    flextable::fit_to_width(max_width = 7) |>
+    flextable::save_as_docx(path = path)
+  invisible(path)
+}
