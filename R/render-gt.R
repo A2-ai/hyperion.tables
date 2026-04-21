@@ -331,23 +331,15 @@ sanitize_gt_docx <- function(path) {
   )
 
   ensure_math_namespace(doc, ns)
-  declare_modern_word_namespaces(doc)
   fix_caption_style(doc, ns)
-  strip_tc_borders(doc, ns)
   strip_seq_table_field(doc, ns)
-  normalize_xml_space(doc, ns)
-  normalize_jc_values(doc, ns)
-  rename_rtl_border_tags(doc, ns)
-  strip_zero_cell_margins(doc, ns)
   fill_empty_cells(doc, ns)
   inject_table_grids(doc, ns)
   reorder_ooxml_sequences(doc, ns)
   rewrite_latex_to_omml(doc, ns)
 
   xml2::write_xml(doc, doc_path)
-  post_write_cleanup(doc_path, ns)
-  drop_empty_custom_xml(stage)
-  set_word_compat_mode(stage)
+  dedupe_xmlns_w(doc_path, ns)
 
   unlink(path)
   zip_dir_contents(stage, path)
@@ -363,80 +355,6 @@ ensure_math_namespace <- function(doc, ns) {
   }
 }
 
-# Word opens the document in "Compatibility Mode" when <w:document> lacks the
-# modern Microsoft namespaces and mc:Ignorable. Declare them so Word treats
-# the file as a current-format .docx.
-#' @noRd
-declare_modern_word_namespaces <- function(doc) {
-  modern_ns <- c(
-    mc = "http://schemas.openxmlformats.org/markup-compatibility/2006",
-    w14 = "http://schemas.microsoft.com/office/word/2010/wordml",
-    w15 = "http://schemas.microsoft.com/office/word/2012/wordml",
-    w16se = "http://schemas.microsoft.com/office/word/2015/wordml/symex",
-    w16cid = "http://schemas.microsoft.com/office/word/2016/wordml/cid",
-    w16 = "http://schemas.microsoft.com/office/word/2018/wordml",
-    w16cex = "http://schemas.microsoft.com/office/word/2018/wordml/cex",
-    wp14 = "http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing"
-  )
-  root <- xml2::xml_root(doc)
-  for (prefix in names(modern_ns)) {
-    attr_name <- paste0("xmlns:", prefix)
-    if (is.na(xml2::xml_attr(root, attr_name))) {
-      xml2::xml_set_attr(root, attr_name, modern_ns[[prefix]])
-    }
-  }
-  xml2::xml_set_attr(
-    root,
-    "mc:Ignorable",
-    "w14 w15 w16se w16cid w16 w16cex wp14"
-  )
-}
-
-# Word treats a document as legacy (Compatibility Mode) unless
-# word/settings.xml has a <w:compat> block declaring compatibilityMode=15,
-# AND the <w:settings> root itself declares the modern Microsoft namespaces.
-#' @noRd
-set_word_compat_mode <- function(stage) {
-  settings_path <- file.path(stage, "word", "settings.xml")
-  if (!file.exists(settings_path)) {
-    return(invisible())
-  }
-  settings <- xml2::read_xml(settings_path)
-  declare_modern_word_namespaces(settings)
-  ns <- c(w = "http://schemas.openxmlformats.org/wordprocessingml/2006/main")
-  if (length(xml2::xml_find_all(settings, ".//w:compat", ns = ns)) == 0) {
-    compat_xml <- paste0(
-      "<w:compat xmlns:w=\"",
-      ns[["w"]],
-      "\">",
-      "<w:compatSetting w:name=\"compatibilityMode\"",
-      " w:uri=\"http://schemas.microsoft.com/office/word\" w:val=\"15\"/>",
-      "</w:compat>"
-    )
-    xml2::xml_add_child(
-      xml2::xml_root(settings),
-      xml2::xml_root(xml2::read_xml(compat_xml))
-    )
-  }
-  xml2::write_xml(settings, settings_path)
-  # Strip the redundant xmlns:w that xml2 added on <w:compat>.
-  raw <- paste(readLines(settings_path, warn = FALSE), collapse = "\n")
-  raw <- gsub(
-    paste0(" xmlns:w=\"", ns[["w"]], "\""),
-    "",
-    raw,
-    fixed = TRUE
-  )
-  # Re-add the root's xmlns:w (we stripped the first occurrence too).
-  raw <- sub(
-    "<w:settings",
-    paste0("<w:settings xmlns:w=\"", ns[["w"]], "\""),
-    raw,
-    fixed = TRUE
-  )
-  writeLines(raw, settings_path)
-}
-
 # gt emits <w:pStyle w:val="caption"/> but the styles template defines the
 # style as "Caption". Style IDs are case-sensitive, so Word rejects the
 # reference and prompts "unreadable content".
@@ -448,16 +366,6 @@ fix_caption_style <- function(doc, ns) {
     ns = ns
   )) {
     xml2::xml_set_attr(node, "w:val", "Caption")
-  }
-}
-
-# gt emits <w:left>/<w:right> border children without the required `w:sz`
-# attribute, so Word strips the whole <w:tcBorders> on open. Drop the element
-# ourselves. Users who want cell borders can add them in Word.
-#' @noRd
-strip_tc_borders <- function(doc, ns) {
-  for (tcb in xml2::xml_find_all(doc, ".//w:tcBorders", ns = ns)) {
-    xml2::xml_remove(tcb)
   }
 }
 
@@ -476,102 +384,26 @@ strip_seq_table_field <- function(doc, ns) {
     runs <- xml2::xml_children(para)
     begin_idx <- which(vapply(runs, identical, logical(1), fld_begin))
     end_idx <- begin_idx
-    for (i in seq(begin_idx + 1, length(runs))) {
-      if (
-        length(xml2::xml_find_all(
-          runs[[i]],
-          "./w:fldChar[@w:fldCharType='end']",
-          ns = ns
-        )) >
-          0
-      ) {
-        end_idx <- i
-        break
+    if (begin_idx < length(runs)) {
+      for (i in (begin_idx + 1):length(runs)) {
+        if (
+          length(xml2::xml_find_all(
+            runs[[i]],
+            "./w:fldChar[@w:fldCharType='end']",
+            ns = ns
+          )) >
+            0
+        ) {
+          end_idx <- i
+          break
+        }
       }
     }
     for (i in seq(begin_idx, end_idx)) {
       r <- runs[[i]]
-      has_instr <- length(xml2::xml_find_all(r, "./w:instrText", ns = ns)) > 0
-      has_fld <- length(xml2::xml_find_all(r, "./w:fldChar", ns = ns)) > 0
-      if (has_instr || has_fld) xml2::xml_remove(r)
-    }
-  }
-}
-
-# gt sometimes emits xml:space="default"; Word expects "preserve" for docx
-# text content.
-#' @noRd
-normalize_xml_space <- function(doc, ns) {
-  for (node in xml2::xml_find_all(doc, ".//*[@xml:space='default']", ns = ns)) {
-    xml2::xml_set_attr(node, "xml:space", "preserve")
-  }
-}
-
-# <w:jc w:val="start"/> and w:val="end" are the newer RTL-aware justification
-# values; some Word versions reject them. Drop "start" (default behaviour)
-# and rewrite "end" → "right".
-#' @noRd
-normalize_jc_values <- function(doc, ns) {
-  for (n in xml2::xml_find_all(doc, ".//w:jc[@w:val='start']", ns = ns)) {
-    xml2::xml_remove(n)
-  }
-  for (n in xml2::xml_find_all(doc, ".//w:jc[@w:val='end']", ns = ns)) {
-    xml2::xml_set_attr(n, "w:val", "right")
-  }
-}
-
-# gt emits the new-style RTL tags <w:start> and <w:end> inside <w:tblCellMar>
-# and <w:tblBorders> etc. Rename to the classic <w:left>/<w:right> that Word
-# accepts unconditionally.
-#' @noRd
-rename_rtl_border_tags <- function(doc, ns) {
-  rename_one <- function(old, new) {
-    for (n in xml2::xml_find_all(doc, paste0(".//w:", old), ns = ns)) {
-      attrs <- xml2::xml_attrs(n)
-      attr_str <- if (length(attrs)) {
-        paste(sprintf("w:%s=\"%s\"", names(attrs), attrs), collapse = " ")
-      } else {
-        ""
+      if (length(xml2::xml_find_all(r, "./w:instrText|./w:fldChar", ns = ns))) {
+        xml2::xml_remove(r)
       }
-      new_xml <- paste0(
-        "<w:",
-        new,
-        " xmlns:w=\"",
-        ns[["w"]],
-        "\"",
-        if (nzchar(attr_str)) paste0(" ", attr_str) else "",
-        "/>"
-      )
-      xml2::xml_add_sibling(
-        n,
-        xml2::xml_root(xml2::read_xml(new_xml)),
-        .where = "before"
-      )
-      xml2::xml_remove(n)
-    }
-  }
-  rename_one("start", "left")
-  rename_one("end", "right")
-}
-
-# Word's repair strips <w:top> and <w:bottom> children from <w:tblCellMar>
-# when they carry w:w="0". Drop them ourselves. Snapshot targets before
-# removing to avoid mutating-while-iterating.
-#' @noRd
-strip_zero_cell_margins <- function(doc, ns) {
-  for (m in xml2::xml_find_all(doc, ".//w:tblCellMar", ns = ns)) {
-    kids <- xml2::xml_children(m)
-    targets <- kids[
-      xml2::xml_name(kids) %in%
-        c("top", "bottom") &
-        vapply(
-          kids,
-          function(c) identical(xml2::xml_attr(c, "w"), "0"),
-          logical(1)
-        )
-    ]
-    for (t in targets) {
-      xml2::xml_remove(t)
     }
   }
 }
@@ -762,21 +594,13 @@ rewrite_latex_to_omml <- function(doc, ns) {
   }
 }
 
-# Post-write text passes for changes xml2 can't do cleanly:
-#
-# 1. Strip zero-valued `w:before` on <w:spacing>. xml2 can't remove
-#    namespaced regular attributes (libxml2 treats them specially) and Word
-#    flags them when repairing.
-# 2. Strip redundant `xmlns:w="…"` declarations from descendants of
-#    <w:document>. xml2 adds one to every spliced fragment. xml2 can remove
-#    the attribute in-tree, but doing so breaks the namespace binding of the
-#    node and xml2 then serializes without the `w:` prefix — we must operate
-#    on the already-serialized string instead. Keep only the first
-#    occurrence (on <w:document>).
+# Strip redundant `xmlns:w="…"` declarations from descendants. xml2 adds one
+# to every spliced fragment; we can't remove it in-tree without breaking the
+# namespace binding (xml2 then serializes without the `w:` prefix), so we
+# operate on the serialized string. Keeps the first occurrence on the root.
 #' @noRd
-post_write_cleanup <- function(doc_path, ns) {
-  raw <- paste(readLines(doc_path, warn = FALSE), collapse = "\n")
-  raw <- gsub(" w:before=\"0\"", "", raw, fixed = TRUE)
+dedupe_xmlns_w <- function(path, ns) {
+  raw <- paste(readLines(path, warn = FALSE), collapse = "\n")
   w_decl <- paste0(" xmlns:w=\"", ns[["w"]], "\"")
   first <- regexpr(w_decl, raw, fixed = TRUE)
   if (first > 0) {
@@ -785,47 +609,21 @@ post_write_cleanup <- function(doc_path, ns) {
     rest <- gsub(w_decl, "", rest, fixed = TRUE)
     raw <- paste0(keep, rest)
   }
-  writeLines(raw, doc_path)
+  writeLines(raw, path)
 }
 
-# gt emits an empty `<Properties/>` in docProps/custom.xml; per OOXML the
-# CT_Properties schema requires at least one child. Drop the file and its
-# references in [Content_Types].xml and _rels/.rels.
-#' @noRd
-drop_empty_custom_xml <- function(stage) {
-  custom_path <- file.path(stage, "docProps", "custom.xml")
-  if (!file.exists(custom_path)) {
-    return(invisible())
-  }
-  unlink(custom_path)
-  ct_path <- file.path(stage, "[Content_Types].xml")
-  ct <- paste(readLines(ct_path, warn = FALSE), collapse = "")
-  ct <- gsub(
-    "<Override PartName=\"/docProps/custom\\.xml\"[^/]*/>",
-    "",
-    ct
-  )
-  writeLines(ct, ct_path)
-  rels_path <- file.path(stage, "_rels", ".rels")
-  rels <- paste(readLines(rels_path, warn = FALSE), collapse = "")
-  rels <- gsub(
-    "<Relationship[^/]*Target=\"docProps/custom\\.xml\"[^/]*/>",
-    "",
-    rels
-  )
-  writeLines(rels, rels_path)
-}
-
-# Zip the immediate contents of `dir` (files + directories) into `zipfile`,
-# relying on zip::zipr's recursion to preserve the nested structure OOXML
-# requires. The setwd/on.exit dance is localized here so caller-side errors
-# can't leak a changed working directory.
+# Zip the contents of `dir` into `zipfile`. Directory entries are excluded:
+# zip::zipr emits them with version_needed_to_extract = 0 in the local header,
+# which is not a defined PKZIP value; Word rejects the package with
+# "unreadable content" and silently drops the dir entries on repair. OPC
+# treats packages as a flat collection of parts, so dir entries aren't
+# required anyway.
 #' @noRd
 zip_dir_contents <- function(dir, zipfile) {
   entries <- list.files(dir, all.files = TRUE, no.. = TRUE)
   old <- setwd(dir)
   on.exit(setwd(old))
-  zip::zipr(zipfile, files = entries)
+  zip::zipr(zipfile, files = entries, include_directories = FALSE)
 }
 
 #' @noRd
