@@ -361,11 +361,13 @@ rewrite_latex_math_in_docx <- function(path) {
 
   xml2::write_xml(doc, doc_path)
 
-  files <- list.files(stage, recursive = TRUE, all.files = TRUE, no.. = TRUE)
+  # Pass top-level entries (files + dirs) and let zipr recurse so the
+  # _rels/, word/, docProps/ structure required by OOXML is preserved.
+  entries <- list.files(stage, all.files = TRUE, no.. = TRUE)
   unlink(path)
   old <- setwd(stage)
   on.exit(setwd(old), add = TRUE)
-  zip::zipr(path, files = files)
+  zip::zipr(path, files = entries)
 }
 
 #' @noRd
