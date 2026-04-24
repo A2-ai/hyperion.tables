@@ -177,6 +177,7 @@ filter_sections <- function(df, spec) {
   has_na <- any(is.na(labels))
   named <- labels[!is.na(labels)]
   n_before <- nrow(df)
+  available_sections <- unique(stats::na.omit(df$section))
 
   if (mode == "exclude") {
     if (length(named) > 0) {
@@ -199,24 +200,29 @@ filter_sections <- function(df, spec) {
     ))
   }
 
-  if (nrow(df) == 0L && n_before > 0L) {
-    available <- unique(stats::na.omit(
-      spec@sections |>
-        vapply(function(q) rlang::f_rhs(rlang::eval_tidy(q)), character(1))
+  unmatched <- setdiff(named, available_sections)
+  if (n_before > 0L && length(unmatched) > 0L) {
+    rlang::warn(paste0(
+      "section_filter ",
+      mode,
+      " label(s) not present in the data: ",
+      paste(shQuote(unmatched), collapse = ", "),
+      ". Available sections: ",
+      if (length(available_sections)) {
+        paste(shQuote(available_sections), collapse = ", ")
+      } else {
+        "<none>"
+      },
+      "."
     ))
+  }
+  if (nrow(df) == 0L && n_before > 0L) {
     rlang::warn(paste0(
       "section_filter (",
       mode,
       " = ",
       paste(deparse(labels), collapse = " "),
-      ") removed every row. Check for typos against the actual section ",
-      "labels (rules: ",
-      if (length(available)) {
-        paste(shQuote(available), collapse = ", ")
-      } else {
-        "<none>"
-      },
-      "; lookup TOML may add others)."
+      ") removed every row."
     ))
   }
   df
