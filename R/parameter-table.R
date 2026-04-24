@@ -215,11 +215,12 @@ order_sections <- function(params, spec) {
       "corr",
       "sd"
     )
+    n <- nrow(params)
     for (col in missing_cols) {
       if (col %in% numeric_display_cols) {
-        params[[col]] <- NA_real_
+        params[[col]] <- rep(NA_real_, n)
       } else {
-        params[[col]] <- NA_character_
+        params[[col]] <- rep(NA_character_, n)
       }
     }
   }

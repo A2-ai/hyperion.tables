@@ -176,6 +176,7 @@ filter_sections <- function(df, spec) {
   labels <- filt[[1]]
   has_na <- any(is.na(labels))
   named <- labels[!is.na(labels)]
+  n_before <- nrow(df)
 
   if (mode == "exclude") {
     if (length(named) > 0) {
@@ -195,6 +196,27 @@ filter_sections <- function(df, spec) {
       "Unknown section_filter mode: '",
       mode,
       "'. Expected 'exclude' or 'keep'."
+    ))
+  }
+
+  if (nrow(df) == 0L && n_before > 0L) {
+    available <- unique(stats::na.omit(
+      spec@sections |>
+        vapply(function(q) rlang::f_rhs(rlang::eval_tidy(q)), character(1))
+    ))
+    rlang::warn(paste0(
+      "section_filter (",
+      mode,
+      " = ",
+      paste(deparse(labels), collapse = " "),
+      ") removed every row. Check for typos against the actual section ",
+      "labels (rules: ",
+      if (length(available)) {
+        paste(shQuote(available), collapse = ", ")
+      } else {
+        "<none>"
+      },
+      "; lookup TOML may add others)."
     ))
   }
   df
