@@ -25,7 +25,7 @@ read_lookup_toml <- function(path) {
 #' Returns a named character vector: parameter name → section. Entries
 #' without a `section` field (or with non-character values) are dropped.
 #'
-#' @param lookup Result of [read_lookup_toml()].
+#' @param lookup Result of `read_lookup_toml()`.
 #' @return Named character vector (possibly empty).
 #' @noRd
 lookup_section_map <- function(lookup) {
