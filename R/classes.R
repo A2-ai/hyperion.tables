@@ -244,6 +244,10 @@ TableSpec <- S7::new_class(
       class = S7::class_character | NULL,
       default = NULL
     ),
+    lookup_path = S7::new_property(
+      class = S7::class_character | NULL,
+      default = NULL
+    ),
     row_filter = S7::new_property(
       class = S7::class_list,
       default = list()

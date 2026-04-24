@@ -4,12 +4,15 @@
 \alias{render_to_word}
 \title{Render a table to a Word \code{.docx} file}
 \usage{
-render_to_word(table, path)
+render_to_word(table, path, landscape = FALSE)
 }
 \arguments{
 \item{table}{A gt or flextable object.}
 
 \item{path}{Output \code{.docx} path.}
+
+\item{landscape}{If \code{TRUE}, set page orientation to landscape (US Letter,
+11 × 8.5 in). Defaults to \code{FALSE} (portrait).}
 }
 \value{
 \code{path}, invisibly.

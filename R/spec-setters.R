@@ -397,6 +397,53 @@ S7::method(set_spec_section_filter, AnySpec) <- function(spec, ...) {
   spec
 }
 
+#' Attach a parameter lookup TOML to a spec
+#'
+#' @description
+#' `set_spec_lookup()` registers a TOML file that supplies per-parameter
+#' overrides used during [apply_table_spec()]. Currently the `section`
+#' field is read from each entry: any parameter whose `name` matches a
+#' TOML key with a `section = "..."` value has its section assignment
+#' overridden after [section_rules()] evaluation. Other fields in the TOML
+#' are accepted (and reserved for future use) but ignored today.
+#'
+#' Pass `NULL` to clear an existing lookup.
+#'
+#' @param spec A TableSpec object.
+#' @param path Path to a TOML file, or `NULL` to clear.
+#' @return Modified spec.
+#' @seealso [get_spec_lookup()].
+#' @export
+#' @examples
+#' \dontrun{
+#'   TableSpec() |>
+#'     set_spec_sections(kind == "THETA" ~ "Structural") |>
+#'     set_spec_lookup("lookup.toml")
+#' }
+set_spec_lookup <- S7::new_generic("set_spec_lookup", "spec")
+
+#' Attach a parameter lookup TOML to a spec
+#'
+#' Method for [set_spec_lookup()] on `TableSpec`.
+#'
+#' @param spec A TableSpec object.
+#' @param path Path to a TOML file, or `NULL` to clear.
+#' @return Modified spec.
+S7::method(set_spec_lookup, TableSpec) <- function(spec, path) {
+  if (is.null(path)) {
+    spec@lookup_path <- NULL
+    return(spec)
+  }
+  if (!is.character(path) || length(path) != 1L || is.na(path)) {
+    rlang::abort("`path` must be a single non-NA character string or NULL.")
+  }
+  if (!file.exists(path)) {
+    rlang::abort(paste0("Lookup TOML not found: ", path))
+  }
+  spec@lookup_path <- path
+  spec
+}
+
 # ==============================================================================
 # Section Rules (Both Specs)
 # ==============================================================================

@@ -13,3 +13,4 @@ lefthook.yaml
 !tests/testthat/_snaps/**/*.html
 **/*_files
 inst/doc
+.positai

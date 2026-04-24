@@ -375,14 +375,16 @@ render_to_image.default <- function(table, path = NULL) {
 #'
 #' @param table A gt or flextable object.
 #' @param path Output `.docx` path.
+#' @param landscape If `TRUE`, set page orientation to landscape (US Letter,
+#'   11 × 8.5 in). Defaults to `FALSE` (portrait).
 #' @return `path`, invisibly.
 #' @export
-render_to_word <- function(table, path) {
+render_to_word <- function(table, path, landscape = FALSE) {
   UseMethod("render_to_word")
 }
 
 #' @export
-render_to_word.default <- function(table, path) {
+render_to_word.default <- function(table, path, landscape = FALSE) {
   class_txt <- paste(class(table), collapse = "/")
   rlang::abort(
     paste0(

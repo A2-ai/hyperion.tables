@@ -24,6 +24,7 @@ Suggests:
     officer,
     rmarkdown,
     testthat (>= 3.0.0),
+    tomledit,
     webshot2,
     xml2,
     zip
@@ -43,6 +44,7 @@ Collate:
     'compare.R'
     'format.R'
     'hyperion.tables-package.R'
+    'lookup.R'
     'parameter-apply.R'
     'parameter-table.R'
     'render-common.R'

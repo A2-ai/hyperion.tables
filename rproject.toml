@@ -13,7 +13,7 @@ dependencies = [
   # dev dependencies
   "devtools",
   { name = "covr", install_suggestions = true },
-  { name = "pkgload", path = "../pkgload" },
+  { name = "pkgload", git = "https://github.com/r-lib/pkgload", branch = "main" },
   { name = "roxygen2", git = "https://github.com/r-lib/roxygen2", branch = "main" },
   { name = "doclisting", git = "https://github.com/r-lib/doclisting", branch = "main" },
   #{ name = "starlightr", git = "https://github.com/a2-ai/starlightr", branch = "main" },

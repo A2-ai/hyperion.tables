@@ -20,6 +20,7 @@ library(hyperion)
 
 library(gt)
 library(flextable)
+library(here)
 
 model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
 model_run <- "run003"
@@ -58,8 +59,9 @@ get_parameters(parent_mod) |>
       add_summary_info(child_sum),
     labels = c("run002", "run003")
   ) |>
-  make_comparison_table() |>
-	render_to_image()
+  make_comparison_table(output = "flextable") |>
+	reportifyr::fit_flextable_to_page(11.5) |>
+	render_to_word(here("ft-fit-comp-table.docx"))
 ```
 
 ### Multiple Comparison Table

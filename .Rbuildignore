@@ -12,3 +12,4 @@
 ^lefthook\.yaml$
 ^pharos\.toml$
 ^_starlightr\.toml$
+^\.positai$

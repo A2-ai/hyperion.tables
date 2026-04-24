@@ -174,6 +174,21 @@ S7::method(get_spec_section_filter, AnySpec) <- function(spec) {
   spec@section_filter
 }
 
+#' Get the lookup TOML path from a TableSpec
+#'
+#' Returns the path to the parameter lookup TOML registered via
+#' [set_spec_lookup()], or `NULL` if none is set.
+#'
+#' @param spec A TableSpec object.
+#' @return Scalar character path or `NULL`.
+#' @seealso [set_spec_lookup()].
+#' @export
+get_spec_lookup <- S7::new_generic("get_spec_lookup", "spec")
+
+S7::method(get_spec_lookup, TableSpec) <- function(spec) {
+  spec@lookup_path
+}
+
 #' Get row filter rules from a TableSpec
 #'
 #' `get_spec_filter()` is an S7 generic that returns the list of row filter

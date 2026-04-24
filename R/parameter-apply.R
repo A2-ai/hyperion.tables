@@ -191,6 +191,8 @@ apply_sections_and_filters <- function(df, spec) {
       section = build_section(dplyr::pick(dplyr::everything()), spec)
     )
 
+  df <- apply_lookup_section_overrides(df, spec)
+
   df <- filter_sections(df, spec)
 
   if (length(spec@row_filter) > 0) {
@@ -200,6 +202,39 @@ apply_sections_and_filters <- function(df, spec) {
     }
   }
 
+  df
+}
+
+#' Override `section` per-parameter from a lookup TOML when set
+#'
+#' Matches each row by `user_name` first (the comment-name like "TVCL"),
+#' falling back to `nonmem_name` ("THETA1"). TOML entries without a
+#' `section` field are ignored. Per-parameter declaration is more specific
+#' than a section_rule, so it wins.
+#'
+#' @noRd
+apply_lookup_section_overrides <- function(df, spec) {
+  if (is.null(spec@lookup_path)) {
+    return(df)
+  }
+  lookup <- read_lookup_toml(spec@lookup_path)
+  section_map <- lookup_section_map(lookup)
+  if (length(section_map) == 0) {
+    return(df)
+  }
+
+  match_keys <- if ("user_name" %in% names(df)) df$user_name else df$name
+  hits <- match(match_keys, names(section_map))
+  if ("nonmem_name" %in% names(df)) {
+    miss <- is.na(hits)
+    if (any(miss)) {
+      hits[miss] <- match(df$nonmem_name[miss], names(section_map))
+    }
+  }
+  matched <- !is.na(hits)
+  if (any(matched)) {
+    df$section[matched] <- unname(section_map[hits[matched]])
+  }
   df
 }
 

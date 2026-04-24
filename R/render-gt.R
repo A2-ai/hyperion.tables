@@ -60,11 +60,59 @@ render_to_gt <- function(table) {
   # Add footnotes
   gt_table <- apply_gt_footnotes(gt_table, table)
 
+  # Comparison tables: left border between models on body rows only (skip
+  # column labels so the border doesn't bisect column names). Stash the
+  # per-model column segment lengths so the docx post-processor can apply
+  # the same border. Segment math excludes the groupname_col (consumed for
+  # row grouping, not rendered as a column).
+  rendered_cols <- setdiff(visible_cols, groupname_col)
+  segments <- comparison_column_segments(table, rendered_cols)
+  if (!is.null(segments)) {
+    gt_table <- gt_table |>
+      gt::tab_style(
+        style = gt::cell_borders(
+          sides = "left",
+          color = "black",
+          weight = gt::px(1)
+        ),
+        locations = gt::cells_body(
+          columns = dplyr::all_of(segments$boundary_cols)
+        )
+      )
+    attr(gt_table, "hyperion_segment_lengths") <- segments$segment_lengths
+  }
+
   # Add nowrap CSS
   gt_table <- gt_table |>
     gt::opt_css(css = "td, th { white-space: nowrap; }")
 
   gt_table
+}
+
+#' Compute per-model column segments for comparison tables.
+#' Returns NULL for non-comparison tables or ones with <2 model spanners.
+#' @noRd
+comparison_column_segments <- function(table, visible_cols) {
+  if (table@table_type != "comparison" || length(table@spanners) < 2) {
+    return(NULL)
+  }
+  boundary_cols <- vapply(
+    table@spanners[-1],
+    function(s) s$columns[1],
+    character(1)
+  )
+  boundary_cols <- intersect(boundary_cols, visible_cols)
+  if (length(boundary_cols) == 0) {
+    return(NULL)
+  }
+  boundary_idx <- sort(match(boundary_cols, visible_cols))
+  n_total <- length(visible_cols)
+  starts <- c(1L, boundary_idx)
+  ends <- c(boundary_idx - 1L, n_total)
+  list(
+    boundary_cols = boundary_cols,
+    segment_lengths = ends - starts + 1L
+  )
 }
 
 #' Hide columns in gt table
@@ -102,22 +150,6 @@ apply_gt_labels <- function(gt_table, table, visible_cols) {
     gt::cols_label(!!!labels_to_apply)
 }
 
-#' Format numeric columns in gt table
-#' @noRd
-apply_gt_numeric_format <- function(gt_table, table) {
-  numeric_cols <- intersect(table@numeric_cols, names(table@data))
-
-  if (length(numeric_cols) == 0) {
-    return(gt_table)
-  }
-
-  gt_table |>
-    gt::fmt_number(
-      columns = dplyr::any_of(numeric_cols),
-      n_sigfig = table@n_sigfig
-    )
-}
-
 #' Add title to gt table
 #' @noRd
 apply_gt_title <- function(gt_table, table) {
@@ -139,32 +171,6 @@ apply_gt_spanners <- function(gt_table, table, visible_cols) {
         gt::tab_spanner(label = spanner$label, columns = dplyr::all_of(cols))
     }
   }
-  gt_table
-}
-
-#' Apply CI missing text to gt table
-#' @noRd
-apply_gt_ci_missing <- function(gt_table, table) {
-  if (length(table@ci_missing_rows) == 0) {
-    return(gt_table)
-  }
-
-  # Find CI columns
-  ci_cols <- character(0)
-  for (merge in table@ci_merges) {
-    ci_cols <- c(ci_cols, merge$ci_low, merge$ci_high)
-  }
-  ci_cols <- intersect(ci_cols, names(table@data))
-
-  if (length(ci_cols) > 0) {
-    gt_table <- gt_table |>
-      gt::sub_missing(
-        columns = dplyr::all_of(ci_cols),
-        rows = table@ci_missing_rows,
-        missing_text = table@ci@missing_text
-      )
-  }
-
   gt_table
 }
 
@@ -295,29 +301,34 @@ render_to_image.gt_tbl <- function(table, path = NULL) {
 }
 
 #' @export
-render_to_word.gt_tbl <- function(table, path) {
+render_to_word.gt_tbl <- function(table, path, landscape = FALSE) {
   if (!grepl("\\.docx$", path, ignore.case = TRUE)) {
     rlang::abort("`path` must end in `.docx`.")
   }
   rlang::check_installed(c("xml2", "equatags", "zip"))
   dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
 
+  segment_lengths <- attr(table, "hyperion_segment_lengths")
   gt::gtsave(table, path)
-  sanitize_gt_docx(path)
+  sanitize_gt_docx(
+    path,
+    segment_lengths = segment_lengths,
+    landscape = landscape
+  )
   invisible(path)
 }
 
-#' Post-process a gt-generated `.docx` so Word opens it without repair prompts
+#' Post-process a gt-generated `.docx` so Word opens it cleanly.
 #'
-#' gt's docx output (produced via pandoc) violates OOXML in ways that trigger
-#' Word's "unreadable content" and "contains fields" prompts. Each helper
-#' below addresses one specific validation issue observed in Word's repair
-#' log. Ordering matters: tcBorders are stripped before start/end renaming
-#' (so we don't rename descendants about to be deleted), grids are injected
-#' before child-reorder passes, xmlns cleanup runs after all splicing, math
-#' rewriting runs last so it sees the final structure.
+#' Each helper addresses a specific problem: schema gaps pandoc leaves behind
+#' (missing tblGrid, empty cells, out-of-order children), a pandoc emission
+#' bug (column-label bold), the "contains fields" SEQ-Table warning,
+#' aesthetic decisions (cell borders), and our LaTeX → OMML rewrite.
+#' Ordering notes: grids are injected before the reorder pass; math is
+#' rewritten last so it sees the final structure; xmlns dedup runs on the
+#' serialized bytes since xml2 can't remove a binding without breaking it.
 #' @noRd
-sanitize_gt_docx <- function(path) {
+sanitize_gt_docx <- function(path, segment_lengths = NULL, landscape = FALSE) {
   stage <- tempfile("gt-docx-")
   dir.create(stage)
   on.exit(unlink(stage, recursive = TRUE), add = TRUE)
@@ -330,15 +341,18 @@ sanitize_gt_docx <- function(path) {
     m = "http://schemas.openxmlformats.org/officeDocument/2006/math"
   )
 
-  ensure_math_namespace(doc, ns)
   fix_caption_style(doc, ns)
   strip_tc_borders(doc, ns)
+  add_vertical_borders(doc, ns, segment_lengths)
   strip_seq_table_field(doc, ns)
   bold_header_rows(doc, ns)
   fill_empty_cells(doc, ns)
   inject_table_grids(doc, ns)
   reorder_ooxml_sequences(doc, ns)
   rewrite_latex_to_omml(doc, ns)
+  if (isTRUE(landscape)) {
+    set_landscape_orientation(doc, ns)
+  }
 
   xml2::write_xml(doc, doc_path)
   dedupe_xmlns_w(doc_path, ns)
@@ -349,14 +363,6 @@ sanitize_gt_docx <- function(path) {
 }
 
 # --- sanitize_gt_docx helpers --------------------------------------------
-
-#' @noRd
-ensure_math_namespace <- function(doc, ns) {
-  root <- xml2::xml_root(doc)
-  if (is.na(xml2::xml_attr(root, "xmlns:m"))) {
-    xml2::xml_set_attr(root, "xmlns:m", ns[["m"]])
-  }
-}
 
 # Word opens the document in "Compatibility Mode" unless word/settings.xml
 # declares compatibilityMode=15 in a <w:compat> block, AND the <w:settings>
@@ -405,6 +411,42 @@ set_word_compat_mode <- function(stage, ns) {
   dedupe_xmlns_w(settings_path, ns)
 }
 
+# Set the body section to landscape US Letter. gt's docx ships a minimal
+# <w:sectPr> with no <w:pgSz>; we inject one. Page dimensions are in twips
+# (1/20 of a point, 1440 per inch): US Letter is 8.5 × 11 inches, so
+# landscape swaps to 11 × 8.5 → 15840 × 12240 twips.
+#' @noRd
+set_landscape_orientation <- function(doc, ns) {
+  inch <- 1440L
+  width <- 11L * inch
+  height <- as.integer(8.5 * inch)
+  sect <- xml2::xml_find_first(doc, ".//w:body/w:sectPr", ns = ns)
+  if (inherits(sect, "xml_missing")) {
+    return(invisible())
+  }
+  pg_size <- xml2::xml_find_first(sect, "./w:pgSz", ns = ns)
+  if (inherits(pg_size, "xml_missing")) {
+    pg_xml <- sprintf(
+      paste0(
+        "<w:pgSz xmlns:w=\"%s\" w:w=\"%d\" w:h=\"%d\"",
+        " w:orient=\"landscape\"/>"
+      ),
+      ns[["w"]],
+      width,
+      height
+    )
+    xml2::xml_add_child(
+      sect,
+      xml2::xml_root(xml2::read_xml(pg_xml)),
+      .where = 0
+    )
+  } else {
+    xml2::xml_set_attr(pg_size, "w:w", as.character(width))
+    xml2::xml_set_attr(pg_size, "w:h", as.character(height))
+    xml2::xml_set_attr(pg_size, "w:orient", "landscape")
+  }
+}
+
 # gt emits <w:pStyle w:val="caption"/> but the styles template defines the
 # style as "Caption". Style IDs are case-sensitive, so Word rejects the
 # reference and prompts "unreadable content".
@@ -420,13 +462,85 @@ fix_caption_style <- function(doc, ns) {
 }
 
 # Strip cell borders. gt emits them but in complex tables they look noisy;
-# users can add borders in Word after opening if desired.
+# users can add borders in Word after opening if desired. Vertical borders
+# between model groups for comparison tables are added back later via
+# `add_vertical_borders()`, which runs after this.
 #' @noRd
 strip_tc_borders <- function(doc, ns) {
   for (tcb in xml2::xml_find_all(doc, ".//w:tcBorders", ns = ns)) {
     xml2::xml_remove(tcb)
   }
 }
+
+# For comparison tables, add a left border on each <w:tc> whose starting
+# column (computed by walking gridSpans) matches a model-group boundary.
+# Runs after strip_tc_borders so these borders survive. Full-span rows
+# (group headers from groupname_col, footnotes) are naturally skipped —
+# their single cell starts at column 1, never at a boundary. The
+# column-label row (marked with <w:tblHeader/>) is explicitly skipped so
+# the border doesn't bisect column names.
+#' @noRd
+add_vertical_borders <- function(doc, ns, segment_lengths) {
+  if (is.null(segment_lengths) || length(segment_lengths) < 2) {
+    return(invisible())
+  }
+  boundary_positions <- cumsum(segment_lengths)[
+    -length(segment_lengths)
+  ] +
+    1L
+  for (tbl in xml2::xml_find_all(doc, ".//w:tbl", ns = ns)) {
+    for (row in xml2::xml_find_all(tbl, "./w:tr", ns = ns)) {
+      if (length(xml2::xml_find_all(row, "./w:trPr/w:tblHeader", ns = ns))) {
+        next
+      }
+      col <- 1L
+      for (tc in xml2::xml_find_all(row, "./w:tc", ns = ns)) {
+        if (col %in% boundary_positions) {
+          add_left_border(tc, ns)
+        }
+        span <- xml2::xml_find_first(tc, "./w:tcPr/w:gridSpan", ns = ns)
+        width <- if (inherits(span, "xml_missing")) {
+          1L
+        } else {
+          as.integer(xml2::xml_attr(span, "val"))
+        }
+        col <- col + width
+      }
+    }
+  }
+}
+
+# Ensure <w:tc> has <w:tcPr><w:tcBorders><w:left .../></w:tcBorders></w:tcPr>.
+# Does not touch other border sides.
+#' @noRd
+add_left_border <- function(tc, ns) {
+  tcpr <- xml2::xml_find_first(tc, "./w:tcPr", ns = ns)
+  if (inherits(tcpr, "xml_missing")) {
+    tcpr_xml <- paste0("<w:tcPr xmlns:w=\"", ns[["w"]], "\"/>")
+    xml2::xml_add_child(
+      tc,
+      xml2::xml_root(xml2::read_xml(tcpr_xml)),
+      .where = 0
+    )
+    tcpr <- xml2::xml_find_first(tc, "./w:tcPr", ns = ns)
+  }
+  tcb <- xml2::xml_find_first(tcpr, "./w:tcBorders", ns = ns)
+  if (inherits(tcb, "xml_missing")) {
+    tcb_xml <- paste0("<w:tcBorders xmlns:w=\"", ns[["w"]], "\"/>")
+    xml2::xml_add_child(tcpr, xml2::xml_root(xml2::read_xml(tcb_xml)))
+    tcb <- xml2::xml_find_first(tcpr, "./w:tcBorders", ns = ns)
+  }
+  if (length(xml2::xml_find_all(tcb, "./w:left", ns = ns)) == 0) {
+    left_xml <- paste0(
+      "<w:left xmlns:w=\"",
+      ns[["w"]],
+      "\"",
+      " w:val=\"single\" w:sz=\"8\" w:space=\"0\" w:color=\"000000\"/>"
+    )
+    xml2::xml_add_child(tcb, xml2::xml_root(xml2::read_xml(left_xml)))
+  }
+}
+
 
 # Pandoc's docx backend emits column-label bold styling correctly for row
 # groups (`<w:b w:val="true"/>`) but not for column labels — every run in the
@@ -469,7 +583,7 @@ strip_seq_table_field <- function(doc, ns) {
     para <- xml2::xml_parent(fld_begin)
     runs <- xml2::xml_children(para)
     begin_idx <- which(vapply(runs, identical, logical(1), fld_begin))
-    end_idx <- begin_idx
+    end_idx <- NA_integer_
     if (begin_idx < length(runs)) {
       for (i in (begin_idx + 1):length(runs)) {
         if (
@@ -477,13 +591,15 @@ strip_seq_table_field <- function(doc, ns) {
             runs[[i]],
             "./w:fldChar[@w:fldCharType='end']",
             ns = ns
-          )) >
-            0
+          ))
         ) {
           end_idx <- i
           break
         }
       }
+    }
+    if (is.na(end_idx)) {
+      next
     }
     for (i in seq(begin_idx, end_idx)) {
       r <- runs[[i]]
@@ -531,7 +647,19 @@ inject_table_grids <- function(doc, ns) {
     if (inherits(first_tr, "xml_missing")) {
       next
     }
-    n_cols <- length(xml2::xml_find_all(first_tr, "./w:tc", ns = ns))
+    tcs <- xml2::xml_find_all(first_tr, "./w:tc", ns = ns)
+    n_cols <- sum(vapply(
+      tcs,
+      function(tc) {
+        span <- xml2::xml_find_first(tc, "./w:tcPr/w:gridSpan", ns = ns)
+        if (inherits(span, "xml_missing")) {
+          1L
+        } else {
+          as.integer(xml2::xml_attr(span, "val"))
+        }
+      },
+      integer(1)
+    ))
     if (n_cols == 0) {
       next
     }
@@ -643,26 +771,37 @@ reorder_ooxml_sequences <- function(doc, ns) {
   )
 }
 
-# Rewrite every `$…$` inline-math span inside a <w:t> as a sibling <m:oMath>
-# element generated by equatags. Runs last so the text content reflects all
-# prior cleanup. Preserves the original run's <w:rPr> for the text fragments
-# on either side of the equation.
+# Rewrite every `$…$` inline-math span in a paragraph as a sibling
+# <m:oMath> element. Operates at paragraph level because pandoc's markdown
+# parser can split `$…$` across multiple <w:r> runs when the LaTeX contains
+# characters that markdown interprets as emphasis (paired `_` or `*`). When
+# that happens, no single <w:t> contains the full span and a per-<w:t>
+# approach misses it. We concatenate all <w:t> text in the paragraph, detect
+# spans there, and rebuild the paragraph's runs. The first run's <w:rPr>
+# is applied to the reconstructed text — any mid-paragraph pandoc-inferred
+# formatting is lost, which is intentional: the intent was math, not
+# emphasis. Runs last so it sees the final structure.
 #' @noRd
 rewrite_latex_to_omml <- function(doc, ns) {
-  for (t_node in xml2::xml_find_all(doc, ".//w:t", ns = ns)) {
-    txt <- xml2::xml_text(t_node)
-    if (!grepl("\\$[^$]+\\$", txt)) {
+  for (p in xml2::xml_find_all(doc, ".//w:p", ns = ns)) {
+    runs <- xml2::xml_find_all(p, "./w:r", ns = ns)
+    if (length(runs) == 0) {
       next
     }
-
-    run <- xml2::xml_parent(t_node)
-    if (xml2::xml_name(run) != "r") {
+    full_text <- paste(
+      vapply(runs, run_text_with_markdown, character(1), ns = ns),
+      collapse = ""
+    )
+    if (!grepl("\\$[^$]+\\$", full_text)) {
       next
     }
-    rpr <- xml2::xml_find_first(run, "./w:rPr", ns = ns)
-    rpr_xml <- if (!inherits(rpr, "xml_missing")) as.character(rpr) else ""
-
-    parts <- split_on_dollar_math(txt)
+    first_rpr <- xml2::xml_find_first(runs[[1]], "./w:rPr", ns = ns)
+    rpr_xml <- if (!inherits(first_rpr, "xml_missing")) {
+      as.character(first_rpr)
+    } else {
+      ""
+    }
+    parts <- split_on_dollar_math(full_text)
     frag <- vapply(parts, render_latex_part, character(1), rpr_xml = rpr_xml)
     wrapper <- xml2::read_xml(paste0(
       "<root xmlns:w=\"",
@@ -674,10 +813,39 @@ rewrite_latex_to_omml <- function(doc, ns) {
       "</root>"
     ))
     for (child in xml2::xml_children(wrapper)) {
-      xml2::xml_add_sibling(run, child, .where = "before")
+      xml2::xml_add_sibling(runs[[1]], child, .where = "before")
     }
-    xml2::xml_remove(run)
+    for (r in runs) {
+      xml2::xml_remove(r)
+    }
   }
+}
+
+# Reconstruct a run's original markdown source. Pandoc consumes emphasis
+# delimiters (`_`, `*`, `**`) when it emits <w:i/> / <w:b/>, which matters
+# when the delimiters were inside a `$…$` math span: the math's subscripts
+# get eaten. Wrap italic runs with `_` and bold runs with `**` so the
+# concatenated paragraph text matches what the user originally wrote.
+#' @noRd
+run_text_with_markdown <- function(run, ns) {
+  t <- xml2::xml_find_first(run, "./w:t", ns = ns)
+  if (inherits(t, "xml_missing")) {
+    return("")
+  }
+  txt <- xml2::xml_text(t)
+  rpr <- xml2::xml_find_first(run, "./w:rPr", ns = ns)
+  if (inherits(rpr, "xml_missing")) {
+    return(txt)
+  }
+  italic <- length(xml2::xml_find_all(rpr, "./w:i", ns = ns)) > 0
+  bold <- length(xml2::xml_find_all(rpr, "./w:b", ns = ns)) > 0
+  if (bold) {
+    txt <- paste0("**", txt, "**")
+  }
+  if (italic) {
+    txt <- paste0("_", txt, "_")
+  }
+  txt
 }
 
 # Strip redundant `xmlns:w="…"` declarations from descendants. xml2 adds one
