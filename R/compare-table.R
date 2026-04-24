@@ -1123,12 +1123,16 @@ prepare_comparison_table_data <- function(
   model_indices <- get_comparison_model_indices(names(comparison), suffix_cols)
 
   if ("section" %in% names(comparison) && !all(is.na(comparison$section))) {
-    if (!is.null(spec) && length(spec@sections) > 0) {
-      section_levels <- unique(get_section_order(spec))
+    if (
+      !is.null(spec) &&
+        (length(spec@sections) > 0 || length(spec@section_order) > 0)
+    ) {
+      resolved <- resolve_section_levels(comparison, spec)
+      comparison <- resolved$data
       comparison <- comparison |>
         dplyr::mutate(
           .appear_order = dplyr::row_number(),
-          section = factor(.data$section, levels = section_levels)
+          section = factor(.data$section, levels = resolved$levels)
         ) |>
         dplyr::arrange(.data$section, .data$.appear_order)
     }

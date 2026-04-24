@@ -21,7 +21,8 @@ SummarySpec(
   pvalue_scientific = FALSE,
   pvalue_threshold = NULL,
   sections = section_rules(),
-  section_filter = NULL,
+  section_filter = list(),
+  section_order = list(),
   footnote_order = "abbreviations"
 )
 }

@@ -350,16 +350,21 @@ S7::method(set_spec_footnotes, AnySpec) <- function(spec, order) {
 #' Set section filter for a spec
 #'
 #' @description
-#' `set_spec_section_filter()` is an S7 generic that filters out rows belonging
-#' to specified sections. Use `NA` to also filter unmatched rows (those that
-#' didn't match any section rule). Call with no arguments to clear the filter.
+#' `set_spec_section_filter()` filters which sections appear in the rendered
+#' table. Pass exactly one of `exclude` (drop these sections) or `keep`
+#' (drop everything except these). Pass `NA` inside either vector to also
+#' affect rows whose section didn't match any rule. Call with no arguments
+#' to clear any existing filter.
 #'
 #' Methods are available for the following classes:
 #'
 #' `r doclisting::methods_list("set_spec_section_filter")`
 #'
 #' @param spec A TableSpec or SummarySpec object.
-#' @param ... See methods.
+#' @param exclude Character vector of section labels to drop, optionally
+#'   including `NA` to also drop unmatched rows.
+#' @param keep Character vector of section labels to keep (everything else
+#'   is dropped), optionally including `NA` to also keep unmatched rows.
 #' @return Modified spec.
 #' @seealso [get_spec_section_filter()].
 #' @export
@@ -370,7 +375,7 @@ S7::method(set_spec_footnotes, AnySpec) <- function(spec, order) {
 #'     TRUE ~ "Other"
 #'   )
 #' ) |>
-#'   set_spec_section_filter("Other")
+#'   set_spec_section_filter(exclude = "Other")
 set_spec_section_filter <- S7::new_generic("set_spec_section_filter", "spec")
 
 #' Set section filter for a spec
@@ -378,22 +383,79 @@ set_spec_section_filter <- S7::new_generic("set_spec_section_filter", "spec")
 #' Method for [set_spec_section_filter()] on both `TableSpec` and `SummarySpec`.
 #'
 #' @param spec A TableSpec or SummarySpec object.
-#' @param ... Section labels to exclude, or `NA` to also exclude unmatched
-#'   rows. Call with no arguments to clear the filter. Named arguments are
-#'   ignored with a warning.
+#' @param exclude Section labels to drop. Mutually exclusive with `keep`.
+#' @param keep Section labels to retain (drop all others). Mutually
+#'   exclusive with `exclude`.
 #' @return Modified spec.
-S7::method(set_spec_section_filter, AnySpec) <- function(spec, ...) {
-  dots <- capture_unnamed_dots(...)
-  values <- unlist(
-    lapply(dots, function(dot) rlang::eval_tidy(dot)),
-    recursive = FALSE,
-    use.names = FALSE
-  )
-  if (length(values) == 0) {
-    spec@section_filter <- NULL
-  } else {
-    spec@section_filter <- as.character(values)
+S7::method(set_spec_section_filter, AnySpec) <- function(
+  spec,
+  exclude = NULL,
+  keep = NULL
+) {
+  if (!is.null(exclude) && !is.null(keep)) {
+    rlang::abort("Pass either `exclude` or `keep`, not both.")
   }
+  if (is.null(exclude) && is.null(keep)) {
+    spec@section_filter <- list()
+  } else if (!is.null(exclude)) {
+    spec@section_filter <- list(exclude = as.character(exclude))
+  } else {
+    spec@section_filter <- list(keep = as.character(keep))
+  }
+  spec
+}
+
+#' Set explicit section display order
+#'
+#' @description
+#' By default, sections render in the order their rules were declared in
+#' [section_rules()]. Sections introduced by [set_spec_lookup()] (i.e.
+#' labels not present in any rule) are appended at the end. Use
+#' `set_spec_section_order()` to override that with an explicit order.
+#'
+#' Pass `keep_only = TRUE` to also hide any sections not listed.
+#' Call with no arguments (or `order = NULL`) to clear the override.
+#'
+#' @param spec A TableSpec or SummarySpec object.
+#' @param order Character vector of section labels in display order. Pass
+#'   `NULL` to clear.
+#' @param keep_only If `TRUE`, sections not listed in `order` are dropped.
+#'   Defaults to `FALSE` (unlisted sections appear after the listed ones in
+#'   their natural encounter order).
+#' @return Modified spec.
+#' @seealso [get_spec_section_order()].
+#' @export
+#' @examples
+#' \dontrun{
+#'   TableSpec(sections = section_rules(...)) |>
+#'     set_spec_section_order(c(
+#'       "Structural", "Covariate Parameters",
+#'       "Variability", "Residual"
+#'     ))
+#' }
+set_spec_section_order <- S7::new_generic("set_spec_section_order", "spec")
+
+#' Set explicit section display order
+#'
+#' Method for [set_spec_section_order()] on both `TableSpec` and `SummarySpec`.
+#'
+#' @param spec A TableSpec or SummarySpec object.
+#' @param order Character vector of section labels, or `NULL` to clear.
+#' @param keep_only Logical; drop sections not in `order` when `TRUE`.
+#' @return Modified spec.
+S7::method(set_spec_section_order, AnySpec) <- function(
+  spec,
+  order = NULL,
+  keep_only = FALSE
+) {
+  if (is.null(order) || length(order) == 0L) {
+    spec@section_order <- list()
+    return(spec)
+  }
+  spec@section_order <- list(
+    order = as.character(order),
+    keep_only = isTRUE(keep_only)
+  )
   spec
 }
 

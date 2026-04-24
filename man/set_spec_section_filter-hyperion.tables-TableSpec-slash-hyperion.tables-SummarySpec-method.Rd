@@ -7,14 +7,15 @@
 \title{Set section filter for a spec}
 \usage{
 ## S7 method for class <hyperion.tables::TableSpec>/<hyperion.tables::SummarySpec>
-set_spec_section_filter(spec, ...)
+set_spec_section_filter(spec, exclude = NULL, keep = NULL)
 }
 \arguments{
 \item{spec}{A TableSpec or SummarySpec object.}
 
-\item{...}{Section labels to exclude, or \code{NA} to also exclude unmatched
-rows. Call with no arguments to clear the filter. Named arguments are
-ignored with a warning.}
+\item{exclude}{Section labels to drop. Mutually exclusive with \code{keep}.}
+
+\item{keep}{Section labels to retain (drop all others). Mutually
+exclusive with \code{exclude}.}
 }
 \value{
 Modified spec.

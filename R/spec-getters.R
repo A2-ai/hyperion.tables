@@ -156,22 +156,39 @@ S7::method(get_spec_sections, AnySpec) <- function(spec) {
 #' Get section filter from a spec
 #'
 #' @description
-#' `get_spec_section_filter()` is an S7 generic that returns the section labels
-#' being filtered out, or `NULL` if no filter is set.
+#' `get_spec_section_filter()` returns the current filter as a list with one
+#' of two shapes: `list(exclude = c(...))`, `list(keep = c(...))`, or empty
+#' `list()` when no filter is set.
 #'
 #' Methods are available for the following classes:
 #'
 #' `r doclisting::methods_list("get_spec_section_filter")`
 #'
 #' @param spec A TableSpec or SummarySpec object.
-#' @param ... Not used.
-#' @return Character vector or `NULL`.
+#' @return A named list (possibly empty).
 #' @seealso [set_spec_section_filter()].
 #' @export
 get_spec_section_filter <- S7::new_generic("get_spec_section_filter", "spec")
 
 S7::method(get_spec_section_filter, AnySpec) <- function(spec) {
   spec@section_filter
+}
+
+#' Get explicit section display order from a spec
+#'
+#' Returns a list `list(order = c(...), keep_only = TRUE/FALSE)` if an
+#' override has been set via [set_spec_section_order()], or empty `list()`
+#' when no override is in effect (sections fall back to the order of their
+#' declaration in [section_rules()]).
+#'
+#' @param spec A TableSpec or SummarySpec object.
+#' @return A named list (possibly empty).
+#' @seealso [set_spec_section_order()].
+#' @export
+get_spec_section_order <- S7::new_generic("get_spec_section_order", "spec")
+
+S7::method(get_spec_section_order, AnySpec) <- function(spec) {
+  spec@section_order
 }
 
 #' Get the lookup TOML path from a TableSpec

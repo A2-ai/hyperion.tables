@@ -156,12 +156,9 @@ expand_ci_drop_columns <- function(drop_columns) {
 }
 
 order_sections <- function(params, spec) {
-  spec_levels <- unique(get_section_order(spec))
-  # Lookup TOML can inject section labels not present in the spec's rules.
-  # Append any such labels at the end so they survive the factor conversion
-  # below and gt renders them as their own row group.
-  extra_levels <- setdiff(unique(stats::na.omit(params$section)), spec_levels)
-  section_levels <- c(spec_levels, extra_levels)
+  resolved <- resolve_section_levels(params, spec)
+  params <- resolved$data
+  section_levels <- resolved$levels
 
   internal_cols <- c(
     "section",

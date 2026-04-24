@@ -151,19 +151,62 @@ test_that("set_spec_footnotes validates sections", {
   )
 })
 
-test_that("set_spec_section_filter works for both specs", {
-  table_spec <- TableSpec() |> set_spec_section_filter("Other")
-  expect_equal(table_spec@section_filter, "Other")
+test_that("set_spec_section_filter exclude mode works for both specs", {
+  table_spec <- TableSpec() |> set_spec_section_filter(exclude = "Other")
+  expect_identical(table_spec@section_filter, list(exclude = "Other"))
 
-  sum_spec <- SummarySpec() |> set_spec_section_filter("Other", NA)
-  expect_equal(sum_spec@section_filter, c("Other", NA_character_))
+  sum_spec <- SummarySpec() |> set_spec_section_filter(exclude = c("Other", NA))
+  expect_identical(
+    sum_spec@section_filter,
+    list(exclude = c("Other", NA_character_))
+  )
+})
+
+test_that("set_spec_section_filter keep mode stores positive list", {
+  spec <- TableSpec() |>
+    set_spec_section_filter(keep = c("Structural", "Variability"))
+  expect_identical(
+    spec@section_filter,
+    list(keep = c("Structural", "Variability"))
+  )
+})
+
+test_that("set_spec_section_filter rejects exclude + keep together", {
+  expect_error(
+    TableSpec() |>
+      set_spec_section_filter(exclude = "Other", keep = "Structural"),
+    "either"
+  )
 })
 
 test_that("set_spec_section_filter clears with no args", {
   spec <- SummarySpec() |>
-    set_spec_section_filter("Other") |>
+    set_spec_section_filter(exclude = "Other") |>
     set_spec_section_filter()
-  expect_null(spec@section_filter)
+  expect_identical(spec@section_filter, list())
+})
+
+test_that("set_spec_section_order stores order and keep_only flag", {
+  spec <- TableSpec() |>
+    set_spec_section_order(c("A", "B"))
+  expect_identical(
+    spec@section_order,
+    list(order = c("A", "B"), keep_only = FALSE)
+  )
+
+  spec2 <- TableSpec() |>
+    set_spec_section_order(c("A", "B"), keep_only = TRUE)
+  expect_identical(
+    spec2@section_order,
+    list(order = c("A", "B"), keep_only = TRUE)
+  )
+})
+
+test_that("set_spec_section_order clears with NULL", {
+  spec <- TableSpec() |>
+    set_spec_section_order(c("A", "B")) |>
+    set_spec_section_order(NULL)
+  expect_identical(spec@section_order, list())
 })
 
 # ==============================================================================

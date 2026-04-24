@@ -241,8 +241,12 @@ TableSpec <- S7::new_class(
     ),
     sections = sections_property(),
     section_filter = S7::new_property(
-      class = S7::class_character | NULL,
-      default = NULL
+      class = S7::class_list,
+      default = list()
+    ),
+    section_order = S7::new_property(
+      class = S7::class_list,
+      default = list()
     ),
     lookup_path = S7::new_property(
       class = S7::class_character | NULL,
@@ -466,7 +470,8 @@ TableSpec <- S7::new_class(
     drop_columns = NULL,
     hide_empty_columns = TRUE,
     sections = section_rules(),
-    section_filter = NULL,
+    section_filter = list(),
+    section_order = list(),
     row_filter = filter_rules(),
     display_transforms = list(),
     variability_rules = default_variability_rules(),
@@ -551,6 +556,7 @@ TableSpec <- S7::new_class(
       variability_rules = variability_rules,
       sections = sections,
       section_filter = section_filter,
+      section_order = section_order,
       row_filter = row_filter,
       columns = columns,
       drop_columns = drop_columns,
@@ -796,8 +802,12 @@ SummarySpec <- S7::new_class(
     ),
     sections = sections_property(),
     section_filter = S7::new_property(
-      class = S7::class_character | NULL,
-      default = NULL
+      class = S7::class_list,
+      default = list()
+    ),
+    section_order = S7::new_property(
+      class = S7::class_list,
+      default = list()
     ),
     columns = S7::new_property(
       class = S7::class_character,
@@ -972,7 +982,8 @@ SummarySpec <- S7::new_class(
     pvalue_scientific = FALSE,
     pvalue_threshold = NULL,
     sections = section_rules(),
-    section_filter = NULL,
+    section_filter = list(),
+    section_order = list(),
     footnote_order = "abbreviations"
   ) {
     columns <- merge_summary_columns(columns, add_columns)
@@ -996,6 +1007,7 @@ SummarySpec <- S7::new_class(
       pvalue_threshold = pvalue_threshold,
       sections = sections,
       section_filter = section_filter,
+      section_order = section_order,
       footnote_order = footnote_order
     )
   }

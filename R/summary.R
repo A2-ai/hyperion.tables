@@ -152,10 +152,11 @@ apply_summary_spec <- function(tree, spec) {
   attr(df, ".needs_dofv") <- NULL
 
   # Evaluate section rules (before column trim so rule-referenced cols available)
-  if (length(spec@sections) > 0) {
+  if (length(spec@sections) > 0 || length(spec@section_order) > 0) {
     df$section <- build_summary_section(df, spec@sections)
-    section_levels <- unique(get_section_order(spec))
-    df$section <- factor(df$section, levels = section_levels)
+    resolved <- resolve_section_levels(df, spec)
+    df <- resolved$data
+    df$section <- factor(df$section, levels = resolved$levels)
     df <- dplyr::arrange(df, .data$section)
     df$section <- as.character(df$section)
 

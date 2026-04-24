@@ -158,27 +158,44 @@ resolve_name_columns <- function(df, spec, info) {
 
 #' Filter rows by section_filter
 #'
-#' Removes rows whose section label is in `spec@section_filter`.
-#' Pass `NA` in the filter to also remove unmatched (NA-section) rows.
+#' `spec@section_filter` is a list with one of two shapes:
+#' `list(exclude = c(...))` drops the listed sections; `list(keep = c(...))`
+#' drops everything except those. `NA` inside either vector also targets
+#' rows whose section didn't match any rule. Empty list = no filter.
 #'
 #' @param df Data frame with a `section` column
 #' @param spec A TableSpec or SummarySpec with a `section_filter` property
 #' @return Filtered data frame
 #' @noRd
 filter_sections <- function(df, spec) {
-  if (is.null(spec@section_filter) || !"section" %in% names(df)) {
+  filt <- spec@section_filter
+  if (length(filt) == 0L || !"section" %in% names(df)) {
     return(df)
   }
+  mode <- names(filt)[1]
+  labels <- filt[[1]]
+  has_na <- any(is.na(labels))
+  named <- labels[!is.na(labels)]
 
-  filter_labels <- spec@section_filter
-  has_na_filter <- any(is.na(filter_labels))
-  named_filters <- filter_labels[!is.na(filter_labels)]
-
-  if (length(named_filters) > 0) {
-    df <- dplyr::filter(df, !.data$section %in% named_filters)
-  }
-  if (has_na_filter) {
-    df <- dplyr::filter(df, !is.na(.data$section))
+  if (mode == "exclude") {
+    if (length(named) > 0) {
+      df <- dplyr::filter(df, !.data$section %in% named)
+    }
+    if (has_na) {
+      df <- dplyr::filter(df, !is.na(.data$section))
+    }
+  } else if (mode == "keep") {
+    cond <- df$section %in% named
+    if (has_na) {
+      cond <- cond | is.na(df$section)
+    }
+    df <- df[cond, , drop = FALSE]
+  } else {
+    rlang::abort(paste0(
+      "Unknown section_filter mode: '",
+      mode,
+      "'. Expected 'exclude' or 'keep'."
+    ))
   }
   df
 }
@@ -367,6 +384,33 @@ S7::method(get_section_order, AnySpec) <- function(spec) {
     },
     character(1)
   )
+}
+
+#' Resolve final section levels, honoring `set_spec_section_order()` if set,
+#' otherwise falling back to spec rule declaration order with TOML-introduced
+#' labels appended in encounter order. Returns a list with the (possibly
+#' filtered) data and the level vector.
+#' @noRd
+resolve_section_levels <- function(data, spec) {
+  override <- spec@section_order
+  if (length(override) > 0L) {
+    levels <- as.character(override$order)
+    if (isTRUE(override$keep_only)) {
+      data <- data[
+        !is.na(data$section) & data$section %in% levels,
+        ,
+        drop = FALSE
+      ]
+    } else {
+      extra <- setdiff(unique(stats::na.omit(data$section)), levels)
+      levels <- c(levels, extra)
+    }
+  } else {
+    spec_levels <- unique(get_section_order(spec))
+    extra <- setdiff(unique(stats::na.omit(data$section)), spec_levels)
+    levels <- c(spec_levels, extra)
+  }
+  list(data = data, levels = levels)
 }
 
 #' @noRd

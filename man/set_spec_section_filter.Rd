@@ -9,15 +9,21 @@ set_spec_section_filter(spec, ...)
 \arguments{
 \item{spec}{A TableSpec or SummarySpec object.}
 
-\item{...}{See methods.}
+\item{exclude}{Character vector of section labels to drop, optionally
+including \code{NA} to also drop unmatched rows.}
+
+\item{keep}{Character vector of section labels to keep (everything else
+is dropped), optionally including \code{NA} to also keep unmatched rows.}
 }
 \value{
 Modified spec.
 }
 \description{
-\code{set_spec_section_filter()} is an S7 generic that filters out rows belonging
-to specified sections. Use \code{NA} to also filter unmatched rows (those that
-didn't match any section rule). Call with no arguments to clear the filter.
+\code{set_spec_section_filter()} filters which sections appear in the rendered
+table. Pass exactly one of \code{exclude} (drop these sections) or \code{keep}
+(drop everything except these). Pass \code{NA} inside either vector to also
+affect rows whose section didn't match any rule. Call with no arguments
+to clear any existing filter.
 
 Methods are available for the following classes:
 
@@ -33,7 +39,7 @@ spec <- SummarySpec(
     TRUE ~ "Other"
   )
 ) |>
-  set_spec_section_filter("Other")
+  set_spec_section_filter(exclude = "Other")
 }
 \seealso{
 \code{\link[=get_spec_section_filter]{get_spec_section_filter()}}.
