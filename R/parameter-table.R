@@ -412,7 +412,15 @@ prepare_parameter_table_data <- function(params, spec) {
   hide_cols <- resolve_hidden_columns(params, spec)
   label_map <- build_layout_labels(params, spec, hide_cols)
 
-  groupname <- if (length(spec@sections) > 0) "section" else NULL
+  # Group by `section` whenever the data has any populated value — covers
+  # both spec-rule sections and TOML-lookup-only sections.
+  groupname <- if (
+    "section" %in% names(params) && any(!is.na(params$section))
+  ) {
+    "section"
+  } else {
+    NULL
+  }
 
   ci_rows <- integer(0)
   if (all(c("ci_low", "ci_high") %in% names(params))) {
