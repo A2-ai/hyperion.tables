@@ -89,19 +89,19 @@ test_that("get_spec_ci returns modified CI", {
   expect_equal(ci@level, 0.90)
 })
 
-test_that("get_spec_sections returns list", {
+test_that("get_spec_sections returns a Sections object", {
   spec <- TableSpec()
   sections <- get_spec_sections(spec)
 
-  expect_true(is.list(sections))
+  expect_true(S7::S7_inherits(sections, Sections))
 })
 
-test_that("get_spec_sections returns added sections", {
+test_that("get_spec_sections returns added rules on the Sections object", {
   spec <- TableSpec() |>
     set_spec_sections(kind == "THETA" ~ "Structural")
 
   sections <- get_spec_sections(spec)
-  expect_length(sections, 1)
+  expect_length(sections@rules, 1)
 })
 
 test_that("get_spec_section_filter returns empty list by default", {
@@ -127,17 +127,14 @@ test_that("get_spec_section_filter returns set keep value", {
   )
 })
 
-test_that("section_order on spec is empty list by default", {
-  expect_identical(TableSpec()@section_order, list())
+test_that("section order on spec is empty by default", {
+  expect_length(TableSpec()@sections@order, 0L)
 })
 
-test_that("set_spec_sections(order=, keep_only=) populates section_order", {
+test_that("set_spec_sections(order=) populates sections@order", {
   spec <- TableSpec() |>
-    set_spec_sections(order = c("A", "B"), keep_only = TRUE)
-  expect_identical(
-    spec@section_order,
-    list(order = c("A", "B"), keep_only = TRUE)
-  )
+    set_spec_sections(order = c("A", "B"))
+  expect_identical(spec@sections@order, c("A", "B"))
 })
 
 test_that("get_spec_filter returns list", {

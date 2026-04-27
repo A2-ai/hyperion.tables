@@ -13,12 +13,11 @@ test_that("tag-based sections render correctly (gt + flextable)", {
   )
   tree <- hyperion::get_model_lineage(model_dir)
 
-  spec <- SummarySpec(
-    sections = section_rules(
+  spec <- SummarySpec() |>
+    set_spec_sections(
       "base" %in% tags ~ "Base Models",
       "key" %in% tags ~ "Key Models"
-    )
-  ) |>
+    ) |>
     set_spec_section_filter(exclude = NA)
 
   table <- tree |>
@@ -89,13 +88,12 @@ test_that("section_filter drops sections from parameter table", {
   params <- hyperion::get_parameters(mod)
   info <- hyperion::get_model_parameter_info(mod)
 
-  spec <- TableSpec(
-    sections = section_rules(
+  spec <- TableSpec() |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural",
       kind == "OMEGA" ~ "IIV",
       kind == "SIGMA" ~ "Residual"
-    )
-  ) |>
+    ) |>
     set_spec_section_filter(exclude = "Residual")
 
   df <- apply_table_spec(params, spec, info)
@@ -116,13 +114,12 @@ test_that("multi-match warning fires for parameter table sections", {
   info <- hyperion::get_model_parameter_info(mod)
 
   # OMEGA rows are both "OMEGA" kind and diagonal, so they match both rules
-  spec <- TableSpec(
-    sections = section_rules(
+  spec <- TableSpec() |>
+    set_spec_sections(
       kind == "OMEGA" ~ "Random Effects",
       diagonal ~ "Diagonal Elements",
       kind == "THETA" ~ "Structural"
     )
-  )
 
   expect_warning(
     apply_table_spec(params, spec, info),
@@ -140,7 +137,7 @@ test_that("SummarySpec accumulates section rules across calls", {
       model == "run001" ~ "Base Models"
     )
 
-  rules <- get_spec_sections(spec)
+  rules <- get_spec_sections(spec)@rules
   labels <- vapply(
     rules,
     function(r) {
@@ -152,9 +149,9 @@ test_that("SummarySpec accumulates section rules across calls", {
   expect_length(rules, 3)
 })
 
-test_that("SummarySpec rejects invalid section rules", {
+test_that("Sections rejects invalid section rules", {
   expect_error(
-    SummarySpec(sections = list("not a formula")),
-    "section rules"
+    Sections(rules = list("not a formula")),
+    "must be formulas"
   )
 })

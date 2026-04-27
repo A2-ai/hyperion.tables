@@ -1,5 +1,3 @@
-# Include spec.R for TableSpec and
-# SummarySpec to use sections_property()
 #' @include spec.R
 NULL
 
@@ -143,6 +141,120 @@ ParameterNameOptions <- S7::new_class(
 )
 
 # ==============================================================================
+# Sections
+# ==============================================================================
+
+#' Section configuration for a spec
+#'
+#' Holds rule formulas, per-item assignments, display order, and the
+#' filter (keep / exclude) for a `TableSpec` or `SummarySpec`.
+#'
+#' @section Properties:
+#' \itemize{
+#'   \item `rules` - List of formulas created with [section_rules()].
+#'   \item `assignments` - Named list keyed by section label; each value is
+#'     a character vector of items belonging to that section.
+#'   \item `order` - Character vector of section labels in display order, or NULL.
+#'   \item `filter_keep` - Character vector of labels to keep, or NULL.
+#'   \item `filter_exclude` - Character vector of labels to drop, or NULL.
+#' }
+#'
+#' @export
+Sections <- S7::new_class(
+  "Sections",
+  package = "hyperion.tables",
+  properties = list(
+    rules = S7::new_property(
+      class = S7::class_list,
+      default = list()
+    ),
+    assignments = S7::new_property(
+      class = S7::class_list,
+      default = list()
+    ),
+    order = S7::new_property(
+      class = S7::class_character | NULL,
+      default = NULL
+    ),
+    filter_keep = S7::new_property(
+      class = S7::class_character | NULL,
+      default = NULL
+    ),
+    filter_exclude = S7::new_property(
+      class = S7::class_character | NULL,
+      default = NULL
+    )
+  ),
+  validator = function(self) {
+    if (
+      length(self@rules) > 0 &&
+        !all(vapply(self@rules, rlang::is_formula, logical(1)))
+    ) {
+      return(
+        "@rules must be formulas; pass formulas via `set_spec_sections(...)` or build with `section_rules()`."
+      )
+    }
+
+    if (length(self@assignments) > 0) {
+      nm <- names(self@assignments)
+      if (is.null(nm) || any(!nzchar(nm)) || any(is.na(nm))) {
+        return("@assignments must be a named list keyed by section label.")
+      }
+      if (anyDuplicated(nm) > 0L) {
+        return("@assignments has duplicate section labels.")
+      }
+      ok_vals <- vapply(
+        self@assignments,
+        function(v) {
+          is.character(v) &&
+            length(v) > 0L &&
+            !any(is.na(v)) &&
+            all(nzchar(v))
+        },
+        logical(1)
+      )
+      if (!all(ok_vals)) {
+        return(
+          "@assignments values must be non-empty, non-NA character vectors."
+        )
+      }
+      flat <- unlist(self@assignments, use.names = FALSE)
+      if (anyDuplicated(flat) > 0L) {
+        dups <- unique(flat[duplicated(flat)])
+        return(paste0(
+          "@assignments lists the same item under multiple sections: ",
+          paste(shQuote(dups), collapse = ", "),
+          "."
+        ))
+      }
+    }
+
+    if (
+      length(self@order) > 0L &&
+        (any(!nzchar(self@order)) || any(is.na(self@order)))
+    ) {
+      return("@order labels must be non-empty and non-NA.")
+    }
+
+    if (length(self@filter_keep) > 0L && length(self@filter_exclude) > 0L) {
+      return(
+        "@filter_keep and @filter_exclude are mutually exclusive; set at most one."
+      )
+    }
+    for (slot in c("filter_keep", "filter_exclude")) {
+      v <- S7::prop(self, slot)
+      if (length(v) > 0L && any(!is.na(v) & !nzchar(v))) {
+        return(sprintf(
+          "@%s labels must be non-empty (NA allowed).",
+          slot
+        ))
+      }
+    }
+    NULL
+  }
+)
+
+# ==============================================================================
 # TableSpec S7 Class
 # ==============================================================================
 
@@ -162,10 +274,6 @@ ParameterNameOptions <- S7::new_class(
 #' @param hide_empty_columns Logical. If TRUE, columns that are all NA/empty
 #'   are automatically hidden unless explicitly requested via `columns` or
 #'   `add_columns`. Default is TRUE.
-#' @param sections Section rules created with `section_rules()`.
-#' @param section_filter Character vector of section labels to exclude from the
-#'   table. Use `NA` to also exclude rows that don't match any section rule.
-#'   Default is NULL (no filtering). See `set_spec_section_filter()`.
 #' @param row_filter Filter rules created with `filter_rules()`.
 #' @param display_transforms Named list specifying which transforms to apply
 #'   for display. Names are parameter kinds (theta, omega, sigma), values are
@@ -239,22 +347,9 @@ TableSpec <- S7::new_class(
       class = S7::class_logical,
       default = TRUE
     ),
-    sections = sections_property(),
-    section_filter = S7::new_property(
-      class = S7::class_list,
-      default = list()
-    ),
-    section_order = S7::new_property(
-      class = S7::class_list,
-      default = list()
-    ),
-    lookup_path = S7::new_property(
-      class = S7::class_character | NULL,
-      default = NULL
-    ),
-    parameter_sections = S7::new_property(
-      class = S7::class_character,
-      default = character(0)
+    sections = S7::new_property(
+      class = Sections,
+      default = quote(Sections())
     ),
     row_filter = S7::new_property(
       class = S7::class_list,
@@ -336,10 +431,6 @@ TableSpec <- S7::new_class(
         paste(valid_transform_cols, collapse = ", "),
         paste(bad, collapse = ", ")
       ))
-    }
-
-    if (!all(vapply(self@sections, rlang::is_formula, logical(1)))) {
-      return("@section rules must be created with section_rules()")
     }
 
     if (
@@ -473,9 +564,6 @@ TableSpec <- S7::new_class(
     add_columns = NULL,
     drop_columns = NULL,
     hide_empty_columns = TRUE,
-    sections = section_rules(),
-    section_filter = list(),
-    section_order = list(),
     row_filter = filter_rules(),
     display_transforms = list(),
     variability_rules = default_variability_rules(),
@@ -556,11 +644,9 @@ TableSpec <- S7::new_class(
 
     spec <- S7::new_object(
       S7::S7_object(),
+      sections = Sections(),
       display_transforms = display_transforms,
       variability_rules = variability_rules,
-      sections = sections,
-      section_filter = section_filter,
-      section_order = section_order,
       row_filter = row_filter,
       columns = columns,
       drop_columns = drop_columns,
@@ -576,9 +662,7 @@ TableSpec <- S7::new_class(
       ci = ci,
       missing_text = missing_text,
       missing_apply_to = missing_apply_to,
-      footnote_order = footnote_order,
-      lookup_path = NULL,
-      parameter_sections = character(0)
+      footnote_order = footnote_order
     )
     # setter is called for columns which flips columns provided.
     # this reverts it back to what ever it was.
@@ -745,10 +829,6 @@ HyperionTable <- S7::new_class(
 #' @param summary_filter Filter rules created with `summary_filter_rules()`.
 #' @param remove_unrun_models Logical. If TRUE (default), models without
 #'   completed runs are excluded from the table.
-#' @param sections Section rules created with `section_rules()`.
-#' @param section_filter Character vector of section labels to exclude from the
-#'   table. Use `NA` to also exclude models that don't match any section rule.
-#'   Default is NULL (no filtering). See `set_spec_section_filter()`.
 #' @param columns Character vector of columns to include. Valid columns:
 #'   "based_on", "description", "n_parameters", "problem",
 #'   "number_data_records", "number_subjects", "number_obs",
@@ -806,14 +886,9 @@ SummarySpec <- S7::new_class(
       class = S7::class_logical,
       default = TRUE
     ),
-    sections = sections_property(),
-    section_filter = S7::new_property(
-      class = S7::class_list,
-      default = list()
-    ),
-    section_order = S7::new_property(
-      class = S7::class_list,
-      default = list()
+    sections = S7::new_property(
+      class = Sections,
+      default = quote(Sections())
     ),
     columns = S7::new_property(
       class = S7::class_character,
@@ -873,13 +948,6 @@ SummarySpec <- S7::new_class(
     )
   ),
   validator = function(self) {
-    if (
-      length(self@sections) > 0 &&
-        !all(vapply(self@sections, rlang::is_formula, logical(1)))
-    ) {
-      return("@section rules must be created with section_rules()")
-    }
-
     valid_fields <- summary_spec_valid_columns()
     columns_msg <- validate_columns_in_set(
       self@columns,
@@ -987,15 +1055,13 @@ SummarySpec <- S7::new_class(
     time_format = "seconds",
     pvalue_scientific = FALSE,
     pvalue_threshold = NULL,
-    sections = section_rules(),
-    section_filter = list(),
-    section_order = list(),
     footnote_order = "abbreviations"
   ) {
     columns <- merge_summary_columns(columns, add_columns)
 
     S7::new_object(
       S7::S7_object(),
+      sections = Sections(),
       summary_filter = summary_filter,
       models_to_include = models_to_include,
       add_columns = add_columns,
@@ -1011,9 +1077,6 @@ SummarySpec <- S7::new_class(
       tag_exclude = tag_exclude,
       pvalue_scientific = pvalue_scientific,
       pvalue_threshold = pvalue_threshold,
-      sections = sections,
-      section_filter = section_filter,
-      section_order = section_order,
       footnote_order = footnote_order
     )
   }

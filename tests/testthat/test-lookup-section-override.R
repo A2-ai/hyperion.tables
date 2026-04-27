@@ -50,21 +50,21 @@ test_that("inline parameters override warns on conflict with file", {
   mod_info <- hyperion::get_model_parameter_info(mod)
 
   # Lookup TOML assigns TVCL -> "Custom: Clearance Group" (see fixture).
-  # Inline overrides TVCL with a different value -> expect a warning, and
-  # inline wins.
-  spec <- TableSpec() |>
-    set_spec_sections(
-      kind == "THETA" ~ "Structural",
-      kind == "OMEGA" ~ "Variability",
-      kind == "SIGMA" ~ "Residual",
-      file = testthat::test_path("lookup-section.toml"),
-      parameters = list("Inline Override" = "TVCL")
-    )
-
+  # Inline overrides TVCL with a different value -> expect a warning at
+  # setter time, and inline wins.
   expect_warning(
-    df <- apply_table_spec(params, spec, mod_info),
+    spec <- TableSpec() |>
+      set_spec_sections(
+        kind == "THETA" ~ "Structural",
+        kind == "OMEGA" ~ "Variability",
+        kind == "SIGMA" ~ "Residual",
+        file = testthat::test_path("lookup-section.toml"),
+        parameters = list("Inline Override" = "TVCL")
+      ),
     "conflict.*TVCL"
   )
+
+  df <- apply_table_spec(params, spec, mod_info)
   expect_equal(
     df$section[df$user_name == "TVCL"],
     "Inline Override"
@@ -97,15 +97,20 @@ test_that("set_spec_sections rejects parameters/file on SummarySpec", {
   )
 })
 
-test_that("get_spec_parameter_sections returns inline list + file pair", {
-  spec <- TableSpec() |>
-    set_spec_sections(
-      file = testthat::test_path("lookup-section.toml"),
-      parameters = list("X" = "TVCL")
-    )
+test_that("get_spec_parameter_sections returns merged assignments", {
+  expect_warning(
+    spec <- TableSpec() |>
+      set_spec_sections(
+        file = testthat::test_path("lookup-section.toml"),
+        parameters = list("X" = "TVCL")
+      ),
+    "conflict.*TVCL"
+  )
   result <- get_spec_parameter_sections(spec)
-  expect_equal(result$parameters, list(X = "TVCL"))
-  expect_equal(basename(result$file), "lookup-section.toml")
+  # Inline wins for TVCL; file entries for TVV and "OM1 (TVCL)" remain
+  expect_equal(result$X, "TVCL")
+  expect_equal(result$`Custom: Volume Group`, "TVV")
+  expect_equal(result$`Custom: IIV-CL Group`, "OM1 (TVCL)")
 })
 
 # T1
@@ -159,7 +164,7 @@ test_that("file + parameters that agree do not warn", {
 })
 
 # T3
-test_that("section_order keep_only drops TOML-injected sections when omitted", {
+test_that("filter_keep matching order drops TOML-injected sections", {
   testthat::skip_if_not_installed("tomledit")
   model_dir <- system.file(
     "extdata",
@@ -171,23 +176,23 @@ test_that("section_order keep_only drops TOML-injected sections when omitted", {
   params <- hyperion::get_parameters(mod)
   info <- hyperion::get_model_parameter_info(mod)
 
-  # File adds "Custom: Clearance Group"; order omits it with keep_only=TRUE.
+  # File adds "Custom: Clearance Group"; filter keeps only the listed sections.
   spec <- TableSpec() |>
     set_spec_sections(
       kind == "THETA" ~ "Structural",
       kind == "OMEGA" ~ "Variability",
       kind == "SIGMA" ~ "Residual",
       file = testthat::test_path("lookup-section.toml"),
-      order = c("Structural", "Variability", "Residual"),
-      keep_only = TRUE
-    )
+      order = c("Structural", "Variability", "Residual")
+    ) |>
+    set_spec_section_filter(keep = c("Structural", "Variability", "Residual"))
 
   htable <- params |>
     apply_table_spec(spec, info) |>
     add_summary_info(summary(mod)) |>
     make_parameter_table(output = "data")
   # TVCL was reassigned to "Custom: Clearance Group" which is not in the
-  # order list, so keep_only drops it.
+  # keep filter list, so it is dropped.
   expect_false("TVCL" %in% htable@data$user_name)
   expect_true(all(
     htable@data$section %in% c("Structural", "Variability", "Residual")

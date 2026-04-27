@@ -1125,7 +1125,7 @@ prepare_comparison_table_data <- function(
   if ("section" %in% names(comparison) && !all(is.na(comparison$section))) {
     if (
       !is.null(spec) &&
-        (length(spec@sections) > 0 || length(spec@section_order) > 0)
+        (length(spec@sections@rules) > 0 || length(spec@sections@order) > 0)
     ) {
       resolved <- resolve_section_levels(comparison, spec)
       comparison <- resolved$data

@@ -2,7 +2,7 @@
 % Please edit documentation in R/spec-getters.R
 \name{get_spec_sections}
 \alias{get_spec_sections}
-\title{Get section rules from a spec}
+\title{Get section configuration from a spec}
 \usage{
 get_spec_sections(spec, ...)
 }
@@ -12,11 +12,11 @@ get_spec_sections(spec, ...)
 \item{...}{Not used.}
 }
 \value{
-List of quosures.
+A \link{Sections} object.
 }
 \description{
-\code{get_spec_sections()} is an S7 generic that returns the list of section
-assignment rules.
+\code{get_spec_sections()} is an S7 generic that returns the spec's
+\link{Sections} object (rules, assignments, order, filter).
 
 Methods are available for the following classes:
 

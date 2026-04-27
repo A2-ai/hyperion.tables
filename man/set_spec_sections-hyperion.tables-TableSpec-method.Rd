@@ -11,8 +11,7 @@ set_spec_sections(
   overwrite = FALSE,
   parameters = NULL,
   file = NULL,
-  order = NULL,
-  keep_only = FALSE
+  order = NULL
 )
 }
 \arguments{
@@ -26,12 +25,9 @@ set_spec_sections(
 character vector of parameter names), or \code{NULL} to leave alone, or
 \code{list()} to clear.}
 
-\item{file}{Path to a TOML, or \code{NULL} to leave alone, or \code{NA_character_}
-to clear.}
+\item{file}{Path to a TOML, or \code{NULL} to leave alone.}
 
 \item{order}{Display-order vector for sections.}
-
-\item{keep_only}{Drop sections not listed in \code{order}.}
 }
 \value{
 Modified spec.

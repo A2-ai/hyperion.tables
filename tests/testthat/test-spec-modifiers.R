@@ -153,12 +153,12 @@ test_that("set_spec_footnotes validates sections", {
 
 test_that("set_spec_section_filter exclude mode works for both specs", {
   table_spec <- TableSpec() |> set_spec_section_filter(exclude = "Other")
-  expect_identical(table_spec@section_filter, list(exclude = "Other"))
+  expect_identical(table_spec@sections@filter_exclude, "Other")
 
   sum_spec <- SummarySpec() |> set_spec_section_filter(exclude = c("Other", NA))
   expect_identical(
-    sum_spec@section_filter,
-    list(exclude = c("Other", NA_character_))
+    sum_spec@sections@filter_exclude,
+    c("Other", NA_character_)
   )
 })
 
@@ -166,8 +166,8 @@ test_that("set_spec_section_filter keep mode stores positive list", {
   spec <- TableSpec() |>
     set_spec_section_filter(keep = c("Structural", "Variability"))
   expect_identical(
-    spec@section_filter,
-    list(keep = c("Structural", "Variability"))
+    spec@sections@filter_keep,
+    c("Structural", "Variability")
   )
 })
 
@@ -183,30 +183,21 @@ test_that("set_spec_section_filter clears with no args", {
   spec <- SummarySpec() |>
     set_spec_section_filter(exclude = "Other") |>
     set_spec_section_filter()
-  expect_identical(spec@section_filter, list())
+  expect_length(spec@sections@filter_keep, 0L)
+  expect_length(spec@sections@filter_exclude, 0L)
 })
 
-test_that("set_spec_sections(order=, keep_only=) stores order config", {
+test_that("set_spec_sections(order=) stores order config", {
   spec <- TableSpec() |>
     set_spec_sections(order = c("A", "B"))
-  expect_identical(
-    spec@section_order,
-    list(order = c("A", "B"), keep_only = FALSE)
-  )
-
-  spec2 <- TableSpec() |>
-    set_spec_sections(order = c("A", "B"), keep_only = TRUE)
-  expect_identical(
-    spec2@section_order,
-    list(order = c("A", "B"), keep_only = TRUE)
-  )
+  expect_identical(spec@sections@order, c("A", "B"))
 })
 
 test_that("set_spec_sections(order = character(0)) clears the order", {
   spec <- TableSpec() |>
     set_spec_sections(order = c("A", "B")) |>
     set_spec_sections(order = character(0))
-  expect_identical(spec@section_order, list())
+  expect_length(spec@sections@order, 0L)
 })
 
 # ==============================================================================
@@ -260,7 +251,7 @@ test_that("set_spec_sections appends by default", {
     set_spec_sections(kind == "THETA" ~ "Structural") |>
     set_spec_sections(kind == "OMEGA" ~ "IIV")
 
-  expect_length(spec@sections, 2)
+  expect_length(spec@sections@rules, 2)
 })
 
 test_that("set_spec_sections overwrites when specified", {
@@ -268,7 +259,7 @@ test_that("set_spec_sections overwrites when specified", {
     set_spec_sections(kind == "THETA" ~ "First") |>
     set_spec_sections(kind == "OMEGA" ~ "Second", overwrite = TRUE)
 
-  expect_length(spec@sections, 1)
+  expect_length(spec@sections@rules, 1)
 })
 
 test_that("set_spec_filter works", {

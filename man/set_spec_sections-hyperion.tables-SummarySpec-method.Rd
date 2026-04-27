@@ -11,8 +11,7 @@ set_spec_sections(
   overwrite = FALSE,
   parameters = NULL,
   file = NULL,
-  order = NULL,
-  keep_only = FALSE
+  order = NULL
 )
 }
 \arguments{
@@ -27,8 +26,6 @@ set_spec_sections(
 \item{file}{Must be \code{NULL}; errors otherwise.}
 
 \item{order}{Display-order vector for sections.}
-
-\item{keep_only}{Drop sections not listed in \code{order}.}
 }
 \value{
 Modified spec.

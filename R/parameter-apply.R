@@ -156,24 +156,32 @@ resolve_name_columns <- function(df, spec, info) {
   df
 }
 
-#' Filter rows by section_filter
+#' Filter rows by section filter
 #'
-#' `spec@section_filter` is a list with one of two shapes:
-#' `list(exclude = c(...))` drops the listed sections; `list(keep = c(...))`
-#' drops everything except those. `NA` inside either vector also targets
-#' rows whose section didn't match any rule. Empty list = no filter.
+#' Reads `spec@sections@filter_keep` / `@filter_exclude`. `NA` inside
+#' either vector also targets rows whose section didn't match any rule.
+#' Both NULL = no filter.
 #'
 #' @param df Data frame with a `section` column
-#' @param spec A TableSpec or SummarySpec with a `section_filter` property
+#' @param spec A TableSpec or SummarySpec
 #' @return Filtered data frame
 #' @noRd
 filter_sections <- function(df, spec) {
-  filt <- spec@section_filter
-  if (length(filt) == 0L || !"section" %in% names(df)) {
+  s <- spec@sections
+  if (
+    length(s@filter_keep) == 0L &&
+      length(s@filter_exclude) == 0L ||
+      !"section" %in% names(df)
+  ) {
     return(df)
   }
-  mode <- names(filt)[1]
-  labels <- filt[[1]]
+  if (length(s@filter_exclude) > 0L) {
+    mode <- "exclude"
+    labels <- s@filter_exclude
+  } else {
+    mode <- "keep"
+    labels <- s@filter_keep
+  }
   has_na <- any(is.na(labels))
   named <- labels[!is.na(labels)]
   n_before <- nrow(df)
@@ -250,61 +258,27 @@ apply_sections_and_filters <- function(df, spec) {
   df
 }
 
-#' Override `section` per-parameter from file and/or inline overrides
+#' Override `section` per-parameter from merged assignments
 #'
-#' Two override layers stored on the spec:
-#'   * `spec@lookup_path` — TOML file; entries with a `section` field
-#'   * `spec@parameter_sections` — named character vector
-#'
-#' File overrides apply first; inline overrides apply on top and win on
-#' conflicts (with a warning). Parameter rows are matched by `user_name`
-#' first (the comment-name like "TVCL"), falling back to `nonmem_name`
-#' ("THETA1"). TOML entries without a `section` field are ignored.
+#' Walks `spec@sections@assignments` (file + inline already merged at
+#' setter time). Parameter rows are matched by `user_name` first (the
+#' comment-name like "TVCL"), falling back to `nonmem_name` ("THETA1").
 #'
 #' @noRd
 apply_lookup_section_overrides <- function(df, spec) {
-  file_map <- if (!is.null(spec@lookup_path)) {
-    lookup_section_map(read_lookup_toml(spec@lookup_path))
-  } else {
-    stats::setNames(character(0), character(0))
-  }
-  inline_map <- spec@parameter_sections
-  if (length(file_map) == 0L && length(inline_map) == 0L) {
+  assignments <- spec@sections@assignments
+  if (length(assignments) == 0L) {
     return(df)
   }
 
-  conflicts <- intersect(names(file_map), names(inline_map))
-  if (length(conflicts) > 0L) {
-    a <- file_map[conflicts]
-    b <- inline_map[conflicts]
-    same <- (is.na(a) & is.na(b)) | (!is.na(a) & !is.na(b) & a == b)
-    conflicts <- conflicts[!same]
-  }
-  if (length(conflicts) > 0L) {
-    rlang::warn(paste0(
-      "Per-parameter section conflict between `file` and `parameters` for: ",
-      paste(shQuote(conflicts), collapse = ", "),
-      ". Inline `parameters` value(s) win."
-    ))
-  }
+  items <- unlist(assignments, use.names = FALSE)
+  labels <- rep(names(assignments), lengths(assignments))
+  section_map <- stats::setNames(labels, items)
 
-  df <- apply_one_layer(df, file_map, "Lookup file")
-  df <- apply_one_layer(df, inline_map, "Inline `parameters`")
-  df
-}
-
-#' Apply a single override layer (file or inline) and warn about unmatched
-#' keys with the given label as context.
-#' @noRd
-apply_one_layer <- function(df, map, label) {
-  if (length(map) == 0L) {
-    return(df)
-  }
-  res <- assign_section_overrides(df, map)
+  res <- assign_section_overrides(df, section_map)
   if (length(res$unmatched) > 0L) {
     rlang::warn(paste0(
-      label,
-      " section override(s) did not match any parameter: ",
+      "Inline `parameters` section override(s) did not match any parameter: ",
       paste(shQuote(res$unmatched), collapse = ", "),
       "."
     ))
@@ -378,7 +352,7 @@ build_section <- function(data, spec) {
     rlang::abort("spec must be a TableSpec object")
   }
 
-  rules <- spec@sections
+  rules <- spec@sections@rules
   if (length(rules) == 0) {
     return(rep(NA_character_, nrow(data)))
   }
@@ -460,7 +434,7 @@ get_section_order <- S7::new_generic("get_section_order", "spec")
 
 S7::method(get_section_order, AnySpec) <- function(spec) {
   vapply(
-    spec@sections,
+    spec@sections@rules,
     function(rule) {
       rlang::f_rhs(rlang::eval_tidy(rule))
     },
@@ -474,19 +448,11 @@ S7::method(get_section_order, AnySpec) <- function(spec) {
 #' filtered) data and the level vector.
 #' @noRd
 resolve_section_levels <- function(data, spec) {
-  override <- spec@section_order
+  override <- spec@sections@order
   if (length(override) > 0L) {
-    levels <- as.character(override$order)
-    if (isTRUE(override$keep_only)) {
-      data <- data[
-        !is.na(data$section) & data$section %in% levels,
-        ,
-        drop = FALSE
-      ]
-    } else {
-      extra <- setdiff(unique(stats::na.omit(data$section)), levels)
-      levels <- c(levels, extra)
-    }
+    levels <- as.character(override)
+    extra <- setdiff(unique(stats::na.omit(data$section)), levels)
+    levels <- c(levels, extra)
   } else {
     spec_levels <- unique(get_section_order(spec))
     extra <- setdiff(unique(stats::na.omit(data$section)), spec_levels)

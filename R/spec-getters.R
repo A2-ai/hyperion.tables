@@ -129,11 +129,11 @@ S7::method(get_spec_ci, TableSpec) <- function(spec) {
   spec@ci
 }
 
-#' Get section rules from a spec
+#' Get section configuration from a spec
 #'
 #' @description
-#' `get_spec_sections()` is an S7 generic that returns the list of section
-#' assignment rules.
+#' `get_spec_sections()` is an S7 generic that returns the spec's
+#' [Sections] object (rules, assignments, order, filter).
 #'
 #' Methods are available for the following classes:
 #'
@@ -141,7 +141,7 @@ S7::method(get_spec_ci, TableSpec) <- function(spec) {
 #'
 #' @param spec A TableSpec or SummarySpec object.
 #' @param ... Not used.
-#' @return List of quosures.
+#' @return A [Sections] object.
 #' @seealso [set_spec_sections()].
 #' @export
 #' @examples
@@ -171,19 +171,24 @@ S7::method(get_spec_sections, AnySpec) <- function(spec) {
 get_spec_section_filter <- S7::new_generic("get_spec_section_filter", "spec")
 
 S7::method(get_spec_section_filter, AnySpec) <- function(spec) {
-  spec@section_filter
+  s <- spec@sections
+  if (length(s@filter_exclude) > 0L) {
+    list(exclude = s@filter_exclude)
+  } else if (length(s@filter_keep) > 0L) {
+    list(keep = s@filter_keep)
+  } else {
+    list()
+  }
 }
 
-#' Get per-parameter section overrides from a TableSpec
+#' Get per-parameter section assignments from a TableSpec
 #'
-#' Returns a list with two fields:
-#'   * `parameters` — named list keyed by section label, where each value
-#'     is a character vector of parameter names. Mirrors the shape passed
-#'     to `set_spec_sections(parameters = ...)`.
-#'   * `file` — path to the lookup TOML, or `NULL` if none.
+#' Returns the assignments as a named list keyed by section label, where
+#' each value is a character vector of parameter names. Mirrors the shape
+#' passed to `set_spec_sections(parameters = ...)`.
 #'
 #' @param spec A TableSpec object.
-#' @return A named list with `parameters` and `file`.
+#' @return A named list of parameter-name character vectors (possibly empty).
 #' @seealso [set_spec_sections()].
 #' @export
 get_spec_parameter_sections <- S7::new_generic(
@@ -192,16 +197,7 @@ get_spec_parameter_sections <- S7::new_generic(
 )
 
 S7::method(get_spec_parameter_sections, TableSpec) <- function(spec) {
-  flat <- spec@parameter_sections
-  parameters_list <- if (length(flat) == 0L) {
-    list()
-  } else {
-    split(unname(names(flat)), unname(flat))
-  }
-  list(
-    parameters = parameters_list,
-    file = spec@lookup_path
-  )
+  spec@sections@assignments
 }
 
 #' Get row filter rules from a TableSpec

@@ -8,16 +8,16 @@ test_that("parameter comparison table: run002 vs run003b1", {
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
-    sections = section_rules(
+    n_sigfig = 3,
+    drop_columns = c("variability", "shrinkage")
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual variance",
       TRUE ~ "Other"
-    ),
-    n_sigfig = 3,
-    drop_columns = c("variability", "shrinkage")
-  )
+    )
 
   mod1 <- hyperion::read_model(file.path(model_dir, "run002.mod"))
   mod_sum1 <- summary(mod1)
@@ -54,16 +54,16 @@ test_that("parameter comparison table: run003 vs run003b1", {
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
-    sections = section_rules(
+    n_sigfig = 3,
+    drop_columns = c("variability", "shrinkage")
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual variance",
       TRUE ~ "Other"
-    ),
-    n_sigfig = 3,
-    drop_columns = c("variability", "shrinkage")
-  )
+    )
 
   mod <- hyperion::read_model(file.path(model_dir, "run003.mod"))
   mod_sum <- summary(mod)
@@ -100,16 +100,16 @@ test_that("parameter comparison table: run002 vs run003b1 drop symbol", {
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
-    sections = section_rules(
+    n_sigfig = 3,
+    drop_columns = c("symbol", "variability", "shrinkage")
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual variance",
       TRUE ~ "Other"
-    ),
-    n_sigfig = 3,
-    drop_columns = c("symbol", "variability", "shrinkage")
-  )
+    )
 
   mod1 <- hyperion::read_model(file.path(model_dir, "run002.mod"))
   mod_sum1 <- summary(mod1)
@@ -146,16 +146,16 @@ test_that("parameter comparison table: run002 vs run003 drop ci has correct foot
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
-    sections = section_rules(
+    n_sigfig = 3,
+    drop_columns = c("symbol", "ci", "shrinkage")
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual variance",
       TRUE ~ "Other"
-    ),
-    n_sigfig = 3,
-    drop_columns = c("symbol", "ci", "shrinkage")
-  )
+    )
 
   mod1 <- hyperion::read_model(file.path(model_dir, "run002.mod"))
   mod_sum1 <- summary(mod1)
@@ -192,13 +192,6 @@ test_that("parameter comparison table: run002 vs run003b1 drop configurable", {
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
-    sections = section_rules(
-      kind == "THETA" ~ "Structural model parameters",
-      kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
-      kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
-      kind == "SIGMA" ~ "Residual variance",
-      TRUE ~ "Other"
-    ),
     n_sigfig = 3,
     drop_columns = c(
       "variability",
@@ -207,7 +200,14 @@ test_that("parameter comparison table: run002 vs run003b1 drop configurable", {
       "symbol_left",
       "rse_right"
     )
-  )
+  ) |>
+    set_spec_sections(
+      kind == "THETA" ~ "Structural model parameters",
+      kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
+      kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
+      kind == "SIGMA" ~ "Residual variance",
+      TRUE ~ "Other"
+    )
 
   mod1 <- hyperion::read_model(file.path(model_dir, "run002.mod"))
   mod_sum1 <- summary(mod1)
@@ -287,16 +287,16 @@ test_that("parameter comparison table: three models with reference_model", {
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
-    sections = section_rules(
+    n_sigfig = 3,
+    drop_columns = c("variability", "shrinkage")
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual variance",
       TRUE ~ "Other"
-    ),
-    n_sigfig = 3,
-    drop_columns = c("variability", "shrinkage")
-  )
+    )
 
   # Get model summaries and parameter info for all three models
   mod1 <- hyperion::read_model(file.path(model_dir, "run001.mod"))
@@ -346,16 +346,16 @@ test_that("parameter comparison table: three models with lineage shows LRT", {
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
-    sections = section_rules(
+    n_sigfig = 3,
+    drop_columns = c("variability", "shrinkage")
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual variance",
       TRUE ~ "Other"
-    ),
-    n_sigfig = 3,
-    drop_columns = c("variability", "shrinkage")
-  )
+    )
 
   # Get model summaries and parameter info for all three models
   mod1 <- hyperion::read_model(file.path(model_dir, "run001.mod"))
@@ -408,16 +408,16 @@ test_that("parameter comparison table: broken lineage suppresses LRT", {
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
-    sections = section_rules(
+    n_sigfig = 3,
+    drop_columns = c("variability", "shrinkage")
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual variance",
       TRUE ~ "Other"
-    ),
-    n_sigfig = 3,
-    drop_columns = c("variability", "shrinkage")
-  )
+    )
 
   # Get model summaries and parameter info for all three models
   mod1 <- hyperion::read_model(file.path(model_dir, "run001.mod"))
@@ -474,17 +474,17 @@ test_that("parameter comparison table: pvalue_threshold formats small p-values",
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
-    sections = section_rules(
+    n_sigfig = 3,
+    drop_columns = c("variability", "shrinkage"),
+    pvalue_threshold = 0.05
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual variance",
       TRUE ~ "Other"
-    ),
-    n_sigfig = 3,
-    drop_columns = c("variability", "shrinkage"),
-    pvalue_threshold = 0.05
-  )
+    )
 
   # Get model summaries and parameter info for all three models
   mod1 <- hyperion::read_model(file.path(model_dir, "run001.mod"))

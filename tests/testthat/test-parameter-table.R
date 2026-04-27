@@ -16,15 +16,15 @@ test_that("parameter table: run001 basic spec", {
   spec <- TableSpec(
     display_transforms = list(omega = "cv"),
     parameter_names = ParameterNameOptions(source = "display"),
-    title = "Model Parameters",
-    sections = section_rules(
+    title = "Model Parameters"
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual error",
       TRUE ~ "Other"
     )
-  )
 
   table_gt <- params |>
     apply_table_spec(spec, mod_info) |>
@@ -60,15 +60,15 @@ test_that("parameter table: run001 shows fixed", {
     display_transforms = list(omega = "cv"),
     parameter_names = ParameterNameOptions(source = "display"),
     title = "Model Parameters",
-    sections = section_rules(
+    add_columns = "fixed"
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual error",
       TRUE ~ "Other"
-    ),
-    add_columns = "fixed"
-  )
+    )
 
   table_gt <- params |>
     apply_table_spec(spec, mod_info) |>
@@ -103,15 +103,15 @@ test_that("parameter table: run002 shows empty fixed", {
   spec <- TableSpec(
     display_transforms = list(omega = "cv"),
     parameter_names = ParameterNameOptions(source = "display"),
-    title = "Model Parameters",
-    sections = section_rules(
+    title = "Model Parameters"
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual error",
       TRUE ~ "Other"
     )
-  )
 
   table_gt <- params |>
     apply_table_spec(spec, mod_info) |>
@@ -163,15 +163,15 @@ test_that("parameter table: run003 drop ci column", {
     display_transforms = list(omega = "cv"),
     parameter_names = ParameterNameOptions(source = "display"),
     title = "Model Parameters",
-    sections = section_rules(
+    drop_columns = "ci"
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual error",
       TRUE ~ "Other"
-    ),
-    drop_columns = "ci"
-  )
+    )
 
   table_gt <- params |>
     apply_table_spec(spec, mod_info) |>
@@ -207,15 +207,15 @@ test_that("parameter table: run003 drop ci_low column", {
     display_transforms = list(omega = "cv"),
     parameter_names = ParameterNameOptions(source = "display"),
     title = "Model Parameters",
-    sections = section_rules(
+    drop_columns = "ci_low"
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual error",
       TRUE ~ "Other"
-    ),
-    drop_columns = "ci_low"
-  )
+    )
 
   table_gt <- params |>
     apply_table_spec(spec, mod_info) |>
@@ -251,15 +251,15 @@ test_that("parameter table: run003 drop ci_high column", {
     display_transforms = list(omega = "cv"),
     parameter_names = ParameterNameOptions(source = "display"),
     title = "Model Parameters",
-    sections = section_rules(
+    drop_columns = "ci_high"
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual error",
       TRUE ~ "Other"
-    ),
-    drop_columns = "ci_high"
-  )
+    )
 
   table_gt <- params |>
     apply_table_spec(spec, mod_info) |>
@@ -295,16 +295,16 @@ test_that("parameter table: run003 summary footnote only", {
     display_transforms = list(omega = "cv"),
     parameter_names = ParameterNameOptions(source = "display"),
     title = "Model Parameters",
-    sections = section_rules(
+    drop_columns = "ci",
+    footnote_order = "summary_info"
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual error",
       TRUE ~ "Other"
-    ),
-    drop_columns = "ci",
-    footnote_order = "summary_info"
-  )
+    )
 
   table_gt <- params |>
     apply_table_spec(spec, mod_info) |>
@@ -340,16 +340,16 @@ test_that("parameter table: run003 drop footnotes", {
     display_transforms = list(omega = "cv"),
     parameter_names = ParameterNameOptions(source = "display"),
     title = "Model Parameters",
-    sections = section_rules(
+    drop_columns = "ci",
+    footnote_order = NULL
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual error",
       TRUE ~ "Other"
-    ),
-    drop_columns = "ci",
-    footnote_order = NULL
-  )
+    )
 
   table_gt <- params |>
     apply_table_spec(spec, mod_info) |>
@@ -398,17 +398,17 @@ test_that("parameter table: base display", {
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
-    sections = section_rules(
+    parameter_names = ParameterNameOptions(source = "display"),
+    drop_columns = "rse",
+    title = paste(model_run, "Parameters")
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual error",
       TRUE ~ "Other"
-    ),
-    parameter_names = ParameterNameOptions(source = "display"),
-    drop_columns = "rse",
-    title = paste(model_run, "Parameters")
-  )
+    )
 
   info <- hyperion::get_model_parameter_info(mod, lookup_path)
   info@sigma$`SIGMA(1,1)`@parameterization <- "Proportional"
@@ -436,17 +436,17 @@ test_that("parameter table: display name source", {
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
-    sections = section_rules(
+    parameter_names = ParameterNameOptions(source = "display"),
+    drop_columns = "rse",
+    title = paste(model_run, "Parameters")
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual error",
       TRUE ~ "Other"
-    ),
-    parameter_names = ParameterNameOptions(source = "display"),
-    drop_columns = "rse",
-    title = paste(model_run, "Parameters")
-  )
+    )
 
   info <- hyperion::get_model_parameter_info(mod, lookup_path)
   info@sigma$`SIGMA(1,1)`@parameterization <- "Proportional"
@@ -476,17 +476,17 @@ test_that("parameter table: nonmem name source", {
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
-    sections = section_rules(
+    parameter_names = ParameterNameOptions(source = "nonmem"),
+    drop_columns = "rse",
+    title = paste(model_run, "Parameters")
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual error",
       TRUE ~ "Other"
-    ),
-    parameter_names = ParameterNameOptions(source = "nonmem"),
-    drop_columns = "rse",
-    title = paste(model_run, "Parameters")
-  )
+    )
 
   info <- hyperion::get_model_parameter_info(mod, lookup_path)
   info@sigma$`SIGMA(1,1)`@parameterization <- "Proportional"
@@ -513,18 +513,18 @@ test_that("parameter table: description column", {
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
-    sections = section_rules(
+    parameter_names = ParameterNameOptions(source = "display"),
+    add_columns = "description",
+    drop_columns = "rse",
+    title = paste(model_run, "Parameters")
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual error",
       TRUE ~ "Other"
-    ),
-    parameter_names = ParameterNameOptions(source = "display"),
-    add_columns = "description",
-    drop_columns = "rse",
-    title = paste(model_run, "Parameters")
-  )
+    )
 
   info <- hyperion::get_model_parameter_info(mod, lookup_path)
   info@sigma$`SIGMA(1,1)`@parameterization <- "Proportional"
@@ -552,17 +552,17 @@ test_that("parameter table: drop unit column", {
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
-    sections = section_rules(
+    parameter_names = ParameterNameOptions(source = "display"),
+    drop_columns = "unit",
+    title = paste(model_run, "Parameters")
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual error",
       TRUE ~ "Other"
-    ),
-    parameter_names = ParameterNameOptions(source = "display"),
-    drop_columns = "unit",
-    title = paste(model_run, "Parameters")
-  )
+    )
 
   info <- hyperion::get_model_parameter_info(mod, lookup_path)
   info@sigma$`SIGMA(1,1)`@parameterization <- "Proportional"
@@ -589,17 +589,17 @@ test_that("parameter table: drop unit and shrinkage columns", {
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
-    sections = section_rules(
+    parameter_names = ParameterNameOptions(source = "display"),
+    drop_columns = c("unit", "shrinkage"),
+    title = paste(model_run, "Parameters")
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual error",
       TRUE ~ "Other"
-    ),
-    parameter_names = ParameterNameOptions(source = "display"),
-    drop_columns = c("unit", "shrinkage"),
-    title = paste(model_run, "Parameters")
-  )
+    )
 
   info <- hyperion::get_model_parameter_info(mod, lookup_path)
   info@sigma$`SIGMA(1,1)`@parameterization <- "Proportional"
@@ -628,15 +628,15 @@ test_that("parameter table: structural-only filter", {
   info@sigma$`SIGMA(1,1)`@parameterization <- "Proportional"
 
   sp_spec <- TableSpec(
-    sections = section_rules(
-      kind == "THETA" ~ "Structural model parameters",
-      TRUE ~ "Other"
-    ),
     row_filter = filter_rules(
       kind == "THETA"
     ),
     drop_columns = "shrinkage"
-  )
+  ) |>
+    set_spec_sections(
+      kind == "THETA" ~ "Structural model parameters",
+      TRUE ~ "Other"
+    )
 
   table <- hyperion::get_parameters(mod) |>
     apply_table_spec(sp_spec, info) |>
@@ -660,16 +660,16 @@ test_that("parameter table: random effects only", {
   info@sigma$`SIGMA(1,1)`@parameterization <- "Proportional"
 
   re_spec <- TableSpec(
-    sections = section_rules(
-      kind == "OMEGA" ~ "Random Effect Parameters",
-      kind == "SIGMA" ~ "Residual Error",
-      TRUE ~ "Other"
-    ),
     row_filter = filter_rules(
       kind != "THETA"
     ),
     drop_columns = "unit"
-  )
+  ) |>
+    set_spec_sections(
+      kind == "OMEGA" ~ "Random Effect Parameters",
+      kind == "SIGMA" ~ "Residual Error",
+      TRUE ~ "Other"
+    )
 
   table <- hyperion::get_parameters(mod) |>
     apply_table_spec(re_spec, info) |>
@@ -689,16 +689,16 @@ test_that("parameter table: 70% CI", {
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
-    sections = section_rules(
+    ci = CIOptions(level = 0.7),
+    n_sigfig = 3
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual variance",
       TRUE ~ "Other"
-    ),
-    ci = CIOptions(level = 0.7),
-    n_sigfig = 3
-  )
+    )
 
   mod_sum <- summary(mod)
   info <- hyperion::get_model_parameter_info(mod)
@@ -723,17 +723,17 @@ test_that("parameter table: summary info without condition number", {
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
-    sections = section_rules(
+    ci = CIOptions(level = 0.7),
+    n_sigfig = 3,
+    parameter_names = ParameterNameOptions(source = "display")
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual variance",
       TRUE ~ "Other"
-    ),
-    ci = CIOptions(level = 0.7),
-    n_sigfig = 3,
-    parameter_names = ParameterNameOptions(source = "display")
-  )
+    )
 
   mod_sum <- summary(mod)
   info <- hyperion::get_model_parameter_info(mod, lookup_path)
@@ -758,17 +758,17 @@ test_that("parameter table: summary info without condition number or OFV", {
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
-    sections = section_rules(
+    ci = CIOptions(level = 0.7),
+    n_sigfig = 3,
+    parameter_names = ParameterNameOptions(source = "display")
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual variance",
       TRUE ~ "Other"
-    ),
-    ci = CIOptions(level = 0.7),
-    n_sigfig = 3,
-    parameter_names = ParameterNameOptions(source = "display")
-  )
+    )
 
   mod_sum <- summary(mod)
   info <- hyperion::get_model_parameter_info(mod, lookup_path)
@@ -793,17 +793,17 @@ test_that("parameter table: summary info without method", {
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
-    sections = section_rules(
+    ci = CIOptions(level = 0.7),
+    n_sigfig = 3,
+    parameter_names = ParameterNameOptions(source = "display")
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual variance",
       TRUE ~ "Other"
-    ),
-    ci = CIOptions(level = 0.7),
-    n_sigfig = 3,
-    parameter_names = ParameterNameOptions(source = "display")
-  )
+    )
 
   mod_sum <- summary(mod)
   info <- hyperion::get_model_parameter_info(mod, lookup_path)
@@ -830,15 +830,15 @@ test_that("symbol + fixed shows nicely", {
   mod <- hyperion::read_model(file.path(model_dir, paste0(model_run, ".mod")))
 
   spec <- TableSpec(
-    columns = c("name", "symbol", "fixed"),
-    sections = section_rules(
+    columns = c("name", "symbol", "fixed")
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual error",
       TRUE ~ "Other"
     )
-  )
 
   mod_sum <- summary(mod)
   info <- hyperion::get_model_parameter_info(mod, lookup_path)

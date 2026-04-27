@@ -2,7 +2,7 @@
 % Please edit documentation in R/spec-getters.R
 \name{get_spec_parameter_sections}
 \alias{get_spec_parameter_sections}
-\title{Get per-parameter section overrides from a TableSpec}
+\title{Get per-parameter section assignments from a TableSpec}
 \usage{
 get_spec_parameter_sections(spec, ...)
 }
@@ -10,16 +10,12 @@ get_spec_parameter_sections(spec, ...)
 \item{spec}{A TableSpec object.}
 }
 \value{
-A named list with \code{parameters} and \code{file}.
+A named list of parameter-name character vectors (possibly empty).
 }
 \description{
-Returns a list with two fields:
-\itemize{
-\item \code{parameters} — named list keyed by section label, where each value
-is a character vector of parameter names. Mirrors the shape passed
-to \code{set_spec_sections(parameters = ...)}.
-\item \code{file} — path to the lookup TOML, or \code{NULL} if none.
-}
+Returns the assignments as a named list keyed by section label, where
+each value is a character vector of parameter names. Mirrors the shape
+passed to \code{set_spec_sections(parameters = ...)}.
 }
 \seealso{
 \code{\link[=set_spec_sections]{set_spec_sections()}}.

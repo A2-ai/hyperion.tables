@@ -395,13 +395,21 @@ S7::method(set_spec_section_filter, AnySpec) <- function(
   if (!is.null(exclude) && !is.null(keep)) {
     rlang::abort("Pass either `exclude` or `keep`, not both.")
   }
-  if (is.null(exclude) && is.null(keep)) {
-    spec@section_filter <- list()
-  } else if (!is.null(exclude)) {
-    spec@section_filter <- list(exclude = as.character(exclude))
-  } else {
-    spec@section_filter <- list(keep = as.character(keep))
+  current <- spec@sections
+  next_keep <- NULL
+  next_exclude <- NULL
+  if (!is.null(exclude)) {
+    next_exclude <- as.character(exclude)
+  } else if (!is.null(keep)) {
+    next_keep <- as.character(keep)
   }
+  spec@sections <- Sections(
+    rules = current@rules,
+    assignments = current@assignments,
+    order = current@order,
+    filter_keep = next_keep,
+    filter_exclude = next_exclude
+  )
   spec
 }
 
@@ -433,36 +441,32 @@ capture_unnamed_dots <- function(..., .enquo = TRUE) {
 #' Set section assignments for a spec
 #'
 #' @description
-#' Controls how rows are grouped into sections, in what order, and whether
-#' to drop unlisted sections. For TableSpec there are three assignment
-#' layers, applied in order at [apply_table_spec()] time:
+#' Controls how rows are grouped into sections and in what order. For
+#' TableSpec there are three assignment layers, merged at setter time:
 #'
 #' 1. **Rules** (`...`) — formulas like `kind == "THETA" ~ "Structural"`,
 #'    evaluated via [dplyr::case_when()]. Base layer.
 #' 2. **File overrides** (`file =`) — path to a TOML where each entry can
-#'    carry a `section = "..."` field. Matched by parameter name. Overrides
-#'    rules for matching parameters.
+#'    carry a `section = "..."` field. Matched by parameter name. Read
+#'    once and folded into assignments; the path is not stored.
 #' 3. **Inline parameter overrides** (`parameters =`) — a *named list*
 #'    where each name is a section label and each value is a character
 #'    vector of parameter names that should belong to that section. E.g.
 #'    `parameters = list("Covariate Parameters" = c("CAP-D1", "WT-V2/F"))`.
-#'    Overrides rules and file. Conflicts with the file layer (same
-#'    parameter, different sections) emit a warning; inline wins.
+#'    Conflicts with the file layer (same parameter, different sections)
+#'    emit a warning; inline wins.
 #'
-#' Display ordering is also configured here:
+#' Display ordering is also configured here. `order` is a character
+#' vector of section labels giving the display order. Sections not
+#' listed land after, in encounter order. To filter to just the sections
+#' in `order`, follow up with `set_spec_section_filter(keep = order)`.
 #'
-#' * `order` — character vector of section labels giving the display order.
-#'   Sections not listed land after, in encounter order. By default
-#'   sections render in declaration order of the rules.
-#' * `keep_only` — when `TRUE`, drops sections not present in `order`.
-#'
-#' For SummarySpec only the rules layer applies — sections come from
-#' tags-per-model, not parameter names. Passing `parameters` or `file` to
-#' a SummarySpec errors.
+#' For SummarySpec only the rules and order layers apply. Passing
+#' `parameters` or `file` to a SummarySpec errors.
 #'
 #' Defaults of `NULL` for `parameters`, `file`, and `order` mean
-#' "leave alone." To clear: `parameters = list()`, `file = NA_character_`,
-#' `order = character(0)`.
+#' "leave alone." To clear assignments pass `parameters = list()`. To
+#' clear the order pass `order = character(0)`.
 #'
 #' Methods are available for the following classes:
 #'
@@ -476,7 +480,6 @@ capture_unnamed_dots <- function(..., .enquo = TRUE) {
 #'   with character vectors of parameter names. See examples.
 #' @param file TableSpec only. Path to a TOML for per-parameter overrides.
 #' @param order Character vector of section labels in display order.
-#' @param keep_only If `TRUE`, drop sections not listed in `order`.
 #' @return Modified spec.
 #' @seealso [get_spec_sections()], [get_spec_parameter_sections()].
 #' @export
@@ -505,99 +508,32 @@ set_spec_sections <- S7::new_generic(
     overwrite = FALSE,
     parameters = NULL,
     file = NULL,
-    order = NULL,
-    keep_only = FALSE
+    order = NULL
   ) {
     S7::S7_dispatch()
   }
 )
 
-# Apply the rule-formula layer (used by both methods).
 #' @noRd
-apply_section_rules_arg <- function(spec, dots, overwrite) {
+build_next_rules <- function(current_rules, dots, overwrite) {
   rule_dots <- capture_unnamed_dots(!!!dots)
   new_rules <- section_rules(!!!rule_dots)
   if (overwrite) {
-    spec@sections <- new_rules
+    new_rules
   } else {
-    spec@sections <- c(spec@sections, new_rules)
+    c(current_rules, new_rules)
   }
-  spec
 }
 
-# Apply the order/keep_only layer (used by both methods). NULL `order`
-# means "leave alone"; `character(0)` clears.
 #' @noRd
-apply_section_order_arg <- function(spec, order, keep_only) {
+resolve_next_order <- function(current_order, order) {
   if (is.null(order)) {
-    return(spec)
+    return(current_order)
   }
   if (length(order) == 0L) {
-    spec@section_order <- list()
-    return(spec)
+    return(NULL)
   }
-  spec@section_order <- list(
-    order = as.character(order),
-    keep_only = isTRUE(keep_only)
-  )
-  spec
-}
-
-# Validate inline `parameters` (named list shape) and convert to the
-# internal flat named character vector keyed by parameter name. NULL means
-# "leave alone"; an empty list clears.
-#' @noRd
-parameters_arg_to_flat <- function(parameters) {
-  if (is.list(parameters) && length(parameters) == 0L) {
-    return(character(0))
-  }
-  if (!is.list(parameters)) {
-    rlang::abort(
-      "`parameters` must be a named list keyed by section label, e.g. `list(\"Section A\" = c(\"p1\", \"p2\"))`."
-    )
-  }
-  if (is.null(names(parameters)) || any(!nzchar(names(parameters)))) {
-    rlang::abort(
-      "`parameters` must be a *named* list (each name is a section label)."
-    )
-  }
-  bad_values <- !vapply(
-    parameters,
-    function(v) {
-      is.character(v) &&
-        length(v) > 0L &&
-        !any(is.na(v)) &&
-        all(nzchar(v))
-    },
-    logical(1)
-  )
-  if (any(bad_values)) {
-    rlang::abort(
-      "Each value in `parameters` must be a non-empty character vector of parameter names (no NAs or empty strings)."
-    )
-  }
-  flat <- unlist(
-    lapply(seq_along(parameters), function(i) {
-      stats::setNames(
-        rep(names(parameters)[i], length(parameters[[i]])),
-        parameters[[i]]
-      )
-    }),
-    use.names = TRUE
-  )
-  if (is.null(flat)) {
-    flat <- character(0)
-  }
-  dup_idx <- anyDuplicated(names(flat))
-  if (dup_idx > 0L) {
-    dups <- unique(names(flat)[duplicated(names(flat))])
-    rlang::abort(paste0(
-      "`parameters` lists the same parameter under multiple sections: ",
-      paste(shQuote(dups), collapse = ", "),
-      "."
-    ))
-  }
-  flat
+  as.character(order)
 }
 
 #' Set section rules for a SummarySpec
@@ -611,7 +547,6 @@ parameters_arg_to_flat <- function(parameters) {
 #' @param parameters Must be `NULL`; errors otherwise.
 #' @param file Must be `NULL`; errors otherwise.
 #' @param order Display-order vector for sections.
-#' @param keep_only Drop sections not listed in `order`.
 #' @return Modified spec.
 S7::method(set_spec_sections, SummarySpec) <- function(
   spec,
@@ -619,16 +554,22 @@ S7::method(set_spec_sections, SummarySpec) <- function(
   overwrite = FALSE,
   parameters = NULL,
   file = NULL,
-  order = NULL,
-  keep_only = FALSE
+  order = NULL
 ) {
   if (!is.null(parameters) || !is.null(file)) {
     rlang::abort(
       "`parameters` and `file` are only supported on TableSpec; SummarySpec sections come from tag rules."
     )
   }
-  spec <- apply_section_rules_arg(spec, rlang::enquos(...), overwrite)
-  apply_section_order_arg(spec, order, keep_only)
+  current <- spec@sections
+  spec@sections <- Sections(
+    rules = build_next_rules(current@rules, rlang::enquos(...), overwrite),
+    assignments = current@assignments,
+    order = resolve_next_order(current@order, order),
+    filter_keep = current@filter_keep,
+    filter_exclude = current@filter_exclude
+  )
+  spec
 }
 
 #' Set section assignments for a TableSpec
@@ -642,10 +583,8 @@ S7::method(set_spec_sections, SummarySpec) <- function(
 #' @param parameters Named list keyed by section label (each value is a
 #'   character vector of parameter names), or `NULL` to leave alone, or
 #'   `list()` to clear.
-#' @param file Path to a TOML, or `NULL` to leave alone, or `NA_character_`
-#'   to clear.
+#' @param file Path to a TOML, or `NULL` to leave alone.
 #' @param order Display-order vector for sections.
-#' @param keep_only Drop sections not listed in `order`.
 #' @return Modified spec.
 S7::method(set_spec_sections, TableSpec) <- function(
   spec,
@@ -653,29 +592,47 @@ S7::method(set_spec_sections, TableSpec) <- function(
   overwrite = FALSE,
   parameters = NULL,
   file = NULL,
-  order = NULL,
-  keep_only = FALSE
+  order = NULL
 ) {
-  spec <- apply_section_rules_arg(spec, rlang::enquos(...), overwrite)
-
-  if (!is.null(parameters)) {
-    spec@parameter_sections <- parameters_arg_to_flat(parameters)
-  }
+  current <- spec@sections
+  next_rules <- build_next_rules(current@rules, rlang::enquos(...), overwrite)
+  next_assign <- current@assignments
 
   if (!is.null(file)) {
     if (!is.character(file) || length(file) != 1L) {
-      rlang::abort("`file` must be a single character path, NA, or NULL.")
+      rlang::abort("`file` must be a single character path or NULL.")
     }
     if (is.na(file)) {
-      spec@lookup_path <- NULL
+      rlang::abort(
+        "`file` must be a path; pass `parameters = list()` to clear assignments."
+      )
+    }
+    path <- normalizePath(file, mustWork = TRUE)
+    file_assign <- toml_lookup_to_assignments(read_lookup_toml(path))
+    next_assign <- merge_assignments(next_assign, file_assign, source = "file")
+  }
+
+  if (!is.null(parameters)) {
+    if (is.list(parameters) && length(parameters) == 0L) {
+      next_assign <- list()
     } else {
-      # normalizePath(mustWork = TRUE) errors if the file is missing AND
-      # canonicalizes to an absolute path so the spec survives setwd().
-      spec@lookup_path <- normalizePath(file, mustWork = TRUE)
+      next_assign <- merge_assignments(
+        next_assign,
+        parameters,
+        source = "inline",
+        warn_on_conflict = TRUE
+      )
     }
   }
 
-  apply_section_order_arg(spec, order, keep_only)
+  spec@sections <- Sections(
+    rules = next_rules,
+    assignments = next_assign,
+    order = resolve_next_order(current@order, order),
+    filter_keep = current@filter_keep,
+    filter_exclude = current@filter_exclude
+  )
+  spec
 }
 
 # ==============================================================================

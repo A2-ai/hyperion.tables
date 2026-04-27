@@ -29,15 +29,15 @@ test_that("renderers accept TableSpec render overrides", {
       missing_text = "NA"
     ),
     missing_text = "NA",
-    missing_apply_to = "numeric",
-    sections = section_rules(
+    missing_apply_to = "numeric"
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual error",
       TRUE ~ "Other"
     )
-  )
 
   table_data <- params |>
     apply_table_spec(spec, mod_info) |>

@@ -158,22 +158,3 @@ comparison_suffix_columns <- function() {
     "shrinkage"
   )
 }
-
-#' @noRd
-sections_property <- function() {
-  S7::new_property(
-    class = S7::class_list,
-    default = list(),
-    setter = function(self, value) {
-      if (
-        length(value) > 0 &&
-          all(vapply(value, rlang::is_formula, logical(1)))
-      ) {
-        # validation only — no dedup; overwrite=TRUE in set_spec_sections
-        # handles intentional replacement
-      }
-      self@sections <- value
-      self
-    }
-  )
-}
