@@ -8,6 +8,7 @@
 set_spec_sections(
   spec,
   ...,
+  sections = NULL,
   overwrite = FALSE,
   parameters = NULL,
   file = NULL,
@@ -18,6 +19,9 @@ set_spec_sections(
 \item{spec}{A TableSpec object.}
 
 \item{...}{Section rule formulas.}
+
+\item{sections}{List of section rule formulas (e.g. from
+\code{\link[=section_rules]{section_rules()}}).}
 
 \item{overwrite}{Append vs replace for rules.}
 

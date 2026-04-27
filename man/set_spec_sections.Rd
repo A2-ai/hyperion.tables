@@ -7,6 +7,7 @@
 set_spec_sections(
   spec,
   ...,
+  sections = NULL,
   overwrite = FALSE,
   parameters = NULL,
   file = NULL,
@@ -16,7 +17,12 @@ set_spec_sections(
 \arguments{
 \item{spec}{A TableSpec or SummarySpec object.}
 
-\item{...}{Section rule formulas (LHS condition ~ RHS label).}
+\item{...}{Section rule formulas (LHS condition ~ RHS label). Equivalent
+to passing them via \verb{sections =}; kept for backward compatibility.}
+
+\item{sections}{A list of section rule formulas, typically built with
+\code{\link[=section_rules]{section_rules()}}. Combined with any rules passed via \code{...} (the
+\code{sections} arg comes first).}
 
 \item{overwrite}{If \code{FALSE} (default), append to existing rules. If
 \code{TRUE}, replace them.}
@@ -70,9 +76,11 @@ Methods are available for the following classes:
 \examples{
 spec <- TableSpec() |>
   set_spec_sections(
-    kind == "THETA" ~ "Structural Parameters",
-    kind == "OMEGA" ~ "Interindividual Variability",
-    kind == "SIGMA" ~ "Residual Error",
+    sections = section_rules(
+      kind == "THETA" ~ "Structural Parameters",
+      kind == "OMEGA" ~ "Interindividual Variability",
+      kind == "SIGMA" ~ "Residual Error"
+    ),
     parameters = list(
       "Covariate Parameters" = c("CAP-D1", "WT-V2/F", "PSO-CL/F")
     ),

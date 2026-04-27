@@ -473,7 +473,11 @@ capture_unnamed_dots <- function(..., .enquo = TRUE) {
 #' `r doclisting::methods_list("set_spec_sections")`
 #'
 #' @param spec A TableSpec or SummarySpec object.
-#' @param ... Section rule formulas (LHS condition ~ RHS label).
+#' @param ... Section rule formulas (LHS condition ~ RHS label). Equivalent
+#'   to passing them via `sections =`; kept for backward compatibility.
+#' @param sections A list of section rule formulas, typically built with
+#'   [section_rules()]. Combined with any rules passed via `...` (the
+#'   `sections` arg comes first).
 #' @param overwrite If `FALSE` (default), append to existing rules. If
 #'   `TRUE`, replace them.
 #' @param parameters TableSpec only. Named list keyed by section label
@@ -486,9 +490,11 @@ capture_unnamed_dots <- function(..., .enquo = TRUE) {
 #' @examples
 #' spec <- TableSpec() |>
 #'   set_spec_sections(
-#'     kind == "THETA" ~ "Structural Parameters",
-#'     kind == "OMEGA" ~ "Interindividual Variability",
-#'     kind == "SIGMA" ~ "Residual Error",
+#'     sections = section_rules(
+#'       kind == "THETA" ~ "Structural Parameters",
+#'       kind == "OMEGA" ~ "Interindividual Variability",
+#'       kind == "SIGMA" ~ "Residual Error"
+#'     ),
 #'     parameters = list(
 #'       "Covariate Parameters" = c("CAP-D1", "WT-V2/F", "PSO-CL/F")
 #'     ),
@@ -505,6 +511,7 @@ set_spec_sections <- S7::new_generic(
   function(
     spec,
     ...,
+    sections = NULL,
     overwrite = FALSE,
     parameters = NULL,
     file = NULL,
@@ -515,13 +522,14 @@ set_spec_sections <- S7::new_generic(
 )
 
 #' @noRd
-build_next_rules <- function(current_rules, dots, overwrite) {
+build_next_rules <- function(current_rules, sections_arg, dots, overwrite) {
   rule_dots <- capture_unnamed_dots(!!!dots)
-  new_rules <- section_rules(!!!rule_dots)
+  dot_rules <- section_rules(!!!rule_dots)
+  all_new <- c(sections_arg %||% list(), dot_rules)
   if (overwrite) {
-    new_rules
+    all_new
   } else {
-    c(current_rules, new_rules)
+    c(current_rules, all_new)
   }
 }
 
@@ -543,6 +551,8 @@ resolve_next_order <- function(current_order, order) {
 #'
 #' @param spec A SummarySpec object.
 #' @param ... Section rule formulas.
+#' @param sections List of section rule formulas (e.g. from
+#'   [section_rules()]).
 #' @param overwrite Append vs replace for rules.
 #' @param parameters Must be `NULL`; errors otherwise.
 #' @param file Must be `NULL`; errors otherwise.
@@ -551,6 +561,7 @@ resolve_next_order <- function(current_order, order) {
 S7::method(set_spec_sections, SummarySpec) <- function(
   spec,
   ...,
+  sections = NULL,
   overwrite = FALSE,
   parameters = NULL,
   file = NULL,
@@ -563,7 +574,12 @@ S7::method(set_spec_sections, SummarySpec) <- function(
   }
   current <- spec@sections
   spec@sections <- Sections(
-    rules = build_next_rules(current@rules, rlang::enquos(...), overwrite),
+    rules = build_next_rules(
+      current@rules,
+      sections,
+      rlang::enquos(...),
+      overwrite
+    ),
     assignments = current@assignments,
     order = resolve_next_order(current@order, order),
     filter_keep = current@filter_keep,
@@ -579,6 +595,8 @@ S7::method(set_spec_sections, SummarySpec) <- function(
 #'
 #' @param spec A TableSpec object.
 #' @param ... Section rule formulas.
+#' @param sections List of section rule formulas (e.g. from
+#'   [section_rules()]).
 #' @param overwrite Append vs replace for rules.
 #' @param parameters Named list keyed by section label (each value is a
 #'   character vector of parameter names), or `NULL` to leave alone, or
@@ -589,13 +607,19 @@ S7::method(set_spec_sections, SummarySpec) <- function(
 S7::method(set_spec_sections, TableSpec) <- function(
   spec,
   ...,
+  sections = NULL,
   overwrite = FALSE,
   parameters = NULL,
   file = NULL,
   order = NULL
 ) {
   current <- spec@sections
-  next_rules <- build_next_rules(current@rules, rlang::enquos(...), overwrite)
+  next_rules <- build_next_rules(
+    current@rules,
+    sections,
+    rlang::enquos(...),
+    overwrite
+  )
   next_assign <- current@assignments
 
   if (!is.null(file)) {

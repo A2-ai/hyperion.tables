@@ -32,11 +32,13 @@ model_run <- "run003"
 spec <- TableSpec() |>
   set_spec_transforms(omega = "cv") |>
   set_spec_sections(
-    kind == "THETA" ~ "Structural model parameters",
-    kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
-    kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
-    kind == "SIGMA" ~ "Residual variance",
-    TRUE ~ "Other"
+    sections = section_rules(
+      kind == "THETA" ~ "Structural model parameters",
+      kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
+      kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
+      kind == "SIGMA" ~ "Residual variance",
+      TRUE ~ "Other"
+    )
   ) |>
   set_spec_sigfig(3) |>
   drop_spec_columns("variability", "shrinkage", "rse") |>
@@ -70,11 +72,13 @@ get_parameters(parent_mod) |>
 spec <- TableSpec() |>
   set_spec_transforms(omega = "cv") |>
   set_spec_sections(
-    kind == "THETA" ~ "Structural model parameters",
-    kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
-    kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
-    kind == "SIGMA" ~ "Residual error",
-    TRUE ~ "Other"
+    sections = section_rules(
+      kind == "THETA" ~ "Structural model parameters",
+      kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
+      kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
+      kind == "SIGMA" ~ "Residual error",
+      TRUE ~ "Other"
+    )
   ) |>
   set_spec_sigfig(3) |>
   set_spec_columns("symbol", "estimate", "ci", "rse", "pct_change") |>
@@ -119,11 +123,13 @@ comp |>
 spec <- TableSpec() |>
   set_spec_transforms(omega = "cv") |>
   set_spec_sections(
-    kind == "THETA" ~ "Structural model parameters",
-    kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
-    kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
-    kind == "SIGMA" ~ "Residual error",
-    TRUE ~ "Other"
+    sections = section_rules(
+      kind == "THETA" ~ "Structural model parameters",
+      kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
+      kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
+      kind == "SIGMA" ~ "Residual error",
+      TRUE ~ "Other"
+    )
   ) |>
   set_spec_sigfig(3) |>
   set_spec_columns("symbol", "fixed", "estimate") |>

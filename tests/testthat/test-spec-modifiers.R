@@ -262,6 +262,41 @@ test_that("set_spec_sections overwrites when specified", {
   expect_length(spec@sections@rules, 1)
 })
 
+test_that("set_spec_sections accepts `sections =` for both spec types", {
+  table_spec <- TableSpec() |>
+    set_spec_sections(
+      sections = section_rules(
+        kind == "THETA" ~ "Structural",
+        kind == "OMEGA" ~ "IIV"
+      )
+    )
+  expect_length(table_spec@sections@rules, 2)
+
+  summary_spec <- SummarySpec() |>
+    set_spec_sections(
+      sections = section_rules("base" %in% tags ~ "Base Models")
+    )
+  expect_length(summary_spec@sections@rules, 1)
+})
+
+test_that("set_spec_sections combines `sections =` and `...` (sections first)", {
+  spec <- TableSpec() |>
+    set_spec_sections(
+      kind == "SIGMA" ~ "Residual",
+      sections = section_rules(
+        kind == "THETA" ~ "Structural",
+        kind == "OMEGA" ~ "IIV"
+      )
+    )
+  expect_length(spec@sections@rules, 3)
+  labels <- unname(vapply(
+    spec@sections@rules,
+    function(q) rlang::quo_get_expr(q)[[3]],
+    character(1)
+  ))
+  expect_equal(labels, c("Structural", "IIV", "Residual"))
+})
+
 test_that("set_spec_filter works", {
   spec <- TableSpec() |> set_spec_filter(!fixed, diagonal)
   expect_length(spec@row_filter, 2)
