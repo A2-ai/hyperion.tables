@@ -186,26 +186,26 @@ test_that("set_spec_section_filter clears with no args", {
   expect_identical(spec@section_filter, list())
 })
 
-test_that("set_spec_section_order stores order and keep_only flag", {
+test_that("set_spec_sections(order=, keep_only=) stores order config", {
   spec <- TableSpec() |>
-    set_spec_section_order(c("A", "B"))
+    set_spec_sections(order = c("A", "B"))
   expect_identical(
     spec@section_order,
     list(order = c("A", "B"), keep_only = FALSE)
   )
 
   spec2 <- TableSpec() |>
-    set_spec_section_order(c("A", "B"), keep_only = TRUE)
+    set_spec_sections(order = c("A", "B"), keep_only = TRUE)
   expect_identical(
     spec2@section_order,
     list(order = c("A", "B"), keep_only = TRUE)
   )
 })
 
-test_that("set_spec_section_order clears with NULL", {
+test_that("set_spec_sections(order = character(0)) clears the order", {
   spec <- TableSpec() |>
-    set_spec_section_order(c("A", "B")) |>
-    set_spec_section_order(NULL)
+    set_spec_sections(order = c("A", "B")) |>
+    set_spec_sections(order = character(0))
   expect_identical(spec@section_order, list())
 })
 

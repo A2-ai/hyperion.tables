@@ -127,15 +127,15 @@ test_that("get_spec_section_filter returns set keep value", {
   )
 })
 
-test_that("get_spec_section_order returns empty list by default", {
-  expect_identical(get_spec_section_order(TableSpec()), list())
+test_that("section_order on spec is empty list by default", {
+  expect_identical(TableSpec()@section_order, list())
 })
 
-test_that("get_spec_section_order returns set value", {
+test_that("set_spec_sections(order=, keep_only=) populates section_order", {
   spec <- TableSpec() |>
-    set_spec_section_order(c("A", "B"), keep_only = TRUE)
+    set_spec_sections(order = c("A", "B"), keep_only = TRUE)
   expect_identical(
-    get_spec_section_order(spec),
+    spec@section_order,
     list(order = c("A", "B"), keep_only = TRUE)
   )
 })

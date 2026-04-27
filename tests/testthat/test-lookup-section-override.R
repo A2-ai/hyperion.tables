@@ -58,7 +58,7 @@ test_that("inline parameters override warns on conflict with file", {
       kind == "OMEGA" ~ "Variability",
       kind == "SIGMA" ~ "Residual",
       file = testthat::test_path("lookup-section.toml"),
-      parameters = c(TVCL = "Inline Override")
+      parameters = list("Inline Override" = "TVCL")
     )
 
   expect_warning(
@@ -86,7 +86,7 @@ test_that("set_spec_sections rejects parameters/file on SummarySpec", {
     SummarySpec() |>
       set_spec_sections(
         TRUE ~ "All",
-        parameters = c(run001.mod = "Custom")
+        parameters = list("Custom" = "run001.mod")
       ),
     "TableSpec"
   )
@@ -97,14 +97,14 @@ test_that("set_spec_sections rejects parameters/file on SummarySpec", {
   )
 })
 
-test_that("get_spec_parameter_sections returns inline + file pair", {
+test_that("get_spec_parameter_sections returns inline list + file pair", {
   spec <- TableSpec() |>
     set_spec_sections(
       file = testthat::test_path("lookup-section.toml"),
-      parameters = c(TVCL = "X")
+      parameters = list("X" = "TVCL")
     )
   result <- get_spec_parameter_sections(spec)
-  expect_equal(result$parameters, c(TVCL = "X"))
+  expect_equal(result$parameters, list(X = "TVCL"))
   expect_equal(basename(result$file), "lookup-section.toml")
 })
 
@@ -121,7 +121,7 @@ test_that("inline parameters work without rules or file", {
   info <- hyperion::get_model_parameter_info(mod)
 
   spec <- TableSpec() |>
-    set_spec_sections(parameters = c(TVCL = "Inline Only"))
+    set_spec_sections(parameters = list("Inline Only" = "TVCL"))
 
   df <- apply_table_spec(params, spec, info)
   expect_equal(df$section[df$user_name == "TVCL"], "Inline Only")
@@ -148,7 +148,7 @@ test_that("file + parameters that agree do not warn", {
     set_spec_sections(
       kind == "OMEGA" ~ "Variability",
       file = testthat::test_path("lookup-section.toml"),
-      parameters = c(TVCL = "Custom: Clearance Group")
+      parameters = list("Custom: Clearance Group" = "TVCL")
     )
 
   expect_warning(
@@ -177,10 +177,8 @@ test_that("section_order keep_only drops TOML-injected sections when omitted", {
       kind == "THETA" ~ "Structural",
       kind == "OMEGA" ~ "Variability",
       kind == "SIGMA" ~ "Residual",
-      file = testthat::test_path("lookup-section.toml")
-    ) |>
-    set_spec_section_order(
-      c("Structural", "Variability", "Residual"),
+      file = testthat::test_path("lookup-section.toml"),
+      order = c("Structural", "Variability", "Residual"),
       keep_only = TRUE
     )
 
@@ -209,7 +207,7 @@ test_that("inline parameters warn when no row matches", {
   info <- hyperion::get_model_parameter_info(mod)
 
   spec <- TableSpec() |>
-    set_spec_sections(parameters = c(NOT_A_PARAM = "X"))
+    set_spec_sections(parameters = list("X" = "NOT_A_PARAM"))
 
   expect_warning(
     apply_table_spec(params, spec, info),
@@ -237,12 +235,51 @@ test_that("SummarySpec section_filter without rules runs (and warns on typo)", {
   )
 })
 
-# Issue 2 follow-up
-test_that("set_spec_sections rejects duplicate parameter names", {
+# Issue 2 follow-up — same parameter listed under multiple sections
+test_that("set_spec_sections rejects parameter assigned to multiple sections", {
   expect_error(
     TableSpec() |>
-      set_spec_sections(parameters = c(TVCL = "A", TVCL = "B")),
-    "duplicate name"
+      set_spec_sections(
+        parameters = list("A" = "TVCL", "B" = "TVCL")
+      ),
+    "multiple sections|TVCL"
+  )
+})
+
+# Same parameter listed twice within one section
+test_that("set_spec_sections rejects duplicate parameter within one section", {
+  expect_error(
+    TableSpec() |>
+      set_spec_sections(parameters = list("A" = c("TVCL", "TVCL"))),
+    "multiple sections|TVCL"
+  )
+})
+
+# Validation of bad shapes
+test_that("set_spec_sections rejects malformed parameters arg", {
+  # not a list
+  expect_error(
+    TableSpec() |>
+      set_spec_sections(parameters = c(TVCL = "A")),
+    "named list"
+  )
+  # unnamed list
+  expect_error(
+    TableSpec() |>
+      set_spec_sections(parameters = list("TVCL")),
+    "named"
+  )
+  # empty character vector value
+  expect_error(
+    TableSpec() |>
+      set_spec_sections(parameters = list("A" = character(0))),
+    "non-empty"
+  )
+  # NA inside parameter list
+  expect_error(
+    TableSpec() |>
+      set_spec_sections(parameters = list("A" = NA_character_)),
+    "non-empty"
   )
 })
 
@@ -252,33 +289,6 @@ test_that("set_spec_sections(file=) errors on missing file", {
     TableSpec() |>
       set_spec_sections(file = tempfile(fileext = ".toml")),
     "No such file|cannot|does not exist"
-  )
-})
-
-# Issue 8 — NA-asymmetric conflict detection
-test_that("inline NA conflicting with file value still warns", {
-  testthat::skip_if_not_installed("tomledit")
-  model_dir <- system.file(
-    "extdata",
-    "models",
-    "onecmt",
-    package = "hyperion.tables"
-  )
-  mod <- hyperion::read_model(file.path(model_dir, "run001.mod"))
-  params <- hyperion::get_parameters(mod)
-  info <- hyperion::get_model_parameter_info(mod)
-
-  # File assigns TVCL → "Custom: Clearance Group"; inline overrides with NA.
-  # `(NA, "x")` must trip the conflict warning.
-  spec <- TableSpec() |>
-    set_spec_sections(
-      file = testthat::test_path("lookup-section.toml"),
-      parameters = c(TVCL = NA_character_)
-    )
-
-  expect_warning(
-    apply_table_spec(params, spec, info),
-    "conflict.*TVCL"
   )
 })
 
@@ -295,7 +305,7 @@ test_that("partial-match override applies what it can and warns about the rest",
   info <- hyperion::get_model_parameter_info(mod)
 
   spec <- TableSpec() |>
-    set_spec_sections(parameters = c(TVCL = "A", NOT_A_PARAM = "B"))
+    set_spec_sections(parameters = list("A" = c("TVCL", "NOT_A_PARAM")))
 
   expect_warning(
     df <- apply_table_spec(params, spec, info),

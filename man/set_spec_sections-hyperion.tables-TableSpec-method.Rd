@@ -5,7 +5,15 @@
 \title{Set section assignments for a TableSpec}
 \usage{
 ## S7 method for class <hyperion.tables::TableSpec>
-set_spec_sections(spec, ..., overwrite = FALSE, parameters = NULL, file = NULL)
+set_spec_sections(
+  spec,
+  ...,
+  overwrite = FALSE,
+  parameters = NULL,
+  file = NULL,
+  order = NULL,
+  keep_only = FALSE
+)
 }
 \arguments{
 \item{spec}{A TableSpec object.}
@@ -14,16 +22,21 @@ set_spec_sections(spec, ..., overwrite = FALSE, parameters = NULL, file = NULL)
 
 \item{overwrite}{Append vs replace for rules.}
 
-\item{parameters}{Named character vector of per-parameter overrides, or
-\code{NULL} to leave alone, or \code{character(0)} to clear.}
+\item{parameters}{Named list keyed by section label (each value is a
+character vector of parameter names), or \code{NULL} to leave alone, or
+\code{list()} to clear.}
 
 \item{file}{Path to a TOML, or \code{NULL} to leave alone, or \code{NA_character_}
 to clear.}
+
+\item{order}{Display-order vector for sections.}
+
+\item{keep_only}{Drop sections not listed in \code{order}.}
 }
 \value{
 Modified spec.
 }
 \description{
-Three layers: rules, file overrides, inline parameter overrides. See
-\code{\link[=set_spec_sections]{set_spec_sections()}} for full description.
+Three assignment layers (rules, file overrides, inline overrides) plus
+display-order configuration. See \code{\link[=set_spec_sections]{set_spec_sections()}} for full details.
 }

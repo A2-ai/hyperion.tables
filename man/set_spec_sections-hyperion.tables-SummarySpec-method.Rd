@@ -5,7 +5,15 @@
 \title{Set section rules for a SummarySpec}
 \usage{
 ## S7 method for class <hyperion.tables::SummarySpec>
-set_spec_sections(spec, ..., overwrite = FALSE, parameters = NULL, file = NULL)
+set_spec_sections(
+  spec,
+  ...,
+  overwrite = FALSE,
+  parameters = NULL,
+  file = NULL,
+  order = NULL,
+  keep_only = FALSE
+)
 }
 \arguments{
 \item{spec}{A SummarySpec object.}
@@ -17,11 +25,15 @@ set_spec_sections(spec, ..., overwrite = FALSE, parameters = NULL, file = NULL)
 \item{parameters}{Must be \code{NULL}; errors otherwise.}
 
 \item{file}{Must be \code{NULL}; errors otherwise.}
+
+\item{order}{Display-order vector for sections.}
+
+\item{keep_only}{Drop sections not listed in \code{order}.}
 }
 \value{
 Modified spec.
 }
 \description{
-SummarySpec only supports the rules layer. \code{parameters} / \code{file} are
-rejected because summary tables have no per-parameter concept.
+SummarySpec supports the rules and order layers. \code{parameters} / \code{file}
+are rejected because summary tables have no per-parameter concept.
 }

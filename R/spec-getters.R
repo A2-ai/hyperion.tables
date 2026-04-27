@@ -174,30 +174,13 @@ S7::method(get_spec_section_filter, AnySpec) <- function(spec) {
   spec@section_filter
 }
 
-#' Get explicit section display order from a spec
-#'
-#' Returns a list `list(order = c(...), keep_only = TRUE/FALSE)` if an
-#' override has been set via [set_spec_section_order()], or empty `list()`
-#' when no override is in effect (sections fall back to the order of their
-#' declaration in [section_rules()]).
-#'
-#' @param spec A TableSpec or SummarySpec object.
-#' @return A named list (possibly empty).
-#' @seealso [set_spec_section_order()].
-#' @export
-get_spec_section_order <- S7::new_generic("get_spec_section_order", "spec")
-
-S7::method(get_spec_section_order, AnySpec) <- function(spec) {
-  spec@section_order
-}
-
 #' Get per-parameter section overrides from a TableSpec
 #'
 #' Returns a list with two fields:
-#'   * `parameters` — named character vector of inline overrides
-#'     (set via `set_spec_sections(parameters = ...)`).
-#'   * `file` — path to the lookup TOML, or `NULL` if none
-#'     (set via `set_spec_sections(file = ...)`).
+#'   * `parameters` — named list keyed by section label, where each value
+#'     is a character vector of parameter names. Mirrors the shape passed
+#'     to `set_spec_sections(parameters = ...)`.
+#'   * `file` — path to the lookup TOML, or `NULL` if none.
 #'
 #' @param spec A TableSpec object.
 #' @return A named list with `parameters` and `file`.
@@ -209,8 +192,14 @@ get_spec_parameter_sections <- S7::new_generic(
 )
 
 S7::method(get_spec_parameter_sections, TableSpec) <- function(spec) {
+  flat <- spec@parameter_sections
+  parameters_list <- if (length(flat) == 0L) {
+    list()
+  } else {
+    split(unname(names(flat)), unname(flat))
+  }
   list(
-    parameters = spec@parameter_sections,
+    parameters = parameters_list,
     file = spec@lookup_path
   )
 }

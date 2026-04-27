@@ -15,10 +15,10 @@ A named list with \code{parameters} and \code{file}.
 \description{
 Returns a list with two fields:
 \itemize{
-\item \code{parameters} — named character vector of inline overrides
-(set via \code{set_spec_sections(parameters = ...)}).
-\item \code{file} — path to the lookup TOML, or \code{NULL} if none
-(set via \code{set_spec_sections(file = ...)}).
+\item \code{parameters} — named list keyed by section label, where each value
+is a character vector of parameter names. Mirrors the shape passed
+to \code{set_spec_sections(parameters = ...)}.
+\item \code{file} — path to the lookup TOML, or \code{NULL} if none.
 }
 }
 \seealso{

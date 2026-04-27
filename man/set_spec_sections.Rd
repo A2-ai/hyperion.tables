@@ -4,7 +4,15 @@
 \alias{set_spec_sections}
 \title{Set section assignments for a spec}
 \usage{
-set_spec_sections(spec, ..., overwrite = FALSE, parameters = NULL, file = NULL)
+set_spec_sections(
+  spec,
+  ...,
+  overwrite = FALSE,
+  parameters = NULL,
+  file = NULL,
+  order = NULL,
+  keep_only = FALSE
+)
 }
 \arguments{
 \item{spec}{A TableSpec or SummarySpec object.}
@@ -14,36 +22,51 @@ set_spec_sections(spec, ..., overwrite = FALSE, parameters = NULL, file = NULL)
 \item{overwrite}{If \code{FALSE} (default), append to existing rules. If
 \code{TRUE}, replace them.}
 
-\item{parameters}{TableSpec only. Named character vector of
-per-parameter section overrides.}
+\item{parameters}{TableSpec only. Named list keyed by section label
+with character vectors of parameter names. See examples.}
 
 \item{file}{TableSpec only. Path to a TOML for per-parameter overrides.}
+
+\item{order}{Character vector of section labels in display order.}
+
+\item{keep_only}{If \code{TRUE}, drop sections not listed in \code{order}.}
 }
 \value{
 Modified spec.
 }
 \description{
-Controls how rows are grouped into sections. For TableSpec there are
-three layers, applied in order at \code{\link[=apply_table_spec]{apply_table_spec()}} time:
+Controls how rows are grouped into sections, in what order, and whether
+to drop unlisted sections. For TableSpec there are three assignment
+layers, applied in order at \code{\link[=apply_table_spec]{apply_table_spec()}} time:
 \enumerate{
 \item \strong{Rules} (\code{...}) — formulas like \code{kind == "THETA" ~ "Structural"},
-evaluated against the data via \code{\link[dplyr:case_when]{dplyr::case_when()}}. Base layer.
+evaluated via \code{\link[dplyr:case_when]{dplyr::case_when()}}. Base layer.
 \item \strong{File overrides} (\verb{file =}) — path to a TOML where each entry can
 carry a \code{section = "..."} field. Matched by parameter name. Overrides
 rules for matching parameters.
-\item \strong{Inline parameter overrides} (\verb{parameters =}) — a named character
-vector like \code{c(CAP_D1 = "Covariate", TVCL = "Custom")}. Overrides both
-rules and file. Conflicts with \verb{file =} (same parameter, different
-sections) emit a warning and inline wins.
+\item \strong{Inline parameter overrides} (\verb{parameters =}) — a \emph{named list}
+where each name is a section label and each value is a character
+vector of parameter names that should belong to that section. E.g.
+\code{parameters = list("Covariate Parameters" = c("CAP-D1", "WT-V2/F"))}.
+Overrides rules and file. Conflicts with the file layer (same
+parameter, different sections) emit a warning; inline wins.
 }
 
-For SummarySpec only rules apply — sections come from tags-per-model,
-not parameter names. Passing \code{parameters} or \code{file} to a SummarySpec
-errors.
+Display ordering is also configured here:
+\itemize{
+\item \code{order} — character vector of section labels giving the display order.
+Sections not listed land after, in encounter order. By default
+sections render in declaration order of the rules.
+\item \code{keep_only} — when \code{TRUE}, drops sections not present in \code{order}.
+}
 
-Defaults of \code{NULL} for \code{parameters} and \code{file} mean "leave alone." Pass
-\code{character(0)} to clear \code{parameters}; pass \code{NA_character_} to clear
-\code{file}.
+For SummarySpec only the rules layer applies — sections come from
+tags-per-model, not parameter names. Passing \code{parameters} or \code{file} to
+a SummarySpec errors.
+
+Defaults of \code{NULL} for \code{parameters}, \code{file}, and \code{order} mean
+"leave alone." To clear: \code{parameters = list()}, \code{file = NA_character_},
+\code{order = character(0)}.
 
 Methods are available for the following classes:
 
@@ -55,9 +78,18 @@ Methods are available for the following classes:
 \examples{
 spec <- TableSpec() |>
   set_spec_sections(
-    kind == "THETA" ~ "Structural",
-    kind == "OMEGA" ~ "IIV",
-    parameters = c(CAP_D1 = "Covariate Parameters")
+    kind == "THETA" ~ "Structural Parameters",
+    kind == "OMEGA" ~ "Interindividual Variability",
+    kind == "SIGMA" ~ "Residual Error",
+    parameters = list(
+      "Covariate Parameters" = c("CAP-D1", "WT-V2/F", "PSO-CL/F")
+    ),
+    order = c(
+      "Structural Parameters",
+      "Covariate Parameters",
+      "Interindividual Variability",
+      "Residual Error"
+    )
   )
 }
 \seealso{
