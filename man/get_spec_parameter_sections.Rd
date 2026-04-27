@@ -8,6 +8,8 @@ get_spec_parameter_sections(spec, ...)
 }
 \arguments{
 \item{spec}{A TableSpec object.}
+
+\item{...}{Not used.}
 }
 \value{
 A named list of parameter-name character vectors (possibly empty).

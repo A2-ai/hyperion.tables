@@ -21,6 +21,13 @@ Modified spec.
 \code{set_spec_variability()} is an S7 generic that controls how the variability
 display column is constructed.
 }
+\details{
+Methods are available for the following classes:
+
+\itemize{
+\item \code{\link[=set_spec_variability-hyperion.tables-TableSpec-method]{hyperion.tables::TableSpec}}
+}
+}
 \examples{
 spec <- TableSpec() |>
   set_spec_variability(

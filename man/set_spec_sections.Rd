@@ -11,7 +11,9 @@ set_spec_sections(
   overwrite = FALSE,
   parameters = NULL,
   file = NULL,
-  order = NULL
+  order = NULL,
+  keep = NULL,
+  exclude = NULL
 )
 }
 \arguments{
@@ -33,6 +35,14 @@ with character vectors of parameter names. See examples.}
 \item{file}{TableSpec only. Path to a TOML for per-parameter overrides.}
 
 \item{order}{Character vector of section labels in display order.}
+
+\item{keep}{Character vector of section labels to keep (everything else is
+dropped), optionally including \code{NA} to also keep unmatched rows. Mutually
+exclusive with \code{exclude}. Pass \code{character(0)} to clear the current filter.}
+
+\item{exclude}{Character vector of section labels to drop, optionally
+including \code{NA} to also drop unmatched rows. Mutually exclusive with \code{keep}.
+Pass \code{character(0)} to clear the current filter.}
 }
 \value{
 Modified spec.
@@ -45,11 +55,11 @@ TableSpec there are three assignment layers, merged at setter time:
 evaluated via \code{\link[dplyr:case_when]{dplyr::case_when()}}. Base layer.
 \item \strong{File overrides} (\verb{file =}) — path to a TOML where each entry can
 carry a \code{section = "..."} field. Matched by parameter name. Read
-once and folded into assignments; the path is not stored.
+once and folded into assignments.
 \item \strong{Inline parameter overrides} (\verb{parameters =}) — a \emph{named list}
 where each name is a section label and each value is a character
 vector of parameter names that should belong to that section. E.g.
-\code{parameters = list("Covariate Parameters" = c("CAP-D1", "WT-V2/F"))}.
+\code{parameters = list("Covariate Parameters" = c("CAPSULE", "WT-VP"))}.
 Conflicts with the file layer (same parameter, different sections)
 emit a warning; inline wins.
 }
@@ -57,14 +67,15 @@ emit a warning; inline wins.
 Display ordering is also configured here. \code{order} is a character
 vector of section labels giving the display order. Sections not
 listed land after, in encounter order. To filter to just the sections
-in \code{order}, follow up with \code{set_spec_section_filter(keep = order)}.
+in \code{order}, pass \code{keep = order}.
 
 For SummarySpec only the rules and order layers apply. Passing
 \code{parameters} or \code{file} to a SummarySpec errors.
 
-Defaults of \code{NULL} for \code{parameters}, \code{file}, and \code{order} mean
+Defaults of \code{NULL} for \code{parameters}, \code{file}, \code{order}, \code{keep}, and \code{exclude} mean
 "leave alone." To clear assignments pass \code{parameters = list()}. To
-clear the order pass \code{order = character(0)}.
+clear the order pass \code{order = character(0)}. To clear the current section
+filter pass \code{keep = character(0)} or \code{exclude = character(0)}.
 
 Methods are available for the following classes:
 
@@ -76,11 +87,9 @@ Methods are available for the following classes:
 \examples{
 spec <- TableSpec() |>
   set_spec_sections(
-    sections = section_rules(
-      kind == "THETA" ~ "Structural Parameters",
-      kind == "OMEGA" ~ "Interindividual Variability",
-      kind == "SIGMA" ~ "Residual Error"
-    ),
+    kind == "THETA" ~ "Structural Parameters",
+    kind == "OMEGA" ~ "Interindividual Variability",
+    kind == "SIGMA" ~ "Residual Error",
     parameters = list(
       "Covariate Parameters" = c("CAP-D1", "WT-V2/F", "PSO-CL/F")
     ),

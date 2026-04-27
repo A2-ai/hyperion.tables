@@ -8,6 +8,8 @@ get_spec_section_filter(spec, ...)
 }
 \arguments{
 \item{spec}{A TableSpec or SummarySpec object.}
+
+\item{...}{Not used.}
 }
 \value{
 A named list (possibly empty).
@@ -25,5 +27,5 @@ Methods are available for the following classes:
 }
 }
 \seealso{
-\code{\link[=set_spec_section_filter]{set_spec_section_filter()}}.
+\code{\link[=set_spec_sections]{set_spec_sections()}}.
 }

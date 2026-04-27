@@ -2,6 +2,7 @@
 % Please edit documentation in R/spec-setters.R
 \name{set_spec_sections,hyperion.tables::SummarySpec-method}
 \alias{set_spec_sections,hyperion.tables::SummarySpec-method}
+\alias{set_spec_sections-hyperion.tables-SummarySpec-method}
 \title{Set section rules for a SummarySpec}
 \usage{
 ## S7 method for class <hyperion.tables::SummarySpec>
@@ -12,7 +13,9 @@ set_spec_sections(
   overwrite = FALSE,
   parameters = NULL,
   file = NULL,
-  order = NULL
+  order = NULL,
+  keep = NULL,
+  exclude = NULL
 )
 }
 \arguments{
@@ -30,6 +33,10 @@ set_spec_sections(
 \item{file}{Must be \code{NULL}; errors otherwise.}
 
 \item{order}{Display-order vector for sections.}
+
+\item{keep}{Character vector of section labels to keep.}
+
+\item{exclude}{Character vector of section labels to exclude.}
 }
 \value{
 Modified spec.

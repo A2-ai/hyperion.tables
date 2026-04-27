@@ -20,7 +20,6 @@ library(hyperion)
 
 library(gt)
 library(flextable)
-library(here)
 
 model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
 model_run <- "run003"
@@ -32,13 +31,11 @@ model_run <- "run003"
 spec <- TableSpec() |>
   set_spec_transforms(omega = "cv") |>
   set_spec_sections(
-    sections = section_rules(
-      kind == "THETA" ~ "Structural model parameters",
-      kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
-      kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
-      kind == "SIGMA" ~ "Residual variance",
-      TRUE ~ "Other"
-    )
+    kind == "THETA" ~ "Structural model parameters",
+    kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
+    kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
+    kind == "SIGMA" ~ "Residual variance",
+    TRUE ~ "Other"
   ) |>
   set_spec_sigfig(3) |>
   drop_spec_columns("variability", "shrinkage", "rse") |>
@@ -62,8 +59,7 @@ get_parameters(parent_mod) |>
     labels = c("run002", "run003")
   ) |>
   make_comparison_table(output = "flextable") |>
-	reportifyr::fit_flextable_to_page(11.5) |>
-	render_to_word(here("ft-fit-comp-table.docx"))
+	render_to_image()
 ```
 
 ### Multiple Comparison Table
@@ -72,13 +68,11 @@ get_parameters(parent_mod) |>
 spec <- TableSpec() |>
   set_spec_transforms(omega = "cv") |>
   set_spec_sections(
-    sections = section_rules(
-      kind == "THETA" ~ "Structural model parameters",
-      kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
-      kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
-      kind == "SIGMA" ~ "Residual error",
-      TRUE ~ "Other"
-    )
+    kind == "THETA" ~ "Structural model parameters",
+    kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
+    kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
+    kind == "SIGMA" ~ "Residual error",
+    TRUE ~ "Other"
   ) |>
   set_spec_sigfig(3) |>
   set_spec_columns("symbol", "estimate", "ci", "rse", "pct_change") |>
@@ -123,13 +117,11 @@ comp |>
 spec <- TableSpec() |>
   set_spec_transforms(omega = "cv") |>
   set_spec_sections(
-    sections = section_rules(
-      kind == "THETA" ~ "Structural model parameters",
-      kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
-      kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
-      kind == "SIGMA" ~ "Residual error",
-      TRUE ~ "Other"
-    )
+    kind == "THETA" ~ "Structural model parameters",
+    kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
+    kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
+    kind == "SIGMA" ~ "Residual error",
+    TRUE ~ "Other"
   ) |>
   set_spec_sigfig(3) |>
   set_spec_columns("symbol", "fixed", "estimate") |>

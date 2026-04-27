@@ -2,6 +2,7 @@
 % Please edit documentation in R/spec-setters.R
 \name{set_spec_sections,hyperion.tables::TableSpec-method}
 \alias{set_spec_sections,hyperion.tables::TableSpec-method}
+\alias{set_spec_sections-hyperion.tables-TableSpec-method}
 \title{Set section assignments for a TableSpec}
 \usage{
 ## S7 method for class <hyperion.tables::TableSpec>
@@ -12,7 +13,9 @@ set_spec_sections(
   overwrite = FALSE,
   parameters = NULL,
   file = NULL,
-  order = NULL
+  order = NULL,
+  keep = NULL,
+  exclude = NULL
 )
 }
 \arguments{
@@ -32,6 +35,10 @@ character vector of parameter names), or \code{NULL} to leave alone, or
 \item{file}{Path to a TOML, or \code{NULL} to leave alone.}
 
 \item{order}{Display-order vector for sections.}
+
+\item{keep}{Character vector of section labels to keep.}
+
+\item{exclude}{Character vector of section labels to exclude.}
 }
 \value{
 Modified spec.

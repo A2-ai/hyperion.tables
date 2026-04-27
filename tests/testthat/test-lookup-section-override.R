@@ -32,7 +32,7 @@ test_that("lookup TOML overrides per-parameter section assignments", {
     add_summary_info(mod_sum) |>
     make_parameter_table()
 
-  snapshot_gt(table_gt, "param-lookup-section-override-gt")
+  snapshot_gt(table_gt, "lookup-gt")
 })
 
 test_that("inline parameters override warns on conflict with file", {
@@ -183,9 +183,9 @@ test_that("filter_keep matching order drops TOML-injected sections", {
       kind == "OMEGA" ~ "Variability",
       kind == "SIGMA" ~ "Residual",
       file = testthat::test_path("lookup-section.toml"),
-      order = c("Structural", "Variability", "Residual")
-    ) |>
-    set_spec_section_filter(keep = c("Structural", "Variability", "Residual"))
+      order = c("Structural", "Variability", "Residual"),
+      keep = c("Structural", "Variability", "Residual")
+    )
 
   htable <- params |>
     apply_table_spec(spec, info) |>
@@ -230,7 +230,7 @@ test_that("SummarySpec section_filter without rules runs (and warns on typo)", {
   )
   tree <- hyperion::get_model_lineage(model_dir)
   spec <- SummarySpec() |>
-    set_spec_section_filter(exclude = "Foo")
+    set_spec_sections(exclude = "Foo")
 
   # No rules -> section column populated as NA -> filter has nothing to
   # match. We expect a warning that the label wasn't present in the data.

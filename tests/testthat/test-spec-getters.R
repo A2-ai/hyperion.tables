@@ -111,7 +111,7 @@ test_that("get_spec_section_filter returns empty list by default", {
 
 test_that("get_spec_section_filter returns set exclude value", {
   spec <- TableSpec() |>
-    set_spec_section_filter(exclude = c("Other", NA))
+    set_spec_sections(exclude = c("Other", NA))
   expect_identical(
     get_spec_section_filter(spec),
     list(exclude = c("Other", NA_character_))
@@ -120,7 +120,7 @@ test_that("get_spec_section_filter returns set exclude value", {
 
 test_that("get_spec_section_filter returns set keep value", {
   spec <- TableSpec() |>
-    set_spec_section_filter(keep = c("Structural", "Variability"))
+    set_spec_sections(keep = c("Structural", "Variability"))
   expect_identical(
     get_spec_section_filter(spec),
     list(keep = c("Structural", "Variability"))

@@ -7,6 +7,7 @@
 TableSpec(
   title = "Model Parameters",
   parameter_names = ParameterNameOptions(),
+  sections = Sections(),
   columns = NULL,
   add_columns = NULL,
   drop_columns = NULL,
@@ -31,6 +32,10 @@ TableSpec(
 \item{parameter_names}{ParameterNameOptions object controlling how parameter names
 are displayed. Controls which name field to use ("name", "display", or "nonmem").
 Defaults to \code{ParameterNameOptions()}.}
+
+\item{sections}{A \code{Sections} object, or \code{NULL} for an empty section
+configuration. Prefer configuring sections with \code{\link[=set_spec_sections]{set_spec_sections()}} in
+a pipe for user-facing code.}
 
 \item{columns}{Character vector of columns to include in output.}
 

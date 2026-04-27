@@ -9,7 +9,8 @@ drop_spec_columns(spec, ...)
 \arguments{
 \item{spec}{A TableSpec or SummarySpec object.}
 
-\item{...}{See methods.}
+\item{...}{Column names as unnamed character strings. Named arguments are
+ignored with a warning.}
 }
 \value{
 Modified spec.
@@ -21,8 +22,8 @@ Modified spec.
 Methods are available for the following classes:
 
 \itemize{
-\item \code{\link[=drop_spec_columns-hyperion.tables-TableSpec-slash-hyperion.tables-SummarySpec-method]{hyperion.tables::SummarySpec}}
-\item \code{\link[=drop_spec_columns-hyperion.tables-TableSpec-slash-hyperion.tables-SummarySpec-method]{hyperion.tables::TableSpec}}
+\item \code{hyperion.tables::SummarySpec}
+\item \code{hyperion.tables::TableSpec}
 }
 }
 \examples{

@@ -2,6 +2,7 @@
 % Please edit documentation in R/spec-setters.R
 \name{set_spec_columns,hyperion.tables::SummarySpec-method}
 \alias{set_spec_columns,hyperion.tables::SummarySpec-method}
+\alias{set_spec_columns-hyperion.tables-SummarySpec-method}
 \title{Set columns for a SummarySpec}
 \usage{
 ## S7 method for class <hyperion.tables::SummarySpec>

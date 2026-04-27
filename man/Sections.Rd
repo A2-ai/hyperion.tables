@@ -12,6 +12,18 @@ Sections(
   filter_exclude = character(0)
 )
 }
+\arguments{
+\item{rules}{List of formulas created with \code{\link[=section_rules]{section_rules()}}.}
+
+\item{assignments}{Named list keyed by section label; each value is a
+character vector of items belonging to that section.}
+
+\item{order}{Character vector of section labels in display order, or NULL.}
+
+\item{filter_keep}{Character vector of labels to keep, or NULL.}
+
+\item{filter_exclude}{Character vector of labels to drop, or NULL.}
+}
 \description{
 Holds rule formulas, per-item assignments, display order, and the
 filter (keep / exclude) for a \code{TableSpec} or \code{SummarySpec}.

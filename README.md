@@ -44,16 +44,16 @@ library(hyperion.tables)
 model_dir <- system.file("extdata", "models", "onecmt",  package = "hyperion.tables")
 spec <- TableSpec(
   display_transforms = list(omega = c("cv")),
-  sections = section_rules(
+  parameter_names = ParameterNameOptions(source = "display"),
+  title = "Model Parameters"
+) |>
+  set_spec_sections(
     kind == "THETA" ~ "Structural model parameters",
     kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
     kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
     kind == "SIGMA" ~ "Residual error",
     TRUE ~ "Other"
-  ),
-  parameter_names = ParameterNameOptions(source = "display"),
-  title = "Model Parameters"
-)
+  )
 
 model <- read_model(file.path(model_dir, "run003.mod"))
 params <- get_parameters(model)
@@ -76,15 +76,15 @@ model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tabl
 
 spec <- TableSpec(
   display_transforms = list(omega = c("cv")),
-  sections = section_rules(
+  drop_columns = c("variability", "rse", "shrinkage")
+) |>
+  set_spec_sections(
     kind == "THETA" ~ "Structural model parameters",
     kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
     kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
     kind == "SIGMA" ~ "Residual variance",
     TRUE ~ "Other"
-  ),
-  drop_columns = c("variability", "rse", "shrinkage")
-)
+  )
 
 run002 <- read_model(file.path(model_dir, "run002.mod"))
 run003 <- read_model(file.path(model_dir, "run003.mod"))

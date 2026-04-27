@@ -2,6 +2,7 @@
 % Please edit documentation in R/spec-setters.R
 \name{set_spec_columns,hyperion.tables::TableSpec-method}
 \alias{set_spec_columns,hyperion.tables::TableSpec-method}
+\alias{set_spec_columns-hyperion.tables-TableSpec-method}
 \title{Set columns for a TableSpec}
 \usage{
 ## S7 method for class <hyperion.tables::TableSpec>

@@ -165,8 +165,9 @@ S7::method(get_spec_sections, AnySpec) <- function(spec) {
 #' `r doclisting::methods_list("get_spec_section_filter")`
 #'
 #' @param spec A TableSpec or SummarySpec object.
+#' @param ... Not used.
 #' @return A named list (possibly empty).
-#' @seealso [set_spec_section_filter()].
+#' @seealso [set_spec_sections()].
 #' @export
 get_spec_section_filter <- S7::new_generic("get_spec_section_filter", "spec")
 
@@ -188,6 +189,7 @@ S7::method(get_spec_section_filter, AnySpec) <- function(spec) {
 #' passed to `set_spec_sections(parameters = ...)`.
 #'
 #' @param spec A TableSpec object.
+#' @param ... Not used.
 #' @return A named list of parameter-name character vectors (possibly empty).
 #' @seealso [set_spec_sections()].
 #' @export

@@ -22,6 +22,13 @@ Modified spec.
 appear in the summary table based on filter expressions evaluated against
 summary columns.
 }
+\details{
+Methods are available for the following classes:
+
+\itemize{
+\item \code{\link[=set_spec_summary_filter-hyperion.tables-SummarySpec-method]{hyperion.tables::SummarySpec}}
+}
+}
 \examples{
 spec <- SummarySpec() |>
   set_spec_summary_filter(ofv < 1000)

@@ -21,6 +21,13 @@ Modified spec.
 \code{set_spec_filter()} is an S7 generic that controls which parameters appear
 in the output table. Pass filter expressions like \code{!fixed}, \code{diagonal}.
 }
+\details{
+Methods are available for the following classes:
+
+\itemize{
+\item \code{\link[=set_spec_filter-hyperion.tables-TableSpec-method]{hyperion.tables::TableSpec}}
+}
+}
 \examples{
 spec <- TableSpec() |>
   set_spec_filter(!fixed, diagonal)

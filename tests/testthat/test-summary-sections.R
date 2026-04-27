@@ -16,9 +16,9 @@ test_that("tag-based sections render correctly (gt + flextable)", {
   spec <- SummarySpec() |>
     set_spec_sections(
       "base" %in% tags ~ "Base Models",
-      "key" %in% tags ~ "Key Models"
-    ) |>
-    set_spec_section_filter(exclude = NA)
+      "key" %in% tags ~ "Key Models",
+      exclude = NA
+    )
 
   table <- tree |>
     apply_summary_spec(spec) |>
@@ -54,9 +54,9 @@ test_that("section_filter multi-section", {
       "one-comp" %in% tags ~ "One Compartment",
       "base" %in% tags ~ "Base Model",
       "two-comp" %in% tags ~ "Two Compartment",
-      TRUE ~ "Other"
-    ) |>
-    set_spec_section_filter(exclude = "Other")
+      TRUE ~ "Other",
+      exclude = "Other"
+    )
 
   # Multiple sections for single model warning
   expect_warning(
@@ -92,9 +92,9 @@ test_that("section_filter drops sections from parameter table", {
     set_spec_sections(
       kind == "THETA" ~ "Structural",
       kind == "OMEGA" ~ "IIV",
-      kind == "SIGMA" ~ "Residual"
-    ) |>
-    set_spec_section_filter(exclude = "Residual")
+      kind == "SIGMA" ~ "Residual",
+      exclude = "Residual"
+    )
 
   df <- apply_table_spec(params, spec, info)
 

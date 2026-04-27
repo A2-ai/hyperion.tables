@@ -149,6 +149,13 @@ ParameterNameOptions <- S7::new_class(
 #' Holds rule formulas, per-item assignments, display order, and the
 #' filter (keep / exclude) for a `TableSpec` or `SummarySpec`.
 #'
+#' @param rules List of formulas created with [section_rules()].
+#' @param assignments Named list keyed by section label; each value is a
+#'   character vector of items belonging to that section.
+#' @param order Character vector of section labels in display order, or NULL.
+#' @param filter_keep Character vector of labels to keep, or NULL.
+#' @param filter_exclude Character vector of labels to drop, or NULL.
+#'
 #' @section Properties:
 #' \itemize{
 #'   \item `rules` - List of formulas created with [section_rules()].
@@ -254,6 +261,27 @@ Sections <- S7::new_class(
   }
 )
 
+#' @noRd
+normalize_sections_arg <- function(sections, owner = "TableSpec") {
+  if (is.null(sections)) {
+    return(Sections())
+  }
+  if (S7::S7_inherits(sections, Sections)) {
+    return(sections)
+  }
+
+  rlang::abort(c(
+    "`sections` must be a Sections object or NULL.",
+    i = paste0(
+      "Use `",
+      owner,
+      "(sections = Sections(...))`, or prefer `",
+      owner,
+      "() |> set_spec_sections(...)`."
+    )
+  ))
+}
+
 # ==============================================================================
 # TableSpec S7 Class
 # ==============================================================================
@@ -265,6 +293,9 @@ Sections <- S7::new_class(
 #' @param parameter_names ParameterNameOptions object controlling how parameter names
 #'   are displayed. Controls which name field to use ("name", "display", or "nonmem").
 #'   Defaults to `ParameterNameOptions()`.
+#' @param sections A `Sections` object, or `NULL` for an empty section
+#'   configuration. Prefer configuring sections with [set_spec_sections()] in
+#'   a pipe for user-facing code.
 #' @param columns Character vector of columns to include in output.
 #' @param add_columns Character vector of columns to append to the column list.
 #'   Useful for comparisons when you want to add columns like "pct_change"
@@ -560,6 +591,7 @@ TableSpec <- S7::new_class(
   constructor = function(
     title = "Model Parameters",
     parameter_names = ParameterNameOptions(),
+    sections = Sections(),
     columns = NULL,
     add_columns = NULL,
     drop_columns = NULL,
@@ -576,6 +608,7 @@ TableSpec <- S7::new_class(
     missing_apply_to = "all",
     footnote_order = c("summary_info", "equations", "abbreviations")
   ) {
+    sections <- normalize_sections_arg(sections, owner = "TableSpec")
     if (!is.list(display_transforms)) {
       rlang::abort(paste0(
         "@display_transforms must be a list, not a ",
@@ -644,7 +677,7 @@ TableSpec <- S7::new_class(
 
     spec <- S7::new_object(
       S7::S7_object(),
-      sections = Sections(),
+      sections = sections,
       display_transforms = display_transforms,
       variability_rules = variability_rules,
       row_filter = row_filter,
@@ -829,6 +862,9 @@ HyperionTable <- S7::new_class(
 #' @param summary_filter Filter rules created with `summary_filter_rules()`.
 #' @param remove_unrun_models Logical. If TRUE (default), models without
 #'   completed runs are excluded from the table.
+#' @param sections A `Sections` object, or `NULL` for an empty section
+#'   configuration. Prefer configuring sections with [set_spec_sections()] in
+#'   a pipe for user-facing code.
 #' @param columns Character vector of columns to include. Valid columns:
 #'   "based_on", "description", "n_parameters", "problem",
 #'   "number_data_records", "number_subjects", "number_obs",
@@ -1046,6 +1082,7 @@ SummarySpec <- S7::new_class(
     tag_exclude = NULL,
     summary_filter = summary_filter_rules(),
     remove_unrun_models = TRUE,
+    sections = Sections(),
     columns = NULL,
     add_columns = NULL,
     drop_columns = NULL,
@@ -1058,10 +1095,11 @@ SummarySpec <- S7::new_class(
     footnote_order = "abbreviations"
   ) {
     columns <- merge_summary_columns(columns, add_columns)
+    sections <- normalize_sections_arg(sections, owner = "SummarySpec")
 
     S7::new_object(
       S7::S7_object(),
-      sections = Sections(),
+      sections = sections,
       summary_filter = summary_filter,
       models_to_include = models_to_include,
       add_columns = add_columns,

@@ -4,7 +4,7 @@
 \alias{set_spec_section_filter}
 \title{Set section filter for a spec}
 \usage{
-set_spec_section_filter(spec, ...)
+set_spec_section_filter(spec, exclude = NULL, keep = NULL)
 }
 \arguments{
 \item{spec}{A TableSpec or SummarySpec object.}
@@ -19,26 +19,26 @@ is dropped), optionally including \code{NA} to also keep unmatched rows.}
 Modified spec.
 }
 \description{
-\code{set_spec_section_filter()} filters which sections appear in the rendered
-table. Pass exactly one of \code{exclude} (drop these sections) or \code{keep}
-(drop everything except these). Pass \code{NA} inside either vector to also
-affect rows whose section didn't match any rule. Call with no arguments
-to clear any existing filter.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+\code{set_spec_section_filter()} was deprecated in hyperion.tables 0.5.0 and
+will be removed in 0.6.0. Use \code{\link[=set_spec_sections]{set_spec_sections()}} with \code{keep} or
+\code{exclude} instead. Calling with no filter arguments still clears the
+existing filter for backward compatibility.
 
 Methods are available for the following classes:
 
 \itemize{
-\item \code{\link[=set_spec_section_filter-hyperion.tables-TableSpec-slash-hyperion.tables-SummarySpec-method]{hyperion.tables::SummarySpec}}
-\item \code{\link[=set_spec_section_filter-hyperion.tables-TableSpec-slash-hyperion.tables-SummarySpec-method]{hyperion.tables::TableSpec}}
+\item \code{hyperion.tables::SummarySpec}
+\item \code{hyperion.tables::TableSpec}
 }
 }
 \examples{
-spec <- SummarySpec(
-  sections = section_rules(
+spec <- SummarySpec() |>
+  set_spec_sections(
     "base" \%in\% tags ~ "Base Models",
     TRUE ~ "Other"
-  )
-) |>
+  ) |>
   set_spec_section_filter(exclude = "Other")
 }
 \seealso{

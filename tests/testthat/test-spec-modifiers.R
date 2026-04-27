@@ -151,40 +151,52 @@ test_that("set_spec_footnotes validates sections", {
   )
 })
 
-test_that("set_spec_section_filter exclude mode works for both specs", {
-  table_spec <- TableSpec() |> set_spec_section_filter(exclude = "Other")
+test_that("set_spec_sections exclude mode works for both specs", {
+  table_spec <- TableSpec() |> set_spec_sections(exclude = "Other")
   expect_identical(table_spec@sections@filter_exclude, "Other")
 
-  sum_spec <- SummarySpec() |> set_spec_section_filter(exclude = c("Other", NA))
+  sum_spec <- SummarySpec() |> set_spec_sections(exclude = c("Other", NA))
   expect_identical(
     sum_spec@sections@filter_exclude,
     c("Other", NA_character_)
   )
 })
 
-test_that("set_spec_section_filter keep mode stores positive list", {
+test_that("set_spec_sections keep mode stores positive list", {
   spec <- TableSpec() |>
-    set_spec_section_filter(keep = c("Structural", "Variability"))
+    set_spec_sections(keep = c("Structural", "Variability"))
   expect_identical(
     spec@sections@filter_keep,
     c("Structural", "Variability")
   )
 })
 
-test_that("set_spec_section_filter rejects exclude + keep together", {
+test_that("set_spec_sections rejects exclude + keep together", {
   expect_error(
     TableSpec() |>
-      set_spec_section_filter(exclude = "Other", keep = "Structural"),
+      set_spec_sections(exclude = "Other", keep = "Structural"),
     "either"
   )
 })
 
-test_that("set_spec_section_filter clears with no args", {
+test_that("set_spec_sections clears section filter with character(0)", {
   spec <- SummarySpec() |>
-    set_spec_section_filter(exclude = "Other") |>
-    set_spec_section_filter()
+    set_spec_sections(exclude = "Other") |>
+    set_spec_sections(keep = character(0))
   expect_length(spec@sections@filter_keep, 0L)
   expect_length(spec@sections@filter_exclude, 0L)
+})
+
+test_that("set_spec_section_filter is deprecated but delegates", {
+  expect_warning(
+    spec <- TableSpec() |> set_spec_section_filter(exclude = "Other"),
+    "deprecated"
+  )
+  expect_identical(spec@sections@filter_exclude, "Other")
+
+  cleared <- suppressWarnings(spec |> set_spec_section_filter(exclude = NULL))
+  expect_length(cleared@sections@filter_keep, 0L)
+  expect_length(cleared@sections@filter_exclude, 0L)
 })
 
 test_that("set_spec_sections(order=) stores order config", {
@@ -277,6 +289,29 @@ test_that("set_spec_sections accepts `sections =` for both spec types", {
       sections = section_rules("base" %in% tags ~ "Base Models")
     )
   expect_length(summary_spec@sections@rules, 1)
+})
+
+test_that("TableSpec()/SummarySpec() require Sections objects at construction", {
+  table_from_sections <- TableSpec(
+    sections = Sections(rules = section_rules(kind == "THETA" ~ "Structural"))
+  )
+  expect_length(table_from_sections@sections@rules, 1)
+
+  summary_from_sections <- SummarySpec(
+    sections = Sections(
+      rules = section_rules("base" %in% tags ~ "Base Models")
+    )
+  )
+  expect_length(summary_from_sections@sections@rules, 1)
+
+  expect_error(
+    TableSpec(sections = section_rules(kind == "THETA" ~ "Structural")),
+    "`sections` must be a Sections object"
+  )
+  expect_error(
+    SummarySpec(sections = section_rules("base" %in% tags ~ "Base Models")),
+    "`sections` must be a Sections object"
+  )
 })
 
 test_that("set_spec_sections combines `sections =` and `...` (sections first)", {

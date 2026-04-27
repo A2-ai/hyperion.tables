@@ -35,6 +35,7 @@ add_spec_columns <- S7::new_generic("add_spec_columns", "spec")
 #' Method for [add_spec_columns()] on `TableSpec`. Confidence-interval column
 #' aliases (e.g., `"ci"`) are expanded to their underlying column names.
 #'
+#' @aliases add_spec_columns-hyperion.tables-TableSpec-method
 #' @param spec A TableSpec object.
 #' @param ... Column names as unnamed character strings. Named arguments are
 #'   ignored with a warning.
@@ -75,7 +76,8 @@ S7::method(add_spec_columns, SummarySpec) <- function(spec, ...) {
 #' `r doclisting::methods_list("drop_spec_columns")`
 #'
 #' @param spec A TableSpec or SummarySpec object.
-#' @param ... See methods.
+#' @param ... Column names as unnamed character strings. Named arguments are
+#'   ignored with a warning.
 #' @return Modified spec.
 #' @seealso [get_spec_columns()], [add_spec_columns()], [set_spec_columns()].
 #' @export
@@ -87,14 +89,6 @@ S7::method(add_spec_columns, SummarySpec) <- function(spec, ...) {
 #'   drop_spec_columns("description")
 drop_spec_columns <- S7::new_generic("drop_spec_columns", "spec")
 
-#' Drop columns from a spec
-#'
-#' Method for [drop_spec_columns()] on both `TableSpec` and `SummarySpec`.
-#'
-#' @param spec A TableSpec or SummarySpec object.
-#' @param ... Column names as unnamed character strings. Named arguments are
-#'   ignored with a warning.
-#' @return Modified spec.
 S7::method(drop_spec_columns, AnySpec) <- function(spec, ...) {
   dots <- capture_unnamed_dots(..., .enquo = FALSE)
   cols <- unlist(dots)
@@ -127,6 +121,7 @@ set_spec_columns <- S7::new_generic("set_spec_columns", "spec")
 #' Method for [set_spec_columns()] on `TableSpec`. Confidence-interval column
 #' aliases (e.g., `"ci"`) are expanded to their underlying column names.
 #'
+#' @aliases set_spec_columns-hyperion.tables-TableSpec-method
 #' @param spec A TableSpec object.
 #' @param ... Column names as unnamed character strings. Named arguments are
 #'   ignored with a warning.
@@ -142,6 +137,7 @@ S7::method(set_spec_columns, TableSpec) <- function(spec, ...) {
 #'
 #' Method for [set_spec_columns()] on `SummarySpec`.
 #'
+#' @aliases set_spec_columns-hyperion.tables-SummarySpec-method
 #' @param spec A SummarySpec object.
 #' @param ... Column names as unnamed character strings. Named arguments are
 #'   ignored with a warning.
@@ -350,11 +346,12 @@ S7::method(set_spec_footnotes, AnySpec) <- function(spec, order) {
 #' Set section filter for a spec
 #'
 #' @description
-#' `set_spec_section_filter()` filters which sections appear in the rendered
-#' table. Pass exactly one of `exclude` (drop these sections) or `keep`
-#' (drop everything except these). Pass `NA` inside either vector to also
-#' affect rows whose section didn't match any rule. Call with no arguments
-#' to clear any existing filter.
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `set_spec_section_filter()` was deprecated in hyperion.tables 0.5.0 and
+#' will be removed in 0.6.0. Use [set_spec_sections()] with `keep` or
+#' `exclude` instead. Calling with no filter arguments still clears the
+#' existing filter for backward compatibility.
 #'
 #' Methods are available for the following classes:
 #'
@@ -369,48 +366,41 @@ S7::method(set_spec_footnotes, AnySpec) <- function(spec, order) {
 #' @seealso [get_spec_section_filter()].
 #' @export
 #' @examples
-#' spec <- SummarySpec(
-#'   sections = section_rules(
+#' spec <- SummarySpec() |>
+#'   set_spec_sections(
 #'     "base" %in% tags ~ "Base Models",
 #'     TRUE ~ "Other"
-#'   )
-#' ) |>
+#'   ) |>
 #'   set_spec_section_filter(exclude = "Other")
-set_spec_section_filter <- S7::new_generic("set_spec_section_filter", "spec")
+set_spec_section_filter <- S7::new_generic(
+  "set_spec_section_filter",
+  "spec",
+  function(spec, exclude = NULL, keep = NULL) S7::S7_dispatch()
+)
 
-#' Set section filter for a spec
-#'
-#' Method for [set_spec_section_filter()] on both `TableSpec` and `SummarySpec`.
-#'
-#' @param spec A TableSpec or SummarySpec object.
-#' @param exclude Section labels to drop. Mutually exclusive with `keep`.
-#' @param keep Section labels to retain (drop all others). Mutually
-#'   exclusive with `exclude`.
-#' @return Modified spec.
 S7::method(set_spec_section_filter, AnySpec) <- function(
   spec,
   exclude = NULL,
   keep = NULL
 ) {
-  if (!is.null(exclude) && !is.null(keep)) {
-    rlang::abort("Pass either `exclude` or `keep`, not both.")
-  }
-  current <- spec@sections
-  next_keep <- NULL
-  next_exclude <- NULL
-  if (!is.null(exclude)) {
-    next_exclude <- as.character(exclude)
-  } else if (!is.null(keep)) {
-    next_keep <- as.character(keep)
-  }
-  spec@sections <- Sections(
-    rules = current@rules,
-    assignments = current@assignments,
-    order = current@order,
-    filter_keep = next_keep,
-    filter_exclude = next_exclude
+  lifecycle::deprecate_warn(
+    "0.5.0",
+    "set_spec_section_filter()",
+    "set_spec_sections()",
+    details = paste0(
+      "`set_spec_section_filter()` will be removed in hyperion.tables 0.6.0. ",
+      "Use `set_spec_sections(keep = ...)` or ",
+      "`set_spec_sections(exclude = ...)` instead."
+    )
   )
-  spec
+
+  if (
+    (missing(exclude) || is.null(exclude)) &&
+      (missing(keep) || is.null(keep))
+  ) {
+    return(set_spec_sections(spec, keep = character(0)))
+  }
+  set_spec_sections(spec, exclude = exclude, keep = keep)
 }
 
 # ==============================================================================
@@ -448,25 +438,26 @@ capture_unnamed_dots <- function(..., .enquo = TRUE) {
 #'    evaluated via [dplyr::case_when()]. Base layer.
 #' 2. **File overrides** (`file =`) — path to a TOML where each entry can
 #'    carry a `section = "..."` field. Matched by parameter name. Read
-#'    once and folded into assignments; the path is not stored.
+#'    once and folded into assignments.
 #' 3. **Inline parameter overrides** (`parameters =`) — a *named list*
 #'    where each name is a section label and each value is a character
 #'    vector of parameter names that should belong to that section. E.g.
-#'    `parameters = list("Covariate Parameters" = c("CAP-D1", "WT-V2/F"))`.
+#'    `parameters = list("Covariate Parameters" = c("CAPSULE", "WT-VP"))`.
 #'    Conflicts with the file layer (same parameter, different sections)
 #'    emit a warning; inline wins.
 #'
 #' Display ordering is also configured here. `order` is a character
 #' vector of section labels giving the display order. Sections not
 #' listed land after, in encounter order. To filter to just the sections
-#' in `order`, follow up with `set_spec_section_filter(keep = order)`.
+#' in `order`, pass `keep = order`.
 #'
 #' For SummarySpec only the rules and order layers apply. Passing
 #' `parameters` or `file` to a SummarySpec errors.
 #'
-#' Defaults of `NULL` for `parameters`, `file`, and `order` mean
+#' Defaults of `NULL` for `parameters`, `file`, `order`, `keep`, and `exclude` mean
 #' "leave alone." To clear assignments pass `parameters = list()`. To
-#' clear the order pass `order = character(0)`.
+#' clear the order pass `order = character(0)`. To clear the current section
+#' filter pass `keep = character(0)` or `exclude = character(0)`.
 #'
 #' Methods are available for the following classes:
 #'
@@ -484,17 +475,21 @@ capture_unnamed_dots <- function(..., .enquo = TRUE) {
 #'   with character vectors of parameter names. See examples.
 #' @param file TableSpec only. Path to a TOML for per-parameter overrides.
 #' @param order Character vector of section labels in display order.
+#' @param keep Character vector of section labels to keep (everything else is
+#'   dropped), optionally including `NA` to also keep unmatched rows. Mutually
+#'   exclusive with `exclude`. Pass `character(0)` to clear the current filter.
+#' @param exclude Character vector of section labels to drop, optionally
+#'   including `NA` to also drop unmatched rows. Mutually exclusive with `keep`.
+#'   Pass `character(0)` to clear the current filter.
 #' @return Modified spec.
 #' @seealso [get_spec_sections()], [get_spec_parameter_sections()].
 #' @export
 #' @examples
 #' spec <- TableSpec() |>
 #'   set_spec_sections(
-#'     sections = section_rules(
-#'       kind == "THETA" ~ "Structural Parameters",
-#'       kind == "OMEGA" ~ "Interindividual Variability",
-#'       kind == "SIGMA" ~ "Residual Error"
-#'     ),
+#'     kind == "THETA" ~ "Structural Parameters",
+#'     kind == "OMEGA" ~ "Interindividual Variability",
+#'     kind == "SIGMA" ~ "Residual Error",
 #'     parameters = list(
 #'       "Covariate Parameters" = c("CAP-D1", "WT-V2/F", "PSO-CL/F")
 #'     ),
@@ -515,7 +510,9 @@ set_spec_sections <- S7::new_generic(
     overwrite = FALSE,
     parameters = NULL,
     file = NULL,
-    order = NULL
+    order = NULL,
+    keep = NULL,
+    exclude = NULL
   ) {
     S7::S7_dispatch()
   }
@@ -544,11 +541,42 @@ resolve_next_order <- function(current_order, order) {
   as.character(order)
 }
 
+#' @noRd
+resolve_next_section_filter <- function(
+  current_keep,
+  current_exclude,
+  keep,
+  exclude
+) {
+  if (!is.null(keep) && !is.null(exclude)) {
+    rlang::abort("Pass either `keep` or `exclude`, not both.")
+  }
+
+  if (!is.null(keep)) {
+    keep <- as.character(keep)
+    if (length(keep) == 0L) {
+      return(list(keep = NULL, exclude = NULL))
+    }
+    return(list(keep = keep, exclude = NULL))
+  }
+
+  if (!is.null(exclude)) {
+    exclude <- as.character(exclude)
+    if (length(exclude) == 0L) {
+      return(list(keep = NULL, exclude = NULL))
+    }
+    return(list(keep = NULL, exclude = exclude))
+  }
+
+  list(keep = current_keep, exclude = current_exclude)
+}
+
 #' Set section rules for a SummarySpec
 #'
 #' SummarySpec supports the rules and order layers. `parameters` / `file`
 #' are rejected because summary tables have no per-parameter concept.
 #'
+#' @aliases set_spec_sections-hyperion.tables-SummarySpec-method
 #' @param spec A SummarySpec object.
 #' @param ... Section rule formulas.
 #' @param sections List of section rule formulas (e.g. from
@@ -557,6 +585,8 @@ resolve_next_order <- function(current_order, order) {
 #' @param parameters Must be `NULL`; errors otherwise.
 #' @param file Must be `NULL`; errors otherwise.
 #' @param order Display-order vector for sections.
+#' @param keep Character vector of section labels to keep.
+#' @param exclude Character vector of section labels to exclude.
 #' @return Modified spec.
 S7::method(set_spec_sections, SummarySpec) <- function(
   spec,
@@ -565,7 +595,9 @@ S7::method(set_spec_sections, SummarySpec) <- function(
   overwrite = FALSE,
   parameters = NULL,
   file = NULL,
-  order = NULL
+  order = NULL,
+  keep = NULL,
+  exclude = NULL
 ) {
   if (!is.null(parameters) || !is.null(file)) {
     rlang::abort(
@@ -573,6 +605,12 @@ S7::method(set_spec_sections, SummarySpec) <- function(
     )
   }
   current <- spec@sections
+  next_filter <- resolve_next_section_filter(
+    current@filter_keep,
+    current@filter_exclude,
+    keep,
+    exclude
+  )
   spec@sections <- Sections(
     rules = build_next_rules(
       current@rules,
@@ -582,8 +620,8 @@ S7::method(set_spec_sections, SummarySpec) <- function(
     ),
     assignments = current@assignments,
     order = resolve_next_order(current@order, order),
-    filter_keep = current@filter_keep,
-    filter_exclude = current@filter_exclude
+    filter_keep = next_filter$keep,
+    filter_exclude = next_filter$exclude
   )
   spec
 }
@@ -593,6 +631,7 @@ S7::method(set_spec_sections, SummarySpec) <- function(
 #' Three assignment layers (rules, file overrides, inline overrides) plus
 #' display-order configuration. See [set_spec_sections()] for full details.
 #'
+#' @aliases set_spec_sections-hyperion.tables-TableSpec-method
 #' @param spec A TableSpec object.
 #' @param ... Section rule formulas.
 #' @param sections List of section rule formulas (e.g. from
@@ -603,6 +642,8 @@ S7::method(set_spec_sections, SummarySpec) <- function(
 #'   `list()` to clear.
 #' @param file Path to a TOML, or `NULL` to leave alone.
 #' @param order Display-order vector for sections.
+#' @param keep Character vector of section labels to keep.
+#' @param exclude Character vector of section labels to exclude.
 #' @return Modified spec.
 S7::method(set_spec_sections, TableSpec) <- function(
   spec,
@@ -611,7 +652,9 @@ S7::method(set_spec_sections, TableSpec) <- function(
   overwrite = FALSE,
   parameters = NULL,
   file = NULL,
-  order = NULL
+  order = NULL,
+  keep = NULL,
+  exclude = NULL
 ) {
   current <- spec@sections
   next_rules <- build_next_rules(
@@ -649,12 +692,19 @@ S7::method(set_spec_sections, TableSpec) <- function(
     }
   }
 
+  next_filter <- resolve_next_section_filter(
+    current@filter_keep,
+    current@filter_exclude,
+    keep,
+    exclude
+  )
+
   spec@sections <- Sections(
     rules = next_rules,
     assignments = next_assign,
     order = resolve_next_order(current@order, order),
-    filter_keep = current@filter_keep,
-    filter_exclude = current@filter_exclude
+    filter_keep = next_filter$keep,
+    filter_exclude = next_filter$exclude
   )
   spec
 }
@@ -848,6 +898,10 @@ S7::method(set_spec_transforms, TableSpec) <- function(
 #' `set_spec_filter()` is an S7 generic that controls which parameters appear
 #' in the output table. Pass filter expressions like `!fixed`, `diagonal`.
 #'
+#' Methods are available for the following classes:
+#'
+#' `r doclisting::methods_list("set_spec_filter")`
+#'
 #' @param spec A TableSpec object.
 #' @param ... See methods.
 #' @param overwrite If FALSE (default), append to existing rules.
@@ -868,6 +922,7 @@ set_spec_filter <- S7::new_generic(
 #'
 #' Method for [set_spec_filter()] on `TableSpec`.
 #'
+#' @aliases set_spec_filter-hyperion.tables-TableSpec-method
 #' @param spec A TableSpec object.
 #' @param ... Filter rule expressions. Named arguments are ignored with a
 #'   warning.
@@ -894,6 +949,10 @@ S7::method(set_spec_filter, TableSpec) <- function(
 #' `set_spec_variability()` is an S7 generic that controls how the variability
 #' display column is constructed.
 #'
+#' Methods are available for the following classes:
+#'
+#' `r doclisting::methods_list("set_spec_variability")`
+#'
 #' @param spec A TableSpec object.
 #' @param ... See methods.
 #' @param overwrite If FALSE (default), append to existing rules.
@@ -918,6 +977,7 @@ set_spec_variability <- S7::new_generic(
 #'
 #' Method for [set_spec_variability()] on `TableSpec`.
 #'
+#' @aliases set_spec_variability-hyperion.tables-TableSpec-method
 #' @param spec A TableSpec object.
 #' @param ... Variability rule formulas. Named arguments are ignored with a
 #'   warning.
@@ -1058,6 +1118,10 @@ S7::method(set_spec_remove_unrun, SummarySpec) <- function(spec, remove) {
 #' appear in the summary table based on filter expressions evaluated against
 #' summary columns.
 #'
+#' Methods are available for the following classes:
+#'
+#' `r doclisting::methods_list("set_spec_summary_filter")`
+#'
 #' @param spec A SummarySpec object.
 #' @param ... See methods.
 #' @param overwrite If FALSE (default), append to existing rules.
@@ -1077,6 +1141,7 @@ set_spec_summary_filter <- S7::new_generic(
 #'
 #' Method for [set_spec_summary_filter()] on `SummarySpec`.
 #'
+#' @aliases set_spec_summary_filter-hyperion.tables-SummarySpec-method
 #' @param spec A SummarySpec object.
 #' @param ... Summary filter rule expressions evaluated against summary
 #'   columns. Named arguments are ignored with a warning.
