@@ -409,7 +409,7 @@ S7::method(set_spec_section_filter, AnySpec) <- function(
 #'
 #' @description
 #' By default, sections render in the order their rules were declared in
-#' [section_rules()]. Sections introduced by [set_spec_lookup()] (i.e.
+#' [section_rules()]. Sections introduced by `set_spec_sections(file=)` (i.e.
 #' labels not present in any rule) are appended at the end. Use
 #' `set_spec_section_order()` to override that with an explicit order.
 #'
@@ -459,53 +459,6 @@ S7::method(set_spec_section_order, AnySpec) <- function(
   spec
 }
 
-#' Attach a parameter lookup TOML to a spec
-#'
-#' @description
-#' `set_spec_lookup()` registers a TOML file that supplies per-parameter
-#' overrides used during [apply_table_spec()]. Currently the `section`
-#' field is read from each entry: any parameter whose `name` matches a
-#' TOML key with a `section = "..."` value has its section assignment
-#' overridden after [section_rules()] evaluation. Other fields in the TOML
-#' are accepted (and reserved for future use) but ignored today.
-#'
-#' Pass `NULL` to clear an existing lookup.
-#'
-#' @param spec A TableSpec object.
-#' @param path Path to a TOML file, or `NULL` to clear.
-#' @return Modified spec.
-#' @seealso [get_spec_lookup()].
-#' @export
-#' @examples
-#' \dontrun{
-#'   TableSpec() |>
-#'     set_spec_sections(kind == "THETA" ~ "Structural") |>
-#'     set_spec_lookup("lookup.toml")
-#' }
-set_spec_lookup <- S7::new_generic("set_spec_lookup", "spec")
-
-#' Attach a parameter lookup TOML to a spec
-#'
-#' Method for [set_spec_lookup()] on `TableSpec`.
-#'
-#' @param spec A TableSpec object.
-#' @param path Path to a TOML file, or `NULL` to clear.
-#' @return Modified spec.
-S7::method(set_spec_lookup, TableSpec) <- function(spec, path) {
-  if (is.null(path)) {
-    spec@lookup_path <- NULL
-    return(spec)
-  }
-  if (!is.character(path) || length(path) != 1L || is.na(path)) {
-    rlang::abort("`path` must be a single non-NA character string or NULL.")
-  }
-  if (!file.exists(path)) {
-    rlang::abort(paste0("Lookup TOML not found: ", path))
-  }
-  spec@lookup_path <- path
-  spec
-}
-
 # ==============================================================================
 # Section Rules (Both Specs)
 # ==============================================================================
@@ -531,65 +484,164 @@ capture_unnamed_dots <- function(..., .enquo = TRUE) {
   unname(dots[unnamed])
 }
 
-#' Set section rules for a spec
+#' Set section assignments for a spec
 #'
 #' @description
-#' `set_spec_sections()` is an S7 generic that controls how rows are grouped
-#' into sections. Pass formula expressions where the LHS is a condition and
-#' the RHS is the section label.
+#' Controls how rows are grouped into sections. For TableSpec there are
+#' three layers, applied in order at [apply_table_spec()] time:
 #'
-#' For TableSpec, rules are evaluated against parameter columns
-#' (e.g., `kind == "THETA" ~ "Structural Parameters"`).
+#' 1. **Rules** (`...`) — formulas like `kind == "THETA" ~ "Structural"`,
+#'    evaluated against the data via [dplyr::case_when()]. Base layer.
+#' 2. **File overrides** (`file =`) — path to a TOML where each entry can
+#'    carry a `section = "..."` field. Matched by parameter name. Overrides
+#'    rules for matching parameters.
+#' 3. **Inline parameter overrides** (`parameters =`) — a named character
+#'    vector like `c(CAP_D1 = "Covariate", TVCL = "Custom")`. Overrides both
+#'    rules and file. Conflicts with `file =` (same parameter, different
+#'    sections) emit a warning and inline wins.
 #'
-#' For SummarySpec, rules are evaluated row-by-row against summary columns
-#' including `tags` (e.g., `"base" %in% tags ~ "Base Models"`).
+#' For SummarySpec only rules apply — sections come from tags-per-model,
+#' not parameter names. Passing `parameters` or `file` to a SummarySpec
+#' errors.
+#'
+#' Defaults of `NULL` for `parameters` and `file` mean "leave alone." Pass
+#' `character(0)` to clear `parameters`; pass `NA_character_` to clear
+#' `file`.
 #'
 #' Methods are available for the following classes:
 #'
 #' `r doclisting::methods_list("set_spec_sections")`
 #'
 #' @param spec A TableSpec or SummarySpec object.
-#' @param ... See methods.
-#' @param overwrite If FALSE (default), append to existing rules.
-#'   If TRUE, replace all existing rules.
+#' @param ... Section rule formulas (LHS condition ~ RHS label).
+#' @param overwrite If `FALSE` (default), append to existing rules. If
+#'   `TRUE`, replace them.
+#' @param parameters TableSpec only. Named character vector of
+#'   per-parameter section overrides.
+#' @param file TableSpec only. Path to a TOML for per-parameter overrides.
 #' @return Modified spec.
-#' @seealso [get_spec_sections()].
+#' @seealso [get_spec_sections()], [get_spec_parameter_sections()].
 #' @export
 #' @examples
 #' spec <- TableSpec() |>
 #'   set_spec_sections(
 #'     kind == "THETA" ~ "Structural",
-#'     kind == "OMEGA" ~ "IIV"
+#'     kind == "OMEGA" ~ "IIV",
+#'     parameters = c(CAP_D1 = "Covariate Parameters")
 #'   )
 set_spec_sections <- S7::new_generic(
   "set_spec_sections",
   "spec",
-  function(spec, ..., overwrite = FALSE) S7::S7_dispatch()
+  function(
+    spec,
+    ...,
+    overwrite = FALSE,
+    parameters = NULL,
+    file = NULL
+  ) {
+    S7::S7_dispatch()
+  }
 )
 
-#' Set section rules for a spec
-#'
-#' Method for [set_spec_sections()] on both `TableSpec` and `SummarySpec`.
-#'
-#' @param spec A TableSpec or SummarySpec object.
-#' @param ... Section rule formulas. Named arguments are ignored with a
-#'   warning.
-#' @param overwrite If FALSE (default), append to existing rules. If TRUE,
-#'   replace all existing rules.
-#' @return Modified spec.
-S7::method(set_spec_sections, AnySpec) <- function(
-  spec,
-  ...,
-  overwrite = FALSE
-) {
-  rule_dots <- capture_unnamed_dots(...)
+# Apply the rule-formula layer (used by both methods).
+#' @noRd
+apply_section_rules_arg <- function(spec, dots, overwrite) {
+  rule_dots <- capture_unnamed_dots(!!!dots)
   new_rules <- section_rules(!!!rule_dots)
-
   if (overwrite) {
     spec@sections <- new_rules
   } else {
     spec@sections <- c(spec@sections, new_rules)
   }
+  spec
+}
+
+#' Set section rules for a SummarySpec
+#'
+#' SummarySpec only supports the rules layer. `parameters` / `file` are
+#' rejected because summary tables have no per-parameter concept.
+#'
+#' @param spec A SummarySpec object.
+#' @param ... Section rule formulas.
+#' @param overwrite Append vs replace for rules.
+#' @param parameters Must be `NULL`; errors otherwise.
+#' @param file Must be `NULL`; errors otherwise.
+#' @return Modified spec.
+S7::method(set_spec_sections, SummarySpec) <- function(
+  spec,
+  ...,
+  overwrite = FALSE,
+  parameters = NULL,
+  file = NULL
+) {
+  if (!is.null(parameters) || !is.null(file)) {
+    rlang::abort(
+      "`parameters` and `file` are only supported on TableSpec; SummarySpec sections come from tag rules."
+    )
+  }
+  apply_section_rules_arg(spec, rlang::enquos(...), overwrite)
+}
+
+#' Set section assignments for a TableSpec
+#'
+#' Three layers: rules, file overrides, inline parameter overrides. See
+#' [set_spec_sections()] for full description.
+#'
+#' @param spec A TableSpec object.
+#' @param ... Section rule formulas.
+#' @param overwrite Append vs replace for rules.
+#' @param parameters Named character vector of per-parameter overrides, or
+#'   `NULL` to leave alone, or `character(0)` to clear.
+#' @param file Path to a TOML, or `NULL` to leave alone, or `NA_character_`
+#'   to clear.
+#' @return Modified spec.
+S7::method(set_spec_sections, TableSpec) <- function(
+  spec,
+  ...,
+  overwrite = FALSE,
+  parameters = NULL,
+  file = NULL
+) {
+  spec <- apply_section_rules_arg(spec, rlang::enquos(...), overwrite)
+
+  if (!is.null(parameters)) {
+    if (!is.character(parameters)) {
+      rlang::abort("`parameters` must be a (possibly empty) character vector.")
+    }
+    if (length(parameters) == 0L) {
+      spec@parameter_sections <- character(0)
+    } else {
+      if (is.null(names(parameters)) || any(!nzchar(names(parameters)))) {
+        rlang::abort(
+          "`parameters` must be a *named* character vector (parameter name -> section)."
+        )
+      }
+      dup_idx <- anyDuplicated(names(parameters))
+      if (dup_idx > 0L) {
+        dups <- unique(names(parameters)[duplicated(names(parameters))])
+        rlang::abort(paste0(
+          "`parameters` has duplicate name(s): ",
+          paste(shQuote(dups), collapse = ", "),
+          ". Each parameter must appear at most once."
+        ))
+      }
+      spec@parameter_sections <- parameters
+    }
+  }
+
+  if (!is.null(file)) {
+    if (!is.character(file) || length(file) != 1L) {
+      rlang::abort("`file` must be a single character path, NA, or NULL.")
+    }
+    if (is.na(file)) {
+      spec@lookup_path <- NULL
+    } else {
+      # normalizePath(mustWork = TRUE) errors if the file is missing AND
+      # canonicalizes to an absolute path so the spec survives setwd().
+      spec@lookup_path <- normalizePath(file, mustWork = TRUE)
+    }
+  }
+
   spec
 }
 

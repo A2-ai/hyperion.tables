@@ -191,19 +191,28 @@ S7::method(get_spec_section_order, AnySpec) <- function(spec) {
   spec@section_order
 }
 
-#' Get the lookup TOML path from a TableSpec
+#' Get per-parameter section overrides from a TableSpec
 #'
-#' Returns the path to the parameter lookup TOML registered via
-#' [set_spec_lookup()], or `NULL` if none is set.
+#' Returns a list with two fields:
+#'   * `parameters` — named character vector of inline overrides
+#'     (set via `set_spec_sections(parameters = ...)`).
+#'   * `file` — path to the lookup TOML, or `NULL` if none
+#'     (set via `set_spec_sections(file = ...)`).
 #'
 #' @param spec A TableSpec object.
-#' @return Scalar character path or `NULL`.
-#' @seealso [set_spec_lookup()].
+#' @return A named list with `parameters` and `file`.
+#' @seealso [set_spec_sections()].
 #' @export
-get_spec_lookup <- S7::new_generic("get_spec_lookup", "spec")
+get_spec_parameter_sections <- S7::new_generic(
+  "get_spec_parameter_sections",
+  "spec"
+)
 
-S7::method(get_spec_lookup, TableSpec) <- function(spec) {
-  spec@lookup_path
+S7::method(get_spec_parameter_sections, TableSpec) <- function(spec) {
+  list(
+    parameters = spec@parameter_sections,
+    file = spec@lookup_path
+  )
 }
 
 #' Get row filter rules from a TableSpec

@@ -252,6 +252,10 @@ TableSpec <- S7::new_class(
       class = S7::class_character | NULL,
       default = NULL
     ),
+    parameter_sections = S7::new_property(
+      class = S7::class_character,
+      default = character(0)
+    ),
     row_filter = S7::new_property(
       class = S7::class_list,
       default = list()
@@ -572,7 +576,9 @@ TableSpec <- S7::new_class(
       ci = ci,
       missing_text = missing_text,
       missing_apply_to = missing_apply_to,
-      footnote_order = footnote_order
+      footnote_order = footnote_order,
+      lookup_path = NULL,
+      parameter_sections = character(0)
     )
     # setter is called for columns which flips columns provided.
     # this reverts it back to what ever it was.

@@ -6,8 +6,8 @@
 #'
 #' Returns a named list keyed by parameter name. Each value is the entry's
 #' field list (e.g., `list(section = "...", display = "...", ...)`). Used
-#' internally by [apply_table_spec()] when a `lookup_path` is set on the
-#' spec via [set_spec_lookup()].
+#' internally by [apply_table_spec()] when a TOML path was set on the
+#' spec via `set_spec_sections(file = ...)`.
 #'
 #' @param path Path to a TOML file.
 #' @return Named list of per-parameter entries.

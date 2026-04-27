@@ -21,7 +21,7 @@ Modified spec.
 }
 \description{
 By default, sections render in the order their rules were declared in
-\code{\link[=section_rules]{section_rules()}}. Sections introduced by \code{\link[=set_spec_lookup]{set_spec_lookup()}} (i.e.
+\code{\link[=section_rules]{section_rules()}}. Sections introduced by \code{set_spec_sections(file=)} (i.e.
 labels not present in any rule) are appended at the end. Use
 \code{set_spec_section_order()} to override that with an explicit order.
 

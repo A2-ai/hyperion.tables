@@ -2,46 +2,64 @@
 % Please edit documentation in R/spec-setters.R
 \name{set_spec_sections}
 \alias{set_spec_sections}
-\title{Set section rules for a spec}
+\title{Set section assignments for a spec}
 \usage{
-set_spec_sections(spec, ..., overwrite = FALSE)
+set_spec_sections(spec, ..., overwrite = FALSE, parameters = NULL, file = NULL)
 }
 \arguments{
 \item{spec}{A TableSpec or SummarySpec object.}
 
-\item{...}{See methods.}
+\item{...}{Section rule formulas (LHS condition ~ RHS label).}
 
-\item{overwrite}{If FALSE (default), append to existing rules.
-If TRUE, replace all existing rules.}
+\item{overwrite}{If \code{FALSE} (default), append to existing rules. If
+\code{TRUE}, replace them.}
+
+\item{parameters}{TableSpec only. Named character vector of
+per-parameter section overrides.}
+
+\item{file}{TableSpec only. Path to a TOML for per-parameter overrides.}
 }
 \value{
 Modified spec.
 }
 \description{
-\code{set_spec_sections()} is an S7 generic that controls how rows are grouped
-into sections. Pass formula expressions where the LHS is a condition and
-the RHS is the section label.
+Controls how rows are grouped into sections. For TableSpec there are
+three layers, applied in order at \code{\link[=apply_table_spec]{apply_table_spec()}} time:
+\enumerate{
+\item \strong{Rules} (\code{...}) — formulas like \code{kind == "THETA" ~ "Structural"},
+evaluated against the data via \code{\link[dplyr:case_when]{dplyr::case_when()}}. Base layer.
+\item \strong{File overrides} (\verb{file =}) — path to a TOML where each entry can
+carry a \code{section = "..."} field. Matched by parameter name. Overrides
+rules for matching parameters.
+\item \strong{Inline parameter overrides} (\verb{parameters =}) — a named character
+vector like \code{c(CAP_D1 = "Covariate", TVCL = "Custom")}. Overrides both
+rules and file. Conflicts with \verb{file =} (same parameter, different
+sections) emit a warning and inline wins.
+}
 
-For TableSpec, rules are evaluated against parameter columns
-(e.g., \code{kind == "THETA" ~ "Structural Parameters"}).
+For SummarySpec only rules apply — sections come from tags-per-model,
+not parameter names. Passing \code{parameters} or \code{file} to a SummarySpec
+errors.
 
-For SummarySpec, rules are evaluated row-by-row against summary columns
-including \code{tags} (e.g., \code{"base" \%in\% tags ~ "Base Models"}).
+Defaults of \code{NULL} for \code{parameters} and \code{file} mean "leave alone." Pass
+\code{character(0)} to clear \code{parameters}; pass \code{NA_character_} to clear
+\code{file}.
 
 Methods are available for the following classes:
 
 \itemize{
-\item \code{\link[=set_spec_sections-hyperion.tables-TableSpec-slash-hyperion.tables-SummarySpec-method]{hyperion.tables::SummarySpec}}
-\item \code{\link[=set_spec_sections-hyperion.tables-TableSpec-slash-hyperion.tables-SummarySpec-method]{hyperion.tables::TableSpec}}
+\item \code{\link[=set_spec_sections-hyperion.tables-SummarySpec-method]{hyperion.tables::SummarySpec}}
+\item \code{\link[=set_spec_sections-hyperion.tables-TableSpec-method]{hyperion.tables::TableSpec}}
 }
 }
 \examples{
 spec <- TableSpec() |>
   set_spec_sections(
     kind == "THETA" ~ "Structural",
-    kind == "OMEGA" ~ "IIV"
+    kind == "OMEGA" ~ "IIV",
+    parameters = c(CAP_D1 = "Covariate Parameters")
   )
 }
 \seealso{
-\code{\link[=get_spec_sections]{get_spec_sections()}}.
+\code{\link[=get_spec_sections]{get_spec_sections()}}, \code{\link[=get_spec_parameter_sections]{get_spec_parameter_sections()}}.
 }

@@ -250,24 +250,74 @@ apply_sections_and_filters <- function(df, spec) {
   df
 }
 
-#' Override `section` per-parameter from a lookup TOML when set
+#' Override `section` per-parameter from file and/or inline overrides
 #'
-#' Matches each row by `user_name` first (the comment-name like "TVCL"),
-#' falling back to `nonmem_name` ("THETA1"). TOML entries without a
-#' `section` field are ignored. Per-parameter declaration is more specific
-#' than a section_rule, so it wins.
+#' Two override layers stored on the spec:
+#'   * `spec@lookup_path` — TOML file; entries with a `section` field
+#'   * `spec@parameter_sections` — named character vector
+#'
+#' File overrides apply first; inline overrides apply on top and win on
+#' conflicts (with a warning). Parameter rows are matched by `user_name`
+#' first (the comment-name like "TVCL"), falling back to `nonmem_name`
+#' ("THETA1"). TOML entries without a `section` field are ignored.
 #'
 #' @noRd
 apply_lookup_section_overrides <- function(df, spec) {
-  if (is.null(spec@lookup_path)) {
-    return(df)
+  file_map <- if (!is.null(spec@lookup_path)) {
+    lookup_section_map(read_lookup_toml(spec@lookup_path))
+  } else {
+    stats::setNames(character(0), character(0))
   }
-  lookup <- read_lookup_toml(spec@lookup_path)
-  section_map <- lookup_section_map(lookup)
-  if (length(section_map) == 0) {
+  inline_map <- spec@parameter_sections
+  if (length(file_map) == 0L && length(inline_map) == 0L) {
     return(df)
   }
 
+  conflicts <- intersect(names(file_map), names(inline_map))
+  if (length(conflicts) > 0L) {
+    a <- file_map[conflicts]
+    b <- inline_map[conflicts]
+    same <- (is.na(a) & is.na(b)) | (!is.na(a) & !is.na(b) & a == b)
+    conflicts <- conflicts[!same]
+  }
+  if (length(conflicts) > 0L) {
+    rlang::warn(paste0(
+      "Per-parameter section conflict between `file` and `parameters` for: ",
+      paste(shQuote(conflicts), collapse = ", "),
+      ". Inline `parameters` value(s) win."
+    ))
+  }
+
+  df <- apply_one_layer(df, file_map, "Lookup file")
+  df <- apply_one_layer(df, inline_map, "Inline `parameters`")
+  df
+}
+
+#' Apply a single override layer (file or inline) and warn about unmatched
+#' keys with the given label as context.
+#' @noRd
+apply_one_layer <- function(df, map, label) {
+  if (length(map) == 0L) {
+    return(df)
+  }
+  res <- assign_section_overrides(df, map)
+  if (length(res$unmatched) > 0L) {
+    rlang::warn(paste0(
+      label,
+      " section override(s) did not match any parameter: ",
+      paste(shQuote(res$unmatched), collapse = ", "),
+      "."
+    ))
+  }
+  res$data
+}
+
+#' Apply a name -> section map onto df$section, matching user_name first,
+#' nonmem_name second. Returns the data frame and the indices of map keys
+#' that did not match any row, so the caller can warn with appropriate
+#' context (file vs inline).
+#' @noRd
+assign_section_overrides <- function(df, section_map) {
   match_keys <- if ("user_name" %in% names(df)) df$user_name else df$name
   hits <- match(match_keys, names(section_map))
   if ("nonmem_name" %in% names(df)) {
@@ -280,7 +330,11 @@ apply_lookup_section_overrides <- function(df, spec) {
   if (any(matched)) {
     df$section[matched] <- unname(section_map[hits[matched]])
   }
-  df
+  unmatched_keys <- setdiff(
+    names(section_map),
+    names(section_map)[unique(stats::na.omit(hits))]
+  )
+  list(data = df, unmatched = unmatched_keys)
 }
 
 # ==============================================================================
