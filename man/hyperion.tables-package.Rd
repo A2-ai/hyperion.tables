@@ -18,6 +18,7 @@ S7 classes for configuring table output:
 \item \link{SummarySpec} - Configuration for run summary tables
 \item \link{CIOptions} - Confidence interval display options
 \item \link{ParameterNameOptions} - Parameter name display options
+\item \link{SectionOptions} - Section assignment, order, and filter options
 }
 }
 

@@ -12,6 +12,7 @@
 #'   \item [SummarySpec] - Configuration for run summary tables
 #'   \item [CIOptions] - Confidence interval display options
 #'   \item [ParameterNameOptions] - Parameter name display options
+#'   \item [SectionOptions] - Section assignment, order, and filter options
 #' }
 #'
 #' @section Table Creation:

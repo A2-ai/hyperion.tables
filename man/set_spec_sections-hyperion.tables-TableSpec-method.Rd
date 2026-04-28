@@ -2,6 +2,7 @@
 % Please edit documentation in R/spec-setters.R
 \name{set_spec_sections,hyperion.tables::TableSpec-method}
 \alias{set_spec_sections,hyperion.tables::TableSpec-method}
+\alias{set_spec_sections}
 \alias{set_spec_sections-hyperion.tables-TableSpec-method}
 \title{Set section assignments for a TableSpec}
 \usage{

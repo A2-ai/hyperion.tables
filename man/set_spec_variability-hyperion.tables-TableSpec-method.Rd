@@ -2,6 +2,7 @@
 % Please edit documentation in R/spec-setters.R
 \name{set_spec_variability,hyperion.tables::TableSpec-method}
 \alias{set_spec_variability,hyperion.tables::TableSpec-method}
+\alias{set_spec_variability}
 \alias{set_spec_variability-hyperion.tables-TableSpec-method}
 \title{Set variability rules for a TableSpec}
 \usage{

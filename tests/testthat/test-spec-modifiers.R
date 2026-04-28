@@ -291,14 +291,16 @@ test_that("set_spec_sections accepts `sections =` for both spec types", {
   expect_length(summary_spec@sections@rules, 1)
 })
 
-test_that("TableSpec()/SummarySpec() require Sections objects at construction", {
+test_that("TableSpec()/SummarySpec() require SectionOptions objects at construction", {
   table_from_sections <- TableSpec(
-    sections = Sections(rules = section_rules(kind == "THETA" ~ "Structural"))
+    sections = SectionOptions(
+      rules = section_rules(kind == "THETA" ~ "Structural")
+    )
   )
   expect_length(table_from_sections@sections@rules, 1)
 
   summary_from_sections <- SummarySpec(
-    sections = Sections(
+    sections = SectionOptions(
       rules = section_rules("base" %in% tags ~ "Base Models")
     )
   )
@@ -306,11 +308,11 @@ test_that("TableSpec()/SummarySpec() require Sections objects at construction", 
 
   expect_error(
     TableSpec(sections = section_rules(kind == "THETA" ~ "Structural")),
-    "`sections` must be a Sections object"
+    "`sections` must be a SectionOptions object"
   )
   expect_error(
     SummarySpec(sections = section_rules("base" %in% tags ~ "Base Models")),
-    "`sections` must be a Sections object"
+    "`sections` must be a SectionOptions object"
   )
 })
 

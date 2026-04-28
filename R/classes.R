@@ -141,10 +141,10 @@ ParameterNameOptions <- S7::new_class(
 )
 
 # ==============================================================================
-# Sections
+# Section Options
 # ==============================================================================
 
-#' Section configuration for a spec
+#' Section options for a spec
 #'
 #' Holds rule formulas, per-item assignments, display order, and the
 #' filter (keep / exclude) for a `TableSpec` or `SummarySpec`.
@@ -167,8 +167,8 @@ ParameterNameOptions <- S7::new_class(
 #' }
 #'
 #' @export
-Sections <- S7::new_class(
-  "Sections",
+SectionOptions <- S7::new_class(
+  "SectionOptions",
   package = "hyperion.tables",
   properties = list(
     rules = S7::new_property(
@@ -264,18 +264,18 @@ Sections <- S7::new_class(
 #' @noRd
 normalize_sections_arg <- function(sections, owner = "TableSpec") {
   if (is.null(sections)) {
-    return(Sections())
+    return(SectionOptions())
   }
-  if (S7::S7_inherits(sections, Sections)) {
+  if (S7::S7_inherits(sections, SectionOptions)) {
     return(sections)
   }
 
   rlang::abort(c(
-    "`sections` must be a Sections object or NULL.",
+    "`sections` must be a SectionOptions object or NULL.",
     i = paste0(
       "Use `",
       owner,
-      "(sections = Sections(...))`, or prefer `",
+      "(sections = SectionOptions(...))`, or prefer `",
       owner,
       "() |> set_spec_sections(...)`."
     )
@@ -293,7 +293,7 @@ normalize_sections_arg <- function(sections, owner = "TableSpec") {
 #' @param parameter_names ParameterNameOptions object controlling how parameter names
 #'   are displayed. Controls which name field to use ("name", "display", or "nonmem").
 #'   Defaults to `ParameterNameOptions()`.
-#' @param sections A `Sections` object, or `NULL` for an empty section
+#' @param sections A `SectionOptions` object, or `NULL` for an empty section
 #'   configuration. Prefer configuring sections with [set_spec_sections()] in
 #'   a pipe for user-facing code.
 #' @param columns Character vector of columns to include in output.
@@ -379,8 +379,8 @@ TableSpec <- S7::new_class(
       default = TRUE
     ),
     sections = S7::new_property(
-      class = Sections,
-      default = quote(Sections())
+      class = SectionOptions,
+      default = quote(SectionOptions())
     ),
     row_filter = S7::new_property(
       class = S7::class_list,
@@ -591,7 +591,7 @@ TableSpec <- S7::new_class(
   constructor = function(
     title = "Model Parameters",
     parameter_names = ParameterNameOptions(),
-    sections = Sections(),
+    sections = SectionOptions(),
     columns = NULL,
     add_columns = NULL,
     drop_columns = NULL,
@@ -862,7 +862,7 @@ HyperionTable <- S7::new_class(
 #' @param summary_filter Filter rules created with `summary_filter_rules()`.
 #' @param remove_unrun_models Logical. If TRUE (default), models without
 #'   completed runs are excluded from the table.
-#' @param sections A `Sections` object, or `NULL` for an empty section
+#' @param sections A `SectionOptions` object, or `NULL` for an empty section
 #'   configuration. Prefer configuring sections with [set_spec_sections()] in
 #'   a pipe for user-facing code.
 #' @param columns Character vector of columns to include. Valid columns:
@@ -923,8 +923,8 @@ SummarySpec <- S7::new_class(
       default = TRUE
     ),
     sections = S7::new_property(
-      class = Sections,
-      default = quote(Sections())
+      class = SectionOptions,
+      default = quote(SectionOptions())
     ),
     columns = S7::new_property(
       class = S7::class_character,
@@ -1082,7 +1082,7 @@ SummarySpec <- S7::new_class(
     tag_exclude = NULL,
     summary_filter = summary_filter_rules(),
     remove_unrun_models = TRUE,
-    sections = Sections(),
+    sections = SectionOptions(),
     columns = NULL,
     add_columns = NULL,
     drop_columns = NULL,

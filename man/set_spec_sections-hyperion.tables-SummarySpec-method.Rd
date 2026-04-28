@@ -2,6 +2,7 @@
 % Please edit documentation in R/spec-setters.R
 \name{set_spec_sections,hyperion.tables::SummarySpec-method}
 \alias{set_spec_sections,hyperion.tables::SummarySpec-method}
+\alias{set_spec_sections}
 \alias{set_spec_sections-hyperion.tables-SummarySpec-method}
 \title{Set section rules for a SummarySpec}
 \usage{

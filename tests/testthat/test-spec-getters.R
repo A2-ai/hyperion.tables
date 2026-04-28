@@ -89,14 +89,14 @@ test_that("get_spec_ci returns modified CI", {
   expect_equal(ci@level, 0.90)
 })
 
-test_that("get_spec_sections returns a Sections object", {
+test_that("get_spec_sections returns a SectionOptions object", {
   spec <- TableSpec()
   sections <- get_spec_sections(spec)
 
-  expect_true(S7::S7_inherits(sections, Sections))
+  expect_true(S7::S7_inherits(sections, SectionOptions))
 })
 
-test_that("get_spec_sections returns added rules on the Sections object", {
+test_that("get_spec_sections returns added rules on the SectionOptions object", {
   spec <- TableSpec() |>
     set_spec_sections(kind == "THETA" ~ "Structural")
 

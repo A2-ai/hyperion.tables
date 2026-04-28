@@ -2,6 +2,7 @@
 % Please edit documentation in R/spec-setters.R
 \name{set_spec_summary_filter,hyperion.tables::SummarySpec-method}
 \alias{set_spec_summary_filter,hyperion.tables::SummarySpec-method}
+\alias{set_spec_summary_filter}
 \alias{set_spec_summary_filter-hyperion.tables-SummarySpec-method}
 \title{Set summary filter rules for a SummarySpec}
 \usage{

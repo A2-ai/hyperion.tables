@@ -35,7 +35,7 @@ add_spec_columns <- S7::new_generic("add_spec_columns", "spec")
 #' Method for [add_spec_columns()] on `TableSpec`. Confidence-interval column
 #' aliases (e.g., `"ci"`) are expanded to their underlying column names.
 #'
-#' @aliases add_spec_columns-hyperion.tables-TableSpec-method
+#' @rdname add_spec_columns
 #' @param spec A TableSpec object.
 #' @param ... Column names as unnamed character strings. Named arguments are
 #'   ignored with a warning.
@@ -52,7 +52,7 @@ S7::method(add_spec_columns, TableSpec) <- function(spec, ...) {
 #' Method for [add_spec_columns()] on `SummarySpec`. Updates `@columns` to
 #' reflect the merged default + added columns.
 #'
-#' @aliases add_spec_columns-hyperion.tables-SummarySpec-method
+#' @aliases add_spec_columns add_spec_columns-hyperion.tables-SummarySpec-method
 #' @param spec A SummarySpec object.
 #' @param ... Column names as unnamed character strings. Named arguments are
 #'   ignored with a warning.
@@ -121,7 +121,7 @@ set_spec_columns <- S7::new_generic("set_spec_columns", "spec")
 #' Method for [set_spec_columns()] on `TableSpec`. Confidence-interval column
 #' aliases (e.g., `"ci"`) are expanded to their underlying column names.
 #'
-#' @aliases set_spec_columns-hyperion.tables-TableSpec-method
+#' @aliases set_spec_columns set_spec_columns-hyperion.tables-TableSpec-method
 #' @param spec A TableSpec object.
 #' @param ... Column names as unnamed character strings. Named arguments are
 #'   ignored with a warning.
@@ -137,7 +137,7 @@ S7::method(set_spec_columns, TableSpec) <- function(spec, ...) {
 #'
 #' Method for [set_spec_columns()] on `SummarySpec`.
 #'
-#' @aliases set_spec_columns-hyperion.tables-SummarySpec-method
+#' @aliases set_spec_columns set_spec_columns-hyperion.tables-SummarySpec-method
 #' @param spec A SummarySpec object.
 #' @param ... Column names as unnamed character strings. Named arguments are
 #'   ignored with a warning.
@@ -375,7 +375,19 @@ S7::method(set_spec_footnotes, AnySpec) <- function(spec, order) {
 set_spec_section_filter <- S7::new_generic(
   "set_spec_section_filter",
   "spec",
-  function(spec, exclude = NULL, keep = NULL) S7::S7_dispatch()
+  function(spec, exclude = NULL, keep = NULL) {
+    lifecycle::deprecate_warn(
+      "0.5.0",
+      "set_spec_section_filter()",
+      "set_spec_sections()",
+      details = paste0(
+        "`set_spec_section_filter()` will be removed in hyperion.tables 0.6.0. ",
+        "Use `set_spec_sections(keep = ...)` or ",
+        "`set_spec_sections(exclude = ...)` instead."
+      )
+    )
+    S7::S7_dispatch()
+  }
 )
 
 S7::method(set_spec_section_filter, AnySpec) <- function(
@@ -383,17 +395,6 @@ S7::method(set_spec_section_filter, AnySpec) <- function(
   exclude = NULL,
   keep = NULL
 ) {
-  lifecycle::deprecate_warn(
-    "0.5.0",
-    "set_spec_section_filter()",
-    "set_spec_sections()",
-    details = paste0(
-      "`set_spec_section_filter()` will be removed in hyperion.tables 0.6.0. ",
-      "Use `set_spec_sections(keep = ...)` or ",
-      "`set_spec_sections(exclude = ...)` instead."
-    )
-  )
-
   if (
     (missing(exclude) || is.null(exclude)) &&
       (missing(keep) || is.null(keep))
@@ -576,7 +577,7 @@ resolve_next_section_filter <- function(
 #' SummarySpec supports the rules and order layers. `parameters` / `file`
 #' are rejected because summary tables have no per-parameter concept.
 #'
-#' @aliases set_spec_sections-hyperion.tables-SummarySpec-method
+#' @aliases set_spec_sections set_spec_sections-hyperion.tables-SummarySpec-method
 #' @param spec A SummarySpec object.
 #' @param ... Section rule formulas.
 #' @param sections List of section rule formulas (e.g. from
@@ -611,7 +612,7 @@ S7::method(set_spec_sections, SummarySpec) <- function(
     keep,
     exclude
   )
-  spec@sections <- Sections(
+  spec@sections <- SectionOptions(
     rules = build_next_rules(
       current@rules,
       sections,
@@ -631,7 +632,7 @@ S7::method(set_spec_sections, SummarySpec) <- function(
 #' Three assignment layers (rules, file overrides, inline overrides) plus
 #' display-order configuration. See [set_spec_sections()] for full details.
 #'
-#' @aliases set_spec_sections-hyperion.tables-TableSpec-method
+#' @aliases set_spec_sections set_spec_sections-hyperion.tables-TableSpec-method
 #' @param spec A TableSpec object.
 #' @param ... Section rule formulas.
 #' @param sections List of section rule formulas (e.g. from
@@ -699,7 +700,7 @@ S7::method(set_spec_sections, TableSpec) <- function(
     exclude
   )
 
-  spec@sections <- Sections(
+  spec@sections <- SectionOptions(
     rules = next_rules,
     assignments = next_assign,
     order = resolve_next_order(current@order, order),
@@ -922,7 +923,7 @@ set_spec_filter <- S7::new_generic(
 #'
 #' Method for [set_spec_filter()] on `TableSpec`.
 #'
-#' @aliases set_spec_filter-hyperion.tables-TableSpec-method
+#' @aliases set_spec_filter set_spec_filter-hyperion.tables-TableSpec-method
 #' @param spec A TableSpec object.
 #' @param ... Filter rule expressions. Named arguments are ignored with a
 #'   warning.
@@ -977,7 +978,7 @@ set_spec_variability <- S7::new_generic(
 #'
 #' Method for [set_spec_variability()] on `TableSpec`.
 #'
-#' @aliases set_spec_variability-hyperion.tables-TableSpec-method
+#' @aliases set_spec_variability set_spec_variability-hyperion.tables-TableSpec-method
 #' @param spec A TableSpec object.
 #' @param ... Variability rule formulas. Named arguments are ignored with a
 #'   warning.
@@ -1141,7 +1142,7 @@ set_spec_summary_filter <- S7::new_generic(
 #'
 #' Method for [set_spec_summary_filter()] on `SummarySpec`.
 #'
-#' @aliases set_spec_summary_filter-hyperion.tables-SummarySpec-method
+#' @aliases set_spec_summary_filter set_spec_summary_filter-hyperion.tables-SummarySpec-method
 #' @param spec A SummarySpec object.
 #' @param ... Summary filter rule expressions evaluated against summary
 #'   columns. Named arguments are ignored with a warning.

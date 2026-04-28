@@ -149,9 +149,9 @@ test_that("SummarySpec accumulates section rules across calls", {
   expect_length(rules, 3)
 })
 
-test_that("Sections rejects invalid section rules", {
+test_that("SectionOptions rejects invalid section rules", {
   expect_error(
-    Sections(rules = list("not a formula")),
+    SectionOptions(rules = list("not a formula")),
     "must be formulas"
   )
 })

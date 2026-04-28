@@ -133,7 +133,7 @@ S7::method(get_spec_ci, TableSpec) <- function(spec) {
 #'
 #' @description
 #' `get_spec_sections()` is an S7 generic that returns the spec's
-#' [Sections] object (rules, assignments, order, filter).
+#' [SectionOptions] object (rules, assignments, order, filter).
 #'
 #' Methods are available for the following classes:
 #'
@@ -141,7 +141,7 @@ S7::method(get_spec_ci, TableSpec) <- function(spec) {
 #'
 #' @param spec A TableSpec or SummarySpec object.
 #' @param ... Not used.
-#' @return A [Sections] object.
+#' @return A [SectionOptions] object.
 #' @seealso [set_spec_sections()].
 #' @export
 #' @examples

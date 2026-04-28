@@ -12,11 +12,11 @@ get_spec_sections(spec, ...)
 \item{...}{Not used.}
 }
 \value{
-A \link{Sections} object.
+A \link{SectionOptions} object.
 }
 \description{
 \code{get_spec_sections()} is an S7 generic that returns the spec's
-\link{Sections} object (rules, assignments, order, filter).
+\link{SectionOptions} object (rules, assignments, order, filter).
 
 Methods are available for the following classes:
 
