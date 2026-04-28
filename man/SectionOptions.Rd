@@ -7,6 +7,7 @@
 SectionOptions(
   rules = list(),
   assignments = list(),
+  inline_items = character(0),
   order = character(0),
   filter_keep = character(0),
   filter_exclude = character(0)
