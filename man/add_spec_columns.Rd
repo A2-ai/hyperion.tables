@@ -9,7 +9,8 @@ add_spec_columns(spec, ...)
 \arguments{
 \item{spec}{A TableSpec or SummarySpec object.}
 
-\item{...}{See methods.}
+\item{...}{Column names as unnamed character strings. For TableSpec, the
+alias \code{"ci"} expands to the configured confidence-interval bounds columns.}
 }
 \value{
 Modified spec.

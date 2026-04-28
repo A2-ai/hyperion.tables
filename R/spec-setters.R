@@ -18,7 +18,8 @@
 #' `r doclisting::methods_list("add_spec_columns")`
 #'
 #' @param spec A TableSpec or SummarySpec object.
-#' @param ... See methods.
+#' @param ... Column names as unnamed character strings. For TableSpec, the
+#'   alias `"ci"` expands to the configured confidence-interval bounds columns.
 #' @return Modified spec.
 #' @seealso [get_spec_columns()], [set_spec_columns()], [drop_spec_columns()].
 #' @export
@@ -87,7 +88,8 @@ S7::method(drop_spec_columns, AnySpec) <- function(spec, ...) {
 #' `r doclisting::methods_list("set_spec_columns")`
 #'
 #' @param spec A TableSpec or SummarySpec object.
-#' @param ... See methods.
+#' @param ... Column names as unnamed character strings. For TableSpec, the
+#'   alias `"ci"` expands to the configured confidence-interval bounds columns.
 #' @return Modified spec.
 #' @seealso [get_spec_columns()], [add_spec_columns()], [drop_spec_columns()].
 #' @export
@@ -843,7 +845,9 @@ S7::method(set_spec_transforms, TableSpec) <- function(
 #' `r doclisting::methods_list("set_spec_filter")`
 #'
 #' @param spec A TableSpec object.
-#' @param ... See methods.
+#' @param ... Filter expressions evaluated against parameter rows (e.g.
+#'   `!fixed`, `diagonal`). Captured as quosures and combined via
+#'   [filter_rules()].
 #' @param overwrite If FALSE (default), append to existing rules.
 #'   If TRUE, replace all existing rules.
 #' @return Modified spec.
@@ -883,7 +887,8 @@ S7::method(set_spec_filter, TableSpec) <- function(
 #' `r doclisting::methods_list("set_spec_variability")`
 #'
 #' @param spec A TableSpec object.
-#' @param ... See methods.
+#' @param ... Rule formulas (LHS condition ~ RHS expression) defining how
+#'   the variability column is constructed. Combined via [variability_rules()].
 #' @param overwrite If FALSE (default), append to existing rules.
 #'   If TRUE, replace all existing rules.
 #' @return Modified spec.
@@ -1041,7 +1046,9 @@ S7::method(set_spec_remove_unrun, SummarySpec) <- function(spec, remove) {
 #' `r doclisting::methods_list("set_spec_summary_filter")`
 #'
 #' @param spec A SummarySpec object.
-#' @param ... See methods.
+#' @param ... Filter expressions evaluated against summary columns (e.g.
+#'   `ofv < 1000`). Captured as quosures and combined via
+#'   [summary_filter_rules()].
 #' @param overwrite If FALSE (default), append to existing rules.
 #'   If TRUE, replace all existing rules.
 #' @return Modified spec.

@@ -9,7 +9,9 @@ set_spec_filter(spec, ..., overwrite = FALSE)
 \arguments{
 \item{spec}{A TableSpec object.}
 
-\item{...}{See methods.}
+\item{...}{Filter expressions evaluated against parameter rows (e.g.
+\code{!fixed}, \code{diagonal}). Captured as quosures and combined via
+\code{\link[=filter_rules]{filter_rules()}}.}
 
 \item{overwrite}{If FALSE (default), append to existing rules.
 If TRUE, replace all existing rules.}

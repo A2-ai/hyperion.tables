@@ -9,7 +9,8 @@ set_spec_variability(spec, ..., overwrite = FALSE)
 \arguments{
 \item{spec}{A TableSpec object.}
 
-\item{...}{See methods.}
+\item{...}{Rule formulas (LHS condition ~ RHS expression) defining how
+the variability column is constructed. Combined via \code{\link[=variability_rules]{variability_rules()}}.}
 
 \item{overwrite}{If FALSE (default), append to existing rules.
 If TRUE, replace all existing rules.}

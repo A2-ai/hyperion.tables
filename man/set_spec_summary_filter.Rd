@@ -9,7 +9,9 @@ set_spec_summary_filter(spec, ..., overwrite = FALSE)
 \arguments{
 \item{spec}{A SummarySpec object.}
 
-\item{...}{See methods.}
+\item{...}{Filter expressions evaluated against summary columns (e.g.
+\code{ofv < 1000}). Captured as quosures and combined via
+\code{\link[=summary_filter_rules]{summary_filter_rules()}}.}
 
 \item{overwrite}{If FALSE (default), append to existing rules.
 If TRUE, replace all existing rules.}
