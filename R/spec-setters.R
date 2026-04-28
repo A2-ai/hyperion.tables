@@ -514,40 +514,49 @@ drop_named_dots <- function(dots, names) {
 }
 
 #' @noRd
-with_assignment_error <- function(arg_name, expr) {
+with_section_options_error <- function(assignment_arg, expr) {
   tryCatch(
     force(expr),
     error = function(err) {
       msg <- conditionMessage(err)
-      if (!grepl("@assignments", msg, fixed = TRUE)) {
-        stop(err)
-      }
-      friendly <- if (grepl("multiple sections", msg, fixed = TRUE)) {
-        items <- sub(".*multiple sections: ", "", msg)
-        sprintf(
-          "Invalid `%s`: lists the same item under multiple sections: %s",
-          arg_name,
-          items
-        )
-      } else if (grepl("duplicate section labels", msg, fixed = TRUE)) {
-        sprintf("Invalid `%s`: has duplicate section labels.", arg_name)
-      } else if (
-        grepl("non-empty, non-NA character vectors", msg, fixed = TRUE)
-      ) {
-        sprintf(
-          "Invalid `%s`: values must be non-empty, non-NA character vectors.",
-          arg_name
-        )
+      friendly <- if (grepl("@order", msg, fixed = TRUE)) {
+        sub("^.*@order ", "Invalid `order`: ", msg)
+      } else if (grepl("@assignments", msg, fixed = TRUE)) {
+        translate_assignments_error(msg, assignment_arg)
       } else {
-        sprintf(
-          "Invalid `%s`: must be a named list keyed by section label, e.g. `%s = list(\"Section A\" = c(\"item1\", \"item2\"))`.",
-          arg_name,
-          arg_name
-        )
+        NULL
+      }
+      if (is.null(friendly)) {
+        stop(err)
       }
       rlang::abort(friendly, call = rlang::call2("set_spec_sections"))
     }
   )
+}
+
+#' @noRd
+translate_assignments_error <- function(msg, arg_name) {
+  if (grepl("multiple sections", msg, fixed = TRUE)) {
+    items <- sub(".*multiple sections: ", "", msg)
+    sprintf(
+      "Invalid `%s`: lists the same item under multiple sections: %s",
+      arg_name,
+      items
+    )
+  } else if (grepl("duplicate section labels", msg, fixed = TRUE)) {
+    sprintf("Invalid `%s`: has duplicate section labels.", arg_name)
+  } else if (grepl("non-empty, non-NA character vectors", msg, fixed = TRUE)) {
+    sprintf(
+      "Invalid `%s`: values must be non-empty, non-NA character vectors.",
+      arg_name
+    )
+  } else {
+    sprintf(
+      "Invalid `%s`: must be a named list keyed by section label, e.g. `%s = list(\"Section A\" = c(\"item1\", \"item2\"))`.",
+      arg_name,
+      arg_name
+    )
+  }
 }
 
 S7::method(set_spec_sections, SummarySpec) <- function(
@@ -578,23 +587,24 @@ S7::method(set_spec_sections, SummarySpec) <- function(
     next_keep <- NULL
     next_exclude <- exclude
   }
-  next_sections <- SectionOptions(
-    rules = build_next_rules(
-      current@rules,
-      sections,
-      dots,
-      overwrite
-    ),
-    assignments = current@assignments,
-    order = next_order,
-    filter_keep = next_keep,
-    filter_exclude = next_exclude
-  )
-  if (!is.null(models)) {
-    with_assignment_error("models", {
+  with_section_options_error("models", {
+    next_sections <- SectionOptions(
+      rules = build_next_rules(
+        current@rules,
+        sections,
+        dots,
+        overwrite
+      ),
+      assignments = current@assignments,
+      order = NULL,
+      filter_keep = next_keep,
+      filter_exclude = next_exclude
+    )
+    if (!is.null(models)) {
       next_sections@assignments <- models
-    })
-  }
+    }
+    next_sections@order <- next_order
+  })
   spec@sections <- next_sections
   spec
 }
@@ -646,28 +656,30 @@ S7::method(set_spec_sections, TableSpec) <- function(
     next_exclude <- exclude
   }
 
-  next_sections <- SectionOptions(
-    rules = next_rules,
-    assignments = current@assignments,
-    order = next_order,
-    filter_keep = next_keep,
-    filter_exclude = next_exclude
-  )
+  with_section_options_error("parameters", {
+    next_sections <- SectionOptions(
+      rules = next_rules,
+      assignments = current@assignments,
+      order = NULL,
+      filter_keep = next_keep,
+      filter_exclude = next_exclude
+    )
 
-  if (!is.null(file)) {
-    path <- normalizePath(file, mustWork = TRUE)
-    file_assign <- toml_lookup_to_assignments(read_lookup_toml(path))
-    if (length(file_assign) > 0L) {
-      next_sections@assignments <- file_assign
+    if (!is.null(file)) {
+      path <- normalizePath(file, mustWork = TRUE)
+      file_assign <- toml_lookup_to_assignments(read_lookup_toml(path))
+      if (length(file_assign) > 0L) {
+        next_sections@assignments <- file_assign
+      }
     }
-  }
 
-  if (!is.null(parameters)) {
-    attr(parameters, "warn_on_conflict") <- TRUE
-    with_assignment_error("parameters", {
+    if (!is.null(parameters)) {
+      attr(parameters, "warn_on_conflict") <- TRUE
       next_sections@assignments <- parameters
-    })
-  }
+    }
+
+    next_sections@order <- next_order
+  })
 
   spec@sections <- next_sections
   spec

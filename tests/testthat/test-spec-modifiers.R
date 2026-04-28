@@ -201,13 +201,21 @@ test_that("set_spec_section_filter is deprecated but delegates", {
 
 test_that("set_spec_sections(order=) stores order config", {
   spec <- TableSpec() |>
-    set_spec_sections(order = c("A", "B"))
-  expect_identical(spec@sections@order, c("A", "B"))
+    set_spec_sections(
+      kind == "THETA" ~ "A",
+      kind == "OMEGA" ~ "B",
+      order = c("B", "A")
+    )
+  expect_identical(spec@sections@order, c("B", "A"))
 })
 
 test_that("set_spec_sections(order = character(0)) clears the order", {
   spec <- TableSpec() |>
-    set_spec_sections(order = c("A", "B")) |>
+    set_spec_sections(
+      kind == "THETA" ~ "A",
+      kind == "OMEGA" ~ "B",
+      order = c("B", "A")
+    ) |>
     set_spec_sections(order = character(0))
   expect_length(spec@sections@order, 0L)
 })

@@ -347,6 +347,43 @@ SectionOptions <- S7::new_class(
       return("@order labels must be non-empty and non-NA.")
     }
 
+    if (length(self@order) > 0L) {
+      literal_labels <- character()
+      any_dynamic <- FALSE
+      for (rule in self@rules) {
+        expr <- if (rlang::is_quosure(rule)) {
+          rlang::quo_get_expr(rule)
+        } else {
+          rule
+        }
+        if (rlang::is_formula(expr)) {
+          rhs <- rlang::f_rhs(expr)
+          if (is.character(rhs) && length(rhs) == 1L) {
+            literal_labels <- c(literal_labels, rhs)
+          } else {
+            any_dynamic <- TRUE
+          }
+        } else {
+          any_dynamic <- TRUE
+        }
+      }
+      if (!any_dynamic) {
+        known <- unique(c(literal_labels, names(self@assignments)))
+        unknown <- setdiff(self@order, known)
+        if (length(unknown) > 0L) {
+          return(paste0(
+            "@order references unknown section ",
+            if (length(unknown) == 1L) "label" else "labels",
+            ": ",
+            paste(shQuote(unknown), collapse = ", "),
+            ". Known sections: ",
+            paste(shQuote(known), collapse = ", "),
+            "."
+          ))
+        }
+      }
+    }
+
     if (length(self@filter_keep) > 0L && length(self@filter_exclude) > 0L) {
       return(
         "@filter_keep and @filter_exclude are mutually exclusive; set at most one."
