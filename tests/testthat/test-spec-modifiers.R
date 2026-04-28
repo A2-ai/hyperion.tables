@@ -152,10 +152,18 @@ test_that("set_spec_footnotes validates sections", {
 })
 
 test_that("set_spec_sections exclude mode works for both specs", {
-  table_spec <- TableSpec() |> set_spec_sections(exclude = "Other")
+  table_spec <- TableSpec() |>
+    set_spec_sections(
+      kind == "THETA" ~ "Other",
+      exclude = "Other"
+    )
   expect_identical(table_spec@sections@filter_exclude, "Other")
 
-  sum_spec <- SummarySpec() |> set_spec_sections(exclude = c("Other", NA))
+  sum_spec <- SummarySpec() |>
+    set_spec_sections(
+      "base" %in% tags ~ "Other",
+      exclude = c("Other", NA)
+    )
   expect_identical(
     sum_spec@sections@filter_exclude,
     c("Other", NA_character_)
@@ -164,7 +172,11 @@ test_that("set_spec_sections exclude mode works for both specs", {
 
 test_that("set_spec_sections keep mode stores positive list", {
   spec <- TableSpec() |>
-    set_spec_sections(keep = c("Structural", "Variability"))
+    set_spec_sections(
+      kind == "THETA" ~ "Structural",
+      kind == "OMEGA" ~ "Variability",
+      keep = c("Structural", "Variability")
+    )
   expect_identical(
     spec@sections@filter_keep,
     c("Structural", "Variability")
@@ -174,22 +186,32 @@ test_that("set_spec_sections keep mode stores positive list", {
 test_that("set_spec_sections rejects exclude + keep together", {
   expect_error(
     TableSpec() |>
-      set_spec_sections(exclude = "Other", keep = "Structural"),
-    "SectionOptions.*filter_keep and @filter_exclude"
+      set_spec_sections(
+        kind == "THETA" ~ "Other",
+        kind == "OMEGA" ~ "Structural",
+        exclude = "Other",
+        keep = "Structural"
+      ),
+    "mutually exclusive"
   )
 })
 
 test_that("set_spec_sections clears section filter with character(0)", {
   spec <- SummarySpec() |>
-    set_spec_sections(exclude = "Other") |>
+    set_spec_sections(
+      "base" %in% tags ~ "Other",
+      exclude = "Other"
+    ) |>
     set_spec_sections(keep = character(0))
   expect_length(spec@sections@filter_keep, 0L)
   expect_length(spec@sections@filter_exclude, 0L)
 })
 
 test_that("set_spec_section_filter is deprecated but delegates", {
+  base <- TableSpec() |>
+    set_spec_sections(kind == "THETA" ~ "Other")
   expect_warning(
-    spec <- TableSpec() |> set_spec_section_filter(exclude = "Other"),
+    spec <- base |> set_spec_section_filter(exclude = "Other"),
     "deprecated"
   )
   expect_identical(spec@sections@filter_exclude, "Other")

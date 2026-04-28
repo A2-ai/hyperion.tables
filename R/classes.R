@@ -182,7 +182,9 @@ SectionOptions <- S7::new_class(
         warn_on_conflict <- isTRUE(
           attr(value, "warn_on_conflict", exact = TRUE)
         )
+        is_inline <- isTRUE(attr(value, "is_inline", exact = TRUE))
         attr(value, "warn_on_conflict") <- NULL
+        attr(value, "is_inline") <- NULL
 
         is_valid_assignments <- function(x) {
           if (!is.list(x)) {
@@ -218,6 +220,9 @@ SectionOptions <- S7::new_class(
 
         if (length(value) == 0L) {
           S7::prop(self, "assignments") <- list()
+          if (is_inline) {
+            S7::prop(self, "inline_items") <- character(0)
+          }
           return(self)
         }
 
@@ -249,8 +254,18 @@ SectionOptions <- S7::new_class(
         merged[names(new_flat)] <- new_flat
         S7::prop(self, "assignments") <-
           split(unname(names(merged)), unname(merged))
+        if (is_inline) {
+          S7::prop(self, "inline_items") <- unique(c(
+            self@inline_items,
+            unlist(value, use.names = FALSE)
+          ))
+        }
         self
       }
+    ),
+    inline_items = S7::new_property(
+      class = S7::class_character,
+      default = character(0)
     ),
     order = S7::new_property(
       class = S7::class_character | NULL,
@@ -347,7 +362,26 @@ SectionOptions <- S7::new_class(
       return("@order labels must be non-empty and non-NA.")
     }
 
-    if (length(self@order) > 0L) {
+    if (length(self@filter_keep) > 0L && length(self@filter_exclude) > 0L) {
+      return(
+        "@filter_keep and @filter_exclude are mutually exclusive; set at most one."
+      )
+    }
+    for (slot in c("filter_keep", "filter_exclude")) {
+      v <- S7::prop(self, slot)
+      if (length(v) > 0L && any(!is.na(v) & !nzchar(v))) {
+        return(sprintf(
+          "@%s labels must be non-empty (NA allowed).",
+          slot
+        ))
+      }
+    }
+
+    if (
+      length(self@order) > 0L ||
+        length(self@filter_keep) > 0L ||
+        length(self@filter_exclude) > 0L
+    ) {
       literal_labels <- character()
       any_dynamic <- FALSE
       for (rule in self@rules) {
@@ -369,35 +403,37 @@ SectionOptions <- S7::new_class(
       }
       if (!any_dynamic) {
         known <- unique(c(literal_labels, names(self@assignments)))
-        unknown <- setdiff(self@order, known)
-        if (length(unknown) > 0L) {
-          return(paste0(
-            "@order references unknown section ",
+        unknown_msg <- function(labels, slot_name) {
+          labels <- labels[!is.na(labels)]
+          unknown <- setdiff(labels, known)
+          if (length(unknown) == 0L) {
+            return(NULL)
+          }
+          paste0(
+            "@",
+            slot_name,
+            " references unknown section ",
             if (length(unknown) == 1L) "label" else "labels",
             ": ",
             paste(shQuote(unknown), collapse = ", "),
             ". Known sections: ",
             paste(shQuote(known), collapse = ", "),
             "."
-          ))
+          )
         }
+        msg <- unknown_msg(self@order, "order")
+        if (!is.null(msg)) {
+          return(msg)
+        }
+        msg <- unknown_msg(self@filter_keep, "filter_keep")
+        if (!is.null(msg)) {
+          return(msg)
+        }
+        msg <- unknown_msg(self@filter_exclude, "filter_exclude")
+        if (!is.null(msg)) return(msg)
       }
     }
 
-    if (length(self@filter_keep) > 0L && length(self@filter_exclude) > 0L) {
-      return(
-        "@filter_keep and @filter_exclude are mutually exclusive; set at most one."
-      )
-    }
-    for (slot in c("filter_keep", "filter_exclude")) {
-      v <- S7::prop(self, slot)
-      if (length(v) > 0L && any(!is.na(v) & !nzchar(v))) {
-        return(sprintf(
-          "@%s labels must be non-empty (NA allowed).",
-          slot
-        ))
-      }
-    }
     NULL
   }
 )

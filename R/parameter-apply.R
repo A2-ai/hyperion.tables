@@ -276,10 +276,11 @@ apply_lookup_section_overrides <- function(df, spec) {
   section_map <- stats::setNames(labels, items)
 
   res <- assign_section_overrides(df, section_map)
-  if (length(res$unmatched) > 0L) {
+  inline_unmatched <- intersect(res$unmatched, spec@sections@inline_items)
+  if (length(inline_unmatched) > 0L) {
     rlang::warn(paste0(
       "Inline `parameters` section override(s) did not match any parameter: ",
-      paste(shQuote(res$unmatched), collapse = ", "),
+      paste(shQuote(inline_unmatched), collapse = ", "),
       "."
     ))
   }

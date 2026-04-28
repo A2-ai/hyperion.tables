@@ -219,7 +219,7 @@ test_that("inline parameters warn when no row matches", {
 })
 
 # T5
-test_that("SummarySpec section_filter without rules runs (and warns on typo)", {
+test_that("SummarySpec section_filter warns when label not in data", {
   model_dir <- system.file(
     "extdata",
     "models",
@@ -228,10 +228,13 @@ test_that("SummarySpec section_filter without rules runs (and warns on typo)", {
   )
   tree <- hyperion::get_model_lineage(model_dir)
   spec <- SummarySpec() |>
-    set_spec_sections(exclude = "Foo")
+    set_spec_sections(
+      "nonexistent_tag" %in% tags ~ "Foo",
+      exclude = "Foo"
+    )
 
-  # No rules -> section column populated as NA -> filter has nothing to
-  # match. We expect a warning that the label wasn't present in the data.
+  # Rule introduces "Foo" but no models match -> data has no "Foo" rows.
+  # Apply-time warns that the label wasn't present in the data.
   expect_warning(
     apply_summary_spec(tree, spec),
     "section_filter exclude label.*not present"

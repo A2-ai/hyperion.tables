@@ -519,8 +519,14 @@ with_section_options_error <- function(assignment_arg, expr) {
     force(expr),
     error = function(err) {
       msg <- conditionMessage(err)
-      friendly <- if (grepl("@order", msg, fixed = TRUE)) {
+      friendly <- if (grepl("mutually exclusive", msg, fixed = TRUE)) {
+        "`keep` and `exclude` are mutually exclusive; pass at most one."
+      } else if (grepl("@order", msg, fixed = TRUE)) {
         sub("^.*@order ", "Invalid `order`: ", msg)
+      } else if (grepl("@filter_keep", msg, fixed = TRUE)) {
+        sub("^.*@filter_keep ", "Invalid `keep`: ", msg)
+      } else if (grepl("@filter_exclude", msg, fixed = TRUE)) {
+        sub("^.*@filter_exclude ", "Invalid `exclude`: ", msg)
       } else if (grepl("@assignments", msg, fixed = TRUE)) {
         translate_assignments_error(msg, assignment_arg)
       } else {
@@ -597,13 +603,15 @@ S7::method(set_spec_sections, SummarySpec) <- function(
       ),
       assignments = current@assignments,
       order = NULL,
-      filter_keep = next_keep,
-      filter_exclude = next_exclude
+      filter_keep = NULL,
+      filter_exclude = NULL
     )
     if (!is.null(models)) {
       next_sections@assignments <- models
     }
     next_sections@order <- next_order
+    next_sections@filter_keep <- next_keep
+    next_sections@filter_exclude <- next_exclude
   })
   spec@sections <- next_sections
   spec
@@ -661,8 +669,8 @@ S7::method(set_spec_sections, TableSpec) <- function(
       rules = next_rules,
       assignments = current@assignments,
       order = NULL,
-      filter_keep = next_keep,
-      filter_exclude = next_exclude
+      filter_keep = NULL,
+      filter_exclude = NULL
     )
 
     if (!is.null(file)) {
@@ -675,10 +683,13 @@ S7::method(set_spec_sections, TableSpec) <- function(
 
     if (!is.null(parameters)) {
       attr(parameters, "warn_on_conflict") <- TRUE
+      attr(parameters, "is_inline") <- TRUE
       next_sections@assignments <- parameters
     }
 
     next_sections@order <- next_order
+    next_sections@filter_keep <- next_keep
+    next_sections@filter_exclude <- next_exclude
   })
 
   spec@sections <- next_sections
