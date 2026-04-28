@@ -532,44 +532,20 @@ build_next_rules <- function(current_rules, sections_arg, dots, overwrite) {
 }
 
 #' @noRd
-resolve_next_order <- function(current_order, order) {
-  if (is.null(order)) {
-    return(current_order)
-  }
-  if (length(order) == 0L) {
-    return(NULL)
-  }
-  as.character(order)
-}
-
-#' @noRd
-resolve_next_section_filter <- function(
-  current_keep,
-  current_exclude,
-  keep,
-  exclude
-) {
-  if (!is.null(keep) && !is.null(exclude)) {
-    rlang::abort("Pass either `keep` or `exclude`, not both.")
-  }
-
-  if (!is.null(keep)) {
-    keep <- as.character(keep)
-    if (length(keep) == 0L) {
-      return(list(keep = NULL, exclude = NULL))
+with_parameters_error <- function(expr) {
+  tryCatch(
+    force(expr),
+    error = function(err) {
+      if (!grepl("@assignments", conditionMessage(err), fixed = TRUE)) {
+        stop(err)
+      }
+      rlang::abort(
+        "Invalid `parameters`.",
+        parent = err,
+        call = rlang::call2("set_spec_sections")
+      )
     }
-    return(list(keep = keep, exclude = NULL))
-  }
-
-  if (!is.null(exclude)) {
-    exclude <- as.character(exclude)
-    if (length(exclude) == 0L) {
-      return(list(keep = NULL, exclude = NULL))
-    }
-    return(list(keep = NULL, exclude = exclude))
-  }
-
-  list(keep = current_keep, exclude = current_exclude)
+  )
 }
 
 #' Set section rules for a SummarySpec
@@ -606,12 +582,22 @@ S7::method(set_spec_sections, SummarySpec) <- function(
     )
   }
   current <- spec@sections
-  next_filter <- resolve_next_section_filter(
-    current@filter_keep,
-    current@filter_exclude,
-    keep,
-    exclude
-  )
+  next_order <- current@order
+  if (!is.null(order)) {
+    next_order <- order
+  }
+  next_keep <- current@filter_keep
+  next_exclude <- current@filter_exclude
+  if (!is.null(keep) && !is.null(exclude)) {
+    next_keep <- keep
+    next_exclude <- exclude
+  } else if (!is.null(keep)) {
+    next_keep <- keep
+    next_exclude <- NULL
+  } else if (!is.null(exclude)) {
+    next_keep <- NULL
+    next_exclude <- exclude
+  }
   spec@sections <- SectionOptions(
     rules = build_next_rules(
       current@rules,
@@ -620,9 +606,9 @@ S7::method(set_spec_sections, SummarySpec) <- function(
       overwrite
     ),
     assignments = current@assignments,
-    order = resolve_next_order(current@order, order),
-    filter_keep = next_filter$keep,
-    filter_exclude = next_filter$exclude
+    order = next_order,
+    filter_keep = next_keep,
+    filter_exclude = next_exclude
   )
   spec
 }
@@ -664,8 +650,6 @@ S7::method(set_spec_sections, TableSpec) <- function(
     rlang::enquos(...),
     overwrite
   )
-  next_assign <- current@assignments
-
   if (!is.null(file)) {
     if (!is.character(file) || length(file) != 1L) {
       rlang::abort("`file` must be a single character path or NULL.")
@@ -675,38 +659,49 @@ S7::method(set_spec_sections, TableSpec) <- function(
         "`file` must be a path; pass `parameters = list()` to clear assignments."
       )
     }
-    path <- normalizePath(file, mustWork = TRUE)
-    file_assign <- toml_lookup_to_assignments(read_lookup_toml(path))
-    next_assign <- merge_assignments(next_assign, file_assign, source = "file")
   }
 
-  if (!is.null(parameters)) {
-    if (is.list(parameters) && length(parameters) == 0L) {
-      next_assign <- list()
-    } else {
-      next_assign <- merge_assignments(
-        next_assign,
-        parameters,
-        source = "inline",
-        warn_on_conflict = TRUE
-      )
+  next_order <- current@order
+  if (!is.null(order)) {
+    next_order <- order
+  }
+  next_keep <- current@filter_keep
+  next_exclude <- current@filter_exclude
+  if (!is.null(keep) && !is.null(exclude)) {
+    next_keep <- keep
+    next_exclude <- exclude
+  } else if (!is.null(keep)) {
+    next_keep <- keep
+    next_exclude <- NULL
+  } else if (!is.null(exclude)) {
+    next_keep <- NULL
+    next_exclude <- exclude
+  }
+
+  next_sections <- SectionOptions(
+    rules = next_rules,
+    assignments = current@assignments,
+    order = next_order,
+    filter_keep = next_keep,
+    filter_exclude = next_exclude
+  )
+
+  if (!is.null(file)) {
+    path <- normalizePath(file, mustWork = TRUE)
+    file_assign <- toml_lookup_to_assignments(read_lookup_toml(path))
+    if (length(file_assign) > 0L) {
+      next_sections@assignments <- file_assign
     }
   }
 
-  next_filter <- resolve_next_section_filter(
-    current@filter_keep,
-    current@filter_exclude,
-    keep,
-    exclude
-  )
+  if (!is.null(parameters)) {
+    attr(parameters, "warn_on_conflict") <- TRUE
+    with_parameters_error({
+      next_sections@assignments <- parameters
+    })
+  }
 
-  spec@sections <- SectionOptions(
-    rules = next_rules,
-    assignments = next_assign,
-    order = resolve_next_order(current@order, order),
-    filter_keep = next_filter$keep,
-    filter_exclude = next_filter$exclude
-  )
+  spec@sections <- next_sections
   spec
 }
 

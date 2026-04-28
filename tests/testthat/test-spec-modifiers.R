@@ -175,7 +175,7 @@ test_that("set_spec_sections rejects exclude + keep together", {
   expect_error(
     TableSpec() |>
       set_spec_sections(exclude = "Other", keep = "Structural"),
-    "either"
+    "SectionOptions.*filter_keep and @filter_exclude"
   )
 })
 

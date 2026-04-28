@@ -176,20 +176,120 @@ SectionOptions <- S7::new_class(
       default = list()
     ),
     assignments = S7::new_property(
-      class = S7::class_list,
-      default = list()
+      class = S7::class_list | S7::class_character,
+      default = list(),
+      setter = function(self, value) {
+        warn_on_conflict <- isTRUE(
+          attr(value, "warn_on_conflict", exact = TRUE)
+        )
+        attr(value, "warn_on_conflict") <- NULL
+
+        is_valid_assignments <- function(x) {
+          if (!is.list(x)) {
+            return(FALSE)
+          }
+          if (length(x) == 0L) {
+            return(TRUE)
+          }
+          nm <- names(x)
+          if (is.null(nm) || any(!nzchar(nm)) || any(is.na(nm))) {
+            return(FALSE)
+          }
+          ok_vals <- vapply(
+            x,
+            function(v) {
+              is.character(v) &&
+                length(v) > 0L &&
+                !any(is.na(v)) &&
+                all(nzchar(v))
+            },
+            logical(1)
+          )
+          if (!all(ok_vals)) {
+            return(FALSE)
+          }
+          anyDuplicated(unlist(x, use.names = FALSE)) == 0L
+        }
+
+        if (!is_valid_assignments(value)) {
+          S7::prop(self, "assignments") <- value
+          return(self)
+        }
+
+        if (length(value) == 0L) {
+          S7::prop(self, "assignments") <- list()
+          return(self)
+        }
+
+        flatten <- function(x) {
+          if (length(x) == 0L) {
+            return(stats::setNames(character(0), character(0)))
+          }
+          items <- unlist(x, use.names = FALSE)
+          labels <- rep(names(x), lengths(x))
+          stats::setNames(labels, items)
+        }
+
+        cur_flat <- flatten(self@assignments)
+        new_flat <- flatten(value)
+        conflicts <- intersect(names(cur_flat), names(new_flat))
+        if (length(conflicts) > 0L) {
+          differing <- conflicts[cur_flat[conflicts] != new_flat[conflicts]]
+          if (warn_on_conflict && length(differing) > 0L) {
+            rlang::warn(paste0(
+              "Per-parameter section conflict between `file` and ",
+              "`parameters` for: ",
+              paste(shQuote(differing), collapse = ", "),
+              ". Inline `parameters` value(s) win."
+            ))
+          }
+        }
+
+        merged <- cur_flat
+        merged[names(new_flat)] <- new_flat
+        S7::prop(self, "assignments") <-
+          split(unname(names(merged)), unname(merged))
+        self
+      }
     ),
     order = S7::new_property(
       class = S7::class_character | NULL,
-      default = NULL
+      default = NULL,
+      setter = function(self, value) {
+        if (!is.null(value) && length(value) == 0L) {
+          value <- NULL
+        }
+        S7::prop(self, "order") <- value
+        self
+      }
     ),
     filter_keep = S7::new_property(
       class = S7::class_character | NULL,
-      default = NULL
+      default = NULL,
+      setter = function(self, value) {
+        if (!is.null(value) && length(value) == 0L) {
+          value <- NULL
+        }
+        if (is.logical(value) && all(is.na(value))) {
+          value <- rep(NA_character_, length(value))
+        }
+        S7::prop(self, "filter_keep") <- value
+        self
+      }
     ),
     filter_exclude = S7::new_property(
       class = S7::class_character | NULL,
-      default = NULL
+      default = NULL,
+      setter = function(self, value) {
+        if (!is.null(value) && length(value) == 0L) {
+          value <- NULL
+        }
+        if (is.logical(value) && all(is.na(value))) {
+          value <- rep(NA_character_, length(value))
+        }
+        S7::prop(self, "filter_exclude") <- value
+        self
+      }
     )
   ),
   validator = function(self) {
@@ -200,6 +300,10 @@ SectionOptions <- S7::new_class(
       return(
         "@rules must be formulas; pass formulas via `set_spec_sections(...)` or build with `section_rules()`."
       )
+    }
+
+    if (!is.list(self@assignments)) {
+      return("@assignments must be a named list keyed by section label.")
     }
 
     if (length(self@assignments) > 0) {
@@ -260,27 +364,6 @@ SectionOptions <- S7::new_class(
     NULL
   }
 )
-
-#' @noRd
-normalize_sections_arg <- function(sections, owner = "TableSpec") {
-  if (is.null(sections)) {
-    return(SectionOptions())
-  }
-  if (S7::S7_inherits(sections, SectionOptions)) {
-    return(sections)
-  }
-
-  rlang::abort(c(
-    "`sections` must be a SectionOptions object or NULL.",
-    i = paste0(
-      "Use `",
-      owner,
-      "(sections = SectionOptions(...))`, or prefer `",
-      owner,
-      "() |> set_spec_sections(...)`."
-    )
-  ))
-}
 
 # ==============================================================================
 # TableSpec S7 Class
@@ -379,8 +462,15 @@ TableSpec <- S7::new_class(
       default = TRUE
     ),
     sections = S7::new_property(
-      class = SectionOptions,
-      default = quote(SectionOptions())
+      class = S7::class_any,
+      default = quote(SectionOptions()),
+      setter = function(self, value) {
+        if (is.null(value)) {
+          value <- SectionOptions()
+        }
+        S7::prop(self, "sections") <- value
+        self
+      }
     ),
     row_filter = S7::new_property(
       class = S7::class_list,
@@ -542,6 +632,10 @@ TableSpec <- S7::new_class(
       return("@ci must be a CIOptions object.")
     }
 
+    if (!S7::S7_inherits(self@sections, SectionOptions)) {
+      return("`sections` must be a SectionOptions object.")
+    }
+
     if (length(self@missing_text) != 1 || is.na(self@missing_text)) {
       return(sprintf(
         "@missing_text must be a single character string. Got: %s",
@@ -608,7 +702,6 @@ TableSpec <- S7::new_class(
     missing_apply_to = "all",
     footnote_order = c("summary_info", "equations", "abbreviations")
   ) {
-    sections <- normalize_sections_arg(sections, owner = "TableSpec")
     if (!is.list(display_transforms)) {
       rlang::abort(paste0(
         "@display_transforms must be a list, not a ",
@@ -923,8 +1016,15 @@ SummarySpec <- S7::new_class(
       default = TRUE
     ),
     sections = S7::new_property(
-      class = SectionOptions,
-      default = quote(SectionOptions())
+      class = S7::class_any,
+      default = quote(SectionOptions()),
+      setter = function(self, value) {
+        if (is.null(value)) {
+          value <- SectionOptions()
+        }
+        S7::prop(self, "sections") <- value
+        self
+      }
     ),
     columns = S7::new_property(
       class = S7::class_character,
@@ -1058,6 +1158,10 @@ SummarySpec <- S7::new_class(
       return(drop_msg)
     }
 
+    if (!S7::S7_inherits(self@sections, SectionOptions)) {
+      return("`sections` must be a SectionOptions object.")
+    }
+
     if (length(self@pvalue_scientific) != 1 || is.na(self@pvalue_scientific)) {
       return(sprintf(
         "@pvalue_scientific must be TRUE or FALSE. Got: %s",
@@ -1095,7 +1199,6 @@ SummarySpec <- S7::new_class(
     footnote_order = "abbreviations"
   ) {
     columns <- merge_summary_columns(columns, add_columns)
-    sections <- normalize_sections_arg(sections, owner = "SummarySpec")
 
     S7::new_object(
       S7::S7_object(),

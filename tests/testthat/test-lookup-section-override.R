@@ -266,7 +266,7 @@ test_that("set_spec_sections rejects malformed parameters arg", {
   expect_error(
     TableSpec() |>
       set_spec_sections(parameters = c(TVCL = "A")),
-    "named list"
+    "Invalid `parameters`"
   )
   # unnamed list
   expect_error(
