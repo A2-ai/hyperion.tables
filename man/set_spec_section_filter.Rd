@@ -41,6 +41,3 @@ spec <- SummarySpec() |>
   ) |>
   set_spec_section_filter(exclude = "Other")
 }
-\seealso{
-\code{\link[=get_spec_section_filter]{get_spec_section_filter()}}.
-}

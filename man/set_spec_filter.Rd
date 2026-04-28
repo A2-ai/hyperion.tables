@@ -25,7 +25,7 @@ in the output table. Pass filter expressions like \code{!fixed}, \code{diagonal}
 Methods are available for the following classes:
 
 \itemize{
-\item \code{\link[=set_spec_filter-hyperion.tables-TableSpec-method]{hyperion.tables::TableSpec}}
+\item \code{hyperion.tables::TableSpec}
 }
 }
 \examples{

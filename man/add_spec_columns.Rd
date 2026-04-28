@@ -2,24 +2,17 @@
 % Please edit documentation in R/spec-setters.R
 \name{add_spec_columns}
 \alias{add_spec_columns}
-\alias{add_spec_columns,hyperion.tables::TableSpec-method}
 \title{Add columns to a spec}
 \usage{
 add_spec_columns(spec, ...)
-
-## S7 method for class <hyperion.tables::TableSpec>
-add_spec_columns(spec, ...)
 }
 \arguments{
-\item{spec}{A TableSpec object.}
+\item{spec}{A TableSpec or SummarySpec object.}
 
-\item{...}{Column names as unnamed character strings. Named arguments are
-ignored with a warning.}
+\item{...}{See methods.}
 }
 \value{
 Modified spec.
-
-Modified TableSpec.
 }
 \description{
 \code{add_spec_columns()} is an S7 generic that appends columns to the spec's
@@ -28,12 +21,9 @@ Modified TableSpec.
 Methods are available for the following classes:
 
 \itemize{
-\item \code{\link[=add_spec_columns-hyperion.tables-SummarySpec-method]{hyperion.tables::SummarySpec}}
+\item \code{hyperion.tables::SummarySpec}
 \item \code{hyperion.tables::TableSpec}
 }
-
-Method for \code{\link[=add_spec_columns]{add_spec_columns()}} on \code{TableSpec}. Confidence-interval column
-aliases (e.g., \code{"ci"}) are expanded to their underlying column names.
 }
 \examples{
 spec <- TableSpec() |>

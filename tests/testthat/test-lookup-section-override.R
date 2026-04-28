@@ -81,19 +81,17 @@ test_that("inline parameters override warns on conflict with file", {
   )
 })
 
-test_that("set_spec_sections rejects parameters/file on SummarySpec", {
-  expect_error(
+test_that("set_spec_sections ignores parameters/file on SummarySpec", {
+  expect_no_error(
     SummarySpec() |>
       set_spec_sections(
         TRUE ~ "All",
         parameters = list("Custom" = "run001.mod")
-      ),
-    "TableSpec"
+      )
   )
-  expect_error(
+  expect_no_error(
     SummarySpec() |>
-      set_spec_sections(file = "anything.toml"),
-    "TableSpec"
+      set_spec_sections(file = "anything.toml")
   )
 })
 

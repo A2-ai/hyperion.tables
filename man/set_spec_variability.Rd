@@ -25,7 +25,7 @@ display column is constructed.
 Methods are available for the following classes:
 
 \itemize{
-\item \code{\link[=set_spec_variability-hyperion.tables-TableSpec-method]{hyperion.tables::TableSpec}}
+\item \code{hyperion.tables::TableSpec}
 }
 }
 \examples{

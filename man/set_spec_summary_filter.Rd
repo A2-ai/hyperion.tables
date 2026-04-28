@@ -26,7 +26,7 @@ summary columns.
 Methods are available for the following classes:
 
 \itemize{
-\item \code{\link[=set_spec_summary_filter-hyperion.tables-SummarySpec-method]{hyperion.tables::SummarySpec}}
+\item \code{hyperion.tables::SummarySpec}
 }
 }
 \examples{

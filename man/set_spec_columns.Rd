@@ -21,8 +21,8 @@ entirely. This overrides the default column set.
 Methods are available for the following classes:
 
 \itemize{
-\item \code{\link[=set_spec_columns-hyperion.tables-SummarySpec-method]{hyperion.tables::SummarySpec}}
-\item \code{\link[=set_spec_columns-hyperion.tables-TableSpec-method]{hyperion.tables::TableSpec}}
+\item \code{hyperion.tables::SummarySpec}
+\item \code{hyperion.tables::TableSpec}
 }
 }
 \examples{
