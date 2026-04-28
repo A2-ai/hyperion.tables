@@ -514,18 +514,38 @@ drop_named_dots <- function(dots, names) {
 }
 
 #' @noRd
-with_parameters_error <- function(expr) {
+with_assignment_error <- function(arg_name, expr) {
   tryCatch(
     force(expr),
     error = function(err) {
-      if (!grepl("@assignments", conditionMessage(err), fixed = TRUE)) {
+      msg <- conditionMessage(err)
+      if (!grepl("@assignments", msg, fixed = TRUE)) {
         stop(err)
       }
-      rlang::abort(
-        "Invalid `parameters`.",
-        parent = err,
-        call = rlang::call2("set_spec_sections")
-      )
+      friendly <- if (grepl("multiple sections", msg, fixed = TRUE)) {
+        items <- sub(".*multiple sections: ", "", msg)
+        sprintf(
+          "Invalid `%s`: lists the same item under multiple sections: %s",
+          arg_name,
+          items
+        )
+      } else if (grepl("duplicate section labels", msg, fixed = TRUE)) {
+        sprintf("Invalid `%s`: has duplicate section labels.", arg_name)
+      } else if (
+        grepl("non-empty, non-NA character vectors", msg, fixed = TRUE)
+      ) {
+        sprintf(
+          "Invalid `%s`: values must be non-empty, non-NA character vectors.",
+          arg_name
+        )
+      } else {
+        sprintf(
+          "Invalid `%s`: must be a named list keyed by section label, e.g. `%s = list(\"Section A\" = c(\"item1\", \"item2\"))`.",
+          arg_name,
+          arg_name
+        )
+      }
+      rlang::abort(friendly, call = rlang::call2("set_spec_sections"))
     }
   )
 }
@@ -571,7 +591,9 @@ S7::method(set_spec_sections, SummarySpec) <- function(
     filter_exclude = next_exclude
   )
   if (!is.null(models)) {
-    next_sections@assignments <- models
+    with_assignment_error("models", {
+      next_sections@assignments <- models
+    })
   }
   spec@sections <- next_sections
   spec
@@ -642,7 +664,7 @@ S7::method(set_spec_sections, TableSpec) <- function(
 
   if (!is.null(parameters)) {
     attr(parameters, "warn_on_conflict") <- TRUE
-    with_parameters_error({
+    with_assignment_error("parameters", {
       next_sections@assignments <- parameters
     })
   }
