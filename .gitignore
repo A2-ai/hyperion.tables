@@ -6,7 +6,7 @@
 .quarto
 
 lefthook.yaml
-
+.claude/
 **/*.otter.R
 
 **/*.html

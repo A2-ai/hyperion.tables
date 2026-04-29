@@ -21,8 +21,7 @@ A \link{SectionOptions} object.
 Methods are available for the following classes:
 
 \itemize{
-\item \code{hyperion.tables::SummarySpec}
-\item \code{hyperion.tables::TableSpec}
+\item \code{hyperion.tables::BaseSpec}
 }
 }
 \examples{

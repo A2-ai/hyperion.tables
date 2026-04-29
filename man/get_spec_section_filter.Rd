@@ -22,8 +22,7 @@ of two shapes: \code{list(exclude = c(...))}, \code{list(keep = c(...))}, or emp
 Methods are available for the following classes:
 
 \itemize{
-\item \code{hyperion.tables::SummarySpec}
-\item \code{hyperion.tables::TableSpec}
+\item \code{hyperion.tables::BaseSpec}
 }
 }
 \seealso{

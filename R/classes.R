@@ -420,6 +420,112 @@ merge_section_assignments <- function(current, new, warn_on_conflict = FALSE) {
 }
 
 # ==============================================================================
+# BaseSpec S7 Class - abstract parent for TableSpec and SummarySpec
+# ==============================================================================
+
+#' Abstract parent class for spec types
+#'
+#' `BaseSpec` is an abstract S7 class that serves as the common parent for
+#' [TableSpec] and [SummarySpec]. It cannot be instantiated directly. Common
+#' properties, validators, and method dispatches that apply to both spec types
+#' are centralized here so the child classes carry only their class-specific
+#' configuration.
+#'
+#' @noRd
+BaseSpec <- S7::new_class(
+  "BaseSpec",
+  abstract = TRUE,
+  properties = list(
+    title = S7::new_property(
+      class = S7::class_character,
+      default = ""
+    ),
+    sections = S7::new_property(
+      class = SectionOptions,
+      default = SectionOptions()
+    ),
+    columns = S7::new_property(
+      class = S7::class_character,
+      default = character(0)
+    ),
+    add_columns = S7::new_property(
+      class = S7::class_character | NULL,
+      default = NULL,
+      setter = function(self, value) {
+        S7::prop(self, "add_columns") <- value
+        self
+      }
+    ),
+    drop_columns = S7::new_property(
+      class = S7::class_character | NULL,
+      default = NULL
+    ),
+    hide_empty_columns = S7::new_property(
+      class = S7::class_logical,
+      default = TRUE
+    ),
+    n_sigfig = S7::new_property(
+      class = S7::class_numeric,
+      default = 3
+    ),
+    n_decimals_ofv = S7::new_property(
+      class = S7::class_numeric,
+      default = 3
+    ),
+    pvalue_scientific = S7::new_property(
+      class = S7::class_logical,
+      default = FALSE
+    ),
+    pvalue_threshold = S7::new_property(
+      class = S7::class_numeric | NULL,
+      default = NULL
+    ),
+    footnote_order = S7::new_property(
+      class = S7::class_character | NULL,
+      default = NULL
+    )
+  ),
+  validator = function(self) {
+    if (
+      length(self@n_sigfig) != 1 ||
+        self@n_sigfig < 1 ||
+        self@n_sigfig != floor(self@n_sigfig)
+    ) {
+      return(sprintf(
+        "@n_sigfig must be a positive whole number. Got: %s",
+        self@n_sigfig
+      ))
+    }
+
+    ofv_msg <- validate_ofv_decimals(self@n_decimals_ofv)
+    if (!is.null(ofv_msg)) {
+      return(ofv_msg)
+    }
+
+    if (
+      length(self@hide_empty_columns) != 1 || is.na(self@hide_empty_columns)
+    ) {
+      return(sprintf(
+        "@hide_empty_columns must be TRUE or FALSE. Got: %s",
+        self@hide_empty_columns
+      ))
+    }
+
+    if (length(self@pvalue_scientific) != 1 || is.na(self@pvalue_scientific)) {
+      return(sprintf(
+        "@pvalue_scientific must be TRUE or FALSE. Got: %s",
+        self@pvalue_scientific
+      ))
+    }
+
+    pvalue_msg <- validate_pvalue_threshold(self@pvalue_threshold)
+    if (!is.null(pvalue_msg)) {
+      return(pvalue_msg)
+    }
+  }
+)
+
+# ==============================================================================
 # TableSpec S7 Class
 # ==============================================================================
 
@@ -468,48 +574,11 @@ merge_section_assignments <- function(current, new, warn_on_conflict = FALSE) {
 #' @export
 TableSpec <- S7::new_class(
   "TableSpec",
+  parent = BaseSpec,
   properties = list(
-    title = S7::new_property(
-      class = S7::class_character,
-      default = "Model Parameters"
-    ),
     parameter_names = S7::new_property(
       class = ParameterNameOptions,
       default = ParameterNameOptions()
-    ),
-    columns = S7::new_property(
-      class = S7::class_character,
-      default = c(
-        "name",
-        "symbol",
-        "unit",
-        "estimate",
-        "variability",
-        "ci_low",
-        "ci_high",
-        "rse",
-        "shrinkage"
-      )
-    ),
-    add_columns = S7::new_property(
-      class = S7::class_character | NULL,
-      default = NULL,
-      setter = function(self, value) {
-        S7::prop(self, "add_columns") <- value
-        self
-      }
-    ),
-    drop_columns = S7::new_property(
-      class = S7::class_character | NULL,
-      default = NULL
-    ),
-    hide_empty_columns = S7::new_property(
-      class = S7::class_logical,
-      default = TRUE
-    ),
-    sections = S7::new_property(
-      class = SectionOptions,
-      default = SectionOptions()
     ),
     row_filter = S7::new_property(
       class = S7::class_list,
@@ -523,22 +592,6 @@ TableSpec <- S7::new_class(
       class = S7::class_list,
       default = list()
     ),
-    n_sigfig = S7::new_property(
-      class = S7::class_numeric,
-      default = 3
-    ),
-    n_decimals_ofv = S7::new_property(
-      class = S7::class_numeric,
-      default = 3
-    ),
-    pvalue_scientific = S7::new_property(
-      class = S7::class_logical,
-      default = FALSE
-    ),
-    pvalue_threshold = S7::new_property(
-      class = S7::class_numeric | NULL,
-      default = NULL
-    ),
     ci = S7::new_property(
       class = CIOptions,
       default = CIOptions()
@@ -550,10 +603,6 @@ TableSpec <- S7::new_class(
     missing_apply_to = S7::new_property(
       class = S7::class_character,
       default = "all"
-    ),
-    footnote_order = S7::new_property(
-      class = S7::class_character | NULL,
-      default = c("summary_info", "equations", "abbreviations")
     ),
     .columns_provided = S7::new_property(
       # Internal: TRUE when user explicitly supplies columns.
@@ -638,33 +687,8 @@ TableSpec <- S7::new_class(
       return(drop_msg)
     }
 
-    if (
-      length(self@n_sigfig) != 1 ||
-        self@n_sigfig < 1 ||
-        self@n_sigfig != floor(self@n_sigfig)
-    ) {
-      return(sprintf(
-        "@n_sigfig must be a positive whole number. Got: %s",
-        self@n_sigfig
-      ))
-    }
-
-    ofv_msg <- validate_ofv_decimals(self@n_decimals_ofv)
-    if (!is.null(ofv_msg)) {
-      return(ofv_msg)
-    }
-
     if (!S7::S7_inherits(self@parameter_names, ParameterNameOptions)) {
       return("@parameter_names must be a ParameterNameOptions object.")
-    }
-
-    if (
-      length(self@hide_empty_columns) != 1 || is.na(self@hide_empty_columns)
-    ) {
-      return(sprintf(
-        "@hide_empty_columns must be TRUE or FALSE. Got: %s",
-        self@hide_empty_columns
-      ))
     }
 
     if (!S7::S7_inherits(self@ci, CIOptions)) {
@@ -698,18 +722,6 @@ TableSpec <- S7::new_class(
         "@.columns_provided must be TRUE or FALSE. Got: %s",
         self@.columns_provided
       ))
-    }
-
-    if (length(self@pvalue_scientific) != 1 || is.na(self@pvalue_scientific)) {
-      return(sprintf(
-        "@pvalue_scientific must be TRUE or FALSE. Got: %s",
-        self@pvalue_scientific
-      ))
-    }
-
-    pvalue_msg <- validate_pvalue_threshold(self@pvalue_threshold)
-    if (!is.null(pvalue_msg)) {
-      return(pvalue_msg)
     }
 
     footnote_msg <- validate_table_footnote_order(self@footnote_order)
@@ -1021,11 +1033,8 @@ HyperionTable <- S7::new_class(
 #' @export
 SummarySpec <- S7::new_class(
   "SummarySpec",
+  parent = BaseSpec,
   properties = list(
-    title = S7::new_property(
-      class = S7::class_character,
-      default = "Run Summary"
-    ),
     models_to_include = S7::new_property(
       class = S7::class_character | NULL,
       default = NULL
@@ -1046,65 +1055,9 @@ SummarySpec <- S7::new_class(
       class = S7::class_logical,
       default = TRUE
     ),
-    sections = S7::new_property(
-      class = SectionOptions,
-      default = SectionOptions()
-    ),
-    columns = S7::new_property(
-      class = S7::class_character,
-      default = c(
-        "based_on",
-        "description",
-        "n_parameters",
-        "condition_number",
-        "ofv",
-        "dofv",
-        "pvalue"
-      ),
-      setter = function(self, value) {
-        S7::prop(self, "columns") <- value
-        self
-      }
-    ),
-    add_columns = S7::new_property(
-      class = S7::class_character | NULL,
-      default = NULL,
-      setter = function(self, value) {
-        S7::prop(self, "add_columns") <- value
-        self
-      }
-    ),
-    drop_columns = S7::new_property(
-      class = S7::class_character | NULL,
-      default = NULL
-    ),
-    hide_empty_columns = S7::new_property(
-      class = S7::class_logical,
-      default = TRUE
-    ),
-    n_sigfig = S7::new_property(
-      class = S7::class_numeric,
-      default = 3
-    ),
-    n_decimals_ofv = S7::new_property(
-      class = S7::class_numeric,
-      default = 3
-    ),
     time_format = S7::new_property(
       class = S7::class_character,
       default = "seconds"
-    ),
-    pvalue_scientific = S7::new_property(
-      class = S7::class_logical,
-      default = FALSE
-    ),
-    pvalue_threshold = S7::new_property(
-      class = S7::class_numeric | NULL,
-      default = NULL
-    ),
-    footnote_order = S7::new_property(
-      class = S7::class_character | NULL,
-      default = c("abbreviations")
     )
   ),
   validator = function(self) {
@@ -1137,28 +1090,6 @@ SummarySpec <- S7::new_class(
     }
 
     if (
-      length(self@n_sigfig) != 1 ||
-        self@n_sigfig < 1 ||
-        self@n_sigfig != floor(self@n_sigfig)
-    ) {
-      return(sprintf(
-        "@n_sigfig must be a positive whole number. Got: %s",
-        self@n_sigfig
-      ))
-    }
-
-    ofv_msg <- validate_ofv_decimals(self@n_decimals_ofv, "@n_decimals_ofv")
-    if (!is.null(ofv_msg)) {
-      return(ofv_msg)
-    }
-
-    if (
-      length(self@hide_empty_columns) != 1 || is.na(self@hide_empty_columns)
-    ) {
-      return("@hide_empty_columns must be TRUE or FALSE")
-    }
-
-    if (
       length(self@remove_unrun_models) != 1 || is.na(self@remove_unrun_models)
     ) {
       return("@remove_unrun_models must be TRUE or FALSE")
@@ -1180,18 +1111,6 @@ SummarySpec <- S7::new_class(
     )
     if (!is.null(drop_msg)) {
       return(drop_msg)
-    }
-
-    if (length(self@pvalue_scientific) != 1 || is.na(self@pvalue_scientific)) {
-      return(sprintf(
-        "@pvalue_scientific must be TRUE or FALSE. Got: %s",
-        self@pvalue_scientific
-      ))
-    }
-
-    pvalue_msg <- validate_pvalue_threshold(self@pvalue_threshold)
-    if (!is.null(pvalue_msg)) {
-      return(pvalue_msg)
     }
 
     footnote_msg <- validate_summary_footnote_order(self@footnote_order)
@@ -1242,6 +1161,3 @@ SummarySpec <- S7::new_class(
     )
   }
 )
-
-#' @noRd
-AnySpec <- S7::new_union(TableSpec, SummarySpec)

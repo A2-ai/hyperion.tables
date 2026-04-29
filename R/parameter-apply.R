@@ -423,7 +423,7 @@ warn_multi_match_sections <- function(formulas, data) {
 #' @noRd
 get_section_order <- S7::new_generic("get_section_order", "spec")
 
-S7::method(get_section_order, AnySpec) <- function(spec) {
+S7::method(get_section_order, BaseSpec) <- function(spec) {
   vapply(
     spec@sections@rules,
     function(rule) {

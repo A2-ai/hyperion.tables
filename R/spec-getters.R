@@ -60,7 +60,7 @@ S7::method(get_spec_columns, SummarySpec) <- function(spec) {
 #' get_spec_title(spec)
 get_spec_title <- S7::new_generic("get_spec_title", "spec")
 
-S7::method(get_spec_title, AnySpec) <- function(spec) {
+S7::method(get_spec_title, BaseSpec) <- function(spec) {
   spec@title
 }
 
@@ -84,7 +84,7 @@ S7::method(get_spec_title, AnySpec) <- function(spec) {
 #' get_spec_sigfig(spec)
 get_spec_sigfig <- S7::new_generic("get_spec_sigfig", "spec")
 
-S7::method(get_spec_sigfig, AnySpec) <- function(spec) {
+S7::method(get_spec_sigfig, BaseSpec) <- function(spec) {
   spec@n_sigfig
 }
 
@@ -149,7 +149,7 @@ S7::method(get_spec_ci, TableSpec) <- function(spec) {
 #' get_spec_sections(spec)
 get_spec_sections <- S7::new_generic("get_spec_sections", "spec")
 
-S7::method(get_spec_sections, AnySpec) <- function(spec) {
+S7::method(get_spec_sections, BaseSpec) <- function(spec) {
   spec@sections
 }
 
@@ -171,7 +171,7 @@ S7::method(get_spec_sections, AnySpec) <- function(spec) {
 #' @export
 get_spec_section_filter <- S7::new_generic("get_spec_section_filter", "spec")
 
-S7::method(get_spec_section_filter, AnySpec) <- function(spec) {
+S7::method(get_spec_section_filter, BaseSpec) <- function(spec) {
   spec@sections@filter
 }
 

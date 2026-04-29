@@ -70,7 +70,7 @@ S7::method(add_spec_columns, SummarySpec) <- function(spec, ...) {
 #'   drop_spec_columns("description")
 drop_spec_columns <- S7::new_generic("drop_spec_columns", "spec")
 
-S7::method(drop_spec_columns, AnySpec) <- function(spec, ...) {
+S7::method(drop_spec_columns, BaseSpec) <- function(spec, ...) {
   dots <- capture_unnamed_dots(..., .enquo = FALSE)
   cols <- unlist(dots)
   spec@drop_columns <- unique(c(spec@drop_columns, cols))
@@ -140,7 +140,7 @@ set_spec_title <- S7::new_generic(
   function(spec, title, ...) S7::S7_dispatch()
 )
 
-S7::method(set_spec_title, AnySpec) <- function(spec, title) {
+S7::method(set_spec_title, BaseSpec) <- function(spec, title) {
   spec@title <- title
   spec
 }
@@ -170,7 +170,7 @@ set_spec_sigfig <- S7::new_generic(
   function(spec, n, ...) S7::S7_dispatch()
 )
 
-S7::method(set_spec_sigfig, AnySpec) <- function(spec, n) {
+S7::method(set_spec_sigfig, BaseSpec) <- function(spec, n) {
   spec@n_sigfig <- n
   spec
 }
@@ -200,7 +200,7 @@ set_spec_ofv_decimals <- S7::new_generic(
   function(spec, n, ...) S7::S7_dispatch()
 )
 
-S7::method(set_spec_ofv_decimals, AnySpec) <- function(spec, n) {
+S7::method(set_spec_ofv_decimals, BaseSpec) <- function(spec, n) {
   spec@n_decimals_ofv <- n
   spec
 }
@@ -229,7 +229,7 @@ set_spec_hide_empty <- S7::new_generic(
   function(spec, hide, ...) S7::S7_dispatch()
 )
 
-S7::method(set_spec_hide_empty, AnySpec) <- function(spec, hide) {
+S7::method(set_spec_hide_empty, BaseSpec) <- function(spec, hide) {
   spec@hide_empty_columns <- hide
   spec
 }
@@ -262,7 +262,7 @@ set_spec_pvalue <- S7::new_generic(
   }
 )
 
-S7::method(set_spec_pvalue, AnySpec) <- function(spec, threshold, scientific) {
+S7::method(set_spec_pvalue, BaseSpec) <- function(spec, threshold, scientific) {
   if (!missing(threshold)) {
     spec@pvalue_threshold <- threshold
   }
@@ -302,7 +302,7 @@ set_spec_footnotes <- S7::new_generic(
   function(spec, order, ...) S7::S7_dispatch()
 )
 
-S7::method(set_spec_footnotes, AnySpec) <- function(spec, order) {
+S7::method(set_spec_footnotes, BaseSpec) <- function(spec, order) {
   spec@footnote_order <- order
   spec
 }
@@ -353,7 +353,7 @@ set_spec_section_filter <- S7::new_generic(
   }
 )
 
-S7::method(set_spec_section_filter, AnySpec) <- function(
+S7::method(set_spec_section_filter, BaseSpec) <- function(
   spec,
   exclude = NULL,
   keep = NULL
