@@ -43,7 +43,7 @@ Modified spec.
 \description{
 Controls how rows are grouped into sections and in what order. Rules
 passed via \code{...} or \verb{sections =} are formulas like
-\code{kind == "THETA" ~ "Structural"}, evaluated via \code{\link[dplyr:case_when]{dplyr::case_when()}}.
+\code{kind == "THETA" ~ "Structural"}, evaluated via \code{\link[dplyr:case-and-replace-when]{dplyr::case_when()}}.
 
 Display ordering is also configured here. \code{order} is a character
 vector of section labels giving the display order. Sections not
@@ -56,13 +56,6 @@ filter pass \code{keep = character(0)} or \code{exclude = character(0)}.
 
 TableSpec and SummarySpec methods take additional arguments — see the
 method-specific sections below.
-
-Methods are available for the following classes:
-
-\itemize{
-\item \code{hyperion.tables::SummarySpec}
-\item \code{hyperion.tables::TableSpec}
-}
 }
 \section{TableSpec method}{
 

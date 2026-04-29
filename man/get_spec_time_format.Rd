@@ -15,8 +15,8 @@ get_spec_time_format(spec, ...)
 Character string: "seconds", "minutes", "hours", or "auto".
 }
 \description{
-\code{get_spec_time_format()} is an S7 generic that returns the time format
-setting.
+\code{get_spec_time_format()} returns the time format setting. Operates on
+\code{SummarySpec} only.
 }
 \examples{
 spec <- SummarySpec()

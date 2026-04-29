@@ -16,15 +16,8 @@ alias \code{"ci"} expands to the configured confidence-interval bounds columns.}
 Modified spec.
 }
 \description{
-\code{set_spec_columns()} is an S7 generic that replaces the spec's columns list
-entirely. This overrides the default column set.
-
-Methods are available for the following classes:
-
-\itemize{
-\item \code{hyperion.tables::SummarySpec}
-\item \code{hyperion.tables::TableSpec}
-}
+\code{set_spec_columns()} replaces the spec's columns list entirely. This
+overrides the default column set.
 }
 \examples{
 spec <- TableSpec() |>

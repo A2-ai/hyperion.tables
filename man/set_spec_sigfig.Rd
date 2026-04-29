@@ -17,14 +17,8 @@ set_spec_sigfig(spec, n, ...)
 Modified spec.
 }
 \description{
-\code{set_spec_sigfig()} is an S7 generic that sets the number of significant
-figures for numeric formatting.
-
-Methods are available for the following classes:
-
-\itemize{
-\item \code{hyperion.tables::BaseSpec}
-}
+\code{set_spec_sigfig()} sets the number of significant figures for numeric
+formatting.
 }
 \examples{
 spec <- TableSpec() |>

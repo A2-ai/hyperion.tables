@@ -25,12 +25,6 @@ Modified spec.
 will be removed in 0.6.0. Use \code{\link[=set_spec_sections]{set_spec_sections()}} with \code{keep} or
 \code{exclude} instead. Calling with no filter arguments still clears the
 existing filter for backward compatibility.
-
-Methods are available for the following classes:
-
-\itemize{
-\item \code{hyperion.tables::BaseSpec}
-}
 }
 \examples{
 spec <- SummarySpec() |>

@@ -17,17 +17,13 @@ set_spec_ofv_decimals(spec, n, ...)
 Modified spec.
 }
 \description{
-\code{set_spec_ofv_decimals()} is an S7 generic that controls the number of
-decimal places for OFV and dOFV values. Use \code{NA} to keep significant-figure
-formatting.
-
-Methods are available for the following classes:
-
-\itemize{
-\item \code{hyperion.tables::BaseSpec}
-}
+\code{set_spec_ofv_decimals()} controls the number of decimal places for OFV and
+dOFV values. Use \code{NA} to keep significant-figure formatting.
 }
 \examples{
 spec <- SummarySpec() |>
   set_spec_ofv_decimals(2)
+}
+\seealso{
+\code{\link[=get_spec_ofv_decimals]{get_spec_ofv_decimals()}}.
 }

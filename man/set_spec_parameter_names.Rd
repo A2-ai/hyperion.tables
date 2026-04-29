@@ -17,8 +17,8 @@ set_spec_parameter_names(spec, ..., source = NULL)
 Modified spec.
 }
 \description{
-\code{set_spec_parameter_names()} is an S7 generic that controls how parameter
-names are displayed in the table.
+\code{set_spec_parameter_names()} controls how parameter names are displayed in
+the table. Operates on \code{TableSpec} only.
 }
 \examples{
 spec <- TableSpec() |>

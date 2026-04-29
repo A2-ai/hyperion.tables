@@ -15,8 +15,8 @@ get_spec_transforms(spec, ...)
 Named list with theta, omega, sigma entries.
 }
 \description{
-\code{get_spec_transforms()} is an S7 generic that returns the display transforms
-configuration.
+\code{get_spec_transforms()} returns the display transforms configuration.
+Operates on \code{TableSpec} only.
 }
 \examples{
 spec <- TableSpec()

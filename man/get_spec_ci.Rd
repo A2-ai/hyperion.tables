@@ -15,7 +15,7 @@ get_spec_ci(spec, ...)
 CIOptions object.
 }
 \description{
-\code{get_spec_ci()} is an S7 generic that returns the CIOptions object.
+\code{get_spec_ci()} returns the CIOptions object. Operates on \code{TableSpec} only.
 }
 \examples{
 spec <- TableSpec()

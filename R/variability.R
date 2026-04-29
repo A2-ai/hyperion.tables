@@ -132,16 +132,18 @@ build_variability_comparison <- function(data, spec, suffix_cols) {
 
 #' @noRd
 wants_variability_column <- function(spec) {
+  base_cols <- spec@columns %||% spec@default_columns
   "variability" %in%
-    c(spec@columns %||% character(0), spec@add_columns %||% character(0)) &&
+    c(base_cols, spec@add_columns %||% character(0)) &&
     !"variability" %in% spec@drop_columns
 }
 
 #' @noRd
 wants_variability_components <- function(spec) {
+  base_cols <- spec@columns %||% spec@default_columns
   any(
     c("cv", "corr", "sd") %in%
-      c(spec@columns %||% character(0), spec@add_columns %||% character(0))
+      c(base_cols, spec@add_columns %||% character(0))
   )
 }
 

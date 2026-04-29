@@ -155,3 +155,41 @@ test_that("SectionOptions rejects invalid section rules", {
     "must be formulas"
   )
 })
+
+test_that("SectionOptions errors on unknown order label when RHS is a pure expression", {
+  expect_error(
+    SectionOptions(
+      rules = section_rules(
+        kind == "THETA" ~ "Thetas",
+        kind == "OMEGA" ~ paste0("Om", "egas")
+      ),
+      order = c("Thetas", "Omegas", "Sigmas")
+    ),
+    "Sigmas"
+  )
+})
+
+test_that("SectionOptions warns on unknown order label when RHS is data-dependent", {
+  expect_warning(
+    SectionOptions(
+      rules = section_rules(
+        kind == "THETA" ~ "Thetas",
+        TRUE ~ paste0("Pre-", is_pediatric)
+      ),
+      order = c("Thetas", "Pediatric", "Sigmas")
+    ),
+    "Sigmas"
+  )
+})
+
+test_that("SectionOptions accepts valid all-literal order", {
+  expect_no_error(
+    SectionOptions(
+      rules = section_rules(
+        kind == "THETA" ~ "Thetas",
+        kind == "OMEGA" ~ "Omegas"
+      ),
+      order = c("Thetas", "Omegas")
+    )
+  )
+})

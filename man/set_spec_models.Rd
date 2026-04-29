@@ -17,10 +17,13 @@ set_spec_models(spec, models, ...)
 Modified spec.
 }
 \description{
-\code{set_spec_models()} is an S7 generic that filters which models appear in
-the summary table by name.
+\code{set_spec_models()} filters which models appear in the summary table by
+name. Operates on \code{SummarySpec} only.
 }
 \examples{
 spec <- SummarySpec() |>
   set_spec_models(c("run001", "run002", "run003"))
+}
+\seealso{
+\code{\link[=get_spec_models]{get_spec_models()}}.
 }

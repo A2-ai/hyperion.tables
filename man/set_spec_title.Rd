@@ -17,13 +17,7 @@ set_spec_title(spec, title, ...)
 Modified spec.
 }
 \description{
-\code{set_spec_title()} is an S7 generic that sets the table header title.
-
-Methods are available for the following classes:
-
-\itemize{
-\item \code{hyperion.tables::BaseSpec}
-}
+\code{set_spec_title()} sets the table header title.
 }
 \examples{
 spec <- TableSpec() |>

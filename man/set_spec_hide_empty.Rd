@@ -17,16 +17,13 @@ set_spec_hide_empty(spec, hide, ...)
 Modified spec.
 }
 \description{
-\code{set_spec_hide_empty()} is an S7 generic that controls whether empty
-columns are automatically hidden.
-
-Methods are available for the following classes:
-
-\itemize{
-\item \code{hyperion.tables::BaseSpec}
-}
+\code{set_spec_hide_empty()} controls whether empty columns are automatically
+hidden.
 }
 \examples{
 spec <- TableSpec() |>
   set_spec_hide_empty(FALSE)
+}
+\seealso{
+\code{\link[=get_spec_hide_empty]{get_spec_hide_empty()}}.
 }

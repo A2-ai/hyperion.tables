@@ -146,6 +146,12 @@ apply_gt_labels <- function(gt_table, table, visible_cols) {
     return(gt_table)
   }
 
+  # Wrap markdown-flagged labels (raw strings containing LaTeX `$` delimiters)
+  # via `gt::md()` so gt renders them as markdown.
+  labels_to_apply <- lapply(labels_to_apply, function(x) {
+    if (is.character(x) && length(x) == 1 && grepl("\\$", x)) gt::md(x) else x
+  })
+
   gt_table |>
     gt::cols_label(!!!labels_to_apply)
 }
@@ -234,6 +240,98 @@ apply_gt_footnotes <- function(gt_table, table) {
       gt::tab_footnote(content)
   }
   gt_table
+}
+
+#' Add footnotes to a gt table in specified order
+#'
+#' Coordinator function that applies footnotes from builders in the order
+#' specified by spec@footnote_order.
+#'
+#' @param table A gt table object
+#' @param spec TableSpec or SummarySpec object (can be NULL)
+#' @param summary_note Character string for summary info, or NULL
+#' @param equations List of footnote content for equations, or NULL
+#' @param abbreviations Character vector for abbreviations, or NULL
+#' @return gt table with footnotes added
+#' @noRd
+add_footnotes <- function(
+  table,
+  spec,
+  summary_note,
+  equations,
+  abbreviations
+) {
+  # Get footnote order from spec - return early if NULL (disabled)
+  footnote_order <- if (
+    !is.null(spec) && "footnote_order" %in% names(S7::props(spec))
+  ) {
+    spec@footnote_order
+  }
+  if (is.null(footnote_order)) {
+    return(table)
+  }
+
+  footnotes <- list(
+    summary_info = summary_note,
+    equations = equations,
+    abbreviations = abbreviations
+  )
+
+  for (section in footnote_order) {
+    content <- footnotes[[section]]
+    if (!is.null(content)) {
+      for (line in content) {
+        # equations are markdown strings; other sections are plain text
+        line <- if (section == "equations") gt::md(line) else line
+        table <- table |> gt::tab_footnote(line)
+      }
+    }
+  }
+
+  table
+}
+
+#' Add conditional footnotes based on table contents
+#'
+#' @param table A gt table object
+#' @param params Parameter data frame (or comparison data frame or summary data frame)
+#' @param spec TableSpec or SummarySpec object
+#' @param comparison_stats Optional list with has_ofv and has_lrt for comparison tables
+#' @param summary_stats Optional list with has_ofv, has_dofv, has_cond_num for summary tables
+#' @param summary_note Optional character string for summary info footnote
+#' @return gt table with appropriate footnotes added
+#' @noRd
+add_conditional_footnotes <- function(
+  table,
+  params,
+  spec,
+  comparison_stats = NULL,
+  summary_stats = NULL,
+  summary_note = NULL
+) {
+  stats <- detect_table_statistics(params, spec)
+
+  ci_pct <- if (!is.null(spec) && "ci" %in% names(S7::props(spec))) {
+    round(spec@ci@level * 100)
+  } else {
+    95
+  }
+
+  # Build footnote content using builder functions
+  abbreviations <- build_abbreviations_footnote(
+    stats,
+    comparison_stats,
+    summary_stats
+  )
+  equations <- build_equations_footnote(
+    stats,
+    ci_pct,
+    comparison_stats,
+    summary_stats
+  )
+
+  # Add footnotes in specified order
+  add_footnotes(table, spec, summary_note, equations, abbreviations)
 }
 
 #' @export

@@ -7,15 +7,27 @@
 # Column Operations (Both Specs)
 # ==============================================================================
 
+#' Normalize a user-supplied column vector for a spec
+#'
+#' Internal hook called by column setters before storing user input. The
+#' TableSpec method expands the `"ci"` alias into `c("ci_low", "ci_high")`;
+#' the SummarySpec method passes the input through unchanged.
+#' @noRd
+normalize_columns <- S7::new_generic("normalize_columns", "spec")
+
+S7::method(normalize_columns, TableSpec) <- function(spec, cols) {
+  expand_ci_alias(cols)
+}
+
+S7::method(normalize_columns, SummarySpec) <- function(spec, cols) {
+  cols
+}
+
 #' Add columns to a spec
 #'
 #' @description
 #' `add_spec_columns()` is an S7 generic that appends columns to the spec's
 #' `add_columns` list. These columns will be added to the default column set.
-#'
-#' Methods are available for the following classes:
-#'
-#' `r doclisting::methods_list("add_spec_columns")`
 #'
 #' @param spec A TableSpec or SummarySpec object.
 #' @param ... Column names as unnamed character strings. For TableSpec, the
@@ -31,18 +43,10 @@
 #'   add_spec_columns("estimation_time")
 add_spec_columns <- S7::new_generic("add_spec_columns", "spec")
 
-S7::method(add_spec_columns, TableSpec) <- function(spec, ...) {
+S7::method(add_spec_columns, BaseSpec) <- function(spec, ...) {
   dots <- capture_unnamed_dots(..., .enquo = FALSE)
-  cols <- expand_ci_alias(unlist(dots))
+  cols <- normalize_columns(spec, unlist(dots))
   spec@add_columns <- unique(c(spec@add_columns, cols))
-  spec
-}
-
-S7::method(add_spec_columns, SummarySpec) <- function(spec, ...) {
-  dots <- capture_unnamed_dots(..., .enquo = FALSE)
-  cols <- unlist(dots)
-  spec@add_columns <- unique(c(spec@add_columns, cols))
-  spec@columns <- merge_summary_columns(spec@columns, spec@add_columns)
   spec
 }
 
@@ -51,10 +55,6 @@ S7::method(add_spec_columns, SummarySpec) <- function(spec, ...) {
 #' @description
 #' `drop_spec_columns()` is an S7 generic that adds columns to the spec's
 #' `drop_columns` list. These columns will be excluded from the output table.
-#'
-#' Methods are available for the following classes:
-#'
-#' `r doclisting::methods_list("drop_spec_columns")`
 #'
 #' @param spec A TableSpec or SummarySpec object.
 #' @param ... Column names as unnamed character strings. Named arguments are
@@ -79,13 +79,8 @@ S7::method(drop_spec_columns, BaseSpec) <- function(spec, ...) {
 
 #' Set columns for a spec
 #'
-#' @description
-#' `set_spec_columns()` is an S7 generic that replaces the spec's columns list
-#' entirely. This overrides the default column set.
-#'
-#' Methods are available for the following classes:
-#'
-#' `r doclisting::methods_list("set_spec_columns")`
+#' `set_spec_columns()` replaces the spec's columns list entirely. This
+#' overrides the default column set.
 #'
 #' @param spec A TableSpec or SummarySpec object.
 #' @param ... Column names as unnamed character strings. For TableSpec, the
@@ -96,19 +91,13 @@ S7::method(drop_spec_columns, BaseSpec) <- function(spec, ...) {
 #' @examples
 #' spec <- TableSpec() |>
 #'   set_spec_columns("name", "estimate", "rse")
-set_spec_columns <- S7::new_generic("set_spec_columns", "spec")
-
-S7::method(set_spec_columns, TableSpec) <- function(spec, ...) {
+set_spec_columns <- function(spec, ...) {
+  if (!S7::S7_inherits(spec, BaseSpec)) {
+    rlang::abort("`spec` must be a <TableSpec> or <SummarySpec> object.")
+  }
   dots <- capture_unnamed_dots(..., .enquo = FALSE)
-  cols <- expand_ci_alias(unlist(dots))
+  cols <- normalize_columns(spec, unlist(dots))
   spec@columns <- cols
-  spec@.columns_provided <- TRUE
-  spec
-}
-
-S7::method(set_spec_columns, SummarySpec) <- function(spec, ...) {
-  dots <- capture_unnamed_dots(..., .enquo = FALSE)
-  spec@columns <- unlist(dots)
   spec
 }
 
@@ -118,12 +107,7 @@ S7::method(set_spec_columns, SummarySpec) <- function(spec, ...) {
 
 #' Set the title for a spec
 #'
-#' @description
-#' `set_spec_title()` is an S7 generic that sets the table header title.
-#'
-#' Methods are available for the following classes:
-#'
-#' `r doclisting::methods_list("set_spec_title")`
+#' `set_spec_title()` sets the table header title.
 #'
 #' @param spec A TableSpec or SummarySpec object.
 #' @param title Character string for the table title.
@@ -134,26 +118,18 @@ S7::method(set_spec_columns, SummarySpec) <- function(spec, ...) {
 #' @examples
 #' spec <- TableSpec() |>
 #'   set_spec_title("Parameter Estimates")
-set_spec_title <- S7::new_generic(
-  "set_spec_title",
-  "spec",
-  function(spec, title, ...) S7::S7_dispatch()
-)
-
-S7::method(set_spec_title, BaseSpec) <- function(spec, title) {
+set_spec_title <- function(spec, title, ...) {
+  if (!S7::S7_inherits(spec, BaseSpec)) {
+    rlang::abort("`spec` must be a <TableSpec> or <SummarySpec> object.")
+  }
   spec@title <- title
   spec
 }
 
 #' Set significant figures for a spec
 #'
-#' @description
-#' `set_spec_sigfig()` is an S7 generic that sets the number of significant
-#' figures for numeric formatting.
-#'
-#' Methods are available for the following classes:
-#'
-#' `r doclisting::methods_list("set_spec_sigfig")`
+#' `set_spec_sigfig()` sets the number of significant figures for numeric
+#' formatting.
 #'
 #' @param spec A TableSpec or SummarySpec object.
 #' @param n Positive integer for significant figures.
@@ -164,85 +140,61 @@ S7::method(set_spec_title, BaseSpec) <- function(spec, title) {
 #' @examples
 #' spec <- TableSpec() |>
 #'   set_spec_sigfig(4)
-set_spec_sigfig <- S7::new_generic(
-  "set_spec_sigfig",
-  "spec",
-  function(spec, n, ...) S7::S7_dispatch()
-)
-
-S7::method(set_spec_sigfig, BaseSpec) <- function(spec, n) {
+set_spec_sigfig <- function(spec, n, ...) {
+  if (!S7::S7_inherits(spec, BaseSpec)) {
+    rlang::abort("`spec` must be a <TableSpec> or <SummarySpec> object.")
+  }
   spec@n_sigfig <- n
   spec
 }
 
 #' Set decimal places for OFV values
 #'
-#' @description
-#' `set_spec_ofv_decimals()` is an S7 generic that controls the number of
-#' decimal places for OFV and dOFV values. Use `NA` to keep significant-figure
-#' formatting.
-#'
-#' Methods are available for the following classes:
-#'
-#' `r doclisting::methods_list("set_spec_ofv_decimals")`
+#' `set_spec_ofv_decimals()` controls the number of decimal places for OFV and
+#' dOFV values. Use `NA` to keep significant-figure formatting.
 #'
 #' @param spec A TableSpec or SummarySpec object.
 #' @param n Non-negative integer or NA.
 #' @param ... Not used.
 #' @return Modified spec.
+#' @seealso [get_spec_ofv_decimals()].
 #' @export
 #' @examples
 #' spec <- SummarySpec() |>
 #'   set_spec_ofv_decimals(2)
-set_spec_ofv_decimals <- S7::new_generic(
-  "set_spec_ofv_decimals",
-  "spec",
-  function(spec, n, ...) S7::S7_dispatch()
-)
-
-S7::method(set_spec_ofv_decimals, BaseSpec) <- function(spec, n) {
+set_spec_ofv_decimals <- function(spec, n, ...) {
+  if (!S7::S7_inherits(spec, BaseSpec)) {
+    rlang::abort("`spec` must be a <TableSpec> or <SummarySpec> object.")
+  }
   spec@n_decimals_ofv <- n
   spec
 }
 
 #' Set hide_empty_columns for a spec
 #'
-#' @description
-#' `set_spec_hide_empty()` is an S7 generic that controls whether empty
-#' columns are automatically hidden.
-#'
-#' Methods are available for the following classes:
-#'
-#' `r doclisting::methods_list("set_spec_hide_empty")`
+#' `set_spec_hide_empty()` controls whether empty columns are automatically
+#' hidden.
 #'
 #' @param spec A TableSpec or SummarySpec object.
 #' @param hide Logical value.
 #' @param ... Not used.
 #' @return Modified spec.
+#' @seealso [get_spec_hide_empty()].
 #' @export
 #' @examples
 #' spec <- TableSpec() |>
 #'   set_spec_hide_empty(FALSE)
-set_spec_hide_empty <- S7::new_generic(
-  "set_spec_hide_empty",
-  "spec",
-  function(spec, hide, ...) S7::S7_dispatch()
-)
-
-S7::method(set_spec_hide_empty, BaseSpec) <- function(spec, hide) {
+set_spec_hide_empty <- function(spec, hide, ...) {
+  if (!S7::S7_inherits(spec, BaseSpec)) {
+    rlang::abort("`spec` must be a <TableSpec> or <SummarySpec> object.")
+  }
   spec@hide_empty_columns <- hide
   spec
 }
 
 #' Set p-value formatting for a spec
 #'
-#' @description
-#' `set_spec_pvalue()` is an S7 generic that controls how p-values are
-#' displayed in the table.
-#'
-#' Methods are available for the following classes:
-#'
-#' `r doclisting::methods_list("set_spec_pvalue")`
+#' `set_spec_pvalue()` controls how p-values are displayed in the table.
 #'
 #' @param spec A TableSpec or SummarySpec object.
 #' @param ... Not used.
@@ -250,19 +202,15 @@ S7::method(set_spec_hide_empty, BaseSpec) <- function(spec, hide) {
 #'   or NULL to disable threshold display.
 #' @param scientific Logical. If TRUE, use scientific notation for p-values.
 #' @return Modified spec.
+#' @seealso [get_spec_pvalue()].
 #' @export
 #' @examples
 #' spec <- TableSpec() |>
 #'   set_spec_pvalue(threshold = 0.001, scientific = TRUE)
-set_spec_pvalue <- S7::new_generic(
-  "set_spec_pvalue",
-  "spec",
-  function(spec, ..., threshold, scientific) {
-    S7::S7_dispatch()
+set_spec_pvalue <- function(spec, ..., threshold, scientific) {
+  if (!S7::S7_inherits(spec, BaseSpec)) {
+    rlang::abort("`spec` must be a <TableSpec> or <SummarySpec> object.")
   }
-)
-
-S7::method(set_spec_pvalue, BaseSpec) <- function(spec, threshold, scientific) {
   if (!missing(threshold)) {
     spec@pvalue_threshold <- threshold
   }
@@ -274,13 +222,8 @@ S7::method(set_spec_pvalue, BaseSpec) <- function(spec, threshold, scientific) {
 
 #' Set footnote order for a spec
 #'
-#' @description
-#' `set_spec_footnotes()` is an S7 generic that controls the order of footnote
-#' sections, or disables footnotes entirely.
-#'
-#' Methods are available for the following classes:
-#'
-#' `r doclisting::methods_list("set_spec_footnotes")`
+#' `set_spec_footnotes()` controls the order of footnote sections, or disables
+#' footnotes entirely.
 #'
 #' @param spec A TableSpec or SummarySpec object.
 #' @param order Character vector of footnote sections in desired order, or NULL
@@ -288,6 +231,7 @@ S7::method(set_spec_pvalue, BaseSpec) <- function(spec, threshold, scientific) {
 #'   For SummarySpec: only "abbreviations" is valid.
 #' @param ... Not used.
 #' @return Modified spec.
+#' @seealso [get_spec_footnotes()].
 #' @export
 #' @examples
 #' spec <- TableSpec() |>
@@ -296,13 +240,10 @@ S7::method(set_spec_pvalue, BaseSpec) <- function(spec, threshold, scientific) {
 #' # Disable footnotes
 #' spec <- TableSpec() |>
 #'   set_spec_footnotes(NULL)
-set_spec_footnotes <- S7::new_generic(
-  "set_spec_footnotes",
-  "spec",
-  function(spec, order, ...) S7::S7_dispatch()
-)
-
-S7::method(set_spec_footnotes, BaseSpec) <- function(spec, order) {
+set_spec_footnotes <- function(spec, order, ...) {
+  if (!S7::S7_inherits(spec, BaseSpec)) {
+    rlang::abort("`spec` must be a <TableSpec> or <SummarySpec> object.")
+  }
   spec@footnote_order <- order
   spec
 }
@@ -316,10 +257,6 @@ S7::method(set_spec_footnotes, BaseSpec) <- function(spec, order) {
 #' will be removed in 0.6.0. Use [set_spec_sections()] with `keep` or
 #' `exclude` instead. Calling with no filter arguments still clears the
 #' existing filter for backward compatibility.
-#'
-#' Methods are available for the following classes:
-#'
-#' `r doclisting::methods_list("set_spec_section_filter")`
 #'
 #' @param spec A TableSpec or SummarySpec object.
 #' @param exclude Character vector of section labels to drop, optionally
@@ -335,29 +272,20 @@ S7::method(set_spec_footnotes, BaseSpec) <- function(spec, order) {
 #'     TRUE ~ "Other"
 #'   ) |>
 #'   set_spec_section_filter(exclude = "Other")
-set_spec_section_filter <- S7::new_generic(
-  "set_spec_section_filter",
-  "spec",
-  function(spec, exclude = NULL, keep = NULL) {
-    lifecycle::deprecate_warn(
-      "0.5.0",
-      "set_spec_section_filter()",
-      "set_spec_sections()",
-      details = paste0(
-        "`set_spec_section_filter()` will be removed in hyperion.tables 0.6.0. ",
-        "Use `set_spec_sections(keep = ...)` or ",
-        "`set_spec_sections(exclude = ...)` instead."
-      )
+set_spec_section_filter <- function(spec, exclude = NULL, keep = NULL) {
+  lifecycle::deprecate_warn(
+    "0.5.0",
+    "set_spec_section_filter()",
+    "set_spec_sections()",
+    details = paste0(
+      "`set_spec_section_filter()` will be removed in hyperion.tables 0.6.0. ",
+      "Use `set_spec_sections(keep = ...)` or ",
+      "`set_spec_sections(exclude = ...)` instead."
     )
-    S7::S7_dispatch()
+  )
+  if (!S7::S7_inherits(spec, BaseSpec)) {
+    rlang::abort("`spec` must be a <TableSpec> or <SummarySpec> object.")
   }
-)
-
-S7::method(set_spec_section_filter, BaseSpec) <- function(
-  spec,
-  exclude = NULL,
-  keep = NULL
-) {
   if (
     (missing(exclude) || is.null(exclude)) &&
       (missing(keep) || is.null(keep))
@@ -410,10 +338,6 @@ capture_unnamed_dots <- function(..., .enquo = TRUE) {
 #'
 #' TableSpec and SummarySpec methods take additional arguments — see the
 #' method-specific sections below.
-#'
-#' Methods are available for the following classes:
-#'
-#' `r doclisting::methods_list("set_spec_sections")`
 #'
 #' @section TableSpec method:
 #' `set_spec_sections(<TableSpec>)` accepts two extra arguments for assigning
@@ -712,8 +636,8 @@ S7::method(set_spec_sections, TableSpec) <- function(
 
 #' Set parameter name options for a TableSpec
 #'
-#' `set_spec_parameter_names()` is an S7 generic that controls how parameter
-#' names are displayed in the table.
+#' `set_spec_parameter_names()` controls how parameter names are displayed in
+#' the table. Operates on `TableSpec` only.
 #'
 #' @param spec A TableSpec object.
 #' @param ... Not used.
@@ -724,18 +648,10 @@ S7::method(set_spec_sections, TableSpec) <- function(
 #' @examples
 #' spec <- TableSpec() |>
 #'   set_spec_parameter_names(source = "nonmem")
-set_spec_parameter_names <- S7::new_generic(
-  "set_spec_parameter_names",
-  "spec",
-  function(spec, ..., source = NULL) {
-    S7::S7_dispatch()
+set_spec_parameter_names <- function(spec, ..., source = NULL) {
+  if (!S7::S7_inherits(spec, TableSpec)) {
+    rlang::abort("`spec` must be a <TableSpec> object.")
   }
-)
-
-S7::method(set_spec_parameter_names, TableSpec) <- function(
-  spec,
-  source = NULL
-) {
   opts <- spec@parameter_names
   if (!is.null(source)) {
     opts@source <- source
@@ -746,8 +662,8 @@ S7::method(set_spec_parameter_names, TableSpec) <- function(
 
 #' Set CI options for a TableSpec
 #'
-#' `set_spec_ci()` is an S7 generic that controls confidence interval rendering
-#' options.
+#' `set_spec_ci()` controls confidence interval rendering options. Operates on
+#' `TableSpec` only.
 #'
 #' @param spec A TableSpec object.
 #' @param ... Not used.
@@ -761,28 +677,17 @@ S7::method(set_spec_parameter_names, TableSpec) <- function(
 #' @examples
 #' spec <- TableSpec() |>
 #'   set_spec_ci(level = 0.90, merge = TRUE, pattern = "(%s, %s)")
-set_spec_ci <- S7::new_generic(
-  "set_spec_ci",
-  "spec",
-  function(
-    spec,
-    ...,
-    level = NULL,
-    merge = NULL,
-    pattern = NULL,
-    missing_text = NULL
-  ) {
-    S7::S7_dispatch()
-  }
-)
-
-S7::method(set_spec_ci, TableSpec) <- function(
+set_spec_ci <- function(
   spec,
+  ...,
   level = NULL,
   merge = NULL,
   pattern = NULL,
   missing_text = NULL
 ) {
+  if (!S7::S7_inherits(spec, TableSpec)) {
+    rlang::abort("`spec` must be a <TableSpec> object.")
+  }
   ci_args <- list(
     level = spec@ci@level,
     merge = spec@ci@merge,
@@ -809,8 +714,8 @@ S7::method(set_spec_ci, TableSpec) <- function(
 
 #' Set missing value handling for a TableSpec
 #'
-#' `set_spec_missing()` is an S7 generic that controls how NA values are
-#' displayed in the table.
+#' `set_spec_missing()` controls how NA values are displayed in the table.
+#' Operates on `TableSpec` only.
 #'
 #' @param spec A TableSpec object.
 #' @param ... Not used.
@@ -818,21 +723,15 @@ S7::method(set_spec_ci, TableSpec) <- function(
 #' @param apply_to Which columns to apply missing text to: "all", "numeric",
 #'   or "character".
 #' @return Modified spec.
+#' @seealso [get_spec_missing()].
 #' @export
 #' @examples
 #' spec <- TableSpec() |>
 #'   set_spec_missing("-", apply_to = "numeric")
-set_spec_missing <- S7::new_generic(
-  "set_spec_missing",
-  "spec",
-  function(spec, text = NULL, ..., apply_to = NULL) S7::S7_dispatch()
-)
-
-S7::method(set_spec_missing, TableSpec) <- function(
-  spec,
-  text = NULL,
-  apply_to = NULL
-) {
+set_spec_missing <- function(spec, text = NULL, ..., apply_to = NULL) {
+  if (!S7::S7_inherits(spec, TableSpec)) {
+    rlang::abort("`spec` must be a <TableSpec> object.")
+  }
   if (!is.null(text)) {
     spec@missing_text <- text
   }
@@ -844,8 +743,8 @@ S7::method(set_spec_missing, TableSpec) <- function(
 
 #' Set display transforms for a TableSpec
 #'
-#' `set_spec_transforms()` is an S7 generic that controls which transforms are
-#' applied for display by parameter kind.
+#' `set_spec_transforms()` controls which transforms are applied for display by
+#' parameter kind. Operates on `TableSpec` only.
 #'
 #' @param spec A TableSpec object.
 #' @param ... Not used.
@@ -858,20 +757,16 @@ S7::method(set_spec_missing, TableSpec) <- function(
 #' @examples
 #' spec <- TableSpec() |>
 #'   set_spec_transforms(theta = "all", omega = c("estimate", "cv"))
-set_spec_transforms <- S7::new_generic(
-  "set_spec_transforms",
-  "spec",
-  function(spec, ..., theta = NULL, omega = NULL, sigma = NULL) {
-    S7::S7_dispatch()
-  }
-)
-
-S7::method(set_spec_transforms, TableSpec) <- function(
+set_spec_transforms <- function(
   spec,
+  ...,
   theta = NULL,
   omega = NULL,
   sigma = NULL
 ) {
+  if (!S7::S7_inherits(spec, TableSpec)) {
+    rlang::abort("`spec` must be a <TableSpec> object.")
+  }
   transforms <- spec@display_transforms
   if (!is.null(theta)) {
     transforms$theta <- theta
@@ -892,12 +787,9 @@ S7::method(set_spec_transforms, TableSpec) <- function(
 
 #' Set row filter rules for a TableSpec
 #'
-#' `set_spec_filter()` is an S7 generic that controls which parameters appear
-#' in the output table. Pass filter expressions like `!fixed`, `diagonal`.
-#'
-#' Methods are available for the following classes:
-#'
-#' `r doclisting::methods_list("set_spec_filter")`
+#' `set_spec_filter()` controls which parameters appear in the output table.
+#' Pass filter expressions like `!fixed`, `diagonal`. Operates on `TableSpec`
+#' only.
 #'
 #' @param spec A TableSpec object.
 #' @param ... Filter expressions evaluated against parameter rows (e.g.
@@ -911,17 +803,10 @@ S7::method(set_spec_transforms, TableSpec) <- function(
 #' @examples
 #' spec <- TableSpec() |>
 #'   set_spec_filter(!fixed, diagonal)
-set_spec_filter <- S7::new_generic(
-  "set_spec_filter",
-  "spec",
-  function(spec, ..., overwrite = FALSE) S7::S7_dispatch()
-)
-
-S7::method(set_spec_filter, TableSpec) <- function(
-  spec,
-  ...,
-  overwrite = FALSE
-) {
+set_spec_filter <- function(spec, ..., overwrite = FALSE) {
+  if (!S7::S7_inherits(spec, TableSpec)) {
+    rlang::abort("`spec` must be a <TableSpec> object.")
+  }
   rule_dots <- capture_unnamed_dots(...)
   new_rules <- filter_rules(!!!rule_dots)
   if (overwrite) {
@@ -934,12 +819,8 @@ S7::method(set_spec_filter, TableSpec) <- function(
 
 #' Set variability rules for a TableSpec
 #'
-#' `set_spec_variability()` is an S7 generic that controls how the variability
-#' display column is constructed.
-#'
-#' Methods are available for the following classes:
-#'
-#' `r doclisting::methods_list("set_spec_variability")`
+#' `set_spec_variability()` controls how the variability display column is
+#' constructed. Operates on `TableSpec` only.
 #'
 #' @param spec A TableSpec object.
 #' @param ... Rule formulas (LHS condition ~ RHS expression) defining how
@@ -956,17 +837,10 @@ S7::method(set_spec_filter, TableSpec) <- function(
 #'     !is.na(cv) ~ sprintf("CV = %s%%", cv),
 #'     TRUE ~ NA_character_
 #'   )
-set_spec_variability <- S7::new_generic(
-  "set_spec_variability",
-  "spec",
-  function(spec, ..., overwrite = FALSE) S7::S7_dispatch()
-)
-
-S7::method(set_spec_variability, TableSpec) <- function(
-  spec,
-  ...,
-  overwrite = FALSE
-) {
+set_spec_variability <- function(spec, ..., overwrite = FALSE) {
+  if (!S7::S7_inherits(spec, TableSpec)) {
+    rlang::abort("`spec` must be a <TableSpec> object.")
+  }
   rule_dots <- capture_unnamed_dots(...)
   new_rules <- variability_rules(!!!rule_dots)
   if (overwrite) {
@@ -983,8 +857,8 @@ S7::method(set_spec_variability, TableSpec) <- function(
 
 #' Set time format for a SummarySpec
 #'
-#' `set_spec_time_format()` is an S7 generic that controls how time columns
-#' are formatted.
+#' `set_spec_time_format()` controls how time columns are formatted. Operates
+#' on `SummarySpec` only.
 #'
 #' @param spec A SummarySpec object.
 #' @param format One of "seconds", "minutes", "hours", or "auto".
@@ -995,70 +869,63 @@ S7::method(set_spec_variability, TableSpec) <- function(
 #' @examples
 #' spec <- SummarySpec() |>
 #'   set_spec_time_format("minutes")
-set_spec_time_format <- S7::new_generic(
-  "set_spec_time_format",
-  "spec",
-  function(spec, format, ...) S7::S7_dispatch()
-)
-
-S7::method(set_spec_time_format, SummarySpec) <- function(spec, format) {
+set_spec_time_format <- function(spec, format, ...) {
+  if (!S7::S7_inherits(spec, SummarySpec)) {
+    rlang::abort("`spec` must be a <SummarySpec> object.")
+  }
   spec@time_format <- format
   spec
 }
 
 #' Set models to include for a SummarySpec
 #'
-#' `set_spec_models()` is an S7 generic that filters which models appear in
-#' the summary table by name.
+#' `set_spec_models()` filters which models appear in the summary table by
+#' name. Operates on `SummarySpec` only.
 #'
 #' @param spec A SummarySpec object.
 #' @param models Character vector of model names, or NULL for all models.
 #' @param ... Not used.
 #' @return Modified spec.
+#' @seealso [get_spec_models()].
 #' @export
 #' @examples
 #' spec <- SummarySpec() |>
 #'   set_spec_models(c("run001", "run002", "run003"))
-set_spec_models <- S7::new_generic(
-  "set_spec_models",
-  "spec",
-  function(spec, models, ...) S7::S7_dispatch()
-)
-
-S7::method(set_spec_models, SummarySpec) <- function(spec, models) {
+set_spec_models <- function(spec, models, ...) {
+  if (!S7::S7_inherits(spec, SummarySpec)) {
+    rlang::abort("`spec` must be a <SummarySpec> object.")
+  }
   spec@models_to_include <- models
   spec
 }
 
 #' Set tag filter for a SummarySpec
 #'
-#' `set_spec_tag_filter()` is an S7 generic that filters which models appear
-#' in the summary table by tags.
+#' `set_spec_tag_filter()` filters which models appear in the summary table by
+#' tags. Operates on `SummarySpec` only.
 #'
 #' @param spec A SummarySpec object.
 #' @param ... Not used.
-#' @param tags Character vector of tags to include, or NULL for no inclusion
+#' @param include Character vector of tags to include, or NULL for no inclusion
 #'   filter. Only models with at least one matching tag are kept.
 #' @param exclude Character vector of tags to exclude, or NULL for no exclusion
-#'   filter. Models with any matching tag are removed. Applied after `tags`.
+#'   filter. Models with any matching tag are removed. Applied after `include`.
 #' @return Modified spec.
+#' @seealso [get_spec_tag_filter()].
 #' @export
 #' @examples
 #' spec <- SummarySpec() |>
-#'   set_spec_tag_filter(c("final", "approved"))
+#'   set_spec_tag_filter(include = c("final", "approved"))
 #'
 #' # Exclude models tagged "failed"
 #' spec <- SummarySpec() |>
 #'   set_spec_tag_filter(exclude = "failed")
-set_spec_tag_filter <- S7::new_generic(
-  "set_spec_tag_filter",
-  "spec",
-  function(spec, ..., tags, exclude) S7::S7_dispatch()
-)
-
-S7::method(set_spec_tag_filter, SummarySpec) <- function(spec, tags, exclude) {
-  if (!missing(tags)) {
-    spec@tag_filter <- tags
+set_spec_tag_filter <- function(spec, ..., include, exclude) {
+  if (!S7::S7_inherits(spec, SummarySpec)) {
+    rlang::abort("`spec` must be a <SummarySpec> object.")
+  }
+  if (!missing(include)) {
+    spec@tag_filter <- include
   }
   if (!missing(exclude)) {
     spec@tag_exclude <- exclude
@@ -1068,37 +935,31 @@ S7::method(set_spec_tag_filter, SummarySpec) <- function(spec, tags, exclude) {
 
 #' Set remove_unrun_models for a SummarySpec
 #'
-#' `set_spec_remove_unrun()` is an S7 generic that controls whether models
-#' without completed runs are excluded.
+#' `set_spec_remove_unrun()` controls whether models without completed runs
+#' are excluded. Operates on `SummarySpec` only.
 #'
 #' @param spec A SummarySpec object.
 #' @param remove Logical value.
 #' @param ... Not used.
 #' @return Modified spec.
+#' @seealso [get_spec_remove_unrun()].
 #' @export
 #' @examples
 #' spec <- SummarySpec() |>
 #'   set_spec_remove_unrun(FALSE)
-set_spec_remove_unrun <- S7::new_generic(
-  "set_spec_remove_unrun",
-  "spec",
-  function(spec, remove, ...) S7::S7_dispatch()
-)
-
-S7::method(set_spec_remove_unrun, SummarySpec) <- function(spec, remove) {
+set_spec_remove_unrun <- function(spec, remove, ...) {
+  if (!S7::S7_inherits(spec, SummarySpec)) {
+    rlang::abort("`spec` must be a <SummarySpec> object.")
+  }
   spec@remove_unrun_models <- remove
   spec
 }
 
 #' Set summary filter rules for a SummarySpec
 #'
-#' `set_spec_summary_filter()` is an S7 generic that controls which models
-#' appear in the summary table based on filter expressions evaluated against
-#' summary columns.
-#'
-#' Methods are available for the following classes:
-#'
-#' `r doclisting::methods_list("set_spec_summary_filter")`
+#' `set_spec_summary_filter()` controls which models appear in the summary
+#' table based on filter expressions evaluated against summary columns.
+#' Operates on `SummarySpec` only.
 #'
 #' @param spec A SummarySpec object.
 #' @param ... Filter expressions evaluated against summary columns (e.g.
@@ -1107,21 +968,15 @@ S7::method(set_spec_remove_unrun, SummarySpec) <- function(spec, remove) {
 #' @param overwrite If FALSE (default), append to existing rules.
 #'   If TRUE, replace all existing rules.
 #' @return Modified spec.
+#' @seealso [get_spec_summary_filter()].
 #' @export
 #' @examples
 #' spec <- SummarySpec() |>
 #'   set_spec_summary_filter(ofv < 1000)
-set_spec_summary_filter <- S7::new_generic(
-  "set_spec_summary_filter",
-  "spec",
-  function(spec, ..., overwrite = FALSE) S7::S7_dispatch()
-)
-
-S7::method(set_spec_summary_filter, SummarySpec) <- function(
-  spec,
-  ...,
-  overwrite = FALSE
-) {
+set_spec_summary_filter <- function(spec, ..., overwrite = FALSE) {
+  if (!S7::S7_inherits(spec, SummarySpec)) {
+    rlang::abort("`spec` must be a <SummarySpec> object.")
+  }
   rule_dots <- capture_unnamed_dots(...)
   new_rules <- summary_filter_rules(!!!rule_dots)
   if (overwrite) {

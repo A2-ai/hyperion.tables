@@ -18,13 +18,6 @@ Modified spec.
 \description{
 \code{add_spec_columns()} is an S7 generic that appends columns to the spec's
 \code{add_columns} list. These columns will be added to the default column set.
-
-Methods are available for the following classes:
-
-\itemize{
-\item \code{hyperion.tables::SummarySpec}
-\item \code{hyperion.tables::TableSpec}
-}
 }
 \examples{
 spec <- TableSpec() |>

@@ -20,10 +20,13 @@ or "character".}
 Modified spec.
 }
 \description{
-\code{set_spec_missing()} is an S7 generic that controls how NA values are
-displayed in the table.
+\code{set_spec_missing()} controls how NA values are displayed in the table.
+Operates on \code{TableSpec} only.
 }
 \examples{
 spec <- TableSpec() |>
   set_spec_missing("-", apply_to = "numeric")
+}
+\seealso{
+\code{\link[=get_spec_missing]{get_spec_missing()}}.
 }

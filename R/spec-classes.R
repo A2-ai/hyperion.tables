@@ -1,423 +1,5 @@
-#' @include spec.R
+#' @include spec-options.R
 NULL
-
-# ==============================================================================
-# CI options
-# ==============================================================================
-
-#' Confidence interval render options
-#'
-#' Controls CI merge behavior and missing-value display.
-#'
-#' @param level Confidence interval level, between 0 and 1.
-#' @param merge Logical. If TRUE, merge CI low/high into a single column when present.
-#' @param pattern sprintf pattern used when merging CI values. Must include exactly two `%s`.
-#' @param missing_text Text to display when CI values are missing in rows where CI is expected.
-#'
-#' @section Properties:
-#' The following properties are available on a `CIOptions` object:
-#' \itemize{
-#'   \item `level` - Confidence interval level (0-1).
-#'   \item `merge` - Whether to merge CI bounds into a single column.
-#'   \item `pattern` - sprintf pattern for merged CI display (two `%s`).
-#'   \item `missing_text` - Text to show for missing CI values.
-#' }
-#'
-#' @export
-CIOptions <- S7::new_class(
-  "CIOptions",
-  properties = list(
-    level = S7::new_property(
-      class = S7::class_numeric,
-      default = 0.95
-    ),
-    merge = S7::new_property(
-      class = S7::class_logical,
-      default = TRUE
-    ),
-    pattern = S7::new_property(
-      class = S7::class_character | NULL,
-      default = "[%s, %s]"
-    ),
-    missing_text = S7::new_property(
-      class = S7::class_character,
-      default = "-"
-    )
-  ),
-  validator = function(self) {
-    if (self@level <= 0 || self@level >= 1) {
-      return(sprintf(
-        "@level must be between 0 and 1 (exclusive). Got: %s",
-        self@level
-      ))
-    }
-    if (length(self@merge) != 1 || is.na(self@merge)) {
-      return(sprintf(
-        "@merge must be TRUE or FALSE. Got: %s",
-        self@merge
-      ))
-    }
-
-    if (length(self@missing_text) != 1 || is.na(self@missing_text)) {
-      return(sprintf(
-        "@missing_text must be a single character string. Got: %s",
-        self@missing_text
-      ))
-    }
-
-    if (isTRUE(self@merge)) {
-      if (length(self@pattern) != 1 || is.na(self@pattern)) {
-        return(sprintf(
-          "@pattern must be a single character string. Got: %s",
-          self@pattern
-        ))
-      }
-      if (
-        length(regmatches(self@pattern, gregexpr("%s", self@pattern))[[1]]) != 2
-      ) {
-        return("@pattern must contain exactly two \"%s\" placeholders.")
-      }
-    } else {
-      if (
-        !is.null(self@pattern) && !is.na(self@pattern) && nzchar(self@pattern)
-      ) {
-        return("@pattern must be NULL or empty when @merge is FALSE.")
-      }
-    }
-  },
-  constructor = function(
-    level = 0.95,
-    merge = TRUE,
-    pattern = "[%s, %s]",
-    missing_text = "-"
-  ) {
-    if (!isTRUE(merge)) {
-      pattern <- NULL
-    }
-    S7::new_object(
-      S7::S7_object(),
-      level = level,
-      merge = merge,
-      pattern = pattern,
-      missing_text = missing_text
-    )
-  }
-)
-
-# ==============================================================================
-# Parameter Name Options
-# ==============================================================================
-
-#' Parameter name display options
-#'
-#' Controls how parameter names are displayed in tables.
-#'
-#' @param source Which name field to use: "name" (default), "display", or "nonmem"
-#'
-#' @section Properties:
-#' The following properties are available on a `ParameterNameOptions` object:
-#' \itemize{
-#'   \item `source` - Which name field to use ("name", "display", or "nonmem").
-#' }
-#'
-#' @export
-ParameterNameOptions <- S7::new_class(
-  "ParameterNameOptions",
-  properties = list(
-    source = S7::new_property(
-      class = S7::class_character,
-      default = "name"
-    )
-  ),
-  validator = function(self) {
-    valid_sources <- c("name", "display", "nonmem")
-    if (!self@source %in% valid_sources) {
-      return(sprintf(
-        "@source must be 'name', 'display', or 'nonmem'. Got: '%s'",
-        self@source
-      ))
-    }
-  }
-)
-
-# ==============================================================================
-# Section Options
-# ==============================================================================
-
-#' Section options for a spec
-#'
-#' Holds rule formulas, per-item assignments, display order, and the
-#' filter (keep / exclude) for a `TableSpec` or `SummarySpec`.
-#'
-#' @param rules List of formulas created with [section_rules()].
-#' @param assignments Named list keyed by section label; each value is a
-#'   character vector of items belonging to that section.
-#' @param order Character vector of section labels in display order, or NULL.
-#' @param filter A list specifying section filtering: `list()` (no filter),
-#'   `list(keep = c(...))`, or `list(exclude = c(...))`.
-#' @param inline_items Internal: items that originated from an inline
-#'   `parameters =` override (used to scope unmatched-item warnings).
-#'   Not intended for direct use.
-#'
-#' @section Properties:
-#' \itemize{
-#'   \item `rules` - List of formulas created with [section_rules()].
-#'   \item `assignments` - Named list keyed by section label; each value is
-#'     a character vector of items belonging to that section.
-#'   \item `order` - Character vector of section labels in display order, or NULL.
-#'   \item `filter` - List with one named entry (`keep` or `exclude`) holding
-#'     section labels, or empty list for no filter.
-#' }
-#'
-#' @export
-SectionOptions <- S7::new_class(
-  "SectionOptions",
-  package = "hyperion.tables",
-  properties = list(
-    rules = S7::new_property(
-      class = S7::class_list,
-      default = list()
-    ),
-    assignments = S7::new_property(
-      class = S7::class_list | S7::class_character,
-      default = list()
-    ),
-    inline_items = S7::new_property(
-      class = S7::class_character,
-      default = character(0)
-    ),
-    order = S7::new_property(
-      class = S7::class_character | NULL,
-      default = NULL,
-      setter = function(self, value) {
-        if (!is.null(value) && length(value) == 0L) {
-          value <- NULL
-        }
-        S7::prop(self, "order") <- value
-        self
-      }
-    ),
-    filter = S7::new_property(
-      class = S7::class_list,
-      default = list()
-    )
-  ),
-  validator = function(self) {
-    if (
-      length(self@rules) > 0 &&
-        !all(vapply(self@rules, rlang::is_formula, logical(1)))
-    ) {
-      return(
-        "@rules must be formulas; pass formulas via `set_spec_sections(...)` or build with `section_rules()`."
-      )
-    }
-
-    if (!is.list(self@assignments)) {
-      return("@assignments must be a named list keyed by section label.")
-    }
-
-    if (length(self@assignments) > 0) {
-      nm <- names(self@assignments)
-      if (is.null(nm) || any(!nzchar(nm)) || any(is.na(nm))) {
-        return("@assignments must be a named list keyed by section label.")
-      }
-      if (anyDuplicated(nm) > 0L) {
-        return("@assignments has duplicate section labels.")
-      }
-      ok_vals <- vapply(
-        self@assignments,
-        function(v) {
-          is.character(v) &&
-            length(v) > 0L &&
-            !any(is.na(v)) &&
-            all(nzchar(v))
-        },
-        logical(1)
-      )
-      if (!all(ok_vals)) {
-        return(
-          "@assignments values must be non-empty, non-NA character vectors."
-        )
-      }
-      flat <- unlist(self@assignments, use.names = FALSE)
-      if (anyDuplicated(flat) > 0L) {
-        dups <- unique(flat[duplicated(flat)])
-        return(paste0(
-          "@assignments lists the same item under multiple sections: ",
-          paste(shQuote(dups), collapse = ", "),
-          "."
-        ))
-      }
-    }
-
-    if (
-      length(self@order) > 0L &&
-        (any(!nzchar(self@order)) || any(is.na(self@order)))
-    ) {
-      return("@order labels must be non-empty and non-NA.")
-    }
-
-    if (length(self@filter) > 0L) {
-      if (length(self@filter) > 1L) {
-        return(
-          "@filter must have exactly one entry: `keep` or `exclude`."
-        )
-      }
-      filter_mode <- names(self@filter)
-      if (is.null(filter_mode) || !filter_mode %in% c("keep", "exclude")) {
-        return(
-          "@filter must be a list named `keep` or `exclude`."
-        )
-      }
-      filter_labels <- self@filter[[1]]
-      if (
-        !is.character(filter_labels) ||
-          length(filter_labels) == 0L ||
-          any(!is.na(filter_labels) & !nzchar(filter_labels))
-      ) {
-        return(sprintf(
-          "@filter$%s labels must be non-empty (NA allowed).",
-          filter_mode
-        ))
-      }
-    }
-
-    if (length(self@order) > 0L || length(self@filter) > 0L) {
-      literal_labels <- character()
-      any_dynamic <- FALSE
-      for (rule in self@rules) {
-        expr <- if (rlang::is_quosure(rule)) {
-          rlang::quo_get_expr(rule)
-        } else {
-          rule
-        }
-        if (rlang::is_formula(expr)) {
-          rhs <- rlang::f_rhs(expr)
-          if (is.character(rhs) && length(rhs) == 1L) {
-            literal_labels <- c(literal_labels, rhs)
-          } else {
-            any_dynamic <- TRUE
-          }
-        } else {
-          any_dynamic <- TRUE
-        }
-      }
-      if (!any_dynamic) {
-        known <- unique(c(literal_labels, names(self@assignments)))
-        unknown_msg <- function(labels, slot_name) {
-          labels <- labels[!is.na(labels)]
-          unknown <- setdiff(labels, known)
-          if (length(unknown) == 0L) {
-            return(NULL)
-          }
-          paste0(
-            "@",
-            slot_name,
-            " references unknown section ",
-            if (length(unknown) == 1L) "label" else "labels",
-            ": ",
-            paste(shQuote(unknown), collapse = ", "),
-            ". Known sections: ",
-            paste(shQuote(known), collapse = ", "),
-            "."
-          )
-        }
-        msg <- unknown_msg(self@order, "order")
-        if (!is.null(msg)) {
-          return(msg)
-        }
-        if (length(self@filter) > 0L) {
-          mode <- names(self@filter)
-          msg <- unknown_msg(self@filter[[1]], paste0("filter$", mode))
-          if (!is.null(msg)) {
-            return(msg)
-          }
-        }
-      }
-    }
-
-    NULL
-  }
-)
-
-#' Validate the shape of a section-assignments list
-#'
-#' Mirrors the SectionOptions validator's checks. Used by
-#' `merge_section_assignments()` to decide whether to merge or pass the
-#' value through unchanged so the validator produces the friendly error.
-#'
-#' @noRd
-is_valid_assignments_input <- function(x) {
-  if (!is.list(x)) {
-    return(FALSE)
-  }
-  if (length(x) == 0L) {
-    return(TRUE)
-  }
-  nm <- names(x)
-  if (is.null(nm) || any(!nzchar(nm)) || any(is.na(nm))) {
-    return(FALSE)
-  }
-  ok_vals <- vapply(
-    x,
-    function(v) {
-      is.character(v) &&
-        length(v) > 0L &&
-        !any(is.na(v)) &&
-        all(nzchar(v))
-    },
-    logical(1)
-  )
-  if (!all(ok_vals)) {
-    return(FALSE)
-  }
-  anyDuplicated(unlist(x, use.names = FALSE)) == 0L
-}
-
-#' Merge a new set of section assignments into the current set
-#'
-#' `new` takes precedence on conflict. When `warn_on_conflict` is TRUE,
-#' warns about items whose section label differs between current and new.
-#' When `new` is malformed, returns it as-is so prop assignment triggers
-#' the SectionOptions validator's friendly error.
-#'
-#' @noRd
-merge_section_assignments <- function(current, new, warn_on_conflict = FALSE) {
-  if (!is_valid_assignments_input(new)) {
-    return(new)
-  }
-  if (length(new) == 0L) {
-    return(list())
-  }
-  if (!is.list(current)) {
-    current <- list()
-  }
-
-  flatten <- function(x) {
-    if (length(x) == 0L) {
-      return(stats::setNames(character(0), character(0)))
-    }
-    items <- unlist(x, use.names = FALSE)
-    labels <- rep(names(x), lengths(x))
-    stats::setNames(labels, items)
-  }
-  cur_flat <- flatten(current)
-  new_flat <- flatten(new)
-  if (warn_on_conflict) {
-    conflicts <- intersect(names(cur_flat), names(new_flat))
-    differing <- conflicts[cur_flat[conflicts] != new_flat[conflicts]]
-    if (length(differing) > 0L) {
-      rlang::warn(paste0(
-        "Per-parameter section conflict between `file` and `parameters` for: ",
-        paste(shQuote(differing), collapse = ", "),
-        ". Inline `parameters` value(s) win."
-      ))
-    }
-  }
-  merged <- cur_flat
-  merged[names(new_flat)] <- new_flat
-  split(unname(names(merged)), unname(merged))
-}
 
 # ==============================================================================
 # BaseSpec S7 Class - abstract parent for TableSpec and SummarySpec
@@ -445,20 +27,20 @@ BaseSpec <- S7::new_class(
       default = SectionOptions()
     ),
     columns = S7::new_property(
-      class = S7::class_character,
-      default = character(0)
+      class = S7::class_character | NULL,
+      default = NULL
     ),
     add_columns = S7::new_property(
       class = S7::class_character | NULL,
-      default = NULL,
-      setter = function(self, value) {
-        S7::prop(self, "add_columns") <- value
-        self
-      }
+      default = NULL
     ),
     drop_columns = S7::new_property(
       class = S7::class_character | NULL,
       default = NULL
+    ),
+    allowed_footnotes = S7::new_property(
+      class = S7::class_character,
+      getter = function(self) character(0)
     ),
     hide_empty_columns = S7::new_property(
       class = S7::class_logical,
@@ -522,12 +104,49 @@ BaseSpec <- S7::new_class(
     if (!is.null(pvalue_msg)) {
       return(pvalue_msg)
     }
+
+    for (slot in c("columns", "add_columns", "drop_columns")) {
+      value <- S7::prop(self, slot)
+      if (!is.null(value) && !is.character(value)) {
+        return(sprintf(
+          "@%s must be NULL or a character vector. Got: %s",
+          slot,
+          class(value)[1]
+        ))
+      }
+    }
+
+    if (!is.null(self@footnote_order)) {
+      if (length(self@footnote_order) == 0) {
+        return("@footnote_order must be NULL or have at least one section")
+      }
+      bad <- setdiff(self@footnote_order, self@allowed_footnotes)
+      if (length(bad) > 0) {
+        return(sprintf(
+          "@footnote_order must be in: %s\n  Got: %s",
+          paste(self@allowed_footnotes, collapse = ", "),
+          paste(bad, collapse = ", ")
+        ))
+      }
+    }
   }
 )
 
 # ==============================================================================
 # TableSpec S7 Class
 # ==============================================================================
+
+#' Default variability rules for TableSpec
+#' @noRd
+default_variability_rules <- function() {
+  variability_rules(
+    fixed ~ "(Fixed)",
+    !is.na(corr) ~ sprintf("(Corr = %s)", corr),
+    !is.na(cv) & cv != 0 ~ sprintf("(CV = %s%%)", cv),
+    !is.na(sd) ~ sprintf("(SD = %s)", sd),
+    TRUE ~ NA_character_
+  )
+}
 
 #' Table specification for parameter tables
 #'
@@ -589,8 +208,8 @@ TableSpec <- S7::new_class(
       default = list()
     ),
     variability_rules = S7::new_property(
-      class = S7::class_list,
-      default = list()
+      class = S7::class_list | NULL,
+      default = NULL
     ),
     ci = S7::new_property(
       class = CIOptions,
@@ -604,10 +223,27 @@ TableSpec <- S7::new_class(
       class = S7::class_character,
       default = "all"
     ),
-    .columns_provided = S7::new_property(
-      # Internal: TRUE when user explicitly supplies columns.
-      class = S7::class_logical,
-      default = FALSE
+    default_columns = S7::new_property(
+      class = S7::class_character,
+      getter = function(self) {
+        c(
+          "name",
+          "symbol",
+          "unit",
+          "estimate",
+          "variability",
+          "ci_low",
+          "ci_high",
+          "rse",
+          "shrinkage"
+        )
+      }
+    ),
+    allowed_footnotes = S7::new_property(
+      class = S7::class_character,
+      getter = function(self) {
+        c("summary_info", "equations", "abbreviations")
+      }
     )
   ),
   validator = function(self) {
@@ -713,21 +349,6 @@ TableSpec <- S7::new_class(
         self@missing_apply_to
       ))
     }
-
-    if (
-      length(self@.columns_provided) != 1 ||
-        is.na(self@.columns_provided)
-    ) {
-      return(sprintf(
-        "@.columns_provided must be TRUE or FALSE. Got: %s",
-        self@.columns_provided
-      ))
-    }
-
-    footnote_msg <- validate_table_footnote_order(self@footnote_order)
-    if (!is.null(footnote_msg)) {
-      return(footnote_msg)
-    }
   },
   constructor = function(
     title = "Model Parameters",
@@ -739,7 +360,7 @@ TableSpec <- S7::new_class(
     hide_empty_columns = TRUE,
     row_filter = filter_rules(),
     display_transforms = list(),
-    variability_rules = default_variability_rules(),
+    variability_rules = NULL,
     n_sigfig = 3,
     ci = CIOptions(),
     n_decimals_ofv = 3,
@@ -766,22 +387,12 @@ TableSpec <- S7::new_class(
       }
     }
 
-    columns_provided <- !is.null(columns)
-    if (is.null(columns)) {
-      columns <- c(
-        "name",
-        "symbol",
-        "unit",
-        "estimate",
-        "variability",
-        "ci_low",
-        "ci_high",
-        "rse",
-        "shrinkage"
-      )
-    }
     columns <- expand_ci_alias(columns)
     add_columns <- expand_ci_alias(add_columns)
+
+    if (is.null(variability_rules)) {
+      variability_rules <- default_variability_rules()
+    }
 
     if (length(variability_rules) > 0 && length(drop_columns) > 0) {
       referenced <- character(0)
@@ -829,7 +440,6 @@ TableSpec <- S7::new_class(
       parameter_names = parameter_names,
       title = title,
       hide_empty_columns = hide_empty_columns,
-      .columns_provided = columns_provided,
       pvalue_scientific = pvalue_scientific,
       pvalue_threshold = pvalue_threshold,
       ci = ci,
@@ -837,147 +447,6 @@ TableSpec <- S7::new_class(
       missing_apply_to = missing_apply_to,
       footnote_order = footnote_order
     )
-  }
-)
-
-# ==============================================================================
-# HyperionTable S7 Class - Intermediate Table Representation
-# ==============================================================================
-
-#' HyperionTable - Intermediate representation for table rendering
-#'
-#' A declarative table specification that can be rendered to multiple output
-#' formats (gt, flextable). Captures all styling intent in a format-agnostic way.
-#'
-#' @param data Data frame containing the table data
-#' @param table_type Character string: "parameter", "comparison", or "summary"
-#' @param groupname_col Column name for row grouping (NULL for no grouping)
-#' @param hide_cols Character vector of columns to hide
-#' @param col_labels Named list mapping column names to display labels
-#' @param title Table title (NULL for no title)
-#' @param spanners List of spanner specifications for column grouping
-#' @param numeric_cols Character vector of columns to format as numeric
-#' @param n_sigfig Number of significant figures for numeric formatting
-#' @param ci CIOptions object controlling CI merge behavior.
-#' @param ci_merges List of CI merge specifications
-#' @param ci_missing_rows Integer vector of rows with missing CI values
-#' @param missing_text Text to show for other missing values (default "")
-#' @param bold_locations Character vector of locations to bold
-#' @param borders List of border specifications
-#' @param footnotes List of footnote specifications (in order)
-#' @param source_spec Original TableSpec/SummarySpec (for reference)
-#'
-#' @return A HyperionTable S7 object
-#' @noRd
-HyperionTable <- S7::new_class(
-  "HyperionTable",
-  properties = list(
-    # Core data
-    data = S7::class_data.frame,
-
-    # Metadata
-    table_type = S7::new_property(
-      class = S7::class_character,
-      default = "parameter"
-    ),
-
-    # Structure
-    groupname_col = S7::new_property(
-      class = S7::class_character | NULL,
-      default = NULL
-    ),
-    hide_cols = S7::new_property(
-      class = S7::class_character,
-      default = character(0)
-    ),
-
-    # Labels & Headers
-    col_labels = S7::new_property(
-      class = S7::class_list,
-      default = list()
-    ),
-    title = S7::new_property(
-      class = S7::class_character | NULL,
-      default = NULL
-    ),
-    spanners = S7::new_property(
-      class = S7::class_list,
-      default = list()
-    ),
-
-    # Formatting
-    numeric_cols = S7::new_property(
-      class = S7::class_character,
-      default = character(0)
-    ),
-    n_sigfig = S7::new_property(
-      class = S7::class_numeric,
-      default = 3
-    ),
-    ci = S7::new_property(
-      class = CIOptions,
-      default = CIOptions()
-    ),
-    ci_merges = S7::new_property(
-      class = S7::class_list,
-      default = list()
-    ),
-    ci_missing_rows = S7::new_property(
-      # Row indices where CI missing text should show "-"
-      class = S7::class_integer,
-      default = integer(0)
-    ),
-    missing_text = S7::new_property(
-      class = S7::class_character,
-      default = ""
-    ),
-    missing_apply_to = S7::new_property(
-      class = S7::class_character,
-      default = "all"
-    ),
-
-    # Styling
-    bold_locations = S7::new_property(
-      # "column_labels", "title", "row_groups", "spanners"
-      class = S7::class_character,
-      default = c("column_labels")
-    ),
-    borders = S7::new_property(
-      class = S7::class_list,
-      default = list()
-    ),
-
-    # Footnotes (in order)
-    footnotes = S7::new_property(
-      class = S7::class_list,
-      default = list()
-    ),
-
-    # Reference to original spec
-    source_spec = S7::new_property(
-      class = S7::class_any,
-      default = NULL
-    )
-  ),
-  validator = function(self) {
-    valid_types <- c("parameter", "comparison", "summary")
-    if (!self@table_type %in% valid_types) {
-      return(sprintf(
-        "@table_type must be one of: %s. Got: %s",
-        paste(valid_types, collapse = ", "),
-        self@table_type
-      ))
-    }
-
-    valid_bold <- c("column_labels", "title", "row_groups", "spanners")
-    bad_bold <- setdiff(self@bold_locations, valid_bold)
-    if (length(bad_bold) > 0) {
-      return(sprintf(
-        "@bold_locations must be in: %s. Got: %s",
-        paste(valid_bold, collapse = ", "),
-        paste(bad_bold, collapse = ", ")
-      ))
-    }
   }
 )
 
@@ -1058,6 +527,24 @@ SummarySpec <- S7::new_class(
     time_format = S7::new_property(
       class = S7::class_character,
       default = "seconds"
+    ),
+    default_columns = S7::new_property(
+      class = S7::class_character,
+      getter = function(self) {
+        c(
+          "based_on",
+          "description",
+          "n_parameters",
+          "condition_number",
+          "ofv",
+          "dofv",
+          "pvalue"
+        )
+      }
+    ),
+    allowed_footnotes = S7::new_property(
+      class = S7::class_character,
+      getter = function(self) "abbreviations"
     )
   ),
   validator = function(self) {
@@ -1112,11 +599,6 @@ SummarySpec <- S7::new_class(
     if (!is.null(drop_msg)) {
       return(drop_msg)
     }
-
-    footnote_msg <- validate_summary_footnote_order(self@footnote_order)
-    if (!is.null(footnote_msg)) {
-      return(footnote_msg)
-    }
   },
   constructor = function(
     title = "Run Summary",
@@ -1137,8 +619,6 @@ SummarySpec <- S7::new_class(
     pvalue_threshold = NULL,
     footnote_order = "abbreviations"
   ) {
-    columns <- merge_summary_columns(columns, add_columns)
-
     S7::new_object(
       S7::S7_object(),
       sections = sections,

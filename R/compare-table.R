@@ -25,7 +25,7 @@ get_comparison_last_two <- function(comparison, suffix_cols) {
 
 detect_comparison_statistics <- function(comparison) {
   fallback_suffix_cols <- comparison_suffix_columns()
-  spec <- get_comparison_table_spec(comparison)
+  spec <- get_comparison_meta(comparison)$table_spec
   suffix_cols <- get_comparison_suffix_cols(
     spec,
     comparison,
@@ -306,7 +306,7 @@ build_comparison_footnote <- function(
   pvalue_threshold = NULL
 ) {
   fallback_suffix_cols <- comparison_suffix_columns()
-  spec <- get_comparison_table_spec(comparison)
+  spec <- get_comparison_meta(comparison)$table_spec
   suffix_cols <- get_comparison_suffix_cols(
     spec,
     comparison,
@@ -447,7 +447,7 @@ make_comparison_table <- function(
   }
 
   # Preserve attributes before dplyr operations (which strip custom attrs)
-  spec <- get_comparison_table_spec(comparison)
+  spec <- get_comparison_meta(comparison)$table_spec
   if (is.null(spec)) {
     rlang::abort(
       "TableSpec not found. Run apply_table_spec(params, spec, info) first."
@@ -591,7 +591,7 @@ hyperion_comparison_table <- function(
 
   # CI merges per model
   ci_merges <- list()
-  effective_cols <- c(spec@columns, spec@add_columns %||% character(0))
+  effective_cols <- if (!is.null(spec)) get_spec_columns(spec) else character(0)
   if (!is.null(spec) && all(c("ci_low", "ci_high") %in% effective_cols)) {
     for (idx in model_indices) {
       ci_low <- paste0("ci_low_", idx)
@@ -704,8 +704,7 @@ build_comparison_footnotes <- function(comparison, spec, layout) {
       }
     } else if (section == "equations" && !is.null(equations)) {
       for (eq in equations) {
-        content <- if (inherits(eq, "gt_md")) as.character(eq) else eq
-        footnotes <- c(footnotes, list(footnote_spec(content, TRUE)))
+        footnotes <- c(footnotes, list(footnote_spec(eq, TRUE)))
       }
     } else if (section == "abbreviations" && !is.null(abbreviations)) {
       for (line in abbreviations) {
@@ -777,7 +776,11 @@ compute_comparison_layout <- function(
   } else {
     character(0)
   }
-  columns <- if (!is.null(spec)) spec@columns else character(0)
+  columns <- if (!is.null(spec)) {
+    spec@columns %||% character(0)
+  } else {
+    character(0)
+  }
   if (!"fixed" %in% c(columns, add_cols)) {
     hide_cols <- unique(c(
       hide_cols,
@@ -792,7 +795,7 @@ compute_comparison_layout <- function(
   }
 
   if (!is.null(spec) && spec@hide_empty_columns) {
-    fixed_requested <- if (isTRUE(spec@.columns_provided)) {
+    fixed_requested <- if (!is.null(spec@columns)) {
       "fixed" %in% c(spec@columns, add_cols)
     } else {
       "fixed" %in% add_cols
@@ -811,7 +814,7 @@ compute_comparison_layout <- function(
     }
 
     empty_cols <- find_empty_columns(comparison)
-    if (length(display_cols) > 0 && isTRUE(spec@.columns_provided)) {
+    if (length(display_cols) > 0 && !is.null(spec@columns)) {
       requested_suffixes <- unlist(
         lapply(
           display_cols,
@@ -827,7 +830,7 @@ compute_comparison_layout <- function(
   }
 
   pct_change_cols <- grep("^pct_change_\\d+$", names(comparison), value = TRUE)
-  columns_provided <- !is.null(spec) && isTRUE(spec@.columns_provided)
+  columns_provided <- !is.null(spec) && !is.null(spec@columns)
   show_pct_change <- !is.null(spec) &&
     ((!columns_provided) ||
       "pct_change" %in% columns ||
@@ -855,7 +858,7 @@ compute_comparison_layout <- function(
   )
   suffixed_cols <- grep("_(\\d+)$", names(comparison), value = TRUE)
   hide_cols <- unique(c(hide_cols, setdiff(suffixed_cols, allowed_suffixed)))
-  effective_cols <- c(spec@columns, spec@add_columns %||% character(0))
+  effective_cols <- if (!is.null(spec)) get_spec_columns(spec) else character(0)
   if (!is.null(spec) && all(c("ci_low", "ci_high") %in% effective_cols)) {
     hide_cols <- unique(c(
       hide_cols,
@@ -950,11 +953,11 @@ compute_comparison_model_cols <- function(
   }
 
   model_cols <- list()
+  effective_cols <- if (!is.null(spec)) get_spec_columns(spec) else character(0)
   for (idx in model_indices) {
     cols <- paste0(display_cols, "_", idx)
     cols <- intersect(cols, names(comparison))
     cols <- cols[!cols %in% hide_cols]
-    effective_cols <- c(spec@columns, spec@add_columns %||% character(0))
     if (!is.null(spec) && all(c("ci_low", "ci_high") %in% effective_cols)) {
       cols <- cols[cols != paste0("ci_high_", idx)]
     }
@@ -995,7 +998,7 @@ build_comparison_label_map <- function(
   hide_cols
 ) {
   label_map <- list(name = "Parameter", pct_change = "% Change")
-  pct_change_refs <- get_comparison_pct_change_refs(comparison)
+  pct_change_refs <- get_comparison_meta(comparison)$pct_change_refs
   if (length(pct_change_cols) > 0 && show_pct_change) {
     label_map$pct_change <- NULL
     for (col in pct_change_cols) {
@@ -1144,8 +1147,8 @@ prepare_comparison_table_data <- function(
 
   # Restore saved attrs and set summaries/labels from meta
   comparison <- restore_comparison_attrs(comparison, saved_attrs)
-  comparison <- attach_comparison_summaries(comparison, summaries)
-  comparison <- attach_comparison_labels(comparison, labels)
+  comparison <- set_comparison_meta_field(comparison, "summaries", summaries)
+  comparison <- set_comparison_meta_field(comparison, "labels", labels)
 
   layout <- compute_comparison_layout(
     comparison,

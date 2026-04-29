@@ -20,15 +20,9 @@ If TRUE, replace all existing rules.}
 Modified spec.
 }
 \description{
-\code{set_spec_filter()} is an S7 generic that controls which parameters appear
-in the output table. Pass filter expressions like \code{!fixed}, \code{diagonal}.
-}
-\details{
-Methods are available for the following classes:
-
-\itemize{
-\item \code{hyperion.tables::TableSpec}
-}
+\code{set_spec_filter()} controls which parameters appear in the output table.
+Pass filter expressions like \code{!fixed}, \code{diagonal}. Operates on \code{TableSpec}
+only.
 }
 \examples{
 spec <- TableSpec() |>

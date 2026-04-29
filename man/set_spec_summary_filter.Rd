@@ -20,18 +20,14 @@ If TRUE, replace all existing rules.}
 Modified spec.
 }
 \description{
-\code{set_spec_summary_filter()} is an S7 generic that controls which models
-appear in the summary table based on filter expressions evaluated against
-summary columns.
-}
-\details{
-Methods are available for the following classes:
-
-\itemize{
-\item \code{hyperion.tables::SummarySpec}
-}
+\code{set_spec_summary_filter()} controls which models appear in the summary
+table based on filter expressions evaluated against summary columns.
+Operates on \code{SummarySpec} only.
 }
 \examples{
 spec <- SummarySpec() |>
   set_spec_summary_filter(ofv < 1000)
+}
+\seealso{
+\code{\link[=get_spec_summary_filter]{get_spec_summary_filter()}}.
 }

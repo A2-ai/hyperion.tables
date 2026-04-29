@@ -19,15 +19,8 @@ If TRUE, replace all existing rules.}
 Modified spec.
 }
 \description{
-\code{set_spec_variability()} is an S7 generic that controls how the variability
-display column is constructed.
-}
-\details{
-Methods are available for the following classes:
-
-\itemize{
-\item \code{hyperion.tables::TableSpec}
-}
+\code{set_spec_variability()} controls how the variability display column is
+constructed. Operates on \code{TableSpec} only.
 }
 \examples{
 spec <- TableSpec() |>

@@ -21,8 +21,8 @@ set_spec_transforms(spec, ..., theta = NULL, omega = NULL, sigma = NULL)
 Modified spec.
 }
 \description{
-\code{set_spec_transforms()} is an S7 generic that controls which transforms are
-applied for display by parameter kind.
+\code{set_spec_transforms()} controls which transforms are applied for display by
+parameter kind. Operates on \code{TableSpec} only.
 }
 \examples{
 spec <- TableSpec() |>

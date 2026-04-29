@@ -15,8 +15,8 @@ get_spec_parameter_names(spec, ...)
 ParameterNameOptions object.
 }
 \description{
-\code{get_spec_parameter_names()} is an S7 generic that returns the
-ParameterNameOptions object controlling how parameter names are displayed.
+\code{get_spec_parameter_names()} returns the ParameterNameOptions object
+controlling how parameter names are displayed. Operates on \code{TableSpec} only.
 }
 \examples{
 spec <- TableSpec()

@@ -15,8 +15,8 @@ get_spec_variability(spec, ...)
 List of quosures.
 }
 \description{
-\code{get_spec_variability()} is an S7 generic that returns the list of
-variability display rules.
+\code{get_spec_variability()} returns the list of variability display rules.
+Operates on \code{TableSpec} only.
 }
 \examples{
 spec <- TableSpec()

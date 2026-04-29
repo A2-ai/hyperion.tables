@@ -1,12 +1,12 @@
-test_that("TableSpec columns_provided tracks explicit columns", {
+test_that("TableSpec @columns is NULL until user sets columns", {
   spec <- TableSpec()
-  expect_false(isTRUE(spec@.columns_provided))
+  expect_null(spec@columns)
 
   spec <- set_spec_columns(spec, "symbol", "fixed")
-  expect_true(isTRUE(spec@.columns_provided))
+  expect_false(is.null(spec@columns))
 })
 
-test_that("TableSpec columns_provided is TRUE when columns passed to constructor", {
+test_that("TableSpec @columns is non-NULL when columns passed to constructor", {
   spec <- TableSpec(columns = c("name", "estimate"))
-  expect_true(isTRUE(spec@.columns_provided))
+  expect_false(is.null(spec@columns))
 })

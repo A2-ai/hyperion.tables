@@ -15,7 +15,6 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 Suggests:
 		diffviewer,
-    doclisting,
     equatags,
     flextable,
     ftExtra,
@@ -39,12 +38,13 @@ Imports:
     S7 (>= 0.2.1)
 VignetteBuilder: knitr
 Collate: 
-    'spec.R'
-    'classes.R'
     'compare-table.R'
     'compare.R'
     'df-attrs.R'
     'format.R'
+    'spec-options.R'
+    'spec-classes.R'
+    'hyperion-table.R'
     'hyperion.tables-package.R'
     'lookup.R'
     'parameter-apply.R'
@@ -53,6 +53,7 @@ Collate:
     'render-flextable.R'
     'render-gt.R'
     'spec-getters.R'
+    'spec-rules.R'
     'spec-setters.R'
     'spec-validation.R'
     'summary.R'
@@ -60,3 +61,4 @@ Collate:
     'variability.R'
     'zzz.R'
 Config/roxygen2/version: 7.3.3.9000
+RoxygenNote: 7.3.3

@@ -20,16 +20,12 @@ or NULL to disable threshold display.}
 Modified spec.
 }
 \description{
-\code{set_spec_pvalue()} is an S7 generic that controls how p-values are
-displayed in the table.
-
-Methods are available for the following classes:
-
-\itemize{
-\item \code{hyperion.tables::BaseSpec}
-}
+\code{set_spec_pvalue()} controls how p-values are displayed in the table.
 }
 \examples{
 spec <- TableSpec() |>
   set_spec_pvalue(threshold = 0.001, scientific = TRUE)
+}
+\seealso{
+\code{\link[=get_spec_pvalue]{get_spec_pvalue()}}.
 }

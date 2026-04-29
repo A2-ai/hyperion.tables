@@ -17,7 +17,8 @@ A named list of parameter-name character vectors (possibly empty).
 \description{
 Returns the assignments as a named list keyed by section label, where
 each value is a character vector of parameter names. Mirrors the shape
-passed to \code{set_spec_sections(parameters = ...)}.
+passed to \code{set_spec_sections(parameters = ...)}. Operates on \code{TableSpec}
+only.
 }
 \seealso{
 \code{\link[=set_spec_sections]{set_spec_sections()}}.

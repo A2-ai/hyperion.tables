@@ -30,8 +30,8 @@ set_spec_ci(
 Modified spec.
 }
 \description{
-\code{set_spec_ci()} is an S7 generic that controls confidence interval rendering
-options.
+\code{set_spec_ci()} controls confidence interval rendering options. Operates on
+\code{TableSpec} only.
 }
 \examples{
 spec <- TableSpec() |>

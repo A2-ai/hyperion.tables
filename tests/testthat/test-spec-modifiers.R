@@ -27,9 +27,9 @@ test_that("add_spec_columns appends to SummarySpec", {
   spec <- SummarySpec()
   modified <- spec |> add_spec_columns("estimation_time")
 
-  expect_true("estimation_time" %in% modified@columns)
+  expect_true("estimation_time" %in% get_spec_columns(modified))
   # Original unchanged
-  expect_false("estimation_time" %in% spec@columns)
+  expect_false("estimation_time" %in% get_spec_columns(spec))
 })
 
 test_that("add_spec_columns rejects invalid columns", {
@@ -386,8 +386,8 @@ test_that("set_spec_variability appends by default", {
     )
 
   expect_length(
-    modified@variability_rules,
-    length(spec@variability_rules) + 1
+    get_spec_variability(modified),
+    length(get_spec_variability(spec)) + 1
   )
 })
 
@@ -417,7 +417,7 @@ test_that("set_spec_models works", {
 })
 
 test_that("set_spec_tag_filter works", {
-  spec <- SummarySpec() |> set_spec_tag_filter(c("final", "approved"))
+  spec <- SummarySpec() |> set_spec_tag_filter(include = c("final", "approved"))
   expect_equal(spec@tag_filter, c("final", "approved"))
 })
 
@@ -427,9 +427,9 @@ test_that("set_spec_tag_filter exclude works", {
   expect_equal(spec@tag_exclude, "failed")
 })
 
-test_that("set_spec_tag_filter sets both tags and exclude", {
+test_that("set_spec_tag_filter sets both include and exclude", {
   spec <- SummarySpec() |>
-    set_spec_tag_filter(tags = c("final", "approved"), exclude = "failed")
+    set_spec_tag_filter(include = c("final", "approved"), exclude = "failed")
   expect_equal(spec@tag_filter, c("final", "approved"))
   expect_equal(spec@tag_exclude, "failed")
 })
@@ -510,7 +510,7 @@ test_that("SummarySpec pipe chain works", {
     set_spec_time_format("auto") |>
     set_spec_models(c("run001", "run002"))
 
-  expect_true("estimation_time" %in% spec@columns)
+  expect_true("estimation_time" %in% get_spec_columns(spec))
   expect_true("description" %in% spec@drop_columns)
   expect_equal(spec@title, "Run Summary")
   expect_equal(spec@time_format, "auto")

@@ -18,12 +18,6 @@ Modified spec.
 \description{
 \code{drop_spec_columns()} is an S7 generic that adds columns to the spec's
 \code{drop_columns} list. These columns will be excluded from the output table.
-
-Methods are available for the following classes:
-
-\itemize{
-\item \code{hyperion.tables::BaseSpec}
-}
 }
 \examples{
 spec <- TableSpec() |>

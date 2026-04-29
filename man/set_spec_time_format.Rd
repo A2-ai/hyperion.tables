@@ -17,8 +17,8 @@ set_spec_time_format(spec, format, ...)
 Modified spec.
 }
 \description{
-\code{set_spec_time_format()} is an S7 generic that controls how time columns
-are formatted.
+\code{set_spec_time_format()} controls how time columns are formatted. Operates
+on \code{SummarySpec} only.
 }
 \examples{
 spec <- SummarySpec() |>

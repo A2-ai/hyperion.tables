@@ -42,29 +42,6 @@ check_suggested <- function(pkg, reason = NULL, severity = c("abort", "warn")) {
 }
 
 
-#' Validate p-value threshold
-#'
-#' @param threshold Numeric or NULL
-#' @return NULL if valid, or error message string if invalid
-#' @noRd
-validate_pvalue_threshold <- function(threshold) {
-  if (is.null(threshold)) {
-    return(NULL)
-  }
-  if (
-    length(threshold) != 1 ||
-      is.na(threshold) ||
-      threshold <= 0 ||
-      threshold >= 1
-  ) {
-    return(sprintf(
-      "@pvalue_threshold must be NULL or a number between 0 and 1. Got: %s",
-      threshold
-    ))
-  }
-  NULL
-}
-
 #' Check if a value is a non-empty scalar character string
 #' @noRd
 is_scalar_nonempty_char <- function(x) {

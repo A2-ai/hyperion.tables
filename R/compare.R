@@ -2,34 +2,28 @@
 # Model comparison functions
 # ==============================================================================
 
-#' Capture all custom attributes from a comparison object
+#' Capture comparison metadata
 #'
-#' Used to preserve attributes before dplyr operations which strip them.
+#' Used to preserve the bundled `hyperion_meta` attr before dplyr operations
+#' which strip attributes.
 #' @param comparison A hyperion_comparison object
-#' @return Named list of attributes
+#' @return The `hyperion_meta` list (possibly NULL)
 #' @noRd
 capture_comparison_attrs <- function(comparison) {
-  list(
-    summaries = get_comparison_summaries(comparison),
-    labels = get_comparison_labels(comparison),
-    table_spec = get_comparison_table_spec(comparison),
-    pct_change_refs = get_comparison_pct_change_refs(comparison),
-    lineage = get_comparison_lineage(comparison)
-  )
+  attr(comparison, "hyperion_meta")
 }
 
-#' Restore custom attributes to a comparison object
+#' Restore comparison metadata
 #'
-#' Used to restore attributes after dplyr operations which strip them.
+#' Used to restore the `hyperion_meta` attr after dplyr operations which
+#' strip attributes.
 #' @param comparison A data frame to restore attributes to
-#' @param attrs Named list of attributes from capture_comparison_attrs()
-#' @return The comparison with attributes restored
+#' @param attrs The `hyperion_meta` list from capture_comparison_attrs()
+#' @return The comparison with metadata restored
 #' @noRd
 restore_comparison_attrs <- function(comparison, attrs) {
-  for (name in names(attrs)) {
-    if (!is.null(attrs[[name]])) {
-      attr(comparison, name) <- attrs[[name]]
-    }
+  if (!is.null(attrs)) {
+    attr(comparison, "hyperion_meta") <- attrs
   }
   comparison
 }
@@ -48,8 +42,8 @@ get_comparison_model_indices <- function(names_vec, suffix_cols) {
 
 #' @noRd
 normalize_comparison_meta <- function(comparison, suffix_cols) {
-  labels <- get_comparison_labels(comparison)
-  summaries <- get_comparison_summaries(comparison)
+  labels <- get_comparison_meta(comparison)$labels
+  summaries <- get_comparison_meta(comparison)$summaries
 
   if (is.null(labels)) {
     indices <- get_comparison_model_indices(names(comparison), suffix_cols)
@@ -68,7 +62,7 @@ resolve_reference_context <- function(
   summaries,
   fallback_pos
 ) {
-  pct_change_refs <- get_comparison_pct_change_refs(comparison)
+  pct_change_refs <- get_comparison_meta(comparison)$pct_change_refs
   pct_col <- paste0("pct_change_", right_idx)
   if (!is.null(pct_change_refs[[pct_col]])) {
     ref_idx <- pct_change_refs[[pct_col]]
@@ -97,7 +91,7 @@ resolve_reference_context <- function(
 can_show_lrt <- function(comparison, left_idx, right_idx, left_sum, right_sum) {
   suppress <- function(reason) list(show = FALSE, reason = reason)
 
-  lineage <- get_comparison_lineage(comparison)
+  lineage <- get_comparison_meta(comparison)$lineage
   if (is.null(lineage)) {
     return(suppress("no lineage attached"))
   }
@@ -152,8 +146,8 @@ get_comparison_suffix_cols <- function(
   fallback_cols,
   include_fixed_for_ci = FALSE
 ) {
-  if (!is.null(spec) && !is.null(spec@columns)) {
-    cols <- setdiff(spec@columns, "name")
+  if (!is.null(spec)) {
+    cols <- setdiff(spec@columns %||% spec@default_columns, "name")
   } else {
     cols <- fallback_cols
   }
@@ -320,7 +314,7 @@ resolve_suffix_cols_for_comparison <- function(params1) {
   } else {
     character(0)
   }
-  columns_provided <- !is.null(spec1) && isTRUE(spec1@.columns_provided)
+  columns_provided <- !is.null(spec1) && !is.null(spec1@columns)
   if (is.null(spec1) || !columns_provided) {
     suffix_cols <- unique(c(suffix_cols, "pct_change"))
   } else if ("pct_change" %in% add_cols1) {
@@ -347,7 +341,7 @@ compute_model_positions <- function(params1, params2, suffix_cols) {
 
   spec1 <- get_table_spec(params1)
   spec2 <- get_table_spec(params2)
-  sum2 <- get_attached_summary(params2)
+  sum2 <- attr(params2, "model_summary")
 
   is_comparison <- inherits(params1, "hyperion_comparison")
 
@@ -389,7 +383,7 @@ compute_model_positions <- function(params1, params2, suffix_cols) {
   sum1 <- if (is_comparison) {
     utils::tail(existing_summaries, 1)[[1]]
   } else {
-    get_attached_summary(params1)
+    attr(params1, "model_summary")
   }
 
   spec <- if (!is.null(spec1)) spec1 else spec2
@@ -608,7 +602,7 @@ finalize_comparison <- function(
   pct_col <- paste0("pct_change_", positions$last_idx)
 
   # Merge pct_change reference indices
-  existing_pct_refs <- get_comparison_pct_change_refs(params1)
+  existing_pct_refs <- get_comparison_meta(params1)$pct_change_refs
   if (is.null(existing_pct_refs)) {
     existing_pct_refs <- list()
   }
@@ -622,10 +616,14 @@ finalize_comparison <- function(
   }
 
   class(comparison) <- c("hyperion_comparison", class(comparison))
-  comparison <- attach_comparison_summaries(comparison, summaries)
-  comparison <- attach_comparison_labels(comparison, labels)
-  comparison <- attach_comparison_table_spec(comparison, positions$spec)
-  attach_comparison_pct_change_refs(comparison, existing_pct_refs)
+  comparison <- set_comparison_meta_field(comparison, "summaries", summaries)
+  comparison <- set_comparison_meta_field(comparison, "labels", labels)
+  comparison <- set_comparison_meta_field(
+    comparison,
+    "table_spec",
+    positions$spec
+  )
+  set_comparison_meta_field(comparison, "pct_change_refs", existing_pct_refs)
 }
 
 #' Compare two enriched parameter data frames
@@ -721,5 +719,5 @@ add_model_lineage <- function(comparison, lineage) {
     )
   }
 
-  attach_comparison_lineage(comparison, lineage)
+  set_comparison_meta_field(comparison, "lineage", lineage)
 }

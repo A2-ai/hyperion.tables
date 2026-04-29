@@ -15,8 +15,8 @@ get_spec_filter(spec, ...)
 List of quosures.
 }
 \description{
-\code{get_spec_filter()} is an S7 generic that returns the list of row filter
-rules.
+\code{get_spec_filter()} returns the list of row filter rules. Operates on
+\code{TableSpec} only.
 }
 \examples{
 spec <- TableSpec()

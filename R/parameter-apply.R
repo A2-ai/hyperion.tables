@@ -29,7 +29,7 @@ apply_table_spec <- function(params, spec, info = NULL) {
   df <- resolve_name_columns(df, spec, info)
   df <- apply_sections_and_filters(df, spec)
 
-  attach_table_spec(df, spec)
+  attach_hyperion_spec(df, spec, TableSpec)
 }
 
 #' Compute derived columns (transforms, CV, RSE, CI, symbol)
@@ -97,7 +97,7 @@ compute_derived_columns <- function(params, spec, info) {
 #' @noRd
 maybe_enrich_description <- function(df, spec, info) {
   want_description <- "description" %in%
-    c(spec@columns, spec@add_columns %||% character(0)) &&
+    get_spec_columns(spec) &&
     !"description" %in% spec@drop_columns
 
   if (!want_description) {
@@ -421,9 +421,7 @@ warn_multi_match_sections <- function(formulas, data) {
 
 #' Get section order from spec
 #' @noRd
-get_section_order <- S7::new_generic("get_section_order", "spec")
-
-S7::method(get_section_order, BaseSpec) <- function(spec) {
+get_section_order <- function(spec) {
   vapply(
     spec@sections@rules,
     function(rule) {

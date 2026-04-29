@@ -15,14 +15,8 @@ get_spec_sigfig(spec, ...)
 Numeric value.
 }
 \description{
-\code{get_spec_sigfig()} is an S7 generic that returns the number of significant
-figures used for numeric formatting.
-
-Methods are available for the following classes:
-
-\itemize{
-\item \code{hyperion.tables::BaseSpec}
-}
+\code{get_spec_sigfig()} returns the number of significant figures used for
+numeric formatting.
 }
 \examples{
 spec <- TableSpec()

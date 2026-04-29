@@ -15,14 +15,8 @@ get_spec_sections(spec, ...)
 A \link{SectionOptions} object.
 }
 \description{
-\code{get_spec_sections()} is an S7 generic that returns the spec's
-\link{SectionOptions} object (rules, assignments, order, filter).
-
-Methods are available for the following classes:
-
-\itemize{
-\item \code{hyperion.tables::BaseSpec}
-}
+\code{get_spec_sections()} returns the spec's \link{SectionOptions} object (rules,
+assignments, order, filter).
 }
 \examples{
 spec <- TableSpec()

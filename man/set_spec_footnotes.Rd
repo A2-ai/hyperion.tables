@@ -19,14 +19,8 @@ For SummarySpec: only "abbreviations" is valid.}
 Modified spec.
 }
 \description{
-\code{set_spec_footnotes()} is an S7 generic that controls the order of footnote
-sections, or disables footnotes entirely.
-
-Methods are available for the following classes:
-
-\itemize{
-\item \code{hyperion.tables::BaseSpec}
-}
+\code{set_spec_footnotes()} controls the order of footnote sections, or disables
+footnotes entirely.
 }
 \examples{
 spec <- TableSpec() |>
@@ -35,4 +29,7 @@ spec <- TableSpec() |>
 # Disable footnotes
 spec <- TableSpec() |>
   set_spec_footnotes(NULL)
+}
+\seealso{
+\code{\link[=get_spec_footnotes]{get_spec_footnotes()}}.
 }

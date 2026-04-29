@@ -17,10 +17,13 @@ set_spec_remove_unrun(spec, remove, ...)
 Modified spec.
 }
 \description{
-\code{set_spec_remove_unrun()} is an S7 generic that controls whether models
-without completed runs are excluded.
+\code{set_spec_remove_unrun()} controls whether models without completed runs
+are excluded. Operates on \code{SummarySpec} only.
 }
 \examples{
 spec <- SummarySpec() |>
   set_spec_remove_unrun(FALSE)
+}
+\seealso{
+\code{\link[=get_spec_remove_unrun]{get_spec_remove_unrun()}}.
 }

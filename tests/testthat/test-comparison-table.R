@@ -253,13 +253,15 @@ test_that("comparison LRT p-value respects direction of delta OFV", {
     stringsAsFactors = FALSE
   )
   class(comparison) <- c("hyperion_comparison", class(comparison))
-  attr(comparison, "labels") <- c("run001", "run002")
-  attr(comparison, "summaries") <- list(
-    list(run_name = "run001", ofv = 100, number_obs = 10, condition_number = 1),
-    list(run_name = "run002", ofv = 110, number_obs = 10, condition_number = 1)
+  attr(comparison, "hyperion_meta") <- list(
+    labels = c("run001", "run002"),
+    summaries = list(
+      list(run_name = "run001", ofv = 100, number_obs = 10, condition_number = 1),
+      list(run_name = "run002", ofv = 110, number_obs = 10, condition_number = 1)
+    ),
+    lineage = lineage,
+    table_spec = TableSpec(columns = c("estimate", "fixed"))
   )
-  attr(comparison, "lineage") <- lineage
-  attr(comparison, "table_spec") <- TableSpec(columns = c("estimate", "fixed"))
 
   lines <- hyperion.tables:::build_comparison_footnote(
     comparison,
@@ -551,9 +553,12 @@ test_that("can_show_lrt returns reason for each suppression condition", {
       stringsAsFactors = FALSE
     )
     class(comp) <- c("hyperion_comparison", class(comp))
-    attr(comp, "labels") <- c("run001", "run002")
-    attr(comp, "summaries") <- list(left_sum, right_sum)
-    if (use_lineage) attr(comp, "lineage") <- lineage
+    meta <- list(
+      labels = c("run001", "run002"),
+      summaries = list(left_sum, right_sum)
+    )
+    if (use_lineage) meta$lineage <- lineage
+    attr(comp, "hyperion_meta") <- meta
     comp
   }
 
@@ -608,7 +613,9 @@ test_that("can_show_lrt returns reason for each suppression condition", {
   broken_lineage <- lineage
   broken_lineage$nodes$`run002.mod`$based_on <- NULL
   not_in_lineage_comp <- make_comp(good_left, good_right)
-  attr(not_in_lineage_comp, "lineage") <- broken_lineage
+  meta <- attr(not_in_lineage_comp, "hyperion_meta")
+  meta$lineage <- broken_lineage
+  attr(not_in_lineage_comp, "hyperion_meta") <- meta
   res <- hyperion.tables:::can_show_lrt(
     not_in_lineage_comp,
     1,
@@ -696,7 +703,7 @@ test_that("format_ofv_lrt_footnote returns OFV line or NULL", {
     stringsAsFactors = FALSE
   )
   class(comp) <- c("hyperion_comparison", class(comp))
-  attr(comp, "lineage") <- lineage
+  attr(comp, "hyperion_meta") <- list(lineage = lineage)
 
   left_sum <- list(run_name = "run001", ofv = 100, number_obs = 10)
   right_sum <- list(run_name = "run002", ofv = 90, number_obs = 10)
@@ -789,7 +796,7 @@ test_that("compare_with warns on disjoint parameter names", {
     estimate = c(1.0, 2.0),
     stringsAsFactors = FALSE
   )
-  attr(p1, "table_spec") <- spec
+  attr(p1, "hyperion_spec") <- spec
   attr(p1, "model_summary") <- list(run_name = "A")
 
   p2 <- data.frame(
@@ -917,7 +924,7 @@ test_that("compare_with resolves reference_model against renamed labels", {
     estimate = c(1.0, 2.0),
     stringsAsFactors = FALSE
   )
-  attr(p1, "table_spec") <- spec
+  attr(p1, "hyperion_spec") <- spec
   attr(p1, "model_summary") <- list(run_name = "run001")
 
   p2 <- data.frame(
@@ -947,11 +954,14 @@ test_that("compare_with resolves reference_model against renamed labels", {
 
   # Should resolve: "BaseModel" matches renamed label for model index 2
   # pct_change_3 should be relative to model 2 (the renamed one)
-  pct_refs <- attr(comp3, "pct_change_refs")
+  pct_refs <- hyperion.tables:::get_comparison_meta(comp3)$pct_change_refs
   expect_equal(pct_refs[["pct_change_3"]], 2L)
 
   # Labels should reflect the rename
-  expect_equal(attr(comp3, "labels"), c("run001", "BaseModel", "run003"))
+  expect_equal(
+    hyperion.tables:::get_comparison_meta(comp3)$labels,
+    c("run001", "BaseModel", "run003")
+  )
 })
 
 test_that("compute_pct_change adds correct columns", {
@@ -989,7 +999,7 @@ test_that("resolve_suffix_cols_for_comparison includes variability cols with tra
     fixed = c(FALSE, FALSE),
     stringsAsFactors = FALSE
   )
-  attr(p1, "table_spec") <- spec_with_transforms
+  attr(p1, "hyperion_spec") <- spec_with_transforms
 
   cols <- hyperion.tables:::resolve_suffix_cols_for_comparison(p1)
   expect_true("cv" %in% cols)
@@ -1003,7 +1013,7 @@ test_that("resolve_suffix_cols_for_comparison includes pct_change when no explic
     estimate = 1.0,
     stringsAsFactors = FALSE
   )
-  attr(p1, "table_spec") <- spec_default
+  attr(p1, "hyperion_spec") <- spec_default
 
   cols <- hyperion.tables:::resolve_suffix_cols_for_comparison(p1)
   expect_true("pct_change" %in% cols)
@@ -1016,7 +1026,7 @@ test_that("compute_model_positions returns correct indices for initial case", {
     estimate = c(1.0, 2.0),
     stringsAsFactors = FALSE
   )
-  attr(p1, "table_spec") <- spec
+  attr(p1, "hyperion_spec") <- spec
   attr(p1, "model_summary") <- list(run_name = "run001", ofv = 100)
 
   p2 <- data.frame(
@@ -1048,7 +1058,7 @@ test_that("compute_model_positions returns correct indices for chained case", {
     estimate = c(1.0, 2.0),
     stringsAsFactors = FALSE
   )
-  attr(p1, "table_spec") <- spec
+  attr(p1, "hyperion_spec") <- spec
   attr(p1, "model_summary") <- list(run_name = "run001", ofv = 100)
 
   p2 <- data.frame(
@@ -1087,7 +1097,7 @@ test_that("join_comparison_params produces correct columns for initial join", {
     rse = c(10, 20, 30),
     stringsAsFactors = FALSE
   )
-  attr(p1, "table_spec") <- spec
+  attr(p1, "hyperion_spec") <- spec
   attr(p1, "model_summary") <- list(run_name = "run001")
 
   p2 <- data.frame(
@@ -1127,7 +1137,7 @@ test_that("join_comparison_params produces correct columns for chained join", {
     estimate = c(1.0, 2.0),
     stringsAsFactors = FALSE
   )
-  attr(p1, "table_spec") <- spec
+  attr(p1, "hyperion_spec") <- spec
   attr(p1, "model_summary") <- list(run_name = "run001")
 
   p2 <- data.frame(
