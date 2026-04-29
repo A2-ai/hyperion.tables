@@ -25,7 +25,7 @@ get_comparison_last_two <- function(comparison, suffix_cols) {
 
 detect_comparison_statistics <- function(comparison) {
   fallback_suffix_cols <- comparison_suffix_columns()
-  spec <- attr(comparison, "table_spec")
+  spec <- get_comparison_table_spec(comparison)
   suffix_cols <- get_comparison_suffix_cols(
     spec,
     comparison,
@@ -306,7 +306,7 @@ build_comparison_footnote <- function(
   pvalue_threshold = NULL
 ) {
   fallback_suffix_cols <- comparison_suffix_columns()
-  spec <- attr(comparison, "table_spec")
+  spec <- get_comparison_table_spec(comparison)
   suffix_cols <- get_comparison_suffix_cols(
     spec,
     comparison,
@@ -447,7 +447,7 @@ make_comparison_table <- function(
   }
 
   # Preserve attributes before dplyr operations (which strip custom attrs)
-  spec <- attr(comparison, "table_spec")
+  spec <- get_comparison_table_spec(comparison)
   if (is.null(spec)) {
     rlang::abort(
       "TableSpec not found. Run apply_table_spec(params, spec, info) first."
@@ -995,7 +995,7 @@ build_comparison_label_map <- function(
   hide_cols
 ) {
   label_map <- list(name = "Parameter", pct_change = "% Change")
-  pct_change_refs <- attr(comparison, "pct_change_refs")
+  pct_change_refs <- get_comparison_pct_change_refs(comparison)
   if (length(pct_change_cols) > 0 && show_pct_change) {
     label_map$pct_change <- NULL
     for (col in pct_change_cols) {
@@ -1144,8 +1144,8 @@ prepare_comparison_table_data <- function(
 
   # Restore saved attrs and set summaries/labels from meta
   comparison <- restore_comparison_attrs(comparison, saved_attrs)
-  attr(comparison, "summaries") <- summaries
-  attr(comparison, "labels") <- labels
+  comparison <- attach_comparison_summaries(comparison, summaries)
+  comparison <- attach_comparison_labels(comparison, labels)
 
   layout <- compute_comparison_layout(
     comparison,

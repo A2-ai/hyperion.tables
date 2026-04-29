@@ -148,14 +148,14 @@ apply_summary_spec <- function(tree, spec) {
 
   # Build summary data frame (pass metadata for based_on/description)
   df <- build_summary_df(models, sorted_names, metadata_df, spec)
-  needs_dofv <- isTRUE(attr(df, ".needs_dofv"))
-  attr(df, ".needs_dofv") <- NULL
+  taken <- take_needs_dofv(df)
+  needs_dofv <- taken$value
+  df <- taken$df
 
   # Evaluate section rules (before column trim so rule-referenced cols available)
   has_section_config <- length(spec@sections@rules) > 0 ||
     length(spec@sections@order) > 0 ||
-    length(spec@sections@filter_keep) > 0 ||
-    length(spec@sections@filter_exclude) > 0
+    length(spec@sections@filter) > 0
   if (has_section_config) {
     df$section <- build_summary_section(df, spec@sections@rules)
     resolved <- resolve_section_levels(df, spec)
@@ -172,10 +172,10 @@ apply_summary_spec <- function(tree, spec) {
   df <- dplyr::select(df, -dplyr::any_of("tags"))
 
   # Select and reorder output columns
-  time_unit <- attr(df, "summary_time_unit")
+  time_unit <- get_summary_time_unit(df)
   df <- select_output_columns(df, spec, needs_dofv)
   if (!is.null(time_unit)) {
-    attr(df, "summary_time_unit") <- time_unit
+    df <- attach_summary_time_unit(df, time_unit)
   }
 
   # Apply summary_filter rules to summary columns
@@ -191,8 +191,7 @@ apply_summary_spec <- function(tree, spec) {
     df <- dplyr::select(df, -dplyr::any_of(spec@drop_columns))
   }
 
-  attr(df, "summary_spec") <- spec
-  df
+  attach_summary_spec(df, spec)
 }
 
 #' Filter metadata data frame by tag and model name
@@ -666,9 +665,7 @@ build_summary_df <- function(models, model_names, metadata_df, spec) {
   }
 
   df <- format_time_columns(df, spec)
-  attr(df, ".needs_dofv") <- needs_dofv
-
-  df
+  attach_needs_dofv(df, needs_dofv)
 }
 
 #' Calculate dOFV, df, and p-value for each model vs its parent
@@ -778,8 +775,7 @@ format_time_columns <- function(df, spec) {
       logical(1)
     ))
     if (all_missing) {
-      attr(df, "summary_time_unit") <- "s"
-      return(df)
+      return(attach_summary_time_unit(df, "s"))
     }
     max_vals <- vapply(
       time_cols,
@@ -800,8 +796,7 @@ format_time_columns <- function(df, spec) {
     for (col in time_cols) {
       df[[col]] <- df[[col]] / divisor
     }
-    attr(df, "summary_time_unit") <- unit
-    return(df)
+    return(attach_summary_time_unit(df, unit))
   }
 
   for (col in time_cols) {
@@ -900,7 +895,7 @@ make_summary_table <- function(
     check_suggested("flextable", reason = "for flextable output.")
   }
 
-  spec <- attr(data, "summary_spec")
+  spec <- get_summary_spec(data)
   if (is.null(spec)) {
     rlang::abort(
       "SummarySpec not found. Run apply_summary_spec(tree, spec) first."
@@ -944,7 +939,7 @@ get_time_suffix <- function(time_format, data) {
   } else if (time_format == "hours") {
     return("h")
   } else if (time_format == "auto") {
-    unit <- attr(data, "summary_time_unit")
+    unit <- get_summary_time_unit(data)
     if (!is.null(unit)) {
       return(unit)
     }

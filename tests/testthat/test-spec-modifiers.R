@@ -157,7 +157,7 @@ test_that("set_spec_sections exclude mode works for both specs", {
       kind == "THETA" ~ "Other",
       exclude = "Other"
     )
-  expect_identical(table_spec@sections@filter_exclude, "Other")
+  expect_identical(table_spec@sections@filter, list(exclude = "Other"))
 
   sum_spec <- SummarySpec() |>
     set_spec_sections(
@@ -165,8 +165,8 @@ test_that("set_spec_sections exclude mode works for both specs", {
       exclude = c("Other", NA)
     )
   expect_identical(
-    sum_spec@sections@filter_exclude,
-    c("Other", NA_character_)
+    sum_spec@sections@filter,
+    list(exclude = c("Other", NA_character_))
   )
 })
 
@@ -178,8 +178,8 @@ test_that("set_spec_sections keep mode stores positive list", {
       keep = c("Structural", "Variability")
     )
   expect_identical(
-    spec@sections@filter_keep,
-    c("Structural", "Variability")
+    spec@sections@filter,
+    list(keep = c("Structural", "Variability"))
   )
 })
 
@@ -203,8 +203,7 @@ test_that("set_spec_sections clears section filter with character(0)", {
       exclude = "Other"
     ) |>
     set_spec_sections(keep = character(0))
-  expect_length(spec@sections@filter_keep, 0L)
-  expect_length(spec@sections@filter_exclude, 0L)
+  expect_length(spec@sections@filter, 0L)
 })
 
 test_that("set_spec_section_filter is deprecated but delegates", {
@@ -214,11 +213,10 @@ test_that("set_spec_section_filter is deprecated but delegates", {
     spec <- base |> set_spec_section_filter(exclude = "Other"),
     "deprecated"
   )
-  expect_identical(spec@sections@filter_exclude, "Other")
+  expect_identical(spec@sections@filter, list(exclude = "Other"))
 
   cleared <- suppressWarnings(spec |> set_spec_section_filter(exclude = NULL))
-  expect_length(cleared@sections@filter_keep, 0L)
-  expect_length(cleared@sections@filter_exclude, 0L)
+  expect_length(cleared@sections@filter, 0L)
 })
 
 test_that("set_spec_sections(order=) stores order config", {
@@ -338,11 +336,11 @@ test_that("TableSpec()/SummarySpec() require SectionOptions objects at construct
 
   expect_error(
     TableSpec(sections = section_rules(kind == "THETA" ~ "Structural")),
-    "`sections` must be a SectionOptions object"
+    "sections.*SectionOptions"
   )
   expect_error(
     SummarySpec(sections = section_rules("base" %in% tags ~ "Base Models")),
-    "`sections` must be a SectionOptions object"
+    "sections.*SectionOptions"
   )
 })
 

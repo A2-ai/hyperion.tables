@@ -43,6 +43,7 @@ Collate:
     'classes.R'
     'compare-table.R'
     'compare.R'
+    'df-attrs.R'
     'format.R'
     'hyperion.tables-package.R'
     'lookup.R'

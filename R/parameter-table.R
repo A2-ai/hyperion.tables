@@ -5,7 +5,7 @@
 #' @return Character string for footnote, or NULL if no summary
 #' @noRd
 build_summary_footnote <- function(params, n_sigfig, ofv_decimals = NULL) {
-  model_sum <- attr(params, "model_summary")
+  model_sum <- get_attached_summary(params)
   if (is.null(model_sum)) {
     return(NULL)
   }
@@ -99,15 +99,16 @@ add_summary_info <- function(
     NULL
   }
 
-  attr(params, "model_summary") <- list(
-    run_name = model_sum$run_name,
-    estimation_method = est_method,
-    ofv = ofv,
-    condition_number = cn,
-    number_obs = n_obs
+  attach_model_summary(
+    params,
+    list(
+      run_name = model_sum$run_name,
+      estimation_method = est_method,
+      ofv = ofv,
+      condition_number = cn,
+      number_obs = n_obs
+    )
   )
-
-  params
 }
 
 #' Extract TableSpec from a parameter data frame
@@ -267,7 +268,7 @@ make_parameter_table <- function(
   }
 
   # Get table_spec - required for proper formatting
-  spec <- attr(params, "table_spec")
+  spec <- get_table_spec(params)
   if (is.null(spec)) {
     rlang::abort(
       "TableSpec not found. Run apply_table_spec(params, spec, info) first."

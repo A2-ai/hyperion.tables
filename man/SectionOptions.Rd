@@ -9,8 +9,7 @@ SectionOptions(
   assignments = list(),
   inline_items = character(0),
   order = character(0),
-  filter_keep = character(0),
-  filter_exclude = character(0)
+  filter = list()
 )
 }
 \arguments{
@@ -19,11 +18,14 @@ SectionOptions(
 \item{assignments}{Named list keyed by section label; each value is a
 character vector of items belonging to that section.}
 
+\item{inline_items}{Internal: items that originated from an inline
+\verb{parameters =} override (used to scope unmatched-item warnings).
+Not intended for direct use.}
+
 \item{order}{Character vector of section labels in display order, or NULL.}
 
-\item{filter_keep}{Character vector of labels to keep, or NULL.}
-
-\item{filter_exclude}{Character vector of labels to drop, or NULL.}
+\item{filter}{A list specifying section filtering: \code{list()} (no filter),
+\code{list(keep = c(...))}, or \code{list(exclude = c(...))}.}
 }
 \description{
 Holds rule formulas, per-item assignments, display order, and the
@@ -36,8 +38,8 @@ filter (keep / exclude) for a \code{TableSpec} or \code{SummarySpec}.
 \item \code{assignments} - Named list keyed by section label; each value is
 a character vector of items belonging to that section.
 \item \code{order} - Character vector of section labels in display order, or NULL.
-\item \code{filter_keep} - Character vector of labels to keep, or NULL.
-\item \code{filter_exclude} - Character vector of labels to drop, or NULL.
+\item \code{filter} - List with one named entry (\code{keep} or \code{exclude}) holding
+section labels, or empty list for no filter.
 }
 }
 

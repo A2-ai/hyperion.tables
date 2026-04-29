@@ -153,8 +153,11 @@ ParameterNameOptions <- S7::new_class(
 #' @param assignments Named list keyed by section label; each value is a
 #'   character vector of items belonging to that section.
 #' @param order Character vector of section labels in display order, or NULL.
-#' @param filter_keep Character vector of labels to keep, or NULL.
-#' @param filter_exclude Character vector of labels to drop, or NULL.
+#' @param filter A list specifying section filtering: `list()` (no filter),
+#'   `list(keep = c(...))`, or `list(exclude = c(...))`.
+#' @param inline_items Internal: items that originated from an inline
+#'   `parameters =` override (used to scope unmatched-item warnings).
+#'   Not intended for direct use.
 #'
 #' @section Properties:
 #' \itemize{
@@ -162,8 +165,8 @@ ParameterNameOptions <- S7::new_class(
 #'   \item `assignments` - Named list keyed by section label; each value is
 #'     a character vector of items belonging to that section.
 #'   \item `order` - Character vector of section labels in display order, or NULL.
-#'   \item `filter_keep` - Character vector of labels to keep, or NULL.
-#'   \item `filter_exclude` - Character vector of labels to drop, or NULL.
+#'   \item `filter` - List with one named entry (`keep` or `exclude`) holding
+#'     section labels, or empty list for no filter.
 #' }
 #'
 #' @export
@@ -177,91 +180,7 @@ SectionOptions <- S7::new_class(
     ),
     assignments = S7::new_property(
       class = S7::class_list | S7::class_character,
-      default = list(),
-      setter = function(self, value) {
-        warn_on_conflict <- isTRUE(
-          attr(value, "warn_on_conflict", exact = TRUE)
-        )
-        is_inline <- isTRUE(attr(value, "is_inline", exact = TRUE))
-        attr(value, "warn_on_conflict") <- NULL
-        attr(value, "is_inline") <- NULL
-
-        is_valid_assignments <- function(x) {
-          if (!is.list(x)) {
-            return(FALSE)
-          }
-          if (length(x) == 0L) {
-            return(TRUE)
-          }
-          nm <- names(x)
-          if (is.null(nm) || any(!nzchar(nm)) || any(is.na(nm))) {
-            return(FALSE)
-          }
-          ok_vals <- vapply(
-            x,
-            function(v) {
-              is.character(v) &&
-                length(v) > 0L &&
-                !any(is.na(v)) &&
-                all(nzchar(v))
-            },
-            logical(1)
-          )
-          if (!all(ok_vals)) {
-            return(FALSE)
-          }
-          anyDuplicated(unlist(x, use.names = FALSE)) == 0L
-        }
-
-        if (!is_valid_assignments(value)) {
-          S7::prop(self, "assignments") <- value
-          return(self)
-        }
-
-        if (length(value) == 0L) {
-          S7::prop(self, "assignments") <- list()
-          if (is_inline) {
-            S7::prop(self, "inline_items") <- character(0)
-          }
-          return(self)
-        }
-
-        flatten <- function(x) {
-          if (length(x) == 0L) {
-            return(stats::setNames(character(0), character(0)))
-          }
-          items <- unlist(x, use.names = FALSE)
-          labels <- rep(names(x), lengths(x))
-          stats::setNames(labels, items)
-        }
-
-        cur_flat <- flatten(self@assignments)
-        new_flat <- flatten(value)
-        conflicts <- intersect(names(cur_flat), names(new_flat))
-        if (length(conflicts) > 0L) {
-          differing <- conflicts[cur_flat[conflicts] != new_flat[conflicts]]
-          if (warn_on_conflict && length(differing) > 0L) {
-            rlang::warn(paste0(
-              "Per-parameter section conflict between `file` and ",
-              "`parameters` for: ",
-              paste(shQuote(differing), collapse = ", "),
-              ". Inline `parameters` value(s) win."
-            ))
-          }
-        }
-
-        merged <- cur_flat
-        merged[names(new_flat)] <- new_flat
-        S7::prop(self, "assignments") <-
-          split(unname(names(merged)), unname(merged))
-        if (is_inline) {
-          S7::prop(self, "inline_items") <- unique(c(
-            self@inline_items,
-            unlist(value, use.names = FALSE)
-          ))
-        }
-        self
-      }
+      default = list()
     ),
     inline_items = S7::new_property(
       class = S7::class_character,
@@ -278,33 +197,9 @@ SectionOptions <- S7::new_class(
         self
       }
     ),
-    filter_keep = S7::new_property(
-      class = S7::class_character | NULL,
-      default = NULL,
-      setter = function(self, value) {
-        if (!is.null(value) && length(value) == 0L) {
-          value <- NULL
-        }
-        if (is.logical(value) && all(is.na(value))) {
-          value <- rep(NA_character_, length(value))
-        }
-        S7::prop(self, "filter_keep") <- value
-        self
-      }
-    ),
-    filter_exclude = S7::new_property(
-      class = S7::class_character | NULL,
-      default = NULL,
-      setter = function(self, value) {
-        if (!is.null(value) && length(value) == 0L) {
-          value <- NULL
-        }
-        if (is.logical(value) && all(is.na(value))) {
-          value <- rep(NA_character_, length(value))
-        }
-        S7::prop(self, "filter_exclude") <- value
-        self
-      }
+    filter = S7::new_property(
+      class = S7::class_list,
+      default = list()
     )
   ),
   validator = function(self) {
@@ -362,26 +257,32 @@ SectionOptions <- S7::new_class(
       return("@order labels must be non-empty and non-NA.")
     }
 
-    if (length(self@filter_keep) > 0L && length(self@filter_exclude) > 0L) {
-      return(
-        "@filter_keep and @filter_exclude are mutually exclusive; set at most one."
-      )
-    }
-    for (slot in c("filter_keep", "filter_exclude")) {
-      v <- S7::prop(self, slot)
-      if (length(v) > 0L && any(!is.na(v) & !nzchar(v))) {
+    if (length(self@filter) > 0L) {
+      if (length(self@filter) > 1L) {
+        return(
+          "@filter must have exactly one entry: `keep` or `exclude`."
+        )
+      }
+      filter_mode <- names(self@filter)
+      if (is.null(filter_mode) || !filter_mode %in% c("keep", "exclude")) {
+        return(
+          "@filter must be a list named `keep` or `exclude`."
+        )
+      }
+      filter_labels <- self@filter[[1]]
+      if (
+        !is.character(filter_labels) ||
+          length(filter_labels) == 0L ||
+          any(!is.na(filter_labels) & !nzchar(filter_labels))
+      ) {
         return(sprintf(
-          "@%s labels must be non-empty (NA allowed).",
-          slot
+          "@filter$%s labels must be non-empty (NA allowed).",
+          filter_mode
         ))
       }
     }
 
-    if (
-      length(self@order) > 0L ||
-        length(self@filter_keep) > 0L ||
-        length(self@filter_exclude) > 0L
-    ) {
+    if (length(self@order) > 0L || length(self@filter) > 0L) {
       literal_labels <- character()
       any_dynamic <- FALSE
       for (rule in self@rules) {
@@ -425,18 +326,98 @@ SectionOptions <- S7::new_class(
         if (!is.null(msg)) {
           return(msg)
         }
-        msg <- unknown_msg(self@filter_keep, "filter_keep")
-        if (!is.null(msg)) {
-          return(msg)
+        if (length(self@filter) > 0L) {
+          mode <- names(self@filter)
+          msg <- unknown_msg(self@filter[[1]], paste0("filter$", mode))
+          if (!is.null(msg)) {
+            return(msg)
+          }
         }
-        msg <- unknown_msg(self@filter_exclude, "filter_exclude")
-        if (!is.null(msg)) return(msg)
       }
     }
 
     NULL
   }
 )
+
+#' Validate the shape of a section-assignments list
+#'
+#' Mirrors the SectionOptions validator's checks. Used by
+#' `merge_section_assignments()` to decide whether to merge or pass the
+#' value through unchanged so the validator produces the friendly error.
+#'
+#' @noRd
+is_valid_assignments_input <- function(x) {
+  if (!is.list(x)) {
+    return(FALSE)
+  }
+  if (length(x) == 0L) {
+    return(TRUE)
+  }
+  nm <- names(x)
+  if (is.null(nm) || any(!nzchar(nm)) || any(is.na(nm))) {
+    return(FALSE)
+  }
+  ok_vals <- vapply(
+    x,
+    function(v) {
+      is.character(v) &&
+        length(v) > 0L &&
+        !any(is.na(v)) &&
+        all(nzchar(v))
+    },
+    logical(1)
+  )
+  if (!all(ok_vals)) {
+    return(FALSE)
+  }
+  anyDuplicated(unlist(x, use.names = FALSE)) == 0L
+}
+
+#' Merge a new set of section assignments into the current set
+#'
+#' `new` takes precedence on conflict. When `warn_on_conflict` is TRUE,
+#' warns about items whose section label differs between current and new.
+#' When `new` is malformed, returns it as-is so prop assignment triggers
+#' the SectionOptions validator's friendly error.
+#'
+#' @noRd
+merge_section_assignments <- function(current, new, warn_on_conflict = FALSE) {
+  if (!is_valid_assignments_input(new)) {
+    return(new)
+  }
+  if (length(new) == 0L) {
+    return(list())
+  }
+  if (!is.list(current)) {
+    current <- list()
+  }
+
+  flatten <- function(x) {
+    if (length(x) == 0L) {
+      return(stats::setNames(character(0), character(0)))
+    }
+    items <- unlist(x, use.names = FALSE)
+    labels <- rep(names(x), lengths(x))
+    stats::setNames(labels, items)
+  }
+  cur_flat <- flatten(current)
+  new_flat <- flatten(new)
+  if (warn_on_conflict) {
+    conflicts <- intersect(names(cur_flat), names(new_flat))
+    differing <- conflicts[cur_flat[conflicts] != new_flat[conflicts]]
+    if (length(differing) > 0L) {
+      rlang::warn(paste0(
+        "Per-parameter section conflict between `file` and `parameters` for: ",
+        paste(shQuote(differing), collapse = ", "),
+        ". Inline `parameters` value(s) win."
+      ))
+    }
+  }
+  merged <- cur_flat
+  merged[names(new_flat)] <- new_flat
+  split(unname(names(merged)), unname(merged))
+}
 
 # ==============================================================================
 # TableSpec S7 Class
@@ -508,15 +489,7 @@ TableSpec <- S7::new_class(
         "ci_high",
         "rse",
         "shrinkage"
-      ),
-      setter = function(self, value) {
-        S7::prop(self, "columns") <- value
-        # if @columns <- is set or mutated we
-        # set .columns_provided to true for
-        # hide_empty_columns
-        self@.columns_provided <- TRUE
-        self
-      }
+      )
     ),
     add_columns = S7::new_property(
       class = S7::class_character | NULL,
@@ -535,15 +508,8 @@ TableSpec <- S7::new_class(
       default = TRUE
     ),
     sections = S7::new_property(
-      class = S7::class_any,
-      default = quote(SectionOptions()),
-      setter = function(self, value) {
-        if (is.null(value)) {
-          value <- SectionOptions()
-        }
-        S7::prop(self, "sections") <- value
-        self
-      }
+      class = SectionOptions,
+      default = SectionOptions()
     ),
     row_filter = S7::new_property(
       class = S7::class_list,
@@ -705,10 +671,6 @@ TableSpec <- S7::new_class(
       return("@ci must be a CIOptions object.")
     }
 
-    if (!S7::S7_inherits(self@sections, SectionOptions)) {
-      return("`sections` must be a SectionOptions object.")
-    }
-
     if (length(self@missing_text) != 1 || is.na(self@missing_text)) {
       return(sprintf(
         "@missing_text must be a single character string. Got: %s",
@@ -841,7 +803,7 @@ TableSpec <- S7::new_class(
       }
     }
 
-    spec <- S7::new_object(
+    S7::new_object(
       S7::S7_object(),
       sections = sections,
       display_transforms = display_transforms,
@@ -863,10 +825,6 @@ TableSpec <- S7::new_class(
       missing_apply_to = missing_apply_to,
       footnote_order = footnote_order
     )
-    # setter is called for columns which flips columns provided.
-    # this reverts it back to what ever it was.
-    spec@.columns_provided <- columns_provided
-    spec
   }
 )
 
@@ -1089,15 +1047,8 @@ SummarySpec <- S7::new_class(
       default = TRUE
     ),
     sections = S7::new_property(
-      class = S7::class_any,
-      default = quote(SectionOptions()),
-      setter = function(self, value) {
-        if (is.null(value)) {
-          value <- SectionOptions()
-        }
-        S7::prop(self, "sections") <- value
-        self
-      }
+      class = SectionOptions,
+      default = SectionOptions()
     ),
     columns = S7::new_property(
       class = S7::class_character,
@@ -1229,10 +1180,6 @@ SummarySpec <- S7::new_class(
     )
     if (!is.null(drop_msg)) {
       return(drop_msg)
-    }
-
-    if (!S7::S7_inherits(self@sections, SectionOptions)) {
-      return("`sections` must be a SectionOptions object.")
     }
 
     if (length(self@pvalue_scientific) != 1 || is.na(self@pvalue_scientific)) {

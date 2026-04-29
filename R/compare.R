@@ -10,11 +10,11 @@
 #' @noRd
 capture_comparison_attrs <- function(comparison) {
   list(
-    summaries = attr(comparison, "summaries"),
-    labels = attr(comparison, "labels"),
-    table_spec = attr(comparison, "table_spec"),
-    pct_change_refs = attr(comparison, "pct_change_refs"),
-    lineage = attr(comparison, "lineage")
+    summaries = get_comparison_summaries(comparison),
+    labels = get_comparison_labels(comparison),
+    table_spec = get_comparison_table_spec(comparison),
+    pct_change_refs = get_comparison_pct_change_refs(comparison),
+    lineage = get_comparison_lineage(comparison)
   )
 }
 
@@ -48,8 +48,8 @@ get_comparison_model_indices <- function(names_vec, suffix_cols) {
 
 #' @noRd
 normalize_comparison_meta <- function(comparison, suffix_cols) {
-  labels <- attr(comparison, "labels")
-  summaries <- attr(comparison, "summaries")
+  labels <- get_comparison_labels(comparison)
+  summaries <- get_comparison_summaries(comparison)
 
   if (is.null(labels)) {
     indices <- get_comparison_model_indices(names(comparison), suffix_cols)
@@ -68,7 +68,7 @@ resolve_reference_context <- function(
   summaries,
   fallback_pos
 ) {
-  pct_change_refs <- attr(comparison, "pct_change_refs")
+  pct_change_refs <- get_comparison_pct_change_refs(comparison)
   pct_col <- paste0("pct_change_", right_idx)
   if (!is.null(pct_change_refs[[pct_col]])) {
     ref_idx <- pct_change_refs[[pct_col]]
@@ -97,7 +97,7 @@ resolve_reference_context <- function(
 can_show_lrt <- function(comparison, left_idx, right_idx, left_sum, right_sum) {
   suppress <- function(reason) list(show = FALSE, reason = reason)
 
-  lineage <- attr(comparison, "lineage")
+  lineage <- get_comparison_lineage(comparison)
   if (is.null(lineage)) {
     return(suppress("no lineage attached"))
   }
@@ -301,7 +301,7 @@ compute_pct_change <- function(comparison, ref_idx, last_idx) {
 #' @noRd
 resolve_suffix_cols_for_comparison <- function(params1) {
   fallback_suffix_cols <- comparison_suffix_columns()
-  spec1 <- attr(params1, "table_spec")
+  spec1 <- get_table_spec(params1)
 
   suffix_cols <- get_comparison_suffix_cols(
     spec1,
@@ -345,9 +345,9 @@ resolve_suffix_cols_for_comparison <- function(params1) {
 compute_model_positions <- function(params1, params2, suffix_cols) {
   coalesce_cols <- c("kind", "section", "random_effect", "diagonal")
 
-  spec1 <- attr(params1, "table_spec")
-  spec2 <- attr(params2, "table_spec")
-  sum2 <- attr(params2, "model_summary")
+  spec1 <- get_table_spec(params1)
+  spec2 <- get_table_spec(params2)
+  sum2 <- get_attached_summary(params2)
 
   is_comparison <- inherits(params1, "hyperion_comparison")
 
@@ -389,7 +389,7 @@ compute_model_positions <- function(params1, params2, suffix_cols) {
   sum1 <- if (is_comparison) {
     utils::tail(existing_summaries, 1)[[1]]
   } else {
-    attr(params1, "model_summary")
+    get_attached_summary(params1)
   }
 
   spec <- if (!is.null(spec1)) spec1 else spec2
@@ -608,7 +608,7 @@ finalize_comparison <- function(
   pct_col <- paste0("pct_change_", positions$last_idx)
 
   # Merge pct_change reference indices
-  existing_pct_refs <- attr(params1, "pct_change_refs")
+  existing_pct_refs <- get_comparison_pct_change_refs(params1)
   if (is.null(existing_pct_refs)) {
     existing_pct_refs <- list()
   }
@@ -622,12 +622,10 @@ finalize_comparison <- function(
   }
 
   class(comparison) <- c("hyperion_comparison", class(comparison))
-  attr(comparison, "summaries") <- summaries
-  attr(comparison, "labels") <- labels
-  attr(comparison, "table_spec") <- positions$spec
-  attr(comparison, "pct_change_refs") <- existing_pct_refs
-
-  comparison
+  comparison <- attach_comparison_summaries(comparison, summaries)
+  comparison <- attach_comparison_labels(comparison, labels)
+  comparison <- attach_comparison_table_spec(comparison, positions$spec)
+  attach_comparison_pct_change_refs(comparison, existing_pct_refs)
 }
 
 #' Compare two enriched parameter data frames
@@ -723,6 +721,5 @@ add_model_lineage <- function(comparison, lineage) {
     )
   }
 
-  attr(comparison, "lineage") <- lineage
-  comparison
+  attach_comparison_lineage(comparison, lineage)
 }

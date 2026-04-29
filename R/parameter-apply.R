@@ -29,8 +29,7 @@ apply_table_spec <- function(params, spec, info = NULL) {
   df <- resolve_name_columns(df, spec, info)
   df <- apply_sections_and_filters(df, spec)
 
-  attr(df, "table_spec") <- spec
-  df
+  attach_table_spec(df, spec)
 }
 
 #' Compute derived columns (transforms, CV, RSE, CI, symbol)
@@ -158,30 +157,21 @@ resolve_name_columns <- function(df, spec, info) {
 
 #' Filter rows by section filter
 #'
-#' Reads `spec@sections@filter_keep` / `@filter_exclude`. `NA` inside
-#' either vector also targets rows whose section didn't match any rule.
-#' Both NULL = no filter.
+#' Reads `spec@sections@filter` (a list with at most one named entry, `keep`
+#' or `exclude`). `NA` inside the value also targets rows whose section
+#' didn't match any rule. Empty list = no filter.
 #'
 #' @param df Data frame with a `section` column
 #' @param spec A TableSpec or SummarySpec
 #' @return Filtered data frame
 #' @noRd
 filter_sections <- function(df, spec) {
-  s <- spec@sections
-  if (
-    length(s@filter_keep) == 0L &&
-      length(s@filter_exclude) == 0L ||
-      !"section" %in% names(df)
-  ) {
+  filter <- spec@sections@filter
+  if (length(filter) == 0L || !"section" %in% names(df)) {
     return(df)
   }
-  if (length(s@filter_exclude) > 0L) {
-    mode <- "exclude"
-    labels <- s@filter_exclude
-  } else {
-    mode <- "keep"
-    labels <- s@filter_keep
-  }
+  mode <- names(filter)
+  labels <- filter[[1]]
   has_na <- any(is.na(labels))
   named <- labels[!is.na(labels)]
   n_before <- nrow(df)

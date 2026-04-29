@@ -102,6 +102,7 @@ S7::method(set_spec_columns, TableSpec) <- function(spec, ...) {
   dots <- capture_unnamed_dots(..., .enquo = FALSE)
   cols <- expand_ci_alias(unlist(dots))
   spec@columns <- cols
+  spec@.columns_provided <- TRUE
   spec
 }
 
@@ -519,14 +520,12 @@ with_section_options_error <- function(assignment_arg, expr) {
     force(expr),
     error = function(err) {
       msg <- conditionMessage(err)
-      friendly <- if (grepl("mutually exclusive", msg, fixed = TRUE)) {
-        "`keep` and `exclude` are mutually exclusive; pass at most one."
-      } else if (grepl("@order", msg, fixed = TRUE)) {
+      friendly <- if (grepl("@order", msg, fixed = TRUE)) {
         sub("^.*@order ", "Invalid `order`: ", msg)
-      } else if (grepl("@filter_keep", msg, fixed = TRUE)) {
-        sub("^.*@filter_keep ", "Invalid `keep`: ", msg)
-      } else if (grepl("@filter_exclude", msg, fixed = TRUE)) {
-        sub("^.*@filter_exclude ", "Invalid `exclude`: ", msg)
+      } else if (grepl("@filter$keep", msg, fixed = TRUE)) {
+        sub("^.*@filter\\$keep ", "Invalid `keep`: ", msg)
+      } else if (grepl("@filter$exclude", msg, fixed = TRUE)) {
+        sub("^.*@filter\\$exclude ", "Invalid `exclude`: ", msg)
       } else if (grepl("@assignments", msg, fixed = TRUE)) {
         translate_assignments_error(msg, assignment_arg)
       } else {
@@ -565,6 +564,49 @@ translate_assignments_error <- function(msg, arg_name) {
   }
 }
 
+#' Resolve order/keep/exclude with "leave alone" semantics
+#'
+#' Reads NULL args as "preserve current". Passing both `keep` and `exclude`
+#' is an error. Passing one (with non-empty value) sets that mode; passing
+#' empty character clears the filter.
+#' @noRd
+resolve_section_meta <- function(current, order, keep, exclude) {
+  if (!is.null(keep) && !is.null(exclude)) {
+    rlang::abort(
+      "`keep` and `exclude` are mutually exclusive; pass at most one.",
+      call = rlang::call2("set_spec_sections")
+    )
+  }
+  next_order <- if (is.null(order)) current@order else order
+  next_filter <- current@filter
+  if (!is.null(keep)) {
+    keep <- normalize_filter_labels(keep)
+    next_filter <- if (length(keep) == 0L) list() else list(keep = keep)
+  } else if (!is.null(exclude)) {
+    exclude <- normalize_filter_labels(exclude)
+    next_filter <- if (length(exclude) == 0L) {
+      list()
+    } else {
+      list(exclude = exclude)
+    }
+  }
+  list(order = next_order, filter = next_filter)
+}
+
+#' Coerce bare logical NA to character NA so `exclude = NA` is accepted
+#' @noRd
+normalize_filter_labels <- function(v) {
+  if (is.logical(v) && all(is.na(v))) rep(NA_character_, length(v)) else v
+}
+
+#' Apply resolved meta onto a freshly-constructed SectionOptions
+#' @noRd
+apply_section_meta <- function(sections, meta) {
+  sections@order <- meta$order
+  sections@filter <- meta$filter
+  sections
+}
+
 S7::method(set_spec_sections, SummarySpec) <- function(
   spec,
   ...,
@@ -577,41 +619,21 @@ S7::method(set_spec_sections, SummarySpec) <- function(
 ) {
   dots <- drop_named_dots(rlang::enquos(...), c("parameters", "file"))
   current <- spec@sections
-  next_order <- current@order
-  if (!is.null(order)) {
-    next_order <- order
-  }
-  next_keep <- current@filter_keep
-  next_exclude <- current@filter_exclude
-  if (!is.null(keep) && !is.null(exclude)) {
-    next_keep <- keep
-    next_exclude <- exclude
-  } else if (!is.null(keep)) {
-    next_keep <- keep
-    next_exclude <- NULL
-  } else if (!is.null(exclude)) {
-    next_keep <- NULL
-    next_exclude <- exclude
-  }
+  meta <- resolve_section_meta(current, order, keep, exclude)
   with_section_options_error("models", {
     next_sections <- SectionOptions(
-      rules = build_next_rules(
-        current@rules,
-        sections,
-        dots,
-        overwrite
-      ),
+      rules = build_next_rules(current@rules, sections, dots, overwrite),
       assignments = current@assignments,
       order = NULL,
-      filter_keep = NULL,
-      filter_exclude = NULL
+      filter = list()
     )
     if (!is.null(models)) {
-      next_sections@assignments <- models
+      next_sections@assignments <- merge_section_assignments(
+        next_sections@assignments,
+        models
+      )
     }
-    next_sections@order <- next_order
-    next_sections@filter_keep <- next_keep
-    next_sections@filter_exclude <- next_exclude
+    next_sections <- apply_section_meta(next_sections, meta)
   })
   spec@sections <- next_sections
   spec
@@ -630,12 +652,6 @@ S7::method(set_spec_sections, TableSpec) <- function(
 ) {
   dots <- drop_named_dots(rlang::enquos(...), "models")
   current <- spec@sections
-  next_rules <- build_next_rules(
-    current@rules,
-    sections,
-    dots,
-    overwrite
-  )
   if (!is.null(file)) {
     if (!is.character(file) || length(file) != 1L) {
       rlang::abort("`file` must be a single character path or NULL.")
@@ -646,50 +662,44 @@ S7::method(set_spec_sections, TableSpec) <- function(
       )
     }
   }
-
-  next_order <- current@order
-  if (!is.null(order)) {
-    next_order <- order
-  }
-  next_keep <- current@filter_keep
-  next_exclude <- current@filter_exclude
-  if (!is.null(keep) && !is.null(exclude)) {
-    next_keep <- keep
-    next_exclude <- exclude
-  } else if (!is.null(keep)) {
-    next_keep <- keep
-    next_exclude <- NULL
-  } else if (!is.null(exclude)) {
-    next_keep <- NULL
-    next_exclude <- exclude
-  }
+  meta <- resolve_section_meta(current, order, keep, exclude)
 
   with_section_options_error("parameters", {
     next_sections <- SectionOptions(
-      rules = next_rules,
+      rules = build_next_rules(current@rules, sections, dots, overwrite),
       assignments = current@assignments,
       order = NULL,
-      filter_keep = NULL,
-      filter_exclude = NULL
+      filter = list()
     )
 
     if (!is.null(file)) {
       path <- normalizePath(file, mustWork = TRUE)
       file_assign <- toml_lookup_to_assignments(read_lookup_toml(path))
       if (length(file_assign) > 0L) {
-        next_sections@assignments <- file_assign
+        next_sections@assignments <- merge_section_assignments(
+          next_sections@assignments,
+          file_assign
+        )
       }
     }
 
     if (!is.null(parameters)) {
-      attr(parameters, "warn_on_conflict") <- TRUE
-      attr(parameters, "is_inline") <- TRUE
-      next_sections@assignments <- parameters
+      next_sections@assignments <- merge_section_assignments(
+        next_sections@assignments,
+        parameters,
+        warn_on_conflict = TRUE
+      )
+      if (length(parameters) == 0L) {
+        next_sections@inline_items <- character(0)
+      } else if (is_valid_assignments_input(parameters)) {
+        next_sections@inline_items <- unique(c(
+          next_sections@inline_items,
+          unlist(parameters, use.names = FALSE)
+        ))
+      }
     }
 
-    next_sections@order <- next_order
-    next_sections@filter_keep <- next_keep
-    next_sections@filter_exclude <- next_exclude
+    next_sections <- apply_section_meta(next_sections, meta)
   })
 
   spec@sections <- next_sections

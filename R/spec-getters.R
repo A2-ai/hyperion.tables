@@ -172,14 +172,7 @@ S7::method(get_spec_sections, AnySpec) <- function(spec) {
 get_spec_section_filter <- S7::new_generic("get_spec_section_filter", "spec")
 
 S7::method(get_spec_section_filter, AnySpec) <- function(spec) {
-  s <- spec@sections
-  if (length(s@filter_exclude) > 0L) {
-    list(exclude = s@filter_exclude)
-  } else if (length(s@filter_keep) > 0L) {
-    list(keep = s@filter_keep)
-  } else {
-    list()
-  }
+  spec@sections@filter
 }
 
 #' Get per-parameter section assignments from a TableSpec
