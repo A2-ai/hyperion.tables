@@ -20,5 +20,4 @@ dependencies = [
 
   { name = "hyperion", git = "https://github.com/a2-ai/hyperion", branch = "nmparser" },
   { name = "hyperion.tables", path = ".", dependencies_only = false, install_suggestions = true },
-  "lobstr",
 ]
