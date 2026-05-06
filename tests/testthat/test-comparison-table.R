@@ -1,3 +1,45 @@
+test_that("parameter comparison table: variability survives when no model has off-diagonals", {
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
+
+  spec <- TableSpec(
+    display_transforms = list(omega = c("cv")),
+    n_sigfig = 3,
+    drop_columns = c("ci", "rse", "shrinkage")
+  ) |>
+    set_spec_sections(
+      kind == "THETA" ~ "Structural Parameter",
+      kind == "OMEGA" ~ "IIV",
+      kind == "SIGMA" ~ "RE"
+    )
+
+  mod1 <- hyperion::read_model(file.path(model_dir, "run001.mod"))
+  info1 <- hyperion::get_model_parameter_info(mod1)
+
+  mod2 <- hyperion::read_model(file.path(model_dir, "run002.mod"))
+  info2 <- hyperion::get_model_parameter_info(mod2)
+
+  comp <- hyperion::get_parameters(mod1) |>
+    apply_table_spec(spec, info1) |>
+    add_summary_info(summary(mod1)) |>
+    compare_with(
+      hyperion::get_parameters(mod2) |>
+        apply_table_spec(spec, info2) |>
+        add_summary_info(summary(mod2)),
+      labels = c("run001", "run002")
+    )
+
+  snapshot_gt(make_comparison_table(comp), "cmp-no-offdiag-var-gt")
+  snapshot_flextable(
+    make_comparison_table(comp, output = "flextable"),
+    "cmp-no-offdiag-var-ft"
+  )
+})
+
 test_that("parameter comparison table: run002 vs run003b1", {
   model_dir <- system.file(
     "extdata",

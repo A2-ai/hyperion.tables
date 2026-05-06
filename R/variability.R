@@ -109,9 +109,6 @@ build_variability <- function(data, spec) {
 #' @noRd
 build_variability_parameter <- function(data, spec) {
   data_fmt <- format_numeric_for_rules(data, spec@n_sigfig)
-  if (!"fixed" %in% names(data_fmt)) {
-    data_fmt$fixed <- NA
-  }
   build_variability(data_fmt, spec)
 }
 

@@ -1,3 +1,23 @@
+test_that("build_variability_comparison handles columns missing from data", {
+  spec <- TableSpec()
+  data <- data.frame(
+    name = c("CL", "V"),
+    cv_1 = c(0.2, 0.3),
+    cv_2 = c(0.25, NA),
+    fixed_1 = c(FALSE, FALSE),
+    fixed_2 = c(FALSE, FALSE),
+    sd_1 = c(NA_real_, NA_real_),
+    sd_2 = c(NA_real_, NA_real_)
+  )
+  suffix_cols <- c("cv", "corr", "sd", "fixed")
+
+  result <- build_variability_comparison(data, spec, suffix_cols)
+
+  expect_true(all(c("variability_1", "variability_2") %in% names(result)))
+  expect_match(result$variability_1[1], "CV = 0\\.200")
+  expect_true(is.na(result$variability_2[2]))
+})
+
 test_that("variability_rules warn when referencing dropped columns", {
   expect_warning(
     TableSpec(
