@@ -90,6 +90,14 @@ build_variability <- function(data, spec) {
   }
 
   rules <- spec@variability_rules
+  rule_vars <- unique(unlist(lapply(rules, function(q) {
+    all.vars(rlang::quo_get_expr(q))
+  })))
+  missing_vars <- setdiff(rule_vars, names(data))
+  for (v in missing_vars) {
+    data[[v]] <- NA
+  }
+
   args <- lapply(rules, function(q) {
     rlang::eval_tidy(q, data = data)
   })
