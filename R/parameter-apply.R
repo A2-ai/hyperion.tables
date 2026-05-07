@@ -456,15 +456,14 @@ comment_keys_for <- function(nonmem, comment, include_associated_theta = TRUE) {
 
   if (!is.null(comment@name)) {
     keys <- c(keys, comment@name)
+  }
 
-    if (
-      include_associated_theta &&
-        S7::S7_inherits(comment, OmegaComment) &&
-        !is.null(comment@associated_theta)
-    ) {
-      theta_str <- paste(comment@associated_theta, collapse = "-")
-      keys <- c(keys, paste0(comment@name, " (", theta_str, ")"))
-    }
+  if (
+    S7::S7_inherits(comment, OmegaComment) &&
+      !is.null(comment@raw_name) &&
+      !is.na(comment@raw_name)
+  ) {
+    keys <- c(keys, comment@raw_name)
   }
 
   if (!is.null(comment@display)) {

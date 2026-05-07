@@ -25,6 +25,7 @@ Suggests:
     testthat (>= 3.0.0),
     tomledit,
     webshot2,
+		withr,
     xml2,
     zip
 Config/testthat/edition: 3

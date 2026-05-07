@@ -5,13 +5,14 @@
 test_that("tag-based sections render correctly (gt + flextable)", {
   testthat::skip_if_not_installed("gt")
 
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
     "onecmt",
     package = "hyperion.tables"
   )
-  tree <- hyperion::get_model_lineage(model_dir)
+  tree <- hyperion::get_model_lineage(model_dir, scope = "project")
 
   spec <- SummarySpec() |>
     set_spec_sections(
@@ -34,6 +35,7 @@ test_that("tag-based sections render correctly (gt + flextable)", {
 })
 
 test_that("section_filter multi-section", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -41,7 +43,7 @@ test_that("section_filter multi-section", {
     package = "hyperion.tables"
   )
 
-  tree <- hyperion::get_model_lineage(model_dir)
+  tree <- hyperion::get_model_lineage(model_dir, scope = "project")
 
   tree$nodes$run001.mod$tags <- c(tree$nodes$run001.mod$tags, "one-comp")
   tree$nodes$run002.mod$tags <- c(tree$nodes$run002.mod$tags, "two-comp")
@@ -78,6 +80,7 @@ test_that("section_filter multi-section", {
 })
 
 test_that("section_filter drops sections from parameter table", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -103,6 +106,7 @@ test_that("section_filter drops sections from parameter table", {
 })
 
 test_that("multi-match warning fires for parameter table sections", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",

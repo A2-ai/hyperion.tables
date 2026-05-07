@@ -64,7 +64,7 @@ desc = "Interindividual variability on Vc"
 unit = "none"
 parameterization = "LogNormal"
 
-["OM1,2 (TVCL:TVV)"]
+["OM1,2 (TVCL, TVV)"]
 display = "IIV-CL-Vc"
 desc = "Interindividual covariance for CL-Vc"
 unit = "none"

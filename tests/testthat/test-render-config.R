@@ -4,6 +4,7 @@ test_that("renderers accept TableSpec render overrides", {
   testthat::skip_if_not_installed("webshot2")
   testthat::skip_if_not_installed("htmltools")
 
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",

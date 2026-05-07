@@ -218,31 +218,15 @@ get_spec_sections <- function(spec, ...) {
 
 #' Get section filter from a spec
 #'
-#' @description
-#' `r lifecycle::badge("deprecated")`
-#'
-#' `get_spec_section_filter()` was deprecated in hyperion.tables 0.5.0 and
-#' will be removed in 0.6.0. Use [get_spec_sections()] and inspect
-#' `@filter` on the returned `SectionOptions` object instead.
-#'
-#' Returns the current filter as a list with one of two shapes:
+#' Returns the current section filter as a list with one of two shapes:
 #' `list(exclude = c(...))`, `list(keep = c(...))`, or empty `list()` when no
 #' filter is set.
 #'
 #' @param spec A TableSpec or SummarySpec object.
 #' @return A named list (possibly empty).
-#' @seealso [set_spec_sections()].
+#' @seealso [set_spec_sections()], [get_spec_sections()].
 #' @export
 get_spec_section_filter <- function(spec) {
-  lifecycle::deprecate_warn(
-    "0.5.0",
-    "get_spec_section_filter()",
-    "get_spec_sections()",
-    details = paste0(
-      "`get_spec_section_filter()` will be removed in hyperion.tables 0.6.0. ",
-      "Use `get_spec_sections(spec)@filter` instead."
-    )
-  )
   if (!S7::S7_inherits(spec, BaseSpec)) {
     rlang::abort("`spec` must be a <TableSpec> or <SummarySpec> object.")
   }

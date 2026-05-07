@@ -1,4 +1,5 @@
 test_that("parameter table: run001 basic spec", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -42,6 +43,7 @@ test_that("parameter table: run001 basic spec", {
 })
 
 test_that("parameter table: run001 shows fixed", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -86,6 +88,7 @@ test_that("parameter table: run001 shows fixed", {
 })
 
 test_that("parameter table: run002 shows empty fixed", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -145,6 +148,7 @@ test_that("parameter table: run002 shows empty fixed", {
 })
 
 test_that("parameter table: run003 drop ci column", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -189,6 +193,7 @@ test_that("parameter table: run003 drop ci column", {
 })
 
 test_that("parameter table: run003 drop ci_low column", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -233,6 +238,7 @@ test_that("parameter table: run003 drop ci_low column", {
 })
 
 test_that("parameter table: run003 drop ci_high column", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -277,6 +283,7 @@ test_that("parameter table: run003 drop ci_high column", {
 })
 
 test_that("parameter table: run003 summary footnote only", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -322,6 +329,7 @@ test_that("parameter table: run003 summary footnote only", {
 })
 
 test_that("parameter table: run003 drop footnotes", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -367,6 +375,7 @@ test_that("parameter table: run003 drop footnotes", {
 })
 
 test_that("parameter table: run001 no spec", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -386,6 +395,7 @@ test_that("parameter table: run001 no spec", {
 })
 
 test_that("parameter table: base display", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -423,6 +433,7 @@ test_that("parameter table: base display", {
 })
 
 test_that("parameter table: display name source", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -463,6 +474,7 @@ test_that("parameter table: display name source", {
 })
 
 test_that("parameter table: nonmem name source", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -501,6 +513,7 @@ test_that("parameter table: nonmem name source", {
 })
 
 test_that("parameter table: description column", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -539,6 +552,7 @@ test_that("parameter table: description column", {
 })
 
 test_that("parameter table: drop unit column", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -577,6 +591,7 @@ test_that("parameter table: drop unit column", {
 })
 
 test_that("parameter table: drop unit and shrinkage columns", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -614,6 +629,7 @@ test_that("parameter table: drop unit and shrinkage columns", {
 })
 
 test_that("parameter table: structural-only filter", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -645,6 +661,7 @@ test_that("parameter table: structural-only filter", {
 })
 
 test_that("parameter table: random effects only", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -678,6 +695,7 @@ test_that("parameter table: random effects only", {
 })
 
 test_that("parameter table: 70% CI", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -711,6 +729,7 @@ test_that("parameter table: 70% CI", {
 })
 
 test_that("parameter table: summary info without condition number", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -746,6 +765,7 @@ test_that("parameter table: summary info without condition number", {
 })
 
 test_that("parameter table: summary info without condition number or OFV", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -781,6 +801,7 @@ test_that("parameter table: summary info without condition number or OFV", {
 })
 
 test_that("parameter table: summary info without method", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -816,6 +837,7 @@ test_that("parameter table: summary info without method", {
 })
 
 test_that("symbol + fixed shows nicely", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -856,6 +878,7 @@ test_that("symbol + fixed shows nicely", {
 # ==============================================================================
 
 test_that("resolve_name_columns warns and falls back when info=NULL and source != nonmem", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -884,6 +907,7 @@ test_that("resolve_name_columns warns and falls back when info=NULL and source !
 })
 
 test_that("maybe_enrich_description returns df unchanged when description is dropped", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -910,6 +934,7 @@ test_that("maybe_enrich_description returns df unchanged when description is dro
 })
 
 test_that("resolve_hidden_columns shows fixed_fmt when fixed is requested", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -938,6 +963,7 @@ test_that("resolve_hidden_columns shows fixed_fmt when fixed is requested", {
 })
 
 test_that("resolve_hidden_columns hides fixed and fixed_fmt when all NA", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",

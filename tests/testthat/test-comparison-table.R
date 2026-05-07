@@ -1,4 +1,5 @@
 test_that("parameter comparison table: variability survives when no model has off-diagonals", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -31,7 +32,8 @@ test_that("parameter comparison table: variability survives when no model has of
         apply_table_spec(spec, info2) |>
         add_summary_info(summary(mod2)),
       labels = c("run001", "run002")
-    )
+    ) |>
+    add_model_lineage(hyperion::get_model_lineage(model_dir, scope = "project"))
 
   snapshot_gt(make_comparison_table(comp), "cmp-no-offdiag-var-gt")
   snapshot_flextable(
@@ -41,6 +43,7 @@ test_that("parameter comparison table: variability survives when no model has of
 })
 
 test_that("parameter comparison table: run002 vs run003b1", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -77,7 +80,8 @@ test_that("parameter comparison table: run002 vs run003b1", {
         apply_table_spec(spec, info2) |>
         add_summary_info(mod_sum2),
       labels = c("run002", "run003b1")
-    )
+    ) |>
+    add_model_lineage(hyperion::get_model_lineage(model_dir, scope = "project"))
 
   snapshot_gt(make_comparison_table(comp), "cmp-grandparent-gt")
   snapshot_flextable(
@@ -87,6 +91,7 @@ test_that("parameter comparison table: run002 vs run003b1", {
 })
 
 test_that("parameter comparison table: run003 vs run003b1", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -123,7 +128,8 @@ test_that("parameter comparison table: run003 vs run003b1", {
         apply_table_spec(spec, child_info) |>
         add_summary_info(child_sum),
       labels = c("run003", "run003b1")
-    )
+    ) |>
+    add_model_lineage(hyperion::get_model_lineage(model_dir, scope = "project"))
 
   snapshot_gt(make_comparison_table(comp), "cmp-child-gt")
   snapshot_flextable(
@@ -133,6 +139,7 @@ test_that("parameter comparison table: run003 vs run003b1", {
 })
 
 test_that("parameter comparison table: run002 vs run003b1 drop symbol", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -169,7 +176,8 @@ test_that("parameter comparison table: run002 vs run003b1 drop symbol", {
         apply_table_spec(spec, info2) |>
         add_summary_info(mod_sum2),
       labels = c("run002", "run003b1")
-    )
+    ) |>
+    add_model_lineage(hyperion::get_model_lineage(model_dir, scope = "project"))
 
   snapshot_gt(make_comparison_table(comp), "cmp-no-symbol-gt")
   snapshot_flextable(
@@ -179,6 +187,7 @@ test_that("parameter comparison table: run002 vs run003b1 drop symbol", {
 })
 
 test_that("parameter comparison table: run002 vs run003 drop ci has correct footnotes", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -215,7 +224,8 @@ test_that("parameter comparison table: run002 vs run003 drop ci has correct foot
         apply_table_spec(spec, info2) |>
         add_summary_info(mod_sum2),
       labels = c("run002", "run003")
-    )
+    ) |>
+    add_model_lineage(hyperion::get_model_lineage(model_dir, scope = "project"))
 
   snapshot_gt(make_comparison_table(comp), "cmp-ci-fn-gt")
   snapshot_flextable(
@@ -225,6 +235,7 @@ test_that("parameter comparison table: run002 vs run003 drop ci has correct foot
 })
 
 test_that("parameter comparison table: run002 vs run003b1 drop configurable", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -267,7 +278,8 @@ test_that("parameter comparison table: run002 vs run003b1 drop configurable", {
         apply_table_spec(spec, info2) |>
         add_summary_info(mod_sum2),
       labels = c("run002", "run003b1")
-    )
+    ) |>
+    add_model_lineage(hyperion::get_model_lineage(model_dir, scope = "project"))
 
   snapshot_gt(make_comparison_table(comp), "cmp-drop-cols-gt")
   snapshot_flextable(
@@ -277,6 +289,7 @@ test_that("parameter comparison table: run002 vs run003b1 drop configurable", {
 })
 
 test_that("comparison LRT p-value respects direction of delta OFV", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -285,7 +298,7 @@ test_that("comparison LRT p-value respects direction of delta OFV", {
   )
   testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
 
-  lineage <- hyperion::get_model_lineage(model_dir)
+  lineage <- hyperion::get_model_lineage(model_dir, scope = "project")
 
   comparison <- data.frame(
     estimate_1 = c(1, 2, 3),
@@ -322,6 +335,7 @@ test_that("comparison LRT p-value respects direction of delta OFV", {
 })
 
 test_that("parameter comparison table: three models with reference_model", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -371,7 +385,8 @@ test_that("parameter comparison table: three models with reference_model", {
         add_summary_info(sum3),
       labels = "run003",
       reference_model = "run001"
-    )
+    ) |>
+    add_model_lineage(hyperion::get_model_lineage(model_dir, scope = "project"))
 
   snapshot_gt(make_comparison_table(comp), "cmp-ref-mod-gt")
   snapshot_flextable(
@@ -381,6 +396,7 @@ test_that("parameter comparison table: three models with reference_model", {
 })
 
 test_that("parameter comparison table: three models with lineage shows LRT", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -415,7 +431,7 @@ test_that("parameter comparison table: three models with lineage shows LRT", {
   info3 <- hyperion::get_model_parameter_info(mod3)
 
   # Get real lineage from model directory
-  lineage <- hyperion::get_model_lineage(model_dir)
+  lineage <- hyperion::get_model_lineage(model_dir, scope = "project")
 
   # Build comparison: run001 -> run002 -> run003 (all in lineage)
   comp <- hyperion::get_parameters(mod1) |>
@@ -443,6 +459,7 @@ test_that("parameter comparison table: three models with lineage shows LRT", {
 })
 
 test_that("parameter comparison table: broken lineage suppresses LRT", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -478,7 +495,7 @@ test_that("parameter comparison table: broken lineage suppresses LRT", {
 
   # Get real lineage and break run003's based_on relationship
   # This makes run003 not in lineage with run002
-  lineage <- hyperion::get_model_lineage(model_dir)
+  lineage <- hyperion::get_model_lineage(model_dir, scope = "project")
   lineage$nodes$`run003.mod`$based_on <- NULL
 
   # Build comparison: run001 -> run002 -> run003
@@ -509,6 +526,7 @@ test_that("parameter comparison table: broken lineage suppresses LRT", {
 })
 
 test_that("parameter comparison table: pvalue_threshold formats small p-values", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -544,7 +562,7 @@ test_that("parameter comparison table: pvalue_threshold formats small p-values",
   info3 <- hyperion::get_model_parameter_info(mod3)
 
   # Get lineage for LRT calculation
-  lineage <- hyperion::get_model_lineage(model_dir)
+  lineage <- hyperion::get_model_lineage(model_dir, scope = "project")
 
   # Build comparison: run001 -> run002 -> run003 with pairwise comparisons
   comp <- hyperion::get_parameters(mod1) |>
@@ -572,13 +590,14 @@ test_that("parameter comparison table: pvalue_threshold formats small p-values",
 })
 
 test_that("can_show_lrt returns reason for each suppression condition", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
     "onecmt",
     package = "hyperion.tables"
   )
-  lineage <- hyperion::get_model_lineage(model_dir)
+  lineage <- hyperion::get_model_lineage(model_dir, scope = "project")
 
   make_comp <- function(
     left_sum,
@@ -729,13 +748,14 @@ test_that("format_nobs_footnote returns correct string or NULL", {
 })
 
 test_that("format_ofv_lrt_footnote returns OFV line or NULL", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
     "onecmt",
     package = "hyperion.tables"
   )
-  lineage <- hyperion::get_model_lineage(model_dir)
+  lineage <- hyperion::get_model_lineage(model_dir, scope = "project")
 
   comp <- data.frame(
     estimate_1 = c(1, 2, 3),
@@ -787,6 +807,7 @@ test_that("format_ofv_lrt_footnote returns OFV line or NULL", {
 })
 
 test_that("footnotes show 'N/A (no summary)' when model_summary is NULL", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -855,6 +876,7 @@ test_that("compare_with warns on disjoint parameter names", {
 })
 
 test_that("compare_with aborts on unresolvable reference_model", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -1215,6 +1237,7 @@ test_that("join_comparison_params produces correct columns for chained join", {
 })
 
 test_that("parameter comparison table: errors no spec", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -1232,7 +1255,7 @@ test_that("parameter comparison table: errors no spec", {
   sum3 <- summary(mod3)
 
   # Get lineage for LRT calculation
-  lineage <- hyperion::get_model_lineage(model_dir)
+  lineage <- hyperion::get_model_lineage(model_dir, scope = "project")
 
   # Build comparison: run001 -> run002 -> run003 with pairwise comparisons
   expect_error(

@@ -220,13 +220,14 @@ test_that("inline parameters warn when no row matches", {
 
 # T5
 test_that("SummarySpec section_filter warns when label not in data", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
     "onecmt",
     package = "hyperion.tables"
   )
-  tree <- hyperion::get_model_lineage(model_dir)
+  tree <- hyperion::get_model_lineage(model_dir, scope = "project")
   spec <- SummarySpec() |>
     set_spec_sections(
       "nonexistent_tag" %in% tags ~ "Foo",

@@ -210,7 +210,7 @@ spec <- TableSpec() |>
   set_spec_parameter_names(source = "display")
 
 mod_sum <- summary(mod)
-info <- get_model_parameter_info(mod, lookup_path = normalizePath("../inst/lookup.toml"))
+info <- get_model_parameter_info(mod, lookup_path = system.file("lookup.toml", package = "hyperion.tables"))
 
 get_parameters(mod) |>
   apply_table_spec(spec, info) |>
@@ -348,7 +348,7 @@ transform_ref |>
 ## Model Lineage
 
 ```{r}
-example_tree <- get_model_lineage(model_dir)
+example_tree <- get_model_lineage(model_dir, scope = "directory")
 
 example_tree
 ```

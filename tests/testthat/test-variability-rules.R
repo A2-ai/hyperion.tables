@@ -34,6 +34,7 @@ test_that("apply_formatting uses variability_rules", {
   testthat::skip_if_not_installed("gt")
   testthat::skip_if_not_installed("webshot2")
 
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",

@@ -13,16 +13,10 @@ get_spec_section_filter(spec)
 A named list (possibly empty).
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
-
-\code{get_spec_section_filter()} was deprecated in hyperion.tables 0.5.0 and
-will be removed in 0.6.0. Use \code{\link[=get_spec_sections]{get_spec_sections()}} and inspect
-\verb{@filter} on the returned \code{SectionOptions} object instead.
-
-Returns the current filter as a list with one of two shapes:
+Returns the current section filter as a list with one of two shapes:
 \code{list(exclude = c(...))}, \code{list(keep = c(...))}, or empty \code{list()} when no
 filter is set.
 }
 \seealso{
-\code{\link[=set_spec_sections]{set_spec_sections()}}.
+\code{\link[=set_spec_sections]{set_spec_sections()}}, \code{\link[=get_spec_sections]{get_spec_sections()}}.
 }
