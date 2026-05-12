@@ -19,6 +19,7 @@ library(hyperion)
 library(hyperion.tables)
 
 model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+options(hyperion.config_dir = system.file(package = "hyperion.tables"))
 ```
 
 ## Basic Summary Table
@@ -26,7 +27,7 @@ model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tabl
 Summary tables display model run information across a project. Start by loading the model lineage tree:
 
 ```{r}
-tree <- get_model_lineage(model_dir, scope = "directory")
+tree <- get_model_lineage()
 
 tree
 ```

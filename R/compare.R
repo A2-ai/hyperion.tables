@@ -126,13 +126,17 @@ can_show_lrt <- function(comparison, left_idx, right_idx, left_sum, right_sum) {
     return(suppress("degrees of freedom is zero"))
   }
 
-  run_name1 <- safe_summary_field(left_sum, "run_name")
-  run_name2 <- safe_summary_field(right_sum, "run_name")
-  if (is.na(run_name1) || is.na(run_name2)) {
-    return(suppress("one or both run names are missing"))
+  path1 <- safe_summary_field(left_sum, "model_file")
+  path2 <- safe_summary_field(right_sum, "model_file")
+  if (is.na(path1) || is.na(path2)) {
+    return(suppress("one or both model file paths are missing"))
   }
-
-  if (!are_models_in_lineage(lineage, run_name1, run_name2)) {
+  if (
+    !are_models_in_lineage(
+      hyperion::from_config_relative(path1),
+      hyperion::from_config_relative(path2)
+    )
+  ) {
     return(suppress("models not in direct lineage"))
   }
 

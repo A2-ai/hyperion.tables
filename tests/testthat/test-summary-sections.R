@@ -12,7 +12,7 @@ test_that("tag-based sections render correctly (gt + flextable)", {
     "onecmt",
     package = "hyperion.tables"
   )
-  tree <- hyperion::get_model_lineage(model_dir, scope = "project")
+  tree <- hyperion::get_model_lineage()
 
   spec <- SummarySpec() |>
     set_spec_sections(
@@ -43,11 +43,21 @@ test_that("section_filter multi-section", {
     package = "hyperion.tables"
   )
 
-  tree <- hyperion::get_model_lineage(model_dir, scope = "project")
+  tree <- hyperion::get_model_lineage()
 
-  tree$nodes$run001.mod$tags <- c(tree$nodes$run001.mod$tags, "one-comp")
-  tree$nodes$run002.mod$tags <- c(tree$nodes$run002.mod$tags, "two-comp")
-  tree$nodes$run003.mod$tags <- c(tree$nodes$run003.mod$tags, "two-comp")
+  for (i in seq_along(tree$nodes)) {
+    bn <- basename(tree$nodes[[i]]$name)
+    new_tag <- switch(
+      bn,
+      "run001.mod" = "one-comp",
+      "run002.mod" = "two-comp",
+      "run003.mod" = "two-comp",
+      NULL
+    )
+    if (!is.null(new_tag)) {
+      tree$nodes[[i]]$model$tags <- c(tree$nodes[[i]]$model$tags, list(new_tag))
+    }
+  }
 
   # No catch-all: untagged models get NA section
   # Filter both "Key Models" and NA — only "Base Models" (run001) survives

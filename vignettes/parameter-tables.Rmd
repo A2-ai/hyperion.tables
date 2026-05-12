@@ -22,6 +22,7 @@ library(gt)
 library(flextable)
 
 model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+options(hyperion.config_dir = system.file(package = "hyperion.tables"))
 model_run <- "run003"
 ```
 
@@ -348,7 +349,7 @@ transform_ref |>
 ## Model Lineage
 
 ```{r}
-example_tree <- get_model_lineage(model_dir, scope = "directory")
+example_tree <- get_model_lineage()
 
 example_tree
 ```

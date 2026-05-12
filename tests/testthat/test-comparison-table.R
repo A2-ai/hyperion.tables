@@ -33,7 +33,7 @@ test_that("parameter comparison table: variability survives when no model has of
         add_summary_info(summary(mod2)),
       labels = c("run001", "run002")
     ) |>
-    add_model_lineage(hyperion::get_model_lineage(model_dir, scope = "project"))
+    add_model_lineage(hyperion::get_model_lineage())
 
   snapshot_gt(make_comparison_table(comp), "cmp-no-offdiag-var-gt")
   snapshot_flextable(
@@ -81,7 +81,7 @@ test_that("parameter comparison table: run002 vs run003b1", {
         add_summary_info(mod_sum2),
       labels = c("run002", "run003b1")
     ) |>
-    add_model_lineage(hyperion::get_model_lineage(model_dir, scope = "project"))
+    add_model_lineage(hyperion::get_model_lineage())
 
   snapshot_gt(make_comparison_table(comp), "cmp-grandparent-gt")
   snapshot_flextable(
@@ -129,7 +129,7 @@ test_that("parameter comparison table: run003 vs run003b1", {
         add_summary_info(child_sum),
       labels = c("run003", "run003b1")
     ) |>
-    add_model_lineage(hyperion::get_model_lineage(model_dir, scope = "project"))
+    add_model_lineage(hyperion::get_model_lineage())
 
   snapshot_gt(make_comparison_table(comp), "cmp-child-gt")
   snapshot_flextable(
@@ -177,7 +177,7 @@ test_that("parameter comparison table: run002 vs run003b1 drop symbol", {
         add_summary_info(mod_sum2),
       labels = c("run002", "run003b1")
     ) |>
-    add_model_lineage(hyperion::get_model_lineage(model_dir, scope = "project"))
+    add_model_lineage(hyperion::get_model_lineage())
 
   snapshot_gt(make_comparison_table(comp), "cmp-no-symbol-gt")
   snapshot_flextable(
@@ -225,7 +225,7 @@ test_that("parameter comparison table: run002 vs run003 drop ci has correct foot
         add_summary_info(mod_sum2),
       labels = c("run002", "run003")
     ) |>
-    add_model_lineage(hyperion::get_model_lineage(model_dir, scope = "project"))
+    add_model_lineage(hyperion::get_model_lineage())
 
   snapshot_gt(make_comparison_table(comp), "cmp-ci-fn-gt")
   snapshot_flextable(
@@ -279,59 +279,13 @@ test_that("parameter comparison table: run002 vs run003b1 drop configurable", {
         add_summary_info(mod_sum2),
       labels = c("run002", "run003b1")
     ) |>
-    add_model_lineage(hyperion::get_model_lineage(model_dir, scope = "project"))
+    add_model_lineage(hyperion::get_model_lineage())
 
   snapshot_gt(make_comparison_table(comp), "cmp-drop-cols-gt")
   snapshot_flextable(
     make_comparison_table(comp, output = "flextable"),
     "cmp-drop-cols-ft"
   )
-})
-
-test_that("comparison LRT p-value respects direction of delta OFV", {
-  local_fixture_dir()
-  model_dir <- system.file(
-    "extdata",
-    "models",
-    "onecmt",
-    package = "hyperion.tables"
-  )
-  testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
-
-  lineage <- hyperion::get_model_lineage(model_dir, scope = "project")
-
-  comparison <- data.frame(
-    estimate_1 = c(1, 2, 3),
-    estimate_2 = c(1, 2, 3),
-    fixed_1 = c(FALSE, FALSE, NA),
-    fixed_2 = c(FALSE, FALSE, FALSE),
-    stringsAsFactors = FALSE
-  )
-  class(comparison) <- c("hyperion_comparison", class(comparison))
-  attr(comparison, "hyperion_meta") <- list(
-    labels = c("run001", "run002"),
-    summaries = list(
-      list(run_name = "run001", ofv = 100, number_obs = 10, condition_number = 1),
-      list(run_name = "run002", ofv = 110, number_obs = 10, condition_number = 1)
-    ),
-    lineage = lineage,
-    table_spec = TableSpec(columns = c("estimate", "fixed"))
-  )
-
-  lines <- hyperion.tables:::build_comparison_footnote(
-    comparison,
-    n_sigfig = 3,
-    pvalue_scientific = FALSE
-  )
-  lrt_line <- lines[grep("LRT p-value", lines)]
-
-  expect_true(length(lrt_line) == 1)
-
-  pval <- as.numeric(
-    sub(".*LRT p-value = ([0-9.eE+-]+).*", "\\1", lrt_line)
-  )
-
-  expect_true(pval > 0.9)
 })
 
 test_that("parameter comparison table: three models with reference_model", {
@@ -386,7 +340,7 @@ test_that("parameter comparison table: three models with reference_model", {
       labels = "run003",
       reference_model = "run001"
     ) |>
-    add_model_lineage(hyperion::get_model_lineage(model_dir, scope = "project"))
+    add_model_lineage(hyperion::get_model_lineage())
 
   snapshot_gt(make_comparison_table(comp), "cmp-ref-mod-gt")
   snapshot_flextable(
@@ -431,7 +385,7 @@ test_that("parameter comparison table: three models with lineage shows LRT", {
   info3 <- hyperion::get_model_parameter_info(mod3)
 
   # Get real lineage from model directory
-  lineage <- hyperion::get_model_lineage(model_dir, scope = "project")
+  lineage <- hyperion::get_model_lineage()
 
   # Build comparison: run001 -> run002 -> run003 (all in lineage)
   comp <- hyperion::get_parameters(mod1) |>
@@ -495,7 +449,7 @@ test_that("parameter comparison table: broken lineage suppresses LRT", {
 
   # Get real lineage and break run003's based_on relationship
   # This makes run003 not in lineage with run002
-  lineage <- hyperion::get_model_lineage(model_dir, scope = "project")
+  lineage <- hyperion::get_model_lineage()
   lineage$nodes$`run003.mod`$based_on <- NULL
 
   # Build comparison: run001 -> run002 -> run003
@@ -562,7 +516,7 @@ test_that("parameter comparison table: pvalue_threshold formats small p-values",
   info3 <- hyperion::get_model_parameter_info(mod3)
 
   # Get lineage for LRT calculation
-  lineage <- hyperion::get_model_lineage(model_dir, scope = "project")
+  lineage <- hyperion::get_model_lineage()
 
   # Build comparison: run001 -> run002 -> run003 with pairwise comparisons
   comp <- hyperion::get_parameters(mod1) |>
@@ -589,110 +543,6 @@ test_that("parameter comparison table: pvalue_threshold formats small p-values",
   )
 })
 
-test_that("can_show_lrt returns reason for each suppression condition", {
-  local_fixture_dir()
-  model_dir <- system.file(
-    "extdata",
-    "models",
-    "onecmt",
-    package = "hyperion.tables"
-  )
-  lineage <- hyperion::get_model_lineage(model_dir, scope = "project")
-
-  make_comp <- function(
-    left_sum,
-    right_sum,
-    fixed1 = c(FALSE, FALSE, NA),
-    fixed2 = c(FALSE, FALSE, FALSE),
-    use_lineage = TRUE
-  ) {
-    comp <- data.frame(
-      estimate_1 = c(1, 2, 3),
-      estimate_2 = c(1, 2, 3),
-      fixed_1 = fixed1,
-      fixed_2 = fixed2,
-      stringsAsFactors = FALSE
-    )
-    class(comp) <- c("hyperion_comparison", class(comp))
-    meta <- list(
-      labels = c("run001", "run002"),
-      summaries = list(left_sum, right_sum)
-    )
-    if (use_lineage) meta$lineage <- lineage
-    attr(comp, "hyperion_meta") <- meta
-    comp
-  }
-
-  good_left <- list(run_name = "run001", ofv = 100, number_obs = 10)
-  good_right <- list(run_name = "run002", ofv = 110, number_obs = 10)
-
-  # no lineage
-  comp <- make_comp(good_left, good_right, use_lineage = FALSE)
-  res <- hyperion.tables:::can_show_lrt(comp, 1, 2, good_left, good_right)
-  expect_false(res$show)
-  expect_match(res$reason, "no lineage")
-
-  # missing summary
-  comp <- make_comp(good_left, good_right)
-  res <- hyperion.tables:::can_show_lrt(comp, 1, 2, NULL, good_right)
-  expect_false(res$show)
-  expect_match(res$reason, "summaries are missing")
-
-  # missing OFV
-  no_ofv <- list(run_name = "run001", number_obs = 10)
-  comp <- make_comp(no_ofv, good_right)
-  res <- hyperion.tables:::can_show_lrt(comp, 1, 2, no_ofv, good_right)
-  expect_false(res$show)
-  expect_match(res$reason, "OFV")
-
-  # different nobs
-  diff_nobs <- list(run_name = "run002", ofv = 110, number_obs = 20)
-  comp <- make_comp(good_left, diff_nobs)
-  res <- hyperion.tables:::can_show_lrt(comp, 1, 2, good_left, diff_nobs)
-  expect_false(res$show)
-  expect_match(res$reason, "observation counts differ")
-
-  # df == 0 (same fixed columns)
-  comp <- make_comp(
-    good_left,
-    good_right,
-    fixed1 = c(FALSE, FALSE, FALSE),
-    fixed2 = c(FALSE, FALSE, FALSE)
-  )
-  res <- hyperion.tables:::can_show_lrt(comp, 1, 2, good_left, good_right)
-  expect_false(res$show)
-  expect_match(res$reason, "degrees of freedom")
-
-  # missing run_name
-  no_name <- list(ofv = 100, number_obs = 10)
-  comp <- make_comp(no_name, good_right)
-  res <- hyperion.tables:::can_show_lrt(comp, 1, 2, no_name, good_right)
-  expect_false(res$show)
-  expect_match(res$reason, "run names")
-
-  # not in lineage (break run002's based_on so run001 vs run002 aren't related)
-  broken_lineage <- lineage
-  broken_lineage$nodes$`run002.mod`$based_on <- NULL
-  not_in_lineage_comp <- make_comp(good_left, good_right)
-  meta <- attr(not_in_lineage_comp, "hyperion_meta")
-  meta$lineage <- broken_lineage
-  attr(not_in_lineage_comp, "hyperion_meta") <- meta
-  res <- hyperion.tables:::can_show_lrt(
-    not_in_lineage_comp,
-    1,
-    2,
-    good_left,
-    good_right
-  )
-  expect_false(res$show)
-  expect_match(res$reason, "not in direct lineage")
-
-  # success case
-  comp <- make_comp(good_left, good_right)
-  res <- hyperion.tables:::can_show_lrt(comp, 1, 2, good_left, good_right)
-  expect_true(res$show)
-  expect_null(res$reason)
-})
 
 test_that("format_condition_number_footnote returns correct string or NULL", {
   left <- list(condition_number = 12.3)
@@ -745,65 +595,6 @@ test_that("format_nobs_footnote returns correct string or NULL", {
   # One missing
   result2 <- hyperion.tables:::format_nobs_footnote(left, NULL, "A", "B")
   expect_match(result2, "N/A")
-})
-
-test_that("format_ofv_lrt_footnote returns OFV line or NULL", {
-  local_fixture_dir()
-  model_dir <- system.file(
-    "extdata",
-    "models",
-    "onecmt",
-    package = "hyperion.tables"
-  )
-  lineage <- hyperion::get_model_lineage(model_dir, scope = "project")
-
-  comp <- data.frame(
-    estimate_1 = c(1, 2, 3),
-    estimate_2 = c(1, 2, 3),
-    fixed_1 = c(FALSE, FALSE, NA),
-    fixed_2 = c(FALSE, FALSE, FALSE),
-    stringsAsFactors = FALSE
-  )
-  class(comp) <- c("hyperion_comparison", class(comp))
-  attr(comp, "hyperion_meta") <- list(lineage = lineage)
-
-  left_sum <- list(run_name = "run001", ofv = 100, number_obs = 10)
-  right_sum <- list(run_name = "run002", ofv = 90, number_obs = 10)
-
-  result <- hyperion.tables:::format_ofv_lrt_footnote(
-    comp,
-    1,
-    2,
-    left_sum,
-    right_sum,
-    "A",
-    "B",
-    10,
-    10,
-    3,
-    3,
-    FALSE,
-    NULL
-  )
-  expect_match(result, "OFV")
-  expect_match(result, "LRT p-value")
-
-  # Both NULL summaries -> NULL
-  expect_null(hyperion.tables:::format_ofv_lrt_footnote(
-    comp,
-    1,
-    2,
-    NULL,
-    NULL,
-    "A",
-    "B",
-    NA,
-    NA,
-    3,
-    3,
-    FALSE,
-    NULL
-  ))
 })
 
 test_that("footnotes show 'N/A (no summary)' when model_summary is NULL", {
@@ -1255,7 +1046,7 @@ test_that("parameter comparison table: errors no spec", {
   sum3 <- summary(mod3)
 
   # Get lineage for LRT calculation
-  lineage <- hyperion::get_model_lineage(model_dir, scope = "project")
+  lineage <- hyperion::get_model_lineage()
 
   # Build comparison: run001 -> run002 -> run003 with pairwise comparisons
   expect_error(

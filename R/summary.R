@@ -76,15 +76,6 @@ apply_summary_spec <- function(tree, spec) {
     rlang::abort("tree must contain at least one model.")
   }
 
-  source_dir <- tryCatch(
-    error = function(e) {
-      rlang::abort(
-        "Could not resolve `tree$source_dir` path from pharos.toml"
-      )
-    },
-    hyperion::from_config_relative(tree$source_dir)
-  )
-
   metadata_df <- build_metadata_df(tree) |>
     filter_metadata(spec)
 
@@ -92,7 +83,7 @@ apply_summary_spec <- function(tree, spec) {
   sorted_names <- topological_sort_models(metadata_df, tree)
 
   # Load models
-  models <- load_models(sorted_names, source_dir)
+  models <- load_models(sorted_names, metadata_df)
 
   # Build summary data frame (pass metadata for based_on/description)
   df <- build_summary_df(models, sorted_names, metadata_df, spec)
@@ -203,15 +194,14 @@ filter_metadata <- function(metadata_df, spec) {
 #' Build metadata data frame from tree nodes
 #' @noRd
 build_metadata_df <- function(tree) {
-  nodes <- tree$nodes
-
-  rows <- lapply(names(nodes), function(name) {
-    node <- nodes[[name]]
+  rows <- lapply(tree$nodes, function(node) {
+    parents <- as.character(unlist(node$model$based_on %||% list()))
     data.frame(
-      name = name,
-      description = node$description %||% NA_character_,
-      tags = I(list(node$tags %||% character(0))),
-      based_on = I(list(as.character(unlist(node$based_on %||% list())))),
+      name = tools::file_path_sans_ext(basename(node$name)),
+      path = node$name,
+      description = node$model$description %||% NA_character_,
+      tags = I(list(as.character(unlist(node$model$tags)) %||% character(0))),
+      based_on = I(list(tools::file_path_sans_ext(basename(parents)))),
       stringsAsFactors = FALSE
     )
   })
@@ -273,10 +263,12 @@ topological_sort_models <- function(metadata_df, tree) {
 
 #' Load models for given model names
 #' @noRd
-load_models <- function(model_names, source_dir) {
+load_models <- function(model_names, metadata_df) {
+  paths <- metadata_df$path[match(model_names, metadata_df$name)]
   models <- list()
-  for (name in model_names) {
-    model_path <- file.path(source_dir, name)
+  for (i in seq_along(model_names)) {
+    name <- model_names[i]
+    model_path <- hyperion::from_config_relative(paths[i])
     mod <- tryCatch(
       read_model(model_path),
       error = function(e) {

@@ -101,6 +101,7 @@ add_summary_info <- function(
 
   attr(params, "model_summary") <- list(
     run_name = model_sum$run_name,
+    model_file = model_sum$model_file,
     estimation_method = est_method,
     ofv = ofv,
     condition_number = cn,

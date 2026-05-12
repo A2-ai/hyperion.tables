@@ -22,6 +22,7 @@ library(gt)
 library(flextable)
 
 model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+options(hyperion.config_dir = system.file(package = "hyperion.tables"))
 model_run <- "run003"
 ```
 

@@ -25,6 +25,7 @@ library(officer)
 
 data_dir <- system.file("extdata", package = "hyperion.tables")
 model_dir <- file.path(data_dir, "models", "onecmt")
+options(hyperion.config_dir = system.file(package = "hyperion.tables"))
 model_run <- "run003"
 ```
 

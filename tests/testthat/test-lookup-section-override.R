@@ -227,7 +227,7 @@ test_that("SummarySpec section_filter warns when label not in data", {
     "onecmt",
     package = "hyperion.tables"
   )
-  tree <- hyperion::get_model_lineage(model_dir, scope = "project")
+  tree <- hyperion::get_model_lineage()
   spec <- SummarySpec() |>
     set_spec_sections(
       "nonexistent_tag" %in% tags ~ "Foo",
