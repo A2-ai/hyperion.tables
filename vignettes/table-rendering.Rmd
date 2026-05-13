@@ -98,13 +98,39 @@ hyperion_table
 `hyperion.tables` includes two built-in renderers:
 
 ```{r}
-render_to_gt(hyperion_table) |>
+hyperion_table |>
+	render_to_gt() |>
 	render_to_image()
 ```
 ```{r}
 hyperion_table |>
 	render_to_flextable() |>
 	render_to_image()
+```
+
+## Rendering to Word
+
+`render_to_word()` saves a rendered `gt` or `flextable` object to a `.docx`
+file. Inline LaTeX (`$...$`) in the rendered table is preserved as native
+Word equations rather than literal text. Pass `landscape = TRUE` for
+landscape orientation.
+
+```{r}
+word_path <- tempfile(fileext = ".docx")
+hyperion_table |>
+	render_to_gt() |>
+	render_to_word(word_path)
+
+file.exists(word_path)
+```
+
+```{r}
+word_path <- tempfile(fileext = ".docx")
+hyperion_table |>
+	render_to_flextable() |>
+	render_to_word(word_path, landscape = TRUE)
+
+file.exists(word_path)
 ```
 
 ## Update render rules and re-render
@@ -142,7 +168,8 @@ names(formatted)
 ```
 
 ```{r}
-render_to_gt(hyperion_table) |>
+hyperion_table |>
+	render_to_gt() |>
 	render_to_image()
 ```
 
