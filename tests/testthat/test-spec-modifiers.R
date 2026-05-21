@@ -27,9 +27,9 @@ test_that("add_spec_columns appends to SummarySpec", {
   spec <- SummarySpec()
   modified <- spec |> add_spec_columns("estimation_time")
 
-  expect_true("estimation_time" %in% modified@columns)
+  expect_true("estimation_time" %in% get_spec_columns(modified))
   # Original unchanged
-  expect_false("estimation_time" %in% spec@columns)
+  expect_false("estimation_time" %in% get_spec_columns(spec))
 })
 
 test_that("add_spec_columns rejects invalid columns", {
@@ -151,19 +151,93 @@ test_that("set_spec_footnotes validates sections", {
   )
 })
 
-test_that("set_spec_section_filter works for both specs", {
-  table_spec <- TableSpec() |> set_spec_section_filter("Other")
-  expect_equal(table_spec@section_filter, "Other")
+test_that("set_spec_sections exclude mode works for both specs", {
+  table_spec <- TableSpec() |>
+    set_spec_sections(
+      kind == "THETA" ~ "Other",
+      exclude = "Other"
+    )
+  expect_identical(table_spec@sections@filter, list(exclude = "Other"))
 
-  sum_spec <- SummarySpec() |> set_spec_section_filter("Other", NA)
-  expect_equal(sum_spec@section_filter, c("Other", NA_character_))
+  sum_spec <- SummarySpec() |>
+    set_spec_sections(
+      "base" %in% tags ~ "Other",
+      exclude = c("Other", NA)
+    )
+  expect_identical(
+    sum_spec@sections@filter,
+    list(exclude = c("Other", NA_character_))
+  )
 })
 
-test_that("set_spec_section_filter clears with no args", {
+test_that("set_spec_sections keep mode stores positive list", {
+  spec <- TableSpec() |>
+    set_spec_sections(
+      kind == "THETA" ~ "Structural",
+      kind == "OMEGA" ~ "Variability",
+      keep = c("Structural", "Variability")
+    )
+  expect_identical(
+    spec@sections@filter,
+    list(keep = c("Structural", "Variability"))
+  )
+})
+
+test_that("set_spec_sections rejects exclude + keep together", {
+  expect_error(
+    TableSpec() |>
+      set_spec_sections(
+        kind == "THETA" ~ "Other",
+        kind == "OMEGA" ~ "Structural",
+        exclude = "Other",
+        keep = "Structural"
+      ),
+    "mutually exclusive"
+  )
+})
+
+test_that("set_spec_sections clears section filter with character(0)", {
   spec <- SummarySpec() |>
-    set_spec_section_filter("Other") |>
-    set_spec_section_filter()
-  expect_null(spec@section_filter)
+    set_spec_sections(
+      "base" %in% tags ~ "Other",
+      exclude = "Other"
+    ) |>
+    set_spec_sections(keep = character(0))
+  expect_length(spec@sections@filter, 0L)
+})
+
+test_that("set_spec_section_filter is deprecated but delegates", {
+  base <- TableSpec() |>
+    set_spec_sections(kind == "THETA" ~ "Other")
+  expect_warning(
+    spec <- base |> set_spec_section_filter(exclude = "Other"),
+    "deprecated"
+  )
+  expect_identical(spec@sections@filter, list(exclude = "Other"))
+
+  cleared <- suppressWarnings(spec |> set_spec_section_filter(exclude = NULL))
+  expect_length(cleared@sections@filter, 0L)
+})
+
+test_that("set_spec_sections(order=) stores order config", {
+  spec <- TableSpec() |>
+    set_spec_sections(
+      kind == "THETA" ~ "A",
+      kind == "OMEGA" ~ "B",
+      order = c("B", "A")
+    )
+  expect_identical(spec@sections@order, c("B", "A"))
+})
+
+test_that("set_spec_sections(order = character(0)) clears the order", {
+  spec <- TableSpec() |>
+    set_spec_sections(
+      kind == "THETA" ~ "A",
+      kind == "OMEGA" ~ "B",
+      order = c("B", "A")
+    ) |>
+    set_spec_sections(order = character(0))
+  expect_length(spec@sections@order, 0L)
 })
 
 # ==============================================================================
@@ -175,33 +249,10 @@ test_that("set_spec_parameter_names sets source", {
   expect_equal(spec@parameter_names@source, "nonmem")
 })
 
-test_that("set_spec_parameter_names sets append_omega_with_theta", {
-  spec <- TableSpec() |>
-    set_spec_parameter_names(append_omega_with_theta = FALSE)
-  expect_false(spec@parameter_names@append_omega_with_theta)
-})
-
-test_that("set_spec_parameter_names sets both options", {
-  spec <- TableSpec() |>
-    set_spec_parameter_names(
-      source = "display",
-      append_omega_with_theta = FALSE
-    )
-  expect_equal(spec@parameter_names@source, "display")
-  expect_false(spec@parameter_names@append_omega_with_theta)
-})
-
 test_that("set_spec_parameter_names validates source", {
   expect_error(
     TableSpec() |> set_spec_parameter_names(source = "invalid"),
     "@source must be"
-  )
-})
-
-test_that("set_spec_parameter_names validates append_omega_with_theta", {
-  expect_error(
-    TableSpec() |> set_spec_parameter_names(append_omega_with_theta = "yes"),
-    "must be.*logical"
   )
 })
 
@@ -240,7 +291,7 @@ test_that("set_spec_sections appends by default", {
     set_spec_sections(kind == "THETA" ~ "Structural") |>
     set_spec_sections(kind == "OMEGA" ~ "IIV")
 
-  expect_length(spec@sections, 2)
+  expect_length(spec@sections@rules, 2)
 })
 
 test_that("set_spec_sections overwrites when specified", {
@@ -248,7 +299,67 @@ test_that("set_spec_sections overwrites when specified", {
     set_spec_sections(kind == "THETA" ~ "First") |>
     set_spec_sections(kind == "OMEGA" ~ "Second", overwrite = TRUE)
 
-  expect_length(spec@sections, 1)
+  expect_length(spec@sections@rules, 1)
+})
+
+test_that("set_spec_sections accepts `sections =` for both spec types", {
+  table_spec <- TableSpec() |>
+    set_spec_sections(
+      sections = section_rules(
+        kind == "THETA" ~ "Structural",
+        kind == "OMEGA" ~ "IIV"
+      )
+    )
+  expect_length(table_spec@sections@rules, 2)
+
+  summary_spec <- SummarySpec() |>
+    set_spec_sections(
+      sections = section_rules("base" %in% tags ~ "Base Models")
+    )
+  expect_length(summary_spec@sections@rules, 1)
+})
+
+test_that("TableSpec()/SummarySpec() require SectionOptions objects at construction", {
+  table_from_sections <- TableSpec(
+    sections = SectionOptions(
+      rules = section_rules(kind == "THETA" ~ "Structural")
+    )
+  )
+  expect_length(table_from_sections@sections@rules, 1)
+
+  summary_from_sections <- SummarySpec(
+    sections = SectionOptions(
+      rules = section_rules("base" %in% tags ~ "Base Models")
+    )
+  )
+  expect_length(summary_from_sections@sections@rules, 1)
+
+  expect_error(
+    TableSpec(sections = section_rules(kind == "THETA" ~ "Structural")),
+    "sections.*SectionOptions"
+  )
+  expect_error(
+    SummarySpec(sections = section_rules("base" %in% tags ~ "Base Models")),
+    "sections.*SectionOptions"
+  )
+})
+
+test_that("set_spec_sections combines `sections =` and `...` (sections first)", {
+  spec <- TableSpec() |>
+    set_spec_sections(
+      kind == "SIGMA" ~ "Residual",
+      sections = section_rules(
+        kind == "THETA" ~ "Structural",
+        kind == "OMEGA" ~ "IIV"
+      )
+    )
+  expect_length(spec@sections@rules, 3)
+  labels <- unname(vapply(
+    spec@sections@rules,
+    function(q) rlang::quo_get_expr(q)[[3]],
+    character(1)
+  ))
+  expect_equal(labels, c("Structural", "IIV", "Residual"))
 })
 
 test_that("set_spec_filter works", {
@@ -275,8 +386,8 @@ test_that("set_spec_variability appends by default", {
     )
 
   expect_length(
-    modified@variability_rules,
-    length(spec@variability_rules) + 1
+    get_spec_variability(modified),
+    length(get_spec_variability(spec)) + 1
   )
 })
 
@@ -306,7 +417,7 @@ test_that("set_spec_models works", {
 })
 
 test_that("set_spec_tag_filter works", {
-  spec <- SummarySpec() |> set_spec_tag_filter(c("final", "approved"))
+  spec <- SummarySpec() |> set_spec_tag_filter(include = c("final", "approved"))
   expect_equal(spec@tag_filter, c("final", "approved"))
 })
 
@@ -316,9 +427,9 @@ test_that("set_spec_tag_filter exclude works", {
   expect_equal(spec@tag_exclude, "failed")
 })
 
-test_that("set_spec_tag_filter sets both tags and exclude", {
+test_that("set_spec_tag_filter sets both include and exclude", {
   spec <- SummarySpec() |>
-    set_spec_tag_filter(tags = c("final", "approved"), exclude = "failed")
+    set_spec_tag_filter(include = c("final", "approved"), exclude = "failed")
   expect_equal(spec@tag_filter, c("final", "approved"))
   expect_equal(spec@tag_exclude, "failed")
 })
@@ -399,7 +510,7 @@ test_that("SummarySpec pipe chain works", {
     set_spec_time_format("auto") |>
     set_spec_models(c("run001", "run002"))
 
-  expect_true("estimation_time" %in% spec@columns)
+  expect_true("estimation_time" %in% get_spec_columns(spec))
   expect_true("description" %in% spec@drop_columns)
   expect_equal(spec@title, "Run Summary")
   expect_equal(spec@time_format, "auto")

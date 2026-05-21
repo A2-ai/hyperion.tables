@@ -101,12 +101,12 @@ add_summary_info <- function(
 
   attr(params, "model_summary") <- list(
     run_name = model_sum$run_name,
+    model_file = model_sum$model_file,
     estimation_method = est_method,
     ofv = ofv,
     condition_number = cn,
     number_obs = n_obs
   )
-
   params
 }
 
@@ -120,7 +120,7 @@ add_summary_info <- function(
 #' @return A TableSpec object or NULL
 #' @export
 get_table_spec <- function(params) {
-  spec <- attr(params, "table_spec")
+  spec <- attr(params, "hyperion_spec")
   if (is.null(spec)) {
     return(NULL)
   }
@@ -142,21 +142,10 @@ get_table_spec <- function(params) {
 #' @return Reordered data frame ready for `make_parameter_table()`
 #' @noRd
 #' @keywords internal
-expand_ci_drop_columns <- function(drop_columns) {
-  if (length(drop_columns) == 0) {
-    return(drop_columns)
-  }
-
-  ci_aliases <- c("ci", "ci_1", "ci_2", "ci_left", "ci_right")
-  if (any(drop_columns %in% ci_aliases)) {
-    drop_columns <- unique(c(drop_columns, "ci_low", "ci_high"))
-  }
-
-  drop_columns
-}
-
 order_sections <- function(params, spec) {
-  section_levels <- unique(get_section_order(spec))
+  resolved <- resolve_section_levels(params, spec)
+  params <- resolved$data
+  section_levels <- resolved$levels
 
   internal_cols <- c(
     "section",
@@ -176,11 +165,12 @@ order_sections <- function(params, spec) {
 
   drop_columns <- expand_ci_drop_columns(spec@drop_columns)
   add_cols <- spec@add_columns %||% character(0)
-  select_cols <- setdiff(spec@columns, drop_columns)
+  base_cols <- spec@columns %||% spec@default_columns
+  select_cols <- setdiff(base_cols, drop_columns)
   if (length(add_cols) > 0) {
     select_cols <- unique(c(select_cols, add_cols))
   }
-  if ("description" %in% select_cols && !spec@.columns_provided) {
+  if ("description" %in% select_cols && is.null(spec@columns)) {
     select_cols <- c(
       "name",
       "description",
@@ -193,7 +183,7 @@ order_sections <- function(params, spec) {
   ) {
     select_cols <- unique(c(select_cols, "fixed"))
   }
-  fixed_requested <- "fixed" %in% c(spec@columns, add_cols)
+  fixed_requested <- "fixed" %in% c(base_cols, add_cols)
   if (fixed_requested && "fixed_fmt" %in% names(params)) {
     select_cols <- unique(c(select_cols, "fixed_fmt"))
   }
@@ -213,11 +203,12 @@ order_sections <- function(params, spec) {
       "corr",
       "sd"
     )
+    n <- nrow(params)
     for (col in missing_cols) {
       if (col %in% numeric_display_cols) {
-        params[[col]] <- NA_real_
+        params[[col]] <- rep(NA_real_, n)
       } else {
-        params[[col]] <- NA_character_
+        params[[col]] <- rep(NA_character_, n)
       }
     }
   }
@@ -264,7 +255,7 @@ make_parameter_table <- function(
   }
 
   # Get table_spec - required for proper formatting
-  spec <- attr(params, "table_spec")
+  spec <- get_table_spec(params)
   if (is.null(spec)) {
     rlang::abort(
       "TableSpec not found. Run apply_table_spec(params, spec, info) first."
@@ -302,7 +293,7 @@ make_parameter_table <- function(
 #' @noRd
 hyperion_parameter_table <- function(params, layout, spec) {
   # Determine CI merge columns
-  effective_cols <- c(spec@columns, spec@add_columns %||% character(0))
+  effective_cols <- get_spec_columns(spec)
   ci_in_spec <- all(c("ci_low", "ci_high") %in% effective_cols)
   ci_in_data <- all(c("ci_low", "ci_high") %in% names(params))
   ci_merges <- if (ci_in_spec && ci_in_data) {
@@ -367,14 +358,8 @@ build_parameter_footnotes <- function(params, spec, layout) {
   summary_note <- build_summary_footnote(params, spec@n_sigfig, ofv_decimals)
 
   # Detect statistics
-  stats <- detect_table_statistics(params)
+  stats <- detect_table_statistics(params, spec)
   ci_pct <- round(spec@ci@level * 100)
-
-  # Check if CI dropped
-  expanded_drop <- expand_ci_drop_columns(spec@drop_columns)
-  if (all(c("ci_low", "ci_high") %in% expanded_drop)) {
-    stats$has_ci <- FALSE
-  }
 
   # Build equations
   equations <- build_equations_footnote(stats, ci_pct, NULL, NULL)
@@ -388,9 +373,7 @@ build_parameter_footnotes <- function(params, spec, layout) {
       footnotes <- c(footnotes, list(footnote_spec(summary_note, FALSE)))
     } else if (section == "equations" && !is.null(equations)) {
       for (eq in equations) {
-        # equations are gt::md() objects, extract the content
-        content <- if (inherits(eq, "gt_md")) as.character(eq) else eq
-        footnotes <- c(footnotes, list(footnote_spec(content, TRUE)))
+        footnotes <- c(footnotes, list(footnote_spec(eq, TRUE)))
       }
     } else if (section == "abbreviations" && !is.null(abbreviations)) {
       for (line in abbreviations) {
@@ -416,7 +399,15 @@ prepare_parameter_table_data <- function(params, spec) {
   hide_cols <- resolve_hidden_columns(params, spec)
   label_map <- build_layout_labels(params, spec, hide_cols)
 
-  groupname <- if (length(spec@sections) > 0) "section" else NULL
+  # Group by `section` whenever the data has any populated value — covers
+  # both spec-rule sections and TOML-lookup-only sections.
+  groupname <- if (
+    "section" %in% names(params) && any(!is.na(params$section))
+  ) {
+    "section"
+  } else {
+    NULL
+  }
 
   ci_rows <- integer(0)
   if (all(c("ci_low", "ci_high") %in% names(params))) {
@@ -447,7 +438,7 @@ resolve_hidden_columns <- function(params, spec) {
   }
 
   add_cols <- spec@add_columns %||% character(0)
-  requested_cols <- if (isTRUE(spec@.columns_provided)) {
+  requested_cols <- if (!is.null(spec@columns)) {
     unique(c(spec@columns, add_cols))
   } else {
     unique(add_cols)
@@ -490,7 +481,7 @@ resolve_hidden_columns <- function(params, spec) {
   }
 
   # Fixed column visibility (single check, was previously duplicated)
-  fixed_requested <- if (isTRUE(spec@.columns_provided)) {
+  fixed_requested <- if (!is.null(spec@columns)) {
     "fixed" %in% c(spec@columns, add_cols)
   } else {
     "fixed" %in% add_cols
@@ -531,7 +522,7 @@ build_layout_labels <- function(params, spec, hide_cols) {
 
   # Remove labels for hidden fixed columns
   add_cols <- spec@add_columns %||% character(0)
-  fixed_requested <- if (isTRUE(spec@.columns_provided)) {
+  fixed_requested <- if (!is.null(spec@columns)) {
     "fixed" %in% c(spec@columns, add_cols)
   } else {
     "fixed" %in% add_cols

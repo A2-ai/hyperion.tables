@@ -7,21 +7,17 @@
 drop_spec_columns(spec, ...)
 }
 \arguments{
-\item{spec}{A TableSpec or SummarySpec object}
+\item{spec}{A TableSpec or SummarySpec object.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Column names as unnamed character strings. Named arguments are
+ignored with a warning.}
 }
 \value{
-Modified spec
+Modified spec.
 }
 \description{
-Adds columns to the spec's drop_columns list. These columns will be
-excluded from the output table.
-}
-\details{
-Built-in methods for \code{TableSpec} and \code{SummarySpec} interpret unnamed
-arguments in \code{...} as column names (character strings). Named arguments in
-\code{...} are ignored with a warning.
+\code{drop_spec_columns()} is an S7 generic that adds columns to the spec's
+\code{drop_columns} list. These columns will be excluded from the output table.
 }
 \examples{
 spec <- TableSpec() |>
@@ -29,4 +25,7 @@ spec <- TableSpec() |>
 
 sum_spec <- SummarySpec() |>
   drop_spec_columns("description")
+}
+\seealso{
+\code{\link[=get_spec_columns]{get_spec_columns()}}, \code{\link[=add_spec_columns]{add_spec_columns()}}, \code{\link[=set_spec_columns]{set_spec_columns()}}.
 }

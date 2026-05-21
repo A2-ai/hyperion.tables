@@ -25,6 +25,7 @@ library(officer)
 
 data_dir <- system.file("extdata", package = "hyperion.tables")
 model_dir <- file.path(data_dir, "models", "onecmt")
+options(hyperion.config_dir = system.file(package = "hyperion.tables"))
 model_run <- "run003"
 ```
 
@@ -74,15 +75,15 @@ Render rules live on `TableSpec`:
 
 ```{r}
 spec <- TableSpec(
-  sections = section_rules(
+  title = paste(model_run, "Parameters")
+) |>
+  set_spec_sections(
     kind == "THETA" ~ "Structural model parameters",
     kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
     kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
     kind == "SIGMA" ~ "Residual error",
     TRUE ~ "Other"
-  ),
-  title = paste(model_run, "Parameters")
-) |>
+  ) |>
 	set_spec_transforms(omega = "cv")
 
 run003 <- read_model(file.path(model_dir, paste0(model_run, ".mod")))
@@ -97,13 +98,39 @@ hyperion_table
 `hyperion.tables` includes two built-in renderers:
 
 ```{r}
-render_to_gt(hyperion_table) |>
+hyperion_table |>
+	render_to_gt() |>
 	render_to_image()
 ```
 ```{r}
 hyperion_table |>
 	render_to_flextable() |>
 	render_to_image()
+```
+
+## Rendering to Word
+
+`render_to_word()` saves a rendered `gt` or `flextable` object to a `.docx`
+file. Inline LaTeX (`$...$`) in the rendered table is preserved as native
+Word equations rather than literal text. Pass `landscape = TRUE` for
+landscape orientation.
+
+```{r}
+word_path <- tempfile(fileext = ".docx")
+hyperion_table |>
+	render_to_gt() |>
+	render_to_word(word_path)
+
+file.exists(word_path)
+```
+
+```{r}
+word_path <- tempfile(fileext = ".docx")
+hyperion_table |>
+	render_to_flextable() |>
+	render_to_word(word_path, landscape = TRUE)
+
+file.exists(word_path)
 ```
 
 ## Update render rules and re-render
@@ -113,13 +140,6 @@ and re-render it. You can also inspect the formatted data directly.
 
 ```{r}
 spec <- TableSpec(
-  sections = section_rules(
-    kind == "THETA" ~ "Structural model parameters",
-    kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
-    kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
-    kind == "SIGMA" ~ "Residual error",
-    TRUE ~ "Other"
-  ),
   title = paste(model_run, "Parameters"),
   n_sigfig = 4,
   ci = CIOptions(
@@ -130,6 +150,13 @@ spec <- TableSpec(
   missing_text = "NA",
   missing_apply_to = "numeric"
 ) |>
+  set_spec_sections(
+    kind == "THETA" ~ "Structural model parameters",
+    kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
+    kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
+    kind == "SIGMA" ~ "Residual error",
+    TRUE ~ "Other"
+  ) |>
   set_spec_transforms(omega = "cv")
 
 hyperion_table <- get_parameters(run003) |>
@@ -141,7 +168,8 @@ names(formatted)
 ```
 
 ```{r}
-render_to_gt(hyperion_table) |>
+hyperion_table |>
+	render_to_gt() |>
 	render_to_image()
 ```
 

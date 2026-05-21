@@ -7,23 +7,20 @@
 set_spec_variability(spec, ..., overwrite = FALSE)
 }
 \arguments{
-\item{spec}{A TableSpec object}
+\item{spec}{A TableSpec object.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Rule formulas (LHS condition ~ RHS expression) defining how
+the variability column is constructed. Combined via \code{\link[=variability_rules]{variability_rules()}}.}
 
 \item{overwrite}{If FALSE (default), append to existing rules.
 If TRUE, replace all existing rules.}
 }
 \value{
-Modified spec
+Modified spec.
 }
 \description{
-Controls how the variability display column is constructed.
-}
-\details{
-The built-in \code{TableSpec} method interprets unnamed arguments in \code{...} as
-variability rule formulas. Named arguments in \code{...} are ignored with a
-warning.
+\code{set_spec_variability()} controls how the variability display column is
+constructed. Operates on \code{TableSpec} only.
 }
 \examples{
 spec <- TableSpec() |>
@@ -32,4 +29,7 @@ spec <- TableSpec() |>
     !is.na(cv) ~ sprintf("CV = \%s\%\%", cv),
     TRUE ~ NA_character_
   )
+}
+\seealso{
+\code{\link[=get_spec_variability]{get_spec_variability()}}.
 }

@@ -1,6 +1,7 @@
 test_that("summary table gt snapshot from vignettes data", {
   testthat::skip_if_not_installed("gt")
 
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -8,7 +9,7 @@ test_that("summary table gt snapshot from vignettes data", {
     package = "hyperion.tables"
   )
 
-  tree <- hyperion::get_model_lineage(model_dir)
+  tree <- hyperion::get_model_lineage()
   spec <- SummarySpec()
 
   table <- tree |>
@@ -25,6 +26,7 @@ test_that("summary table gt snapshot from vignettes data", {
 })
 
 test_that("tag_filter selects tagged models", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -32,11 +34,15 @@ test_that("tag_filter selects tagged models", {
     package = "hyperion.tables"
   )
 
-  tree <- hyperion::get_model_lineage(model_dir)
-  for (name in names(tree$nodes)) {
-    tree$nodes[[name]]$tags <- "draft"
+  tree <- hyperion::get_model_lineage()
+  for (i in seq_along(tree$nodes)) {
+    tree$nodes[[i]]$model$tags <- list("draft")
   }
-  tree$nodes[["run001.mod"]]$tags <- "final"
+  for (i in seq_along(tree$nodes)) {
+    if (basename(tree$nodes[[i]]$name) == "run001.mod") {
+      tree$nodes[[i]]$model$tags <- list("final")
+    }
+  }
 
   spec <- SummarySpec(tag_filter = "final", columns = "ofv")
 
@@ -47,6 +53,7 @@ test_that("tag_filter selects tagged models", {
 })
 
 test_that("tag_exclude removes tagged models", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -54,12 +61,16 @@ test_that("tag_exclude removes tagged models", {
     package = "hyperion.tables"
   )
 
-  tree <- hyperion::get_model_lineage(model_dir)
+  tree <- hyperion::get_model_lineage()
   # Tag one model as "failed"
-  tree$nodes[["run001.mod"]]$tags <- c(
-    tree$nodes[["run001.mod"]]$tags,
-    "failed"
-  )
+  for (i in seq_along(tree$nodes)) {
+    if (basename(tree$nodes[[i]]$name) == "run001.mod") {
+      tree$nodes[[i]]$model$tags <- c(
+        tree$nodes[[i]]$model$tags,
+        list("failed")
+      )
+    }
+  }
 
   spec <- SummarySpec(tag_exclude = "failed", columns = "ofv")
 
@@ -70,6 +81,7 @@ test_that("tag_exclude removes tagged models", {
 })
 
 test_that("tag_exclude works with tag_filter", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -77,12 +89,16 @@ test_that("tag_exclude works with tag_filter", {
     package = "hyperion.tables"
   )
 
-  tree <- hyperion::get_model_lineage(model_dir)
+  tree <- hyperion::get_model_lineage()
   # Tag all models with "candidate", then mark one as "failed"
-  for (name in names(tree$nodes)) {
-    tree$nodes[[name]]$tags <- "candidate"
+  for (i in seq_along(tree$nodes)) {
+    tree$nodes[[i]]$model$tags <- list("candidate")
   }
-  tree$nodes[["run001.mod"]]$tags <- c("candidate", "failed")
+  for (i in seq_along(tree$nodes)) {
+    if (basename(tree$nodes[[i]]$name) == "run001.mod") {
+      tree$nodes[[i]]$model$tags <- list("candidate", "failed")
+    }
+  }
 
   spec <- SummarySpec(
     tag_filter = "candidate",
@@ -98,6 +114,7 @@ test_that("tag_exclude works with tag_filter", {
 
 test_that("summary table snapshot filtered to selected models", {
   testthat::skip_if_not_installed("gt")
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -105,7 +122,7 @@ test_that("summary table snapshot filtered to selected models", {
     package = "hyperion.tables"
   )
 
-  tree <- hyperion::get_model_lineage(model_dir)
+  tree <- hyperion::get_model_lineage()
 
   spec <- SummarySpec(
     models_to_include = c("run001", "run002", "run003")
@@ -125,6 +142,7 @@ test_that("summary table snapshot filtered to selected models", {
 })
 
 test_that("summary_filter applies to summary columns", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -132,7 +150,7 @@ test_that("summary_filter applies to summary columns", {
     package = "hyperion.tables"
   )
 
-  tree <- hyperion::get_model_lineage(model_dir)
+  tree <- hyperion::get_model_lineage()
 
   spec <- SummarySpec(
     columns = "ofv",
@@ -146,6 +164,7 @@ test_that("summary_filter applies to summary columns", {
 })
 
 test_that("models_to_include matches stems and extensions", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -153,7 +172,7 @@ test_that("models_to_include matches stems and extensions", {
     package = "hyperion.tables"
   )
 
-  tree <- hyperion::get_model_lineage(model_dir)
+  tree <- hyperion::get_model_lineage()
 
   spec <- SummarySpec(
     columns = "ofv",
@@ -168,6 +187,7 @@ test_that("models_to_include matches stems and extensions", {
 
 test_that("remove_unrun_models snapshot", {
   testthat::skip_if_not_installed("gt")
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -175,7 +195,7 @@ test_that("remove_unrun_models snapshot", {
     package = "hyperion.tables"
   )
 
-  tree <- hyperion::get_model_lineage(model_dir)
+  tree <- hyperion::get_model_lineage()
 
   spec <- SummarySpec(remove_unrun_models = FALSE)
 
@@ -194,6 +214,7 @@ test_that("remove_unrun_models snapshot", {
 
 test_that("drop_columns removes description (snapshot)", {
   testthat::skip_if_not_installed("gt")
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -201,7 +222,7 @@ test_that("drop_columns removes description (snapshot)", {
     package = "hyperion.tables"
   )
 
-  tree <- hyperion::get_model_lineage(model_dir)
+  tree <- hyperion::get_model_lineage()
 
   spec <- SummarySpec(
     columns = c("description", "ofv"),
@@ -222,6 +243,7 @@ test_that("drop_columns removes description (snapshot)", {
 })
 
 test_that("time_format auto uses seconds label", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -229,7 +251,7 @@ test_that("time_format auto uses seconds label", {
     package = "hyperion.tables"
   )
 
-  tree <- hyperion::get_model_lineage(model_dir)
+  tree <- hyperion::get_model_lineage()
 
   spec <- SummarySpec(
     add_columns = c("estimation_time", "covariance_time"),
@@ -248,6 +270,7 @@ test_that("time_format auto uses seconds label", {
 })
 
 test_that("time_format auto uses minutes label", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -255,7 +278,7 @@ test_that("time_format auto uses minutes label", {
     package = "hyperion.tables"
   )
 
-  tree <- hyperion::get_model_lineage(model_dir)
+  tree <- hyperion::get_model_lineage()
 
   spec <- SummarySpec(
     columns = c("estimation_time", "covariance_time"),
@@ -273,6 +296,7 @@ test_that("time_format auto uses minutes label", {
 })
 
 test_that("time_format auto uses hours label", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -280,7 +304,7 @@ test_that("time_format auto uses hours label", {
     package = "hyperion.tables"
   )
 
-  tree <- hyperion::get_model_lineage(model_dir)
+  tree <- hyperion::get_model_lineage()
 
   spec <- SummarySpec(
     columns = c("estimation_time", "covariance_time"),
@@ -299,6 +323,7 @@ test_that("time_format auto uses hours label", {
 
 test_that("footnote_order NULL disables footnotes", {
   testthat::skip_if_not_installed("gt")
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -306,7 +331,7 @@ test_that("footnote_order NULL disables footnotes", {
     package = "hyperion.tables"
   )
 
-  tree <- hyperion::get_model_lineage(model_dir)
+  tree <- hyperion::get_model_lineage()
 
   spec <- SummarySpec(footnote_order = NULL)
 
@@ -325,6 +350,7 @@ test_that("footnote_order NULL disables footnotes", {
 
 test_that("pvalue_threshold formats small p-values", {
   testthat::skip_if_not_installed("gt")
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -332,7 +358,7 @@ test_that("pvalue_threshold formats small p-values", {
     package = "hyperion.tables"
   )
 
-  tree <- hyperion::get_model_lineage(model_dir)
+  tree <- hyperion::get_model_lineage()
 
   spec <- SummarySpec(pvalue_threshold = 0.05)
 
@@ -376,24 +402,8 @@ test_that("SummarySpec validates n_decimals_ofv", {
   )
 })
 
-test_that("summary tables handle .ctl model names", {
-  model_dir <- system.file(
-    "extdata",
-    "models",
-    "ctls",
-    package = "hyperion.tables"
-  )
-  testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
-
-  tree <- hyperion::get_model_lineage(model_dir)
-
-  spec <- SummarySpec(columns = "ofv")
-  data <- apply_summary_spec(tree, spec)
-
-  expect_true(nrow(data) > 0)
-})
-
 test_that("apply_summary_spec keeps df when pvalue requested", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -402,7 +412,7 @@ test_that("apply_summary_spec keeps df when pvalue requested", {
   )
   testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
 
-  tree <- hyperion::get_model_lineage(model_dir)
+  tree <- hyperion::get_model_lineage()
   spec <- SummarySpec(columns = c("ofv", "dofv", "pvalue"))
 
   data <- apply_summary_spec(tree, spec)
@@ -411,24 +421,24 @@ test_that("apply_summary_spec keeps df when pvalue requested", {
 })
 
 test_that("load_models preserves list entries for missing outputs", {
-  model_dir <- system.file(
-    "extdata",
-    "models",
-    "onecmt",
-    package = "hyperion.tables"
-  )
-  testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
-
   model_names <- c("run001.mod", "missing.mod")
+  metadata_df <- data.frame(
+    name = model_names,
+    path = c(
+      "extdata/models/onecmt/run001.mod",
+      "extdata/models/onecmt/missing.mod"
+    ),
+    stringsAsFactors = FALSE
+  )
   expect_warning(
     expect_warning(
-      hyperion.tables:::load_models(model_names, model_dir),
+      hyperion.tables:::load_models(model_names, metadata_df),
       "could not load model:"
     ),
     "1 of 2 model\\(s\\) failed to load"
   )
   models <- suppressWarnings(
-    hyperion.tables:::load_models(model_names, model_dir)
+    hyperion.tables:::load_models(model_names, metadata_df)
   )
 
   # Use [<- with NULL to preserve list entry for missing models.
@@ -464,6 +474,7 @@ test_that("get_time_suffix(auto) returns minutes for mid-range values when attri
 })
 
 test_that("dofv calculation includes n_parameters even when not in spec columns", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -472,7 +483,7 @@ test_that("dofv calculation includes n_parameters even when not in spec columns"
   )
   testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
 
-  tree <- hyperion::get_model_lineage(model_dir)
+  tree <- hyperion::get_model_lineage()
   # Requesting dofv forces n_parameters to be computed internally,
   # even though it's not in spec@columns
   spec <- SummarySpec(columns = c("ofv", "dofv"))
@@ -491,6 +502,7 @@ test_that("format_time_value treats auto as seconds", {
 })
 
 test_that("filter_metadata errors with message when tag_filter matches nothing", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -498,7 +510,7 @@ test_that("filter_metadata errors with message when tag_filter matches nothing",
     package = "hyperion.tables"
   )
 
-  tree <- hyperion::get_model_lineage(model_dir)
+  tree <- hyperion::get_model_lineage()
   spec <- SummarySpec(tag_filter = "nonexistent_tag_xyz")
 
   expect_error(
@@ -508,6 +520,7 @@ test_that("filter_metadata errors with message when tag_filter matches nothing",
 })
 
 test_that("filter_metadata errors with message when models_to_include matches nothing", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -515,7 +528,7 @@ test_that("filter_metadata errors with message when models_to_include matches no
     package = "hyperion.tables"
   )
 
-  tree <- hyperion::get_model_lineage(model_dir)
+  tree <- hyperion::get_model_lineage()
   spec <- SummarySpec(models_to_include = c("no_such_model", "also_missing"))
 
   expect_error(
@@ -525,6 +538,7 @@ test_that("filter_metadata errors with message when models_to_include matches no
 })
 
 test_that("filter_metadata errors with both filters in message", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -532,7 +546,7 @@ test_that("filter_metadata errors with both filters in message", {
     package = "hyperion.tables"
   )
 
-  tree <- hyperion::get_model_lineage(model_dir)
+  tree <- hyperion::get_model_lineage()
   spec <- SummarySpec(
     tag_filter = "fake_tag",
     models_to_include = "fake_model"
@@ -545,6 +559,7 @@ test_that("filter_metadata errors with both filters in message", {
 })
 
 test_that("filter_metadata errors with tag_exclude in message", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -552,10 +567,10 @@ test_that("filter_metadata errors with tag_exclude in message", {
     package = "hyperion.tables"
   )
 
-  tree <- hyperion::get_model_lineage(model_dir)
+  tree <- hyperion::get_model_lineage()
   # Tag all models so exclusion removes everything
-  for (name in names(tree$nodes)) {
-    tree$nodes[[name]]$tags <- "doomed"
+  for (i in seq_along(tree$nodes)) {
+    tree$nodes[[i]]$model$tags <- list("doomed")
   }
   spec <- SummarySpec(tag_exclude = "doomed")
 

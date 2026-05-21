@@ -6,10 +6,11 @@
 .quarto
 
 lefthook.yaml
-
+.claude/
 **/*.otter.R
 
 **/*.html
 !tests/testthat/_snaps/**/*.html
 **/*_files
 inst/doc
+.positai

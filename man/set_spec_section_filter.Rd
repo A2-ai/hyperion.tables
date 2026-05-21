@@ -4,32 +4,33 @@
 \alias{set_spec_section_filter}
 \title{Set section filter for a spec}
 \usage{
-set_spec_section_filter(spec, ...)
+set_spec_section_filter(spec, exclude = NULL, keep = NULL)
 }
 \arguments{
-\item{spec}{A TableSpec or SummarySpec object}
+\item{spec}{A TableSpec or SummarySpec object.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{exclude}{Character vector of section labels to drop, optionally
+including \code{NA} to also drop unmatched rows.}
+
+\item{keep}{Character vector of section labels to keep (everything else
+is dropped), optionally including \code{NA} to also keep unmatched rows.}
 }
 \value{
-Modified spec
+Modified spec.
 }
 \description{
-Filters out rows belonging to specified sections. Use \code{NA} to also
-filter unmatched rows (those that didn't match any section rule).
-}
-\details{
-Built-in methods for \code{TableSpec} and \code{SummarySpec} interpret values in
-\code{...} as section labels to exclude. Pass \code{NA} to also exclude unmatched rows
-(those that did not match any section rule). Call with no arguments to clear
-the filter. Named arguments in \code{...} are ignored with a warning.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+\code{set_spec_section_filter()} was deprecated in hyperion.tables 0.5.0 and
+will be removed in 0.6.0. Use \code{\link[=set_spec_sections]{set_spec_sections()}} with \code{keep} or
+\code{exclude} instead. Calling with no filter arguments still clears the
+existing filter for backward compatibility.
 }
 \examples{
-spec <- SummarySpec(
-  sections = section_rules(
+spec <- SummarySpec() |>
+  set_spec_sections(
     "base" \%in\% tags ~ "Base Models",
     TRUE ~ "Other"
-  )
-) |>
-  set_spec_section_filter("Other")
+  ) |>
+  set_spec_section_filter(exclude = "Other")
 }

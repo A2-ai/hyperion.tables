@@ -7,26 +7,27 @@
 set_spec_summary_filter(spec, ..., overwrite = FALSE)
 }
 \arguments{
-\item{spec}{A SummarySpec object}
+\item{spec}{A SummarySpec object.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Filter expressions evaluated against summary columns (e.g.
+\code{ofv < 1000}). Captured as quosures and combined via
+\code{\link[=summary_filter_rules]{summary_filter_rules()}}.}
 
 \item{overwrite}{If FALSE (default), append to existing rules.
 If TRUE, replace all existing rules.}
 }
 \value{
-Modified spec
+Modified spec.
 }
 \description{
-Controls which models appear in the summary table based on filter
-expressions evaluated against summary columns.
-}
-\details{
-The built-in \code{SummarySpec} method interprets unnamed arguments in \code{...} as
-summary filter rule expressions. Named arguments in \code{...} are ignored with a
-warning.
+\code{set_spec_summary_filter()} controls which models appear in the summary
+table based on filter expressions evaluated against summary columns.
+Operates on \code{SummarySpec} only.
 }
 \examples{
 spec <- SummarySpec() |>
   set_spec_summary_filter(ofv < 1000)
+}
+\seealso{
+\code{\link[=get_spec_summary_filter]{get_spec_summary_filter()}}.
 }

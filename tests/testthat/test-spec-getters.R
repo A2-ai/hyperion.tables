@@ -66,13 +66,11 @@ test_that("get_spec_parameter_names works", {
 
   expect_true(S7::S7_inherits(opts, ParameterNameOptions))
   expect_equal(opts@source, "name")
-  expect_true(opts@append_omega_with_theta)
 
   modified <- spec |>
-    set_spec_parameter_names(source = "nonmem", append_omega_with_theta = FALSE)
+    set_spec_parameter_names(source = "nonmem")
   opts2 <- get_spec_parameter_names(modified)
   expect_equal(opts2@source, "nonmem")
-  expect_false(opts2@append_omega_with_theta)
 })
 
 test_that("get_spec_ci returns CIOptions", {
@@ -91,29 +89,63 @@ test_that("get_spec_ci returns modified CI", {
   expect_equal(ci@level, 0.90)
 })
 
-test_that("get_spec_sections returns list", {
+test_that("get_spec_sections returns a SectionOptions object", {
   spec <- TableSpec()
   sections <- get_spec_sections(spec)
 
-  expect_true(is.list(sections))
+  expect_true(S7::S7_inherits(sections, SectionOptions))
 })
 
-test_that("get_spec_sections returns added sections", {
+test_that("get_spec_sections returns added rules on the SectionOptions object", {
   spec <- TableSpec() |>
     set_spec_sections(kind == "THETA" ~ "Structural")
 
   sections <- get_spec_sections(spec)
-  expect_length(sections, 1)
+  expect_length(sections@rules, 1)
 })
 
-test_that("get_spec_section_filter returns NULL by default", {
-  expect_null(get_spec_section_filter(TableSpec()))
-  expect_null(get_spec_section_filter(SummarySpec()))
+test_that("get_spec_section_filter returns empty list by default", {
+  expect_identical(get_spec_section_filter(TableSpec()), list())
+  expect_identical(get_spec_section_filter(SummarySpec()), list())
 })
 
-test_that("get_spec_section_filter returns set value", {
-  spec <- TableSpec() |> set_spec_section_filter("Other", NA)
-  expect_equal(get_spec_section_filter(spec), c("Other", NA_character_))
+test_that("get_spec_section_filter returns set exclude value", {
+  spec <- TableSpec() |>
+    set_spec_sections(
+      kind == "THETA" ~ "Other",
+      exclude = c("Other", NA)
+    )
+  expect_identical(
+    get_spec_section_filter(spec),
+    list(exclude = c("Other", NA_character_))
+  )
+})
+
+test_that("get_spec_section_filter returns set keep value", {
+  spec <- TableSpec() |>
+    set_spec_sections(
+      kind == "THETA" ~ "Structural",
+      kind == "OMEGA" ~ "Variability",
+      keep = c("Structural", "Variability")
+    )
+  expect_identical(
+    get_spec_section_filter(spec),
+    list(keep = c("Structural", "Variability"))
+  )
+})
+
+test_that("section order on spec is empty by default", {
+  expect_length(TableSpec()@sections@order, 0L)
+})
+
+test_that("set_spec_sections(order=) populates sections@order", {
+  spec <- TableSpec() |>
+    set_spec_sections(
+      kind == "THETA" ~ "A",
+      kind == "OMEGA" ~ "B",
+      order = c("B", "A")
+    )
+  expect_identical(spec@sections@order, c("B", "A"))
 })
 
 test_that("get_spec_filter returns list", {

@@ -7,25 +7,27 @@
 set_spec_filter(spec, ..., overwrite = FALSE)
 }
 \arguments{
-\item{spec}{A TableSpec object}
+\item{spec}{A TableSpec object.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Filter expressions evaluated against parameter rows (e.g.
+\code{!fixed}, \code{diagonal}). Captured as quosures and combined via
+\code{\link[=filter_rules]{filter_rules()}}.}
 
 \item{overwrite}{If FALSE (default), append to existing rules.
 If TRUE, replace all existing rules.}
 }
 \value{
-Modified spec
+Modified spec.
 }
 \description{
-Controls which parameters appear in the output table. Pass filter
-expressions like \code{!fixed}, \code{diagonal}.
-}
-\details{
-The built-in \code{TableSpec} method interprets unnamed arguments in \code{...} as
-filter rule expressions. Named arguments in \code{...} are ignored with a warning.
+\code{set_spec_filter()} controls which parameters appear in the output table.
+Pass filter expressions like \code{!fixed}, \code{diagonal}. Operates on \code{TableSpec}
+only.
 }
 \examples{
 spec <- TableSpec() |>
   set_spec_filter(!fixed, diagonal)
+}
+\seealso{
+\code{\link[=get_spec_filter]{get_spec_filter()}}.
 }

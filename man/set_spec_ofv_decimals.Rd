@@ -7,20 +7,23 @@
 set_spec_ofv_decimals(spec, n, ...)
 }
 \arguments{
-\item{spec}{A TableSpec or SummarySpec object}
+\item{spec}{A TableSpec or SummarySpec object.}
 
-\item{n}{Non-negative integer or NA}
+\item{n}{Non-negative integer or NA.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Not used.}
 }
 \value{
-Modified spec
+Modified spec.
 }
 \description{
-Controls the number of decimal places for OFV and dOFV values. Use NA to
-keep significant-figure formatting.
+\code{set_spec_ofv_decimals()} controls the number of decimal places for OFV and
+dOFV values. Use \code{NA} to keep significant-figure formatting.
 }
 \examples{
 spec <- SummarySpec() |>
   set_spec_ofv_decimals(2)
+}
+\seealso{
+\code{\link[=get_spec_ofv_decimals]{get_spec_ofv_decimals()}}.
 }

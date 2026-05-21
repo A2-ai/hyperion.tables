@@ -15,6 +15,6 @@ dependencies = [
   { name = "covr", install_suggestions = true },
   #{ name = "starlightr", git = "https://github.com/a2-ai/starlightr", branch = "main" },
 
-  "hyperion",
+  { name = "hyperion", git = "https://github.com/a2-ai/hyperion", tag = "v0.5.0" },
   { name = "hyperion.tables", path = ".", dependencies_only = false, install_suggestions = true },
 ]

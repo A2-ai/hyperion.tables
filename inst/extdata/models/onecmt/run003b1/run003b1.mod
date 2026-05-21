@@ -28,13 +28,13 @@ Y = IPRED * (1 + EPS(1)) + EPS(2)
 
 $THETA
 (0, 1.768615)     ;TVCL (L/hr)
-(0.5, 5)           ;WT-on-CL ()
+(0.5, 5)           ;WT-on-CL
 (0, 34.80303)    ;TVV (L)
 (0, 0.939213)     ;TVKA (1/hr)
 
 $OMEGA BLOCK(2)
 0.103       ;OM1 TVCL :EXP
-0.00009    ;OM1,2 TVCL:TVV :EXP
+0.00009    ;OM1,2 TVCL,TVV :EXP
 0.109       ;OM2 TVV :EXP
 $OMEGA
 0.099       ;OM3 TVKA :EXP

@@ -7,19 +7,23 @@
 set_spec_time_format(spec, format, ...)
 }
 \arguments{
-\item{spec}{A SummarySpec object}
+\item{spec}{A SummarySpec object.}
 
-\item{format}{One of "seconds", "minutes", "hours", or "auto"}
+\item{format}{One of "seconds", "minutes", "hours", or "auto".}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Not used.}
 }
 \value{
-Modified spec
+Modified spec.
 }
 \description{
-Controls how time columns are formatted.
+\code{set_spec_time_format()} controls how time columns are formatted. Operates
+on \code{SummarySpec} only.
 }
 \examples{
 spec <- SummarySpec() |>
   set_spec_time_format("minutes")
+}
+\seealso{
+\code{\link[=get_spec_time_format]{get_spec_time_format()}}.
 }

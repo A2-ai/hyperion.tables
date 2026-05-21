@@ -3,6 +3,108 @@
 # ==============================================================================
 
 #' @noRd
+valid_table_columns <- function() {
+  c(
+    "kind",
+    "name",
+    "random_effect",
+    "description",
+    "symbol",
+    "unit",
+    "estimate",
+    "stderr",
+    "diagonal",
+    "ci_low",
+    "ci_high",
+    "fixed",
+    "variability",
+    "cv",
+    "corr",
+    "sd",
+    "rse",
+    "shrinkage"
+  )
+}
+
+#' @noRd
+valid_summary_columns <- function() {
+  c(
+    # From tree metadata
+    "based_on",
+    "description",
+    # From parameters
+    "n_parameters",
+    # From run_details
+    "problem",
+    "number_data_records",
+    "number_subjects",
+    "number_obs",
+    "estimation_method",
+    "estimation_time",
+    "covariance_time",
+    "postprocess_time",
+    "function_evaluations",
+    "significant_digits",
+    # From minimization_results
+    "ofv",
+    "dofv",
+    "condition_number",
+    "termination_status",
+    # Computed LRT fields
+    "pvalue",
+    "df"
+  )
+}
+
+#' @noRd
+comparison_suffix_columns <- function() {
+  c(
+    "symbol",
+    "unit",
+    "estimate",
+    "rse",
+    "ci_low",
+    "ci_high",
+    "variability",
+    "stderr",
+    "fixed",
+    "shrinkage"
+  )
+}
+
+#' @noRd
+expand_ci_alias <- function(cols) {
+  if (is.null(cols) || length(cols) == 0) {
+    return(cols)
+  }
+  if ("ci" %in% cols) {
+    replace_idx <- which(cols == "ci")
+    cols <- unlist(
+      lapply(seq_along(cols), function(i) {
+        if (i %in% replace_idx) c("ci_low", "ci_high") else cols[[i]]
+      }),
+      use.names = FALSE
+    )
+    cols <- cols[!duplicated(cols)]
+  }
+  cols
+}
+
+#' @noRd
+expand_ci_drop_columns <- function(drop_columns) {
+  if (length(drop_columns) == 0) {
+    return(drop_columns)
+  }
+
+  ci_aliases <- c("ci", "ci_1", "ci_2", "ci_left", "ci_right")
+  if (any(drop_columns %in% ci_aliases)) {
+    drop_columns <- unique(c(drop_columns, "ci_low", "ci_high"))
+  }
+
+  drop_columns
+}
+
+#' @noRd
 table_spec_valid_columns <- function() {
   c(valid_table_columns(), "ci", "pct_change")
 }
@@ -94,6 +196,29 @@ validate_table_drop_columns <- function(cols, label = "@drop_columns") {
   table_drop_columns_message(bad, label = label)
 }
 
+#' Validate p-value threshold
+#'
+#' @param threshold Numeric or NULL
+#' @return NULL if valid, or error message string if invalid
+#' @noRd
+validate_pvalue_threshold <- function(threshold) {
+  if (is.null(threshold)) {
+    return(NULL)
+  }
+  if (
+    length(threshold) != 1 ||
+      is.na(threshold) ||
+      threshold <= 0 ||
+      threshold >= 1
+  ) {
+    return(sprintf(
+      "@pvalue_threshold must be NULL or a number between 0 and 1. Got: %s",
+      threshold
+    ))
+  }
+  NULL
+}
+
 #' @noRd
 validate_ofv_decimals <- function(value, label = "@n_decimals_ofv") {
   if (length(value) != 1) {
@@ -112,35 +237,6 @@ validate_ofv_decimals <- function(value, label = "@n_decimals_ofv") {
       label,
       value
     ))
-  }
-  NULL
-}
-
-#' @noRd
-validate_table_footnote_order <- function(order, label = "@footnote_order") {
-  valid <- c("summary_info", "equations", "abbreviations")
-
-  if (!is.null(order)) {
-    if (length(order) == 0) {
-      return(sprintf("%s must be NULL or have at least one section", label))
-    }
-    bad <- setdiff(order, valid)
-    if (length(bad) > 0) {
-      return(sprintf(
-        "%s must be in: %s\n  Got: %s",
-        label,
-        paste(valid, collapse = ", "),
-        paste(bad, collapse = ", ")
-      ))
-    }
-  }
-  NULL
-}
-
-#' @noRd
-validate_summary_footnote_order <- function(order, label = "@footnote_order") {
-  if (!is.null(order) && !identical(order, "abbreviations")) {
-    return(sprintf("%s must be NULL or 'abbreviations'", label))
   }
   NULL
 }

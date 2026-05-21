@@ -7,19 +7,20 @@
 set_spec_footnotes(spec, order, ...)
 }
 \arguments{
-\item{spec}{A TableSpec or SummarySpec object}
+\item{spec}{A TableSpec or SummarySpec object.}
 
 \item{order}{Character vector of footnote sections in desired order, or NULL
 to disable footnotes. For TableSpec: "summary_info", "equations", "abbreviations".
 For SummarySpec: only "abbreviations" is valid.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Not used.}
 }
 \value{
-Modified spec
+Modified spec.
 }
 \description{
-Controls the order of footnote sections, or disables footnotes entirely.
+\code{set_spec_footnotes()} controls the order of footnote sections, or disables
+footnotes entirely.
 }
 \examples{
 spec <- TableSpec() |>
@@ -28,4 +29,7 @@ spec <- TableSpec() |>
 # Disable footnotes
 spec <- TableSpec() |>
   set_spec_footnotes(NULL)
+}
+\seealso{
+\code{\link[=get_spec_footnotes]{get_spec_footnotes()}}.
 }

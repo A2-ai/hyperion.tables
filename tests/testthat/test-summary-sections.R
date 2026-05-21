@@ -5,21 +5,21 @@
 test_that("tag-based sections render correctly (gt + flextable)", {
   testthat::skip_if_not_installed("gt")
 
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
     "onecmt",
     package = "hyperion.tables"
   )
-  tree <- hyperion::get_model_lineage(model_dir)
+  tree <- hyperion::get_model_lineage()
 
-  spec <- SummarySpec(
-    sections = section_rules(
+  spec <- SummarySpec() |>
+    set_spec_sections(
       "base" %in% tags ~ "Base Models",
-      "key" %in% tags ~ "Key Models"
+      "key" %in% tags ~ "Key Models",
+      exclude = NA
     )
-  ) |>
-    set_spec_section_filter(NA)
 
   table <- tree |>
     apply_summary_spec(spec) |>
@@ -35,6 +35,7 @@ test_that("tag-based sections render correctly (gt + flextable)", {
 })
 
 test_that("section_filter multi-section", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -42,11 +43,21 @@ test_that("section_filter multi-section", {
     package = "hyperion.tables"
   )
 
-  tree <- hyperion::get_model_lineage(model_dir)
+  tree <- hyperion::get_model_lineage()
 
-  tree$nodes$run001.mod$tags <- c(tree$nodes$run001.mod$tags, "one-comp")
-  tree$nodes$run002.mod$tags <- c(tree$nodes$run002.mod$tags, "two-comp")
-  tree$nodes$run003.mod$tags <- c(tree$nodes$run003.mod$tags, "two-comp")
+  for (i in seq_along(tree$nodes)) {
+    bn <- basename(tree$nodes[[i]]$name)
+    new_tag <- switch(
+      bn,
+      "run001.mod" = "one-comp",
+      "run002.mod" = "two-comp",
+      "run003.mod" = "two-comp",
+      NULL
+    )
+    if (!is.null(new_tag)) {
+      tree$nodes[[i]]$model$tags <- c(tree$nodes[[i]]$model$tags, list(new_tag))
+    }
+  }
 
   # No catch-all: untagged models get NA section
   # Filter both "Key Models" and NA — only "Base Models" (run001) survives
@@ -55,9 +66,9 @@ test_that("section_filter multi-section", {
       "one-comp" %in% tags ~ "One Compartment",
       "base" %in% tags ~ "Base Model",
       "two-comp" %in% tags ~ "Two Compartment",
-      TRUE ~ "Other"
-    ) |>
-    set_spec_section_filter("Other")
+      TRUE ~ "Other",
+      exclude = "Other"
+    )
 
   # Multiple sections for single model warning
   expect_warning(
@@ -79,6 +90,7 @@ test_that("section_filter multi-section", {
 })
 
 test_that("section_filter drops sections from parameter table", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -89,14 +101,13 @@ test_that("section_filter drops sections from parameter table", {
   params <- hyperion::get_parameters(mod)
   info <- hyperion::get_model_parameter_info(mod)
 
-  spec <- TableSpec(
-    sections = section_rules(
+  spec <- TableSpec() |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural",
       kind == "OMEGA" ~ "IIV",
-      kind == "SIGMA" ~ "Residual"
+      kind == "SIGMA" ~ "Residual",
+      exclude = "Residual"
     )
-  ) |>
-    set_spec_section_filter("Residual")
 
   df <- apply_table_spec(params, spec, info)
 
@@ -105,6 +116,7 @@ test_that("section_filter drops sections from parameter table", {
 })
 
 test_that("multi-match warning fires for parameter table sections", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -116,13 +128,12 @@ test_that("multi-match warning fires for parameter table sections", {
   info <- hyperion::get_model_parameter_info(mod)
 
   # OMEGA rows are both "OMEGA" kind and diagonal, so they match both rules
-  spec <- TableSpec(
-    sections = section_rules(
+  spec <- TableSpec() |>
+    set_spec_sections(
       kind == "OMEGA" ~ "Random Effects",
       diagonal ~ "Diagonal Elements",
       kind == "THETA" ~ "Structural"
     )
-  )
 
   expect_warning(
     apply_table_spec(params, spec, info),
@@ -140,7 +151,7 @@ test_that("SummarySpec accumulates section rules across calls", {
       model == "run001" ~ "Base Models"
     )
 
-  rules <- get_spec_sections(spec)
+  rules <- get_spec_sections(spec)@rules
   labels <- vapply(
     rules,
     function(r) {
@@ -152,9 +163,47 @@ test_that("SummarySpec accumulates section rules across calls", {
   expect_length(rules, 3)
 })
 
-test_that("SummarySpec rejects invalid section rules", {
+test_that("SectionOptions rejects invalid section rules", {
   expect_error(
-    SummarySpec(sections = list("not a formula")),
-    "section rules"
+    SectionOptions(rules = list("not a formula")),
+    "must be formulas"
+  )
+})
+
+test_that("SectionOptions errors on unknown order label when RHS is a pure expression", {
+  expect_error(
+    SectionOptions(
+      rules = section_rules(
+        kind == "THETA" ~ "Thetas",
+        kind == "OMEGA" ~ paste0("Om", "egas")
+      ),
+      order = c("Thetas", "Omegas", "Sigmas")
+    ),
+    "Sigmas"
+  )
+})
+
+test_that("SectionOptions warns on unknown order label when RHS is data-dependent", {
+  expect_warning(
+    SectionOptions(
+      rules = section_rules(
+        kind == "THETA" ~ "Thetas",
+        TRUE ~ paste0("Pre-", is_pediatric)
+      ),
+      order = c("Thetas", "Pediatric", "Sigmas")
+    ),
+    "Sigmas"
+  )
+})
+
+test_that("SectionOptions accepts valid all-literal order", {
+  expect_no_error(
+    SectionOptions(
+      rules = section_rules(
+        kind == "THETA" ~ "Thetas",
+        kind == "OMEGA" ~ "Omegas"
+      ),
+      order = c("Thetas", "Omegas")
+    )
   )
 })

@@ -7,19 +7,23 @@
 set_spec_remove_unrun(spec, remove, ...)
 }
 \arguments{
-\item{spec}{A SummarySpec object}
+\item{spec}{A SummarySpec object.}
 
-\item{remove}{Logical value}
+\item{remove}{Logical value.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Not used.}
 }
 \value{
-Modified spec
+Modified spec.
 }
 \description{
-Controls whether models without completed runs are excluded.
+\code{set_spec_remove_unrun()} controls whether models without completed runs
+are excluded. Operates on \code{SummarySpec} only.
 }
 \examples{
 spec <- SummarySpec() |>
   set_spec_remove_unrun(FALSE)
+}
+\seealso{
+\code{\link[=get_spec_remove_unrun]{get_spec_remove_unrun()}}.
 }

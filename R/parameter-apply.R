@@ -29,8 +29,7 @@ apply_table_spec <- function(params, spec, info = NULL) {
   df <- resolve_name_columns(df, spec, info)
   df <- apply_sections_and_filters(df, spec)
 
-  attr(df, "table_spec") <- spec
-  df
+  attach_hyperion_spec(df, spec, TableSpec)
 }
 
 #' Compute derived columns (transforms, CV, RSE, CI, symbol)
@@ -98,7 +97,7 @@ compute_derived_columns <- function(params, spec, info) {
 #' @noRd
 maybe_enrich_description <- function(df, spec, info) {
   want_description <- "description" %in%
-    c(spec@columns, spec@add_columns %||% character(0)) &&
+    get_spec_columns(spec) &&
     !"description" %in% spec@drop_columns
 
   if (!want_description) {
@@ -156,29 +155,73 @@ resolve_name_columns <- function(df, spec, info) {
   df
 }
 
-#' Filter rows by section_filter
+#' Filter rows by section filter
 #'
-#' Removes rows whose section label is in `spec@section_filter`.
-#' Pass `NA` in the filter to also remove unmatched (NA-section) rows.
+#' Reads `spec@sections@filter` (a list with at most one named entry, `keep`
+#' or `exclude`). `NA` inside the value also targets rows whose section
+#' didn't match any rule. Empty list = no filter.
 #'
 #' @param df Data frame with a `section` column
-#' @param spec A TableSpec or SummarySpec with a `section_filter` property
+#' @param spec A TableSpec or SummarySpec
 #' @return Filtered data frame
 #' @noRd
 filter_sections <- function(df, spec) {
-  if (is.null(spec@section_filter) || !"section" %in% names(df)) {
+  filter <- spec@sections@filter
+  if (length(filter) == 0L || !"section" %in% names(df)) {
     return(df)
   }
+  mode <- names(filter)
+  labels <- filter[[1]]
+  has_na <- any(is.na(labels))
+  named <- labels[!is.na(labels)]
+  n_before <- nrow(df)
+  available_sections <- unique(stats::na.omit(df$section))
 
-  filter_labels <- spec@section_filter
-  has_na_filter <- any(is.na(filter_labels))
-  named_filters <- filter_labels[!is.na(filter_labels)]
-
-  if (length(named_filters) > 0) {
-    df <- dplyr::filter(df, !.data$section %in% named_filters)
+  if (mode == "exclude") {
+    if (length(named) > 0) {
+      df <- dplyr::filter(df, !.data$section %in% named)
+    }
+    if (has_na) {
+      df <- dplyr::filter(df, !is.na(.data$section))
+    }
+  } else if (mode == "keep") {
+    cond <- df$section %in% named
+    if (has_na) {
+      cond <- cond | is.na(df$section)
+    }
+    df <- df[cond, , drop = FALSE]
+  } else {
+    rlang::abort(paste0(
+      "Unknown section_filter mode: '",
+      mode,
+      "'. Expected 'exclude' or 'keep'."
+    ))
   }
-  if (has_na_filter) {
-    df <- dplyr::filter(df, !is.na(.data$section))
+
+  unmatched <- setdiff(named, available_sections)
+  if (n_before > 0L && length(unmatched) > 0L) {
+    rlang::warn(paste0(
+      "section_filter ",
+      mode,
+      " label(s) not present in the data: ",
+      paste(shQuote(unmatched), collapse = ", "),
+      ". Available sections: ",
+      if (length(available_sections)) {
+        paste(shQuote(available_sections), collapse = ", ")
+      } else {
+        "<none>"
+      },
+      "."
+    ))
+  }
+  if (nrow(df) == 0L && n_before > 0L) {
+    rlang::warn(paste0(
+      "section_filter (",
+      mode,
+      " = ",
+      paste(deparse(labels), collapse = " "),
+      ") removed every row."
+    ))
   }
   df
 }
@@ -191,6 +234,8 @@ apply_sections_and_filters <- function(df, spec) {
       section = build_section(dplyr::pick(dplyr::everything()), spec)
     )
 
+  df <- apply_lookup_section_overrides(df, spec)
+
   df <- filter_sections(df, spec)
 
   if (length(spec@row_filter) > 0) {
@@ -201,6 +246,60 @@ apply_sections_and_filters <- function(df, spec) {
   }
 
   df
+}
+
+#' Override `section` per-parameter from merged assignments
+#'
+#' Walks `spec@sections@assignments` (file + inline already merged at
+#' setter time). Parameter rows are matched by `user_name` first (the
+#' comment-name like "TVCL"), falling back to `nonmem_name` ("THETA1").
+#'
+#' @noRd
+apply_lookup_section_overrides <- function(df, spec) {
+  assignments <- spec@sections@assignments
+  if (length(assignments) == 0L) {
+    return(df)
+  }
+
+  items <- unlist(assignments, use.names = FALSE)
+  labels <- rep(names(assignments), lengths(assignments))
+  section_map <- stats::setNames(labels, items)
+
+  res <- assign_section_overrides(df, section_map)
+  inline_unmatched <- intersect(res$unmatched, spec@sections@inline_items)
+  if (length(inline_unmatched) > 0L) {
+    rlang::warn(paste0(
+      "Inline `parameters` section override(s) did not match any parameter: ",
+      paste(shQuote(inline_unmatched), collapse = ", "),
+      "."
+    ))
+  }
+  res$data
+}
+
+#' Apply a name -> section map onto df$section, matching user_name first,
+#' nonmem_name second. Returns the data frame and the indices of map keys
+#' that did not match any row, so the caller can warn with appropriate
+#' context (file vs inline).
+#' @noRd
+assign_section_overrides <- function(df, section_map) {
+  match_keys <- if ("user_name" %in% names(df)) df$user_name else df$name
+  hits <- match(match_keys, names(section_map))
+  if ("nonmem_name" %in% names(df)) {
+    miss <- is.na(hits)
+    if (any(miss)) {
+      hits[miss] <- match(df$nonmem_name[miss], names(section_map))
+    }
+  }
+  matched <- !is.na(hits)
+  if (any(matched)) {
+    df$section[matched] <- unname(section_map[hits[matched]])
+  }
+  unmatched_keys <- setdiff(
+    names(section_map),
+    names(section_map)[unique(stats::na.omit(hits))]
+  )
+  list(data = df, unmatched = unmatched_keys)
 }
 
 # ==============================================================================
@@ -244,7 +343,7 @@ build_section <- function(data, spec) {
     rlang::abort("spec must be a TableSpec object")
   }
 
-  rules <- spec@sections
+  rules <- spec@sections@rules
   if (length(rules) == 0) {
     return(rep(NA_character_, nrow(data)))
   }
@@ -322,16 +421,33 @@ warn_multi_match_sections <- function(formulas, data) {
 
 #' Get section order from spec
 #' @noRd
-get_section_order <- S7::new_generic("get_section_order", "spec")
-
-S7::method(get_section_order, AnySpec) <- function(spec) {
+get_section_order <- function(spec) {
   vapply(
-    spec@sections,
+    spec@sections@rules,
     function(rule) {
       rlang::f_rhs(rlang::eval_tidy(rule))
     },
     character(1)
   )
+}
+
+#' Resolve final section levels, honoring `set_spec_section_order()` if set,
+#' otherwise falling back to spec rule declaration order with TOML-introduced
+#' labels appended in encounter order. Returns a list with the (possibly
+#' filtered) data and the level vector.
+#' @noRd
+resolve_section_levels <- function(data, spec) {
+  override <- spec@sections@order
+  if (length(override) > 0L) {
+    levels <- as.character(override)
+    extra <- setdiff(unique(stats::na.omit(data$section)), levels)
+    levels <- c(levels, extra)
+  } else {
+    spec_levels <- unique(get_section_order(spec))
+    extra <- setdiff(unique(stats::na.omit(data$section)), spec_levels)
+    levels <- c(spec_levels, extra)
+  }
+  list(data = data, levels = levels)
 }
 
 #' @noRd
@@ -340,15 +456,14 @@ comment_keys_for <- function(nonmem, comment, include_associated_theta = TRUE) {
 
   if (!is.null(comment@name)) {
     keys <- c(keys, comment@name)
+  }
 
-    if (
-      include_associated_theta &&
-        S7::S7_inherits(comment, OmegaComment) &&
-        !is.null(comment@associated_theta)
-    ) {
-      theta_str <- paste(comment@associated_theta, collapse = "-")
-      keys <- c(keys, paste0(comment@name, " (", theta_str, ")"))
-    }
+  if (
+    S7::S7_inherits(comment, OmegaComment) &&
+      !is.null(comment@raw_name) &&
+      !is.na(comment@raw_name)
+  ) {
+    keys <- c(keys, comment@raw_name)
   }
 
   if (!is.null(comment@display)) {
@@ -361,7 +476,6 @@ comment_keys_for <- function(nonmem, comment, include_associated_theta = TRUE) {
 #' @noRd
 build_name_lookup <- function(info, parameter_names) {
   source <- parameter_names@source
-  append_omega <- parameter_names@append_omega_with_theta
 
   # Helper to get raw name from a comment based on source
   get_raw_name <- function(cmt, nonmem_name) {
@@ -380,64 +494,10 @@ build_name_lookup <- function(info, parameter_names) {
     }
   }
 
-  # Helper to get theta label based on source
-  # theta_name is the @name from associated_theta (e.g., "TVV")
-  get_theta_label <- function(theta_name) {
-    # Find the theta comment by searching for matching @name
-    theta_cmt <- NULL
-    theta_nonmem <- NULL
-    for (nm in names(info@theta)) {
-      if (
-        !is.na(info@theta[[nm]]@name) && info@theta[[nm]]@name == theta_name
-      ) {
-        theta_cmt <- info@theta[[nm]]
-        theta_nonmem <- nm
-        break
-      }
-    }
-
-    if (is.null(theta_cmt)) {
-      # Not found - return as-is
-
-      return(theta_name)
-    }
-
-    if (source == "nonmem") {
-      return(theta_nonmem)
-    } else if (source == "display") {
-      # Use display if available, otherwise name
-      if (!is.null(theta_cmt@display) && !is.na(theta_cmt@display)) {
-        return(theta_cmt@display)
-      }
-    }
-    # Default: use the theta's @name
-    theta_name
-  }
-
   build_lookup_rows <- function(comments, kind_label) {
     lapply(names(comments), function(nonmem) {
       cmt <- comments[[nonmem]]
       target <- get_raw_name(cmt, nonmem)
-
-      # For omega with append_omega_with_theta = TRUE, add theta info
-      if (
-        append_omega &&
-          S7::S7_inherits(cmt, OmegaComment) &&
-          !is.null(cmt@associated_theta)
-      ) {
-        theta_lbls <- vapply(
-          cmt@associated_theta,
-          get_theta_label,
-          character(1)
-        )
-        names(theta_lbls) <- cmt@associated_theta
-
-        target <- format_omega_display_name(
-          name = target,
-          associated_theta = cmt@associated_theta,
-          theta_labels = theta_lbls
-        )
-      }
 
       keys <- comment_keys_for(nonmem, cmt, include_associated_theta = TRUE)
 

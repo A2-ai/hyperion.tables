@@ -707,3 +707,25 @@ render_to_image.flextable <- function(table, path = NULL) {
 
   knitr::include_graphics(png_path)
 }
+
+#' @export
+render_to_word.flextable <- function(table, path, landscape = FALSE) {
+  check_suggested("flextable", reason = "for Word output.")
+  if (!grepl("\\.docx$", path, ignore.case = TRUE)) {
+    rlang::abort("`path` must end in `.docx`.")
+  }
+  dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+  fit_width <- if (isTRUE(landscape)) 9.5 else 7
+  args <- list(
+    flextable::fit_to_width(table, max_width = fit_width),
+    path = path
+  )
+  if (isTRUE(landscape)) {
+    check_suggested("officer", reason = "for landscape orientation.")
+    args$pr_section <- officer::prop_section(
+      page_size = officer::page_size(orient = "landscape")
+    )
+  }
+  do.call(flextable::save_as_docx, args)
+  invisible(path)
+}

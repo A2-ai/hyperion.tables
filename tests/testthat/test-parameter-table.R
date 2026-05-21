@@ -1,4 +1,5 @@
 test_that("parameter table: run001 basic spec", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -16,15 +17,15 @@ test_that("parameter table: run001 basic spec", {
   spec <- TableSpec(
     display_transforms = list(omega = "cv"),
     parameter_names = ParameterNameOptions(source = "display"),
-    title = "Model Parameters",
-    sections = section_rules(
+    title = "Model Parameters"
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual error",
       TRUE ~ "Other"
     )
-  )
 
   table_gt <- params |>
     apply_table_spec(spec, mod_info) |>
@@ -42,6 +43,7 @@ test_that("parameter table: run001 basic spec", {
 })
 
 test_that("parameter table: run001 shows fixed", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -60,15 +62,15 @@ test_that("parameter table: run001 shows fixed", {
     display_transforms = list(omega = "cv"),
     parameter_names = ParameterNameOptions(source = "display"),
     title = "Model Parameters",
-    sections = section_rules(
+    add_columns = "fixed"
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual error",
       TRUE ~ "Other"
-    ),
-    add_columns = "fixed"
-  )
+    )
 
   table_gt <- params |>
     apply_table_spec(spec, mod_info) |>
@@ -86,6 +88,7 @@ test_that("parameter table: run001 shows fixed", {
 })
 
 test_that("parameter table: run002 shows empty fixed", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -103,15 +106,15 @@ test_that("parameter table: run002 shows empty fixed", {
   spec <- TableSpec(
     display_transforms = list(omega = "cv"),
     parameter_names = ParameterNameOptions(source = "display"),
-    title = "Model Parameters",
-    sections = section_rules(
+    title = "Model Parameters"
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual error",
       TRUE ~ "Other"
     )
-  )
 
   table_gt <- params |>
     apply_table_spec(spec, mod_info) |>
@@ -145,6 +148,7 @@ test_that("parameter table: run002 shows empty fixed", {
 })
 
 test_that("parameter table: run003 drop ci column", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -163,15 +167,15 @@ test_that("parameter table: run003 drop ci column", {
     display_transforms = list(omega = "cv"),
     parameter_names = ParameterNameOptions(source = "display"),
     title = "Model Parameters",
-    sections = section_rules(
+    drop_columns = "ci"
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual error",
       TRUE ~ "Other"
-    ),
-    drop_columns = "ci"
-  )
+    )
 
   table_gt <- params |>
     apply_table_spec(spec, mod_info) |>
@@ -189,6 +193,7 @@ test_that("parameter table: run003 drop ci column", {
 })
 
 test_that("parameter table: run003 drop ci_low column", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -207,15 +212,15 @@ test_that("parameter table: run003 drop ci_low column", {
     display_transforms = list(omega = "cv"),
     parameter_names = ParameterNameOptions(source = "display"),
     title = "Model Parameters",
-    sections = section_rules(
+    drop_columns = "ci_low"
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual error",
       TRUE ~ "Other"
-    ),
-    drop_columns = "ci_low"
-  )
+    )
 
   table_gt <- params |>
     apply_table_spec(spec, mod_info) |>
@@ -233,6 +238,7 @@ test_that("parameter table: run003 drop ci_low column", {
 })
 
 test_that("parameter table: run003 drop ci_high column", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -251,15 +257,15 @@ test_that("parameter table: run003 drop ci_high column", {
     display_transforms = list(omega = "cv"),
     parameter_names = ParameterNameOptions(source = "display"),
     title = "Model Parameters",
-    sections = section_rules(
+    drop_columns = "ci_high"
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual error",
       TRUE ~ "Other"
-    ),
-    drop_columns = "ci_high"
-  )
+    )
 
   table_gt <- params |>
     apply_table_spec(spec, mod_info) |>
@@ -277,6 +283,7 @@ test_that("parameter table: run003 drop ci_high column", {
 })
 
 test_that("parameter table: run003 summary footnote only", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -295,16 +302,16 @@ test_that("parameter table: run003 summary footnote only", {
     display_transforms = list(omega = "cv"),
     parameter_names = ParameterNameOptions(source = "display"),
     title = "Model Parameters",
-    sections = section_rules(
+    drop_columns = "ci",
+    footnote_order = "summary_info"
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual error",
       TRUE ~ "Other"
-    ),
-    drop_columns = "ci",
-    footnote_order = "summary_info"
-  )
+    )
 
   table_gt <- params |>
     apply_table_spec(spec, mod_info) |>
@@ -322,6 +329,7 @@ test_that("parameter table: run003 summary footnote only", {
 })
 
 test_that("parameter table: run003 drop footnotes", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -340,16 +348,16 @@ test_that("parameter table: run003 drop footnotes", {
     display_transforms = list(omega = "cv"),
     parameter_names = ParameterNameOptions(source = "display"),
     title = "Model Parameters",
-    sections = section_rules(
+    drop_columns = "ci",
+    footnote_order = NULL
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual error",
       TRUE ~ "Other"
-    ),
-    drop_columns = "ci",
-    footnote_order = NULL
-  )
+    )
 
   table_gt <- params |>
     apply_table_spec(spec, mod_info) |>
@@ -367,6 +375,7 @@ test_that("parameter table: run003 drop footnotes", {
 })
 
 test_that("parameter table: run001 no spec", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -386,6 +395,7 @@ test_that("parameter table: run001 no spec", {
 })
 
 test_that("parameter table: base display", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -398,17 +408,17 @@ test_that("parameter table: base display", {
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
-    sections = section_rules(
+    parameter_names = ParameterNameOptions(source = "display"),
+    drop_columns = "rse",
+    title = paste(model_run, "Parameters")
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual error",
       TRUE ~ "Other"
-    ),
-    parameter_names = ParameterNameOptions(source = "display"),
-    drop_columns = "rse",
-    title = paste(model_run, "Parameters")
-  )
+    )
 
   info <- hyperion::get_model_parameter_info(mod, lookup_path)
   info@sigma$`SIGMA(1,1)`@parameterization <- "Proportional"
@@ -423,6 +433,7 @@ test_that("parameter table: base display", {
 })
 
 test_that("parameter table: display name source", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -436,17 +447,17 @@ test_that("parameter table: display name source", {
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
-    sections = section_rules(
+    parameter_names = ParameterNameOptions(source = "display"),
+    drop_columns = "rse",
+    title = paste(model_run, "Parameters")
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual error",
       TRUE ~ "Other"
-    ),
-    parameter_names = ParameterNameOptions(source = "display"),
-    drop_columns = "rse",
-    title = paste(model_run, "Parameters")
-  )
+    )
 
   info <- hyperion::get_model_parameter_info(mod, lookup_path)
   info@sigma$`SIGMA(1,1)`@parameterization <- "Proportional"
@@ -463,6 +474,7 @@ test_that("parameter table: display name source", {
 })
 
 test_that("parameter table: nonmem name source", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -476,17 +488,17 @@ test_that("parameter table: nonmem name source", {
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
-    sections = section_rules(
+    parameter_names = ParameterNameOptions(source = "nonmem"),
+    drop_columns = "rse",
+    title = paste(model_run, "Parameters")
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual error",
       TRUE ~ "Other"
-    ),
-    parameter_names = ParameterNameOptions(source = "nonmem"),
-    drop_columns = "rse",
-    title = paste(model_run, "Parameters")
-  )
+    )
 
   info <- hyperion::get_model_parameter_info(mod, lookup_path)
   info@sigma$`SIGMA(1,1)`@parameterization <- "Proportional"
@@ -500,51 +512,8 @@ test_that("parameter table: nonmem name source", {
   snapshot_gt(table, "param-nonmem-name-gt")
 })
 
-test_that("parameter table: nonmem source without theta append", {
-  model_dir <- system.file(
-    "extdata",
-    "models",
-    "onecmt",
-    package = "hyperion.tables"
-  )
-
-  model_run <- "run003"
-  lookup_path <- system.file("lookup.toml", package = "hyperion.tables")
-  mod <- hyperion::read_model(file.path(model_dir, paste0(model_run, ".mod")))
-
-  spec <- TableSpec(
-    display_transforms = list(omega = c("cv")),
-    sections = section_rules(
-      kind == "THETA" ~ "Structural model parameters",
-      kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
-      kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
-      kind == "SIGMA" ~ "Residual error",
-      TRUE ~ "Other"
-    ),
-    drop_columns = "rse",
-    title = paste(model_run, "Parameters")
-  ) |>
-    set_spec_parameter_names(source = "nonmem", append_omega_with_theta = FALSE)
-
-  info <- hyperion::get_model_parameter_info(mod, lookup_path)
-  info@sigma$`SIGMA(1,1)`@parameterization <- "Proportional"
-
-  mod_sum <- summary(mod)
-
-  table_gt <- hyperion::get_parameters(mod) |>
-    apply_table_spec(spec, info) |>
-    add_summary_info(mod_sum) |>
-    make_parameter_table()
-  snapshot_gt(table_gt, "param-nonmem-no-theta-gt")
-
-  table_ft <- hyperion::get_parameters(mod) |>
-    apply_table_spec(spec, info) |>
-    add_summary_info(mod_sum) |>
-    make_parameter_table(output = "flextable")
-  snapshot_flextable(table_ft, "param-nonmem-no-theta-ft")
-})
-
 test_that("parameter table: description column", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -557,18 +526,18 @@ test_that("parameter table: description column", {
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
-    sections = section_rules(
-      kind == "THETA" ~ "Structural model parameters",
-      kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
-      kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
-      kind == "SIGMA" ~ "Residual error",
-      TRUE ~ "Other"
-    ),
     parameter_names = ParameterNameOptions(source = "display"),
     add_columns = "description",
     drop_columns = "rse",
     title = paste(model_run, "Parameters")
-  )
+  ) |>
+    set_spec_sections(
+      kind == "THETA" ~ "Structural model parameters",
+      kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
+      kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
+      kind == "SIGMA" ~ "Residual error",
+      TRUE ~ "Other"
+    )
 
   info <- hyperion::get_model_parameter_info(mod, lookup_path)
   info@sigma$`SIGMA(1,1)`@parameterization <- "Proportional"
@@ -583,6 +552,7 @@ test_that("parameter table: description column", {
 })
 
 test_that("parameter table: drop unit column", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -596,17 +566,17 @@ test_that("parameter table: drop unit column", {
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
-    sections = section_rules(
+    parameter_names = ParameterNameOptions(source = "display"),
+    drop_columns = "unit",
+    title = paste(model_run, "Parameters")
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual error",
       TRUE ~ "Other"
-    ),
-    parameter_names = ParameterNameOptions(source = "display"),
-    drop_columns = "unit",
-    title = paste(model_run, "Parameters")
-  )
+    )
 
   info <- hyperion::get_model_parameter_info(mod, lookup_path)
   info@sigma$`SIGMA(1,1)`@parameterization <- "Proportional"
@@ -621,6 +591,7 @@ test_that("parameter table: drop unit column", {
 })
 
 test_that("parameter table: drop unit and shrinkage columns", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -633,17 +604,17 @@ test_that("parameter table: drop unit and shrinkage columns", {
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
-    sections = section_rules(
+    parameter_names = ParameterNameOptions(source = "display"),
+    drop_columns = c("unit", "shrinkage"),
+    title = paste(model_run, "Parameters")
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual error",
       TRUE ~ "Other"
-    ),
-    parameter_names = ParameterNameOptions(source = "display"),
-    drop_columns = c("unit", "shrinkage"),
-    title = paste(model_run, "Parameters")
-  )
+    )
 
   info <- hyperion::get_model_parameter_info(mod, lookup_path)
   info@sigma$`SIGMA(1,1)`@parameterization <- "Proportional"
@@ -658,6 +629,7 @@ test_that("parameter table: drop unit and shrinkage columns", {
 })
 
 test_that("parameter table: structural-only filter", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -672,15 +644,15 @@ test_that("parameter table: structural-only filter", {
   info@sigma$`SIGMA(1,1)`@parameterization <- "Proportional"
 
   sp_spec <- TableSpec(
-    sections = section_rules(
-      kind == "THETA" ~ "Structural model parameters",
-      TRUE ~ "Other"
-    ),
     row_filter = filter_rules(
       kind == "THETA"
     ),
     drop_columns = "shrinkage"
-  )
+  ) |>
+    set_spec_sections(
+      kind == "THETA" ~ "Structural model parameters",
+      TRUE ~ "Other"
+    )
 
   table <- hyperion::get_parameters(mod) |>
     apply_table_spec(sp_spec, info) |>
@@ -689,6 +661,7 @@ test_that("parameter table: structural-only filter", {
 })
 
 test_that("parameter table: random effects only", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -704,16 +677,16 @@ test_that("parameter table: random effects only", {
   info@sigma$`SIGMA(1,1)`@parameterization <- "Proportional"
 
   re_spec <- TableSpec(
-    sections = section_rules(
-      kind == "OMEGA" ~ "Random Effect Parameters",
-      kind == "SIGMA" ~ "Residual Error",
-      TRUE ~ "Other"
-    ),
     row_filter = filter_rules(
       kind != "THETA"
     ),
     drop_columns = "unit"
-  )
+  ) |>
+    set_spec_sections(
+      kind == "OMEGA" ~ "Random Effect Parameters",
+      kind == "SIGMA" ~ "Residual Error",
+      TRUE ~ "Other"
+    )
 
   table <- hyperion::get_parameters(mod) |>
     apply_table_spec(re_spec, info) |>
@@ -722,6 +695,7 @@ test_that("parameter table: random effects only", {
 })
 
 test_that("parameter table: 70% CI", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -733,16 +707,16 @@ test_that("parameter table: 70% CI", {
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
-    sections = section_rules(
+    ci = CIOptions(level = 0.7),
+    n_sigfig = 3
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual variance",
       TRUE ~ "Other"
-    ),
-    ci = CIOptions(level = 0.7),
-    n_sigfig = 3
-  )
+    )
 
   mod_sum <- summary(mod)
   info <- hyperion::get_model_parameter_info(mod)
@@ -755,6 +729,7 @@ test_that("parameter table: 70% CI", {
 })
 
 test_that("parameter table: summary info without condition number", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -767,17 +742,17 @@ test_that("parameter table: summary info without condition number", {
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
-    sections = section_rules(
+    ci = CIOptions(level = 0.7),
+    n_sigfig = 3,
+    parameter_names = ParameterNameOptions(source = "display")
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual variance",
       TRUE ~ "Other"
-    ),
-    ci = CIOptions(level = 0.7),
-    n_sigfig = 3,
-    parameter_names = ParameterNameOptions(source = "display")
-  )
+    )
 
   mod_sum <- summary(mod)
   info <- hyperion::get_model_parameter_info(mod, lookup_path)
@@ -790,6 +765,7 @@ test_that("parameter table: summary info without condition number", {
 })
 
 test_that("parameter table: summary info without condition number or OFV", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -802,17 +778,17 @@ test_that("parameter table: summary info without condition number or OFV", {
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
-    sections = section_rules(
+    ci = CIOptions(level = 0.7),
+    n_sigfig = 3,
+    parameter_names = ParameterNameOptions(source = "display")
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual variance",
       TRUE ~ "Other"
-    ),
-    ci = CIOptions(level = 0.7),
-    n_sigfig = 3,
-    parameter_names = ParameterNameOptions(source = "display")
-  )
+    )
 
   mod_sum <- summary(mod)
   info <- hyperion::get_model_parameter_info(mod, lookup_path)
@@ -825,6 +801,7 @@ test_that("parameter table: summary info without condition number or OFV", {
 })
 
 test_that("parameter table: summary info without method", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -837,17 +814,17 @@ test_that("parameter table: summary info without method", {
 
   spec <- TableSpec(
     display_transforms = list(omega = c("cv")),
-    sections = section_rules(
+    ci = CIOptions(level = 0.7),
+    n_sigfig = 3,
+    parameter_names = ParameterNameOptions(source = "display")
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual variance",
       TRUE ~ "Other"
-    ),
-    ci = CIOptions(level = 0.7),
-    n_sigfig = 3,
-    parameter_names = ParameterNameOptions(source = "display")
-  )
+    )
 
   mod_sum <- summary(mod)
   info <- hyperion::get_model_parameter_info(mod, lookup_path)
@@ -860,6 +837,7 @@ test_that("parameter table: summary info without method", {
 })
 
 test_that("symbol + fixed shows nicely", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -874,15 +852,15 @@ test_that("symbol + fixed shows nicely", {
   mod <- hyperion::read_model(file.path(model_dir, paste0(model_run, ".mod")))
 
   spec <- TableSpec(
-    columns = c("name", "symbol", "fixed"),
-    sections = section_rules(
+    columns = c("name", "symbol", "fixed")
+  ) |>
+    set_spec_sections(
       kind == "THETA" ~ "Structural model parameters",
       kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
       kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
       kind == "SIGMA" ~ "Residual error",
       TRUE ~ "Other"
     )
-  )
 
   mod_sum <- summary(mod)
   info <- hyperion::get_model_parameter_info(mod, lookup_path)
@@ -900,6 +878,7 @@ test_that("symbol + fixed shows nicely", {
 # ==============================================================================
 
 test_that("resolve_name_columns warns and falls back when info=NULL and source != nonmem", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -928,6 +907,7 @@ test_that("resolve_name_columns warns and falls back when info=NULL and source !
 })
 
 test_that("maybe_enrich_description returns df unchanged when description is dropped", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -954,6 +934,7 @@ test_that("maybe_enrich_description returns df unchanged when description is dro
 })
 
 test_that("resolve_hidden_columns shows fixed_fmt when fixed is requested", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",
@@ -982,6 +963,7 @@ test_that("resolve_hidden_columns shows fixed_fmt when fixed is requested", {
 })
 
 test_that("resolve_hidden_columns hides fixed and fixed_fmt when all NA", {
+  local_fixture_dir()
   model_dir <- system.file(
     "extdata",
     "models",

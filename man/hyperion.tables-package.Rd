@@ -18,6 +18,7 @@ S7 classes for configuring table output:
 \item \link{SummarySpec} - Configuration for run summary tables
 \item \link{CIOptions} - Confidence interval display options
 \item \link{ParameterNameOptions} - Parameter name display options
+\item \link{SectionOptions} - Section assignment, order, and filter options
 }
 }
 
@@ -60,7 +61,7 @@ Functions for reading spec properties:
 \item \code{\link[=get_spec_ci]{get_spec_ci()}} - Get CI options from a TableSpec
 \item \code{\link[=get_spec_parameter_names]{get_spec_parameter_names()}} - Get parameter name options
 \item \code{\link[=get_spec_sections]{get_spec_sections()}} - Get section rules
-\item \code{\link[=get_spec_section_filter]{get_spec_section_filter()}} - Get section filter function
+\item \code{\link[=get_spec_section_filter]{get_spec_section_filter()}} - Get section filter configuration
 \item \code{\link[=get_spec_filter]{get_spec_filter()}} - Get row filter rules
 \item \code{\link[=get_spec_transforms]{get_spec_transforms()}} - Get display transforms
 \item \code{\link[=get_spec_variability]{get_spec_variability()}} - Get variability rules
@@ -89,7 +90,6 @@ Functions that work on both TableSpec and SummarySpec:
 \item \code{\link[=set_spec_pvalue]{set_spec_pvalue()}} - Set p-value formatting
 \item \code{\link[=set_spec_footnotes]{set_spec_footnotes()}} - Set footnote order
 \item \code{\link[=set_spec_sections]{set_spec_sections()}} - Set section grouping rules
-\item \code{\link[=set_spec_section_filter]{set_spec_section_filter()}} - Set section filter function
 }
 }
 

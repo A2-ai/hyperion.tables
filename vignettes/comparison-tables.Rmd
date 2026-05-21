@@ -22,6 +22,7 @@ library(gt)
 library(flextable)
 
 model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
+options(hyperion.config_dir = system.file(package = "hyperion.tables"))
 model_run <- "run003"
 ```
 
@@ -58,7 +59,7 @@ get_parameters(parent_mod) |>
       add_summary_info(child_sum),
     labels = c("run002", "run003")
   ) |>
-  make_comparison_table() |>
+  make_comparison_table(output = "flextable") |>
 	render_to_image()
 ```
 

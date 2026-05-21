@@ -2,22 +2,26 @@
 % Please edit documentation in R/spec-getters.R
 \name{get_spec_sections}
 \alias{get_spec_sections}
-\title{Get section rules from a spec}
+\title{Get section configuration from a spec}
 \usage{
 get_spec_sections(spec, ...)
 }
 \arguments{
-\item{spec}{A TableSpec or SummarySpec object}
+\item{spec}{A TableSpec or SummarySpec object.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Not used.}
 }
 \value{
-List of quosures
+A \link{SectionOptions} object.
 }
 \description{
-Returns the list of section assignment rules.
+\code{get_spec_sections()} returns the spec's \link{SectionOptions} object (rules,
+assignments, order, filter).
 }
 \examples{
 spec <- TableSpec()
 get_spec_sections(spec)
+}
+\seealso{
+\code{\link[=set_spec_sections]{set_spec_sections()}}.
 }

@@ -7,23 +7,22 @@
 set_spec_columns(spec, ...)
 }
 \arguments{
-\item{spec}{A TableSpec or SummarySpec object}
+\item{spec}{A TableSpec or SummarySpec object.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Column names as unnamed character strings. For TableSpec, the
+alias \code{"ci"} expands to the configured confidence-interval bounds columns.}
 }
 \value{
-Modified spec
+Modified spec.
 }
 \description{
-Replaces the spec's columns list entirely. This overrides the default
-column set.
-}
-\details{
-Built-in methods for \code{TableSpec} and \code{SummarySpec} interpret unnamed
-arguments in \code{...} as column names (character strings). Named arguments in
-\code{...} are ignored with a warning.
+\code{set_spec_columns()} replaces the spec's columns list entirely. This
+overrides the default column set.
 }
 \examples{
 spec <- TableSpec() |>
   set_spec_columns("name", "estimate", "rse")
+}
+\seealso{
+\code{\link[=get_spec_columns]{get_spec_columns()}}, \code{\link[=add_spec_columns]{add_spec_columns()}}, \code{\link[=drop_spec_columns]{drop_spec_columns()}}.
 }

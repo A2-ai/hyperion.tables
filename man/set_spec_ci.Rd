@@ -14,25 +14,29 @@ set_spec_ci(
 )
 }
 \arguments{
-\item{spec}{A TableSpec object}
+\item{spec}{A TableSpec object.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Not used.}
 
-\item{level}{Confidence interval level (0-1, exclusive)}
+\item{level}{Confidence interval level (0-1, exclusive).}
 
-\item{merge}{Logical. If TRUE, merge CI bounds into a single column}
+\item{merge}{Logical. If TRUE, merge CI bounds into a single column.}
 
-\item{pattern}{sprintf pattern for merged CI display (must contain two \%\%s)}
+\item{pattern}{sprintf pattern for merged CI display (must contain two \%\%s).}
 
-\item{missing_text}{Text to show for missing CI values}
+\item{missing_text}{Text to show for missing CI values.}
 }
 \value{
-Modified spec
+Modified spec.
 }
 \description{
-Controls confidence interval rendering options.
+\code{set_spec_ci()} controls confidence interval rendering options. Operates on
+\code{TableSpec} only.
 }
 \examples{
 spec <- TableSpec() |>
   set_spec_ci(level = 0.90, merge = TRUE, pattern = "(\%s, \%s)")
+}
+\seealso{
+\code{\link[=get_spec_ci]{get_spec_ci()}}.
 }

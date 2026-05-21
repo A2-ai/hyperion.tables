@@ -1,3 +1,50 @@
+# hyperion.tables 0.5.0
+
+## Breaking Changes
+
+* `ParameterNameOptions()` no longer accepts `append_omega_with_theta`. Omega/theta name joining is handled upstream by `hyperion`; remove the argument from any `ParameterNameOptions()` calls.
+* `TableSpec()` and `SummarySpec()` no longer have a `section_filter` property. Filtering is folded into the new `SectionOptions` object stored on `@sections`. Configure filters with `set_spec_sections(keep = ...)` or `set_spec_sections(exclude = ...)`. `NA` in either vector still targets rows that didn't match any section rule.
+* The `sections =` constructor argument now takes a `SectionOptions` object, not a list of formulas. Existing code that passes `sections = section_rules(...)` directly will fail to validate — build the spec via the pipe instead:
+
+  ```r
+  spec <- TableSpec() |>
+    set_spec_sections(
+      kind == "THETA" ~ "Structural",
+      kind == "OMEGA" ~ "IIV"
+    )
+  ```
+* `set_spec_section_filter()` is deprecated and will be removed in 0.6.0. Replace with `set_spec_sections(keep = ...)` / `set_spec_sections(exclude = ...)`.
+
+## New Features
+
+### Word output
+
+* `render_to_word(table, path, landscape = FALSE)` saves a rendered `gt` or `flextable` object to a `.docx` file. For `gt` output, inline LaTeX (`$...$`) in column labels and footnotes is converted to native Word OMML equations via `equatags`, so Word renders them as equations rather than literal text. For `flextable` output, the table is fitted to page width before saving. Pass `landscape = TRUE` to write US Letter landscape (11 × 8.5 in).
+* For comparison tables, the per-model left border that separates model column groups in the `gt` output is preserved in the Word export.
+
+### Unified section configuration
+
+* New exported `SectionOptions` S7 class bundles section `rules`, per-item `assignments`, display `order`, and `filter` into one property on `TableSpec` / `SummarySpec`. Build it through `set_spec_sections()`; direct construction is rarely needed.
+* `set_spec_sections()` is now the single entry point for everything section-related: rules (via `...` or `sections =`), display ordering (`order =`), filtering (`keep =`, `exclude =`), and per-item assignments. Defaults of `NULL` mean "leave alone"; pass `character(0)` to clear.
+* `set_spec_sections(<TableSpec>)` gains two arguments for assigning specific parameters to sections:
+  * `parameters` — a named list keyed by section label, e.g. `parameters = list("Covariate Parameters" = c("CAP-D1", "WT-V2/F"))`.
+  * `file` — path to a TOML lookup where each `[parameter]` entry can carry a `section = "..."` field. Inline `parameters =` values win on conflict with a warning.
+* `set_spec_sections(<SummarySpec>)` gains a `models` argument for assigning specific runs to sections, e.g. `models = list("Selected Models" = c("run001", "run002"))`.
+* Section filtering now warns when labels in `keep` / `exclude` don't match any section in the data, and when the filter removes every row.
+
+### Markdown and LaTeX in gt output
+
+* `gt` column labels and footnotes containing `$...$` are now rendered as markdown / equations rather than literal text.
+
+### Additional getters
+
+New exports round out the spec getter API: `get_spec_footnotes()`, `get_spec_hide_empty()`, `get_spec_missing()`, `get_spec_models()`, `get_spec_ofv_decimals()`, `get_spec_parameter_sections()`, `get_spec_pvalue()`, `get_spec_remove_unrun()`, `get_spec_summary_filter()`, `get_spec_tag_filter()`.
+
+## Bug Fixes
+
+* `make_comparison_table()` no longer drops columns when an added model lacks columns present on the reference model.
+* Section-filter warnings now correctly identify unmatched labels and report when filtering removed every row, instead of silently returning an empty table.
+
 # hyperion.tables 0.4.0
 
 ## New Features

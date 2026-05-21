@@ -7,19 +7,23 @@
 set_spec_hide_empty(spec, hide, ...)
 }
 \arguments{
-\item{spec}{A TableSpec or SummarySpec object}
+\item{spec}{A TableSpec or SummarySpec object.}
 
-\item{hide}{Logical value}
+\item{hide}{Logical value.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Not used.}
 }
 \value{
-Modified spec
+Modified spec.
 }
 \description{
-Controls whether empty columns are automatically hidden.
+\code{set_spec_hide_empty()} controls whether empty columns are automatically
+hidden.
 }
 \examples{
 spec <- TableSpec() |>
   set_spec_hide_empty(FALSE)
+}
+\seealso{
+\code{\link[=get_spec_hide_empty]{get_spec_hide_empty()}}.
 }

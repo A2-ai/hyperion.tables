@@ -90,6 +90,14 @@ build_variability <- function(data, spec) {
   }
 
   rules <- spec@variability_rules
+  rule_vars <- unique(unlist(lapply(rules, function(q) {
+    all.vars(rlang::quo_get_expr(q))
+  })))
+  missing_vars <- setdiff(rule_vars, names(data))
+  for (v in missing_vars) {
+    data[[v]] <- NA
+  }
+
   args <- lapply(rules, function(q) {
     rlang::eval_tidy(q, data = data)
   })
@@ -101,9 +109,6 @@ build_variability <- function(data, spec) {
 #' @noRd
 build_variability_parameter <- function(data, spec) {
   data_fmt <- format_numeric_for_rules(data, spec@n_sigfig)
-  if (!"fixed" %in% names(data_fmt)) {
-    data_fmt$fixed <- NA
-  }
   build_variability(data_fmt, spec)
 }
 
@@ -132,16 +137,18 @@ build_variability_comparison <- function(data, spec, suffix_cols) {
 
 #' @noRd
 wants_variability_column <- function(spec) {
+  base_cols <- spec@columns %||% spec@default_columns
   "variability" %in%
-    c(spec@columns %||% character(0), spec@add_columns %||% character(0)) &&
+    c(base_cols, spec@add_columns %||% character(0)) &&
     !"variability" %in% spec@drop_columns
 }
 
 #' @noRd
 wants_variability_components <- function(spec) {
+  base_cols <- spec@columns %||% spec@default_columns
   any(
     c("cv", "corr", "sd") %in%
-      c(spec@columns %||% character(0), spec@add_columns %||% character(0))
+      c(base_cols, spec@add_columns %||% character(0))
   )
 }
 

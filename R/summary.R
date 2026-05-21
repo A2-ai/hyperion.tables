@@ -48,58 +48,6 @@ summary_filter_rules <- function(...) {
   rlang::enquos(...)
 }
 
-# ==============================================================================
-# SummarySpec helpers
-# ==============================================================================
-
-#' @noRd
-valid_summary_columns <- function() {
-  c(
-    # From tree metadata
-    "based_on",
-    "description",
-    # From parameters
-    "n_parameters",
-    # From run_details
-    "problem",
-    "number_data_records",
-    "number_subjects",
-    "number_obs",
-    "estimation_method",
-    "estimation_time",
-    "covariance_time",
-    "postprocess_time",
-    "function_evaluations",
-    "significant_digits",
-    # From minimization_results
-    "ofv",
-    "dofv",
-    "condition_number",
-    "termination_status",
-    # Computed LRT fields
-    "pvalue",
-    "df"
-  )
-}
-
-#' @noRd
-merge_summary_columns <- function(columns, add_columns) {
-  if (is.null(columns)) {
-    columns <- c(
-      "based_on",
-      "description",
-      "n_parameters",
-      "condition_number",
-      "ofv",
-      "dofv",
-      "pvalue"
-    )
-  }
-  if (!is.null(add_columns)) {
-    columns <- unique(c(columns, add_columns))
-  }
-  columns
-}
 
 # ==============================================================================
 # Apply spec to lineage tree
@@ -128,15 +76,6 @@ apply_summary_spec <- function(tree, spec) {
     rlang::abort("tree must contain at least one model.")
   }
 
-  source_dir <- tryCatch(
-    error = function(e) {
-      rlang::abort(
-        "Could not resolve `tree$source_dir` path from pharos.toml"
-      )
-    },
-    hyperion::from_config_relative(tree$source_dir)
-  )
-
   metadata_df <- build_metadata_df(tree) |>
     filter_metadata(spec)
 
@@ -144,18 +83,23 @@ apply_summary_spec <- function(tree, spec) {
   sorted_names <- topological_sort_models(metadata_df, tree)
 
   # Load models
-  models <- load_models(sorted_names, source_dir)
+  models <- load_models(sorted_names, metadata_df)
 
   # Build summary data frame (pass metadata for based_on/description)
   df <- build_summary_df(models, sorted_names, metadata_df, spec)
-  needs_dofv <- isTRUE(attr(df, ".needs_dofv"))
-  attr(df, ".needs_dofv") <- NULL
+  taken <- take_needs_dofv(df)
+  needs_dofv <- taken$value
+  df <- taken$df
 
   # Evaluate section rules (before column trim so rule-referenced cols available)
-  if (length(spec@sections) > 0) {
-    df$section <- build_summary_section(df, spec@sections)
-    section_levels <- unique(get_section_order(spec))
-    df$section <- factor(df$section, levels = section_levels)
+  has_section_config <- length(spec@sections@rules) > 0 ||
+    length(spec@sections@order) > 0 ||
+    length(spec@sections@filter) > 0
+  if (has_section_config) {
+    df$section <- build_summary_section(df, spec@sections@rules)
+    resolved <- resolve_section_levels(df, spec)
+    df <- resolved$data
+    df$section <- factor(df$section, levels = resolved$levels)
     df <- dplyr::arrange(df, .data$section)
     df$section <- as.character(df$section)
 
@@ -186,8 +130,7 @@ apply_summary_spec <- function(tree, spec) {
     df <- dplyr::select(df, -dplyr::any_of(spec@drop_columns))
   }
 
-  attr(df, "summary_spec") <- spec
-  df
+  attach_hyperion_spec(df, spec, SummarySpec)
 }
 
 #' Filter metadata data frame by tag and model name
@@ -251,15 +194,14 @@ filter_metadata <- function(metadata_df, spec) {
 #' Build metadata data frame from tree nodes
 #' @noRd
 build_metadata_df <- function(tree) {
-  nodes <- tree$nodes
-
-  rows <- lapply(names(nodes), function(name) {
-    node <- nodes[[name]]
+  rows <- lapply(tree$nodes, function(node) {
+    parents <- as.character(unlist(node$model$based_on %||% list()))
     data.frame(
-      name = name,
-      description = node$description %||% NA_character_,
-      tags = I(list(node$tags %||% character(0))),
-      based_on = I(list(as.character(unlist(node$based_on %||% list())))),
+      name = tools::file_path_sans_ext(basename(node$name)),
+      path = node$name,
+      description = node$model$description %||% NA_character_,
+      tags = I(list(as.character(unlist(node$model$tags)) %||% character(0))),
+      based_on = I(list(tools::file_path_sans_ext(basename(parents)))),
       stringsAsFactors = FALSE
     )
   })
@@ -321,10 +263,12 @@ topological_sort_models <- function(metadata_df, tree) {
 
 #' Load models for given model names
 #' @noRd
-load_models <- function(model_names, source_dir) {
+load_models <- function(model_names, metadata_df) {
+  paths <- metadata_df$path[match(model_names, metadata_df$name)]
   models <- list()
-  for (name in model_names) {
-    model_path <- file.path(source_dir, name)
+  for (i in seq_along(model_names)) {
+    name <- model_names[i]
+    model_path <- hyperion::from_config_relative(paths[i])
     mod <- tryCatch(
       read_model(model_path),
       error = function(e) {
@@ -367,9 +311,10 @@ filter_unrun_rows <- function(df, remove = TRUE) {
 #' Remove internal columns and reorder to match spec column order
 #' @noRd
 select_output_columns <- function(df, spec, needs_dofv) {
+  resolved_cols <- get_spec_columns(spec)
   # Remove internal columns
   internal_cols <- c(".name", ".based_on_raw")
-  if (!needs_dofv && "based_on" %in% spec@columns) {
+  if (!needs_dofv && "based_on" %in% resolved_cols) {
     df <- dplyr::select(df, -dplyr::all_of(internal_cols))
   } else if (needs_dofv) {
     df <- dplyr::select(df, -dplyr::any_of(c(".name", ".based_on_raw")))
@@ -377,7 +322,7 @@ select_output_columns <- function(df, spec, needs_dofv) {
 
   # Remove internal columns that weren't requested (but we needed for calculations)
   # Keep df if pvalue is requested (used for display merging)
-  keep_df_for_pvalue <- "pvalue" %in% spec@columns
+  keep_df_for_pvalue <- "pvalue" %in% resolved_cols
   internal_calc_cols <- c(
     "number_obs",
     "ofv",
@@ -390,14 +335,14 @@ select_output_columns <- function(df, spec, needs_dofv) {
     if (col == "df" && keep_df_for_pvalue) {
       next
     }
-    if (needs_dofv && col %in% names(df) && !col %in% spec@columns) {
+    if (needs_dofv && col %in% names(df) && !col %in% resolved_cols) {
       df <- dplyr::select(df, -dplyr::all_of(col))
     }
   }
 
-  # Reorder columns to match spec@columns order
+  # Reorder columns to match resolved column order
   # Include df after pvalue if pvalue is requested (for merge)
-  col_order <- c("model", intersect(spec@columns, names(df)))
+  col_order <- c("model", intersect(resolved_cols, names(df)))
   if (keep_df_for_pvalue && "df" %in% names(df) && !"df" %in% col_order) {
     pvalue_idx <- which(col_order == "pvalue")
     if (length(pvalue_idx) > 0) {
@@ -500,7 +445,8 @@ build_summary_section <- function(df, rules) {
 #' Build summary data frame from loaded models
 #' @noRd
 build_summary_df <- function(models, model_names, metadata_df, spec) {
-  needs_dofv <- any(c("dofv", "pvalue", "df") %in% spec@columns)
+  resolved_cols <- get_spec_columns(spec)
+  needs_dofv <- any(c("dofv", "pvalue", "df") %in% resolved_cols)
 
   run_detail_cols <- c(
     "problem",
@@ -516,15 +462,15 @@ build_summary_df <- function(models, model_names, metadata_df, spec) {
   )
   min_result_cols <- c("ofv", "condition_number", "termination_status")
 
-  needed_from_run_details <- intersect(spec@columns, run_detail_cols)
-  needed_from_min_results <- intersect(spec@columns, min_result_cols)
+  needed_from_run_details <- intersect(resolved_cols, run_detail_cols)
+  needed_from_min_results <- intersect(resolved_cols, min_result_cols)
   if (needs_dofv) {
     needed_from_run_details <- unique(c(needed_from_run_details, "number_obs"))
     needed_from_min_results <- unique(c(needed_from_min_results, "ofv"))
   }
   needs_summary <- length(needed_from_run_details) > 0 ||
     length(needed_from_min_results) > 0 ||
-    "n_parameters" %in% spec@columns ||
+    "n_parameters" %in% resolved_cols ||
     needs_dofv
 
   meta_idx <- match(model_names, metadata_df$name)
@@ -541,7 +487,7 @@ build_summary_df <- function(models, model_names, metadata_df, spec) {
     )
 
     # Metadata columns (from tree, not model)
-    if ("based_on" %in% spec@columns || needs_dofv) {
+    if ("based_on" %in% resolved_cols || needs_dofv) {
       parents <- metadata_df$based_on[[meta_idx[i]]]
       # .based_on_raw: list-column storing full file paths of parent models.
       # Used for OFV lookups in calculate_dofv(); removed before output.
@@ -552,7 +498,7 @@ build_summary_df <- function(models, model_names, metadata_df, spec) {
         paste(tools::file_path_sans_ext(basename(parents)), collapse = ", ")
       }
     }
-    if ("description" %in% spec@columns) {
+    if ("description" %in% resolved_cols) {
       row$description <- metadata_df$description[meta_idx[i]]
     }
 
@@ -572,7 +518,7 @@ build_summary_df <- function(models, model_names, metadata_df, spec) {
       condition_number = NA_real_,
       termination_status = NA_character_
     )
-    if ("n_parameters" %in% spec@columns || needs_dofv) {
+    if ("n_parameters" %in% resolved_cols || needs_dofv) {
       row$n_parameters <- NA_integer_
     }
     for (col in needed_from_run_details) {
@@ -600,7 +546,7 @@ build_summary_df <- function(models, model_names, metadata_df, spec) {
         }
 
         # n_parameters
-        if ("n_parameters" %in% spec@columns || needs_dofv) {
+        if ("n_parameters" %in% resolved_cols || needs_dofv) {
           params <- mod_sum$parameters
           row$n_parameters <- if (
             !is.null(params) && nrow(params) > 0 && "fixed" %in% names(params)
@@ -662,7 +608,6 @@ build_summary_df <- function(models, model_names, metadata_df, spec) {
 
   df <- format_time_columns(df, spec)
   attr(df, ".needs_dofv") <- needs_dofv
-
   df
 }
 
@@ -674,7 +619,8 @@ calculate_dofv <- function(df, spec) {
   nobs_lookup <- stats::setNames(df$number_obs, df$.name)
   npar_lookup <- stats::setNames(df$n_parameters, df$.name)
 
-  needs_pvalue <- "pvalue" %in% spec@columns || "df" %in% spec@columns
+  resolved_cols <- get_spec_columns(spec)
+  needs_pvalue <- "pvalue" %in% resolved_cols || "df" %in% resolved_cols
 
   results <- lapply(seq_len(nrow(df)), function(i) {
     parents <- df$.based_on_raw[[i]]
@@ -836,7 +782,7 @@ format_time_value <- function(seconds, format) {
 #' @return A SummarySpec object or NULL
 #' @export
 get_summary_spec <- function(data) {
-  spec <- attr(data, "summary_spec")
+  spec <- attr(data, "hyperion_spec")
   if (is.null(spec)) {
     return(NULL)
   }
@@ -844,33 +790,6 @@ get_summary_spec <- function(data) {
     rlang::abort("Attached summary_spec is not a SummarySpec object")
   }
   spec
-}
-
-#' Build label map for summary table columns
-#' @noRd
-build_summary_label_map <- function() {
-  list(
-    model = "Model",
-    based_on = "Reference",
-    description = "Description",
-    n_parameters = "No. Params",
-    problem = "Problem",
-    number_data_records = "Records",
-    number_subjects = "Subjects",
-    number_obs = "Observations",
-    estimation_method = "Method",
-    estimation_time = "Est. Time",
-    covariance_time = "Cov. Time",
-    postprocess_time = "Post Time",
-    function_evaluations = "Func. Evals",
-    significant_digits = "Sig. Digits",
-    ofv = "OFV",
-    dofv = gt::md("$\\Delta$OFV"),
-    condition_number = "Cond. No.",
-    termination_status = "Termination",
-    pvalue = "p-value",
-    df = "df"
-  )
 }
 
 #' Create summary table from prepared data
@@ -895,7 +814,7 @@ make_summary_table <- function(
     check_suggested("flextable", reason = "for flextable output.")
   }
 
-  spec <- attr(data, "summary_spec")
+  spec <- get_summary_spec(data)
   if (is.null(spec)) {
     rlang::abort(
       "SummarySpec not found. Run apply_summary_spec(tree, spec) first."

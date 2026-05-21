@@ -4,30 +4,34 @@
 \alias{set_spec_tag_filter}
 \title{Set tag filter for a SummarySpec}
 \usage{
-set_spec_tag_filter(spec, ..., tags, exclude)
+set_spec_tag_filter(spec, ..., include, exclude)
 }
 \arguments{
-\item{spec}{A SummarySpec object}
+\item{spec}{A SummarySpec object.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Not used.}
 
-\item{tags}{Character vector of tags to include, or NULL for no inclusion
+\item{include}{Character vector of tags to include, or NULL for no inclusion
 filter. Only models with at least one matching tag are kept.}
 
 \item{exclude}{Character vector of tags to exclude, or NULL for no exclusion
-filter. Models with any matching tag are removed. Applied after \code{tags}.}
+filter. Models with any matching tag are removed. Applied after \code{include}.}
 }
 \value{
-Modified spec
+Modified spec.
 }
 \description{
-Filters which models appear in the summary table by tags.
+\code{set_spec_tag_filter()} filters which models appear in the summary table by
+tags. Operates on \code{SummarySpec} only.
 }
 \examples{
 spec <- SummarySpec() |>
-  set_spec_tag_filter(c("final", "approved"))
+  set_spec_tag_filter(include = c("final", "approved"))
 
 # Exclude models tagged "failed"
 spec <- SummarySpec() |>
   set_spec_tag_filter(exclude = "failed")
+}
+\seealso{
+\code{\link[=get_spec_tag_filter]{get_spec_tag_filter()}}.
 }

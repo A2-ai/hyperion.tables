@@ -7,22 +7,26 @@
 set_spec_missing(spec, text = NULL, ..., apply_to = NULL)
 }
 \arguments{
-\item{spec}{A TableSpec object}
+\item{spec}{A TableSpec object.}
 
-\item{text}{Text to substitute for NA values}
+\item{text}{Text to substitute for NA values.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Not used.}
 
 \item{apply_to}{Which columns to apply missing text to: "all", "numeric",
-or "character"}
+or "character".}
 }
 \value{
-Modified spec
+Modified spec.
 }
 \description{
-Controls how NA values are displayed in the table.
+\code{set_spec_missing()} controls how NA values are displayed in the table.
+Operates on \code{TableSpec} only.
 }
 \examples{
 spec <- TableSpec() |>
   set_spec_missing("-", apply_to = "numeric")
+}
+\seealso{
+\code{\link[=get_spec_missing]{get_spec_missing()}}.
 }

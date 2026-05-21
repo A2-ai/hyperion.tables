@@ -4,16 +4,19 @@
 \alias{get_spec_section_filter}
 \title{Get section filter from a spec}
 \usage{
-get_spec_section_filter(spec, ...)
+get_spec_section_filter(spec)
 }
 \arguments{
-\item{spec}{A TableSpec or SummarySpec object}
-
-\item{...}{Additional arguments passed to methods.}
+\item{spec}{A TableSpec or SummarySpec object.}
 }
 \value{
-Character vector or NULL
+A named list (possibly empty).
 }
 \description{
-Returns the section labels being filtered out, or NULL if no filter is set.
+Returns the current section filter as a list with one of two shapes:
+\code{list(exclude = c(...))}, \code{list(keep = c(...))}, or empty \code{list()} when no
+filter is set.
+}
+\seealso{
+\code{\link[=set_spec_sections]{set_spec_sections()}}, \code{\link[=get_spec_sections]{get_spec_sections()}}.
 }

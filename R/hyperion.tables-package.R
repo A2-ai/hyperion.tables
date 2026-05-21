@@ -12,6 +12,7 @@
 #'   \item [SummarySpec] - Configuration for run summary tables
 #'   \item [CIOptions] - Confidence interval display options
 #'   \item [ParameterNameOptions] - Parameter name display options
+#'   \item [SectionOptions] - Section assignment, order, and filter options
 #' }
 #'
 #' @section Table Creation:
@@ -46,7 +47,7 @@
 #'   \item [get_spec_ci()] - Get CI options from a TableSpec
 #'   \item [get_spec_parameter_names()] - Get parameter name options
 #'   \item [get_spec_sections()] - Get section rules
-#'   \item [get_spec_section_filter()] - Get section filter function
+#'   \item [get_spec_section_filter()] - Get section filter configuration
 #'   \item [get_spec_filter()] - Get row filter rules
 #'   \item [get_spec_transforms()] - Get display transforms
 #'   \item [get_spec_variability()] - Get variability rules
@@ -71,7 +72,6 @@
 #'   \item [set_spec_pvalue()] - Set p-value formatting
 #'   \item [set_spec_footnotes()] - Set footnote order
 #'   \item [set_spec_sections()] - Set section grouping rules
-#'   \item [set_spec_section_filter()] - Set section filter function
 #' }
 #'
 #' @section Spec Modifiers - TableSpec:
@@ -128,7 +128,6 @@
 #' @importFrom hyperion compute_ci
 #' @importFrom hyperion compute_cv
 #' @importFrom hyperion compute_rse
-#' @importFrom hyperion format_omega_display_name
 #' @importFrom hyperion read_model
 #' @importFrom hyperion get_parameter_names
 #' @importFrom hyperion get_parameter_transform

@@ -2,40 +2,115 @@
 % Please edit documentation in R/spec-setters.R
 \name{set_spec_sections}
 \alias{set_spec_sections}
-\title{Set section rules for a spec}
+\title{Set section assignments for a spec}
 \usage{
-set_spec_sections(spec, ..., overwrite = FALSE)
+set_spec_sections(
+  spec,
+  ...,
+  sections = NULL,
+  overwrite = FALSE,
+  order = NULL,
+  keep = NULL,
+  exclude = NULL
+)
 }
 \arguments{
-\item{spec}{A TableSpec or SummarySpec object}
+\item{spec}{A TableSpec or SummarySpec object.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Section rule formulas (LHS condition ~ RHS label). Equivalent
+to passing them via \verb{sections =}; kept for backward compatibility.}
 
-\item{overwrite}{If FALSE (default), append to existing rules.
-If TRUE, replace all existing rules.}
+\item{sections}{A list of section rule formulas, typically built with
+\code{\link[=section_rules]{section_rules()}}. Combined with any rules passed via \code{...} (the
+\code{sections} arg comes first).}
+
+\item{overwrite}{If \code{FALSE} (default), append to existing rules. If
+\code{TRUE}, replace them.}
+
+\item{order}{Character vector of section labels in display order.}
+
+\item{keep}{Character vector of section labels to keep (everything else is
+dropped), optionally including \code{NA} to also keep unmatched rows. Mutually
+exclusive with \code{exclude}. Pass \code{character(0)} to clear the current filter.}
+
+\item{exclude}{Character vector of section labels to drop, optionally
+including \code{NA} to also drop unmatched rows. Mutually exclusive with \code{keep}.
+Pass \code{character(0)} to clear the current filter.}
 }
 \value{
-Modified spec
+Modified spec.
 }
 \description{
-Controls how rows are grouped into sections. Pass formula expressions
-where the LHS is a condition and the RHS is the section label.
-}
-\details{
-For TableSpec, rules are evaluated against parameter columns
-(e.g., \code{kind == "THETA" ~ "Structural Parameters"}).
+Controls how rows are grouped into sections and in what order. Rules
+passed via \code{...} or \verb{sections =} are formulas like
+\code{kind == "THETA" ~ "Structural"}, evaluated via \code{\link[dplyr:case-and-replace-when]{dplyr::case_when()}}.
 
-For SummarySpec, rules are evaluated row-by-row against summary columns
-including \code{tags} (e.g., \code{"base" \%in\% tags ~ "Base Models"}).
+Display ordering is also configured here. \code{order} is a character
+vector of section labels giving the display order. Sections not
+listed land after, in encounter order. To filter to just the sections
+in \code{order}, pass \code{keep = order}.
 
-Built-in methods for \code{TableSpec} and \code{SummarySpec} interpret unnamed
-arguments in \code{...} as section rule formulas. Named arguments in \code{...} are
-ignored with a warning.
+Defaults of \code{NULL} for \code{order}, \code{keep}, and \code{exclude} mean "leave alone."
+To clear the order pass \code{order = character(0)}. To clear the current section
+filter pass \code{keep = character(0)} or \code{exclude = character(0)}.
+
+TableSpec and SummarySpec methods take additional arguments — see the
+method-specific sections below.
 }
+\section{TableSpec method}{
+
+\verb{set_spec_sections(<TableSpec>)} accepts two extra arguments for assigning
+parameters to sections, beyond the rules passed via \code{...}:
+\itemize{
+\item \code{parameters} — a named list keyed by section label, with character
+vectors of parameter names as values. E.g.
+\code{parameters = list("Covariate Parameters" = c("CAP-D1", "WT-V2/F"))}.
+\code{NULL} leaves assignments alone; \code{list()} clears them.
+\item \code{file} — path to a TOML where each entry can carry a \code{section = "..."}
+field, matched by parameter name. Read once and folded into assignments.
+}
+
+If both are passed and conflict (same parameter, different sections), a
+warning is emitted and the inline \code{parameters} value wins.
+}
+
+\section{SummarySpec method}{
+
+\verb{set_spec_sections(<SummarySpec>)} accepts one extra argument for assigning
+models to sections, beyond the rules passed via \code{...}:
+\itemize{
+\item \code{models} — a named list keyed by section label, with character vectors of
+model names as values. E.g.
+\code{models = list("Selected Models" = c("run001", "run002"))}. \code{NULL} leaves
+assignments alone; \code{list()} clears them.
+}
+}
+
 \examples{
 spec <- TableSpec() |>
   set_spec_sections(
-    kind == "THETA" ~ "Structural",
-    kind == "OMEGA" ~ "IIV"
+    kind == "THETA" ~ "Structural Parameters",
+    kind == "OMEGA" ~ "Interindividual Variability",
+    kind == "SIGMA" ~ "Residual Error",
+    parameters = list(
+      "Covariate Parameters" = c("CAP-D1", "WT-V2/F", "PSO-CL/F")
+    ),
+    order = c(
+      "Structural Parameters",
+      "Covariate Parameters",
+      "Interindividual Variability",
+      "Residual Error"
+    )
   )
+
+summary_spec <- SummarySpec() |>
+  set_spec_sections(
+    "base" \%in\% tags ~ "Base Models",
+    "key" \%in\% tags ~ "Key Models",
+    models = list("Selected Models" = c("run001", "run002")),
+    order = c("Base Models", "Key Models", "Selected Models")
+  )
+}
+\seealso{
+\code{\link[=get_spec_sections]{get_spec_sections()}}, \code{\link[=get_spec_parameter_sections]{get_spec_parameter_sections()}}.
 }

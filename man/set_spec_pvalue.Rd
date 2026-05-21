@@ -7,22 +7,25 @@
 set_spec_pvalue(spec, ..., threshold, scientific)
 }
 \arguments{
-\item{spec}{A TableSpec or SummarySpec object}
+\item{spec}{A TableSpec or SummarySpec object.}
 
-\item{...}{Additional arguments passed to methods.}
+\item{...}{Not used.}
 
 \item{threshold}{Numeric threshold below which p-values display as "< threshold",
-or NULL to disable threshold display}
+or NULL to disable threshold display.}
 
-\item{scientific}{Logical. If TRUE, use scientific notation for p-values}
+\item{scientific}{Logical. If TRUE, use scientific notation for p-values.}
 }
 \value{
-Modified spec
+Modified spec.
 }
 \description{
-Controls how p-values are displayed in the table.
+\code{set_spec_pvalue()} controls how p-values are displayed in the table.
 }
 \examples{
 spec <- TableSpec() |>
   set_spec_pvalue(threshold = 0.001, scientific = TRUE)
+}
+\seealso{
+\code{\link[=get_spec_pvalue]{get_spec_pvalue()}}.
 }
