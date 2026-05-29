@@ -12,6 +12,7 @@ knitr::opts_chunk$set(
   out.width = "100%"
 )
 dir.create("man/figures", recursive = TRUE, showWarnings = FALSE)
+options(hyperion.config_dir = system.file(package = "hyperion.tables"))
 ```
 
 # hyperion.tables
@@ -105,8 +106,7 @@ get_parameters(run002) |>
 ### Summary table
 
 ```{r summary-table}
-model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
-tree <- get_model_lineage(model_dir)
+tree <- get_model_lineage()
 
 tree |>
   apply_summary_spec(SummarySpec()) |>

@@ -14,7 +14,8 @@ include_pagefind = true
 [versions]
 enabled = true
 list = [
-	{ tag = "0.4.0", label = "v0.4.0", default = true },
+	{ tag = "0.5.0", label = "v0.5.0", default = true },
+	{ tag = "0.4.0", label = "v0.4.0" },
 	{ tag = "0.3.0", label = "v0.3.0" },
 	{ tag = "0.2.1", label = "v0.2.1" },
 	{ tag = "0.2.0", label = "v0.2.0" },
@@ -47,6 +48,7 @@ reference = [
 	{ label = "Spec Classes", collapsed = true, contents = [
 		"TableSpec",
 		"SummarySpec",
+		"SectionOptions",
 		"CIOptions",
 		"ParameterNameOptions",
 	] },
@@ -68,10 +70,20 @@ reference = [
 		"get_spec_ci",
 		"get_spec_columns",
 		"get_spec_filter",
+		"get_spec_footnotes",
+		"get_spec_hide_empty",
+		"get_spec_missing",
+		"get_spec_models",
+		"get_spec_ofv_decimals",
 		"get_spec_parameter_names",
+		"get_spec_parameter_sections",
+		"get_spec_pvalue",
+		"get_spec_remove_unrun",
 		"get_spec_section_filter",
 		"get_spec_sections",
 		"get_spec_sigfig",
+		"get_spec_summary_filter",
+		"get_spec_tag_filter",
 		"get_spec_time_format",
 		"get_spec_title",
 		"get_spec_transforms",
@@ -111,6 +123,7 @@ reference = [
 		"render_to_gt",
 		"render_to_flextable",
 		"render_to_image",
+		"render_to_word",
 	] },
 	{ label = "Model Comparison", collapsed = true, contents = [
 		"compare_with",
