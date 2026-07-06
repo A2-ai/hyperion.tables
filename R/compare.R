@@ -199,6 +199,14 @@ resolve_comparison_labels <- function(is_comparison, labels, existing_labels) {
   } else if (length(labels) != 2) {
     rlang::abort("labels must be a character vector of length 2")
   }
+  if (anyDuplicated(labels)) {
+    dup <- unique(labels[duplicated(labels)])
+    rlang::abort(c(
+      "Comparison model labels must be unique.",
+      x = sprintf("Duplicated label(s): %s", paste(dup, collapse = ", ")),
+      i = "Pass distinct `labels` (models with the same basename need explicit names)."
+    ))
+  }
   labels
 }
 
@@ -620,6 +628,13 @@ finalize_comparison <- function(
   }
 
   class(comparison) <- c("hyperion_comparison", class(comparison))
+  # When extending an existing comparison, carry forward its metadata so fields
+  # that are not recomputed here (e.g. `lineage` attached by add_model_lineage)
+  # survive the attribute-dropping join. The writes below overwrite the fields
+  # that must be recomputed.
+  if (positions$is_comparison) {
+    attr(comparison, "hyperion_meta") <- get_comparison_meta(params1)
+  }
   comparison <- set_comparison_meta_field(comparison, "summaries", summaries)
   comparison <- set_comparison_meta_field(comparison, "labels", labels)
   comparison <- set_comparison_meta_field(

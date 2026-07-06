@@ -262,10 +262,10 @@ format_ofv_lrt_footnote <- function(
               ofv_parts,
               sprintf(
                 "delta = %s, LRT p-value = %s (df=%d)",
-                hyperion::format_hyperion_decimal_string(
+                strip_negative_zero(hyperion::format_hyperion_decimal_string(
                   delta_ofv,
                   ofv_decimals
-                ),
+                )),
                 pval_str,
                 df
               )

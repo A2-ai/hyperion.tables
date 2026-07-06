@@ -254,8 +254,6 @@ TableSpec <- S7::new_class(
       "cv",
       "rse",
       "ci",
-      "ci_low",
-      "ci_high",
       "symbol"
     )
     dt <- self@display_transforms

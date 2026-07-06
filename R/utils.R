@@ -94,6 +94,15 @@ safe_summary_field <- function(summary, field) {
   summary[[field]]
 }
 
+#' Strip a redundant minus sign from a formatted zero ("-0.000" -> "0.000")
+#'
+#' Fixed-decimal formatting of a tiny negative value can produce a signed zero,
+#' which is nonsensical in a report cell.
+#' @noRd
+strip_negative_zero <- function(s) {
+  ifelse(grepl("^-0(\\.0*)?$", s), sub("^-", "", s), s)
+}
+
 #' Compute LRT p-value from a test statistic and degrees of freedom
 #'
 #' Negative values of `test_stat` (i.e., the child model has a higher OFV than

@@ -144,7 +144,14 @@ apply_summary_render_overrides <- function(table, data, numeric_cols) {
             if (is.na(x)) {
               return("")
             }
-            formatC(x, digits = spec@n_decimals_ofv, format = "f")
+            # n_decimals_ofv = NA means "keep significant-figure formatting",
+            # matching the footnote path; formatC() would error on NA digits.
+            formatted <- if (is.na(spec@n_decimals_ofv)) {
+              hyperion::format_hyperion_sigfig_string(x, spec@n_sigfig)
+            } else {
+              formatC(x, digits = spec@n_decimals_ofv, format = "f")
+            }
+            strip_negative_zero(formatted)
           },
           character(1)
         )

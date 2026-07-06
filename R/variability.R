@@ -39,11 +39,14 @@ format_sigfig_pad <- function(x, n_sigfig) {
   if (is.character(x)) {
     return(x)
   }
-
-  base <- trimws(formatC(x, digits = n_sigfig, format = "g"))
-  if (grepl("[eE]", base)) {
-    return(base)
+  if (!is.finite(x)) {
+    return(as.character(x))
   }
+
+  # Fixed notation (never scientific), matching hyperion's own sigfig formatter,
+  # so cells and footnotes of the same table stay consistent. `format = "fg"`
+  # keeps significant figures without switching to `1e+03`-style output.
+  base <- trimws(formatC(signif(x, n_sigfig), digits = n_sigfig, format = "fg"))
 
   sign <- if (startsWith(base, "-")) "-" else ""
   core <- sub("^[-+]", "", base)
@@ -83,8 +86,15 @@ format_sigfig_pad <- function(x, n_sigfig) {
 }
 
 #' Build variability display column using spec rules
+#'
+#' Each rule is a two-sided formula `condition ~ value`. The **condition** is
+#' evaluated against the raw numeric data (`data`) so comparisons like `cv > 30`
+#' are numeric, and the **value** is evaluated against the display-formatted data
+#' (`data_fmt`) so labels like `sprintf("(CV = %s%%)", cv)` show rounded figures.
+#' Evaluating both against formatted strings would make `cv > 30` a lexicographic
+#' string comparison.
 #' @noRd
-build_variability <- function(data, spec) {
+build_variability <- function(data, data_fmt, spec) {
   if (!S7::S7_inherits(spec, TableSpec)) {
     rlang::abort("spec must be a TableSpec object")
   }
@@ -93,23 +103,44 @@ build_variability <- function(data, spec) {
   rule_vars <- unique(unlist(lapply(rules, function(q) {
     all.vars(rlang::quo_get_expr(q))
   })))
-  missing_vars <- setdiff(rule_vars, names(data))
-  for (v in missing_vars) {
+  for (v in setdiff(rule_vars, names(data))) {
     data[[v]] <- NA
   }
+  for (v in setdiff(rule_vars, names(data_fmt))) {
+    data_fmt[[v]] <- NA
+  }
 
-  args <- lapply(rules, function(q) {
-    rlang::eval_tidy(q, data = data)
-  })
+  n <- nrow(data)
+  out <- rep(NA_character_, n)
+  unset <- rep(TRUE, n)
 
-  dplyr::case_when(!!!args)
+  for (q in rules) {
+    expr <- rlang::quo_get_expr(q)
+    env <- rlang::quo_get_env(q)
+    if (!rlang::is_formula(expr) || length(expr) != 3L) {
+      rlang::abort("variability rules must be two-sided formulas (`condition ~ value`)")
+    }
+
+    cond <- as.logical(rlang::eval_tidy(rlang::new_quosure(expr[[2]], env), data = data))
+    cond[is.na(cond)] <- FALSE
+    cond <- rep_len(cond, n)
+
+    val <- as.character(rlang::eval_tidy(rlang::new_quosure(expr[[3]], env), data = data_fmt))
+    val <- rep_len(val, n)
+
+    take <- unset & cond
+    out[take] <- val[take]
+    unset[take] <- FALSE
+  }
+
+  out
 }
 
 #' Build variability for parameter tables
 #' @noRd
 build_variability_parameter <- function(data, spec) {
   data_fmt <- format_numeric_for_rules(data, spec@n_sigfig)
-  build_variability(data_fmt, spec)
+  build_variability(data, data_fmt, spec)
 }
 
 #' Build variability for comparison tables
@@ -123,13 +154,17 @@ build_variability_comparison <- function(data, spec, suffix_cols) {
   }
 
   for (idx in model_indices) {
-    data_tmp <- data_fmt
-    suffixed <- grep(paste0("_", idx, "$"), names(data_tmp), value = TRUE)
+    raw_tmp <- data
+    fmt_tmp <- data_fmt
+    suffixed <- grep(paste0("_", idx, "$"), names(fmt_tmp), value = TRUE)
     for (col in suffixed) {
       base <- sub(paste0("_", idx, "$"), "", col)
-      data_tmp[[base]] <- data_tmp[[col]]
+      fmt_tmp[[base]] <- fmt_tmp[[col]]
+      if (col %in% names(raw_tmp)) {
+        raw_tmp[[base]] <- raw_tmp[[col]]
+      }
     }
-    data[[paste0("variability_", idx)]] <- build_variability(data_tmp, spec)
+    data[[paste0("variability_", idx)]] <- build_variability(raw_tmp, fmt_tmp, spec)
   }
 
   data
