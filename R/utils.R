@@ -60,25 +60,6 @@ normalize_groupname_col <- function(groupname_col, data_names) {
   groupname_col
 }
 
-#' Select columns for missing text substitution
-#' @noRd
-missing_apply_columns <- function(data, apply_to) {
-  if (is.null(apply_to) || apply_to == "all") {
-    return(names(data))
-  }
-  if (apply_to == "numeric") {
-    return(names(data)[vapply(data, is.numeric, logical(1))])
-  }
-  if (apply_to == "character") {
-    return(names(data)[vapply(
-      data,
-      function(x) is.character(x) || is.factor(x),
-      logical(1)
-    )])
-  }
-  names(data)
-}
-
 #' Safely extract a field from a model summary
 #'
 #' Returns NA if the summary is NULL or the field is NULL/missing.
@@ -132,13 +113,19 @@ format_pvalue_string <- function(pval, n_sigfig, scientific, threshold = NULL) {
     return(NA_character_)
   }
 
-  if (!is.null(threshold) && pval < threshold) {
-    return(sprintf("< %s", threshold))
+  fmt <- function(x) {
+    if (scientific) {
+      format(x, scientific = TRUE, digits = n_sigfig)
+    } else {
+      # format() rather than as.character() so tiny values do not leak into
+      # scientific notation when the caller asked for fixed notation.
+      format(signif(x, n_sigfig), scientific = FALSE, trim = TRUE)
+    }
   }
 
-  if (scientific) {
-    format(pval, scientific = TRUE, digits = n_sigfig)
-  } else {
-    as.character(signif(pval, n_sigfig))
+  if (!is.null(threshold) && pval < threshold) {
+    return(sprintf("< %s", fmt(threshold)))
   }
+
+  fmt(pval)
 }

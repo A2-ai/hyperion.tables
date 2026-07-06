@@ -518,7 +518,7 @@ resolve_section_levels <- function(data, spec) {
 }
 
 #' @noRd
-comment_keys_for <- function(nonmem, comment, include_associated_theta = TRUE) {
+comment_keys_for <- function(nonmem, comment) {
   keys <- c(nonmem)
 
   if (!is.null(comment@name)) {
@@ -566,7 +566,7 @@ build_name_lookup <- function(info, parameter_names) {
       cmt <- comments[[nonmem]]
       target <- get_raw_name(cmt, nonmem)
 
-      keys <- comment_keys_for(nonmem, cmt, include_associated_theta = TRUE)
+      keys <- comment_keys_for(nonmem, cmt)
 
       data.frame(
         key = keys,
@@ -627,7 +627,7 @@ enrich_description <- function(df, info) {
         desc <- NA_character_
       }
 
-      keys <- comment_keys_for(nonmem, cmt, include_associated_theta = TRUE)
+      keys <- comment_keys_for(nonmem, cmt)
 
       data.frame(
         key = keys,
