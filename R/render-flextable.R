@@ -58,6 +58,13 @@ render_to_flextable <- function(table) {
   # Auto-fit columns
   ft <- flextable::autofit(ft)
 
+  # autofit() re-measures the (hidden) section column from the full merged group
+  # label, inflating the table so downstream fit_to_width() shrinks fonts to
+  # unreadable sizes. Re-collapse the section column after autofit.
+  if (!is.null(groupname_col)) {
+    ft <- flextable::width(ft, j = groupname_col, width = 0.01)
+  }
+
   ft
 }
 
@@ -550,7 +557,9 @@ build_footnote_paragraph <- function(content) {
   chunks <- parse_subscripts_to_chunks(result)
 
   # Build the paragraph from chunks
-  flextable::as_paragraph(!!!chunks)
+  # `flextable::as_paragraph()` is not rlang-aware, so `!!!` would be parsed as
+  # triple negation of a list. Splice the chunks via do.call instead.
+  do.call(flextable::as_paragraph, chunks)
 }
 
 #' Parse text with subscripts into flextable chunks
@@ -597,47 +606,6 @@ parse_subscripts_to_chunks <- function(text) {
   }
 
   chunks
-}
-
-#' Convert markdown/LaTeX footnote to plain text
-#'
-#' @param content Character string with markdown/LaTeX
-#' @return Plain text version
-#' @noRd
-convert_footnote_to_text <- function(content) {
-  result <- content
-
-  # Greek letters
-  result <- gsub("\\\\theta", "\u03B8", result)
-  result <- gsub("\\\\Theta", "\u0398", result)
-  result <- gsub("\\\\Omega", "\u03A9", result)
-  result <- gsub("\\\\omega", "\u03C9", result)
-  result <- gsub("\\\\Sigma", "\u03A3", result)
-  result <- gsub("\\\\sigma", "\u03C3", result)
-  result <- gsub("\\\\Delta", "\u0394", result)
-  result <- gsub("\\\\delta", "\u03B4", result)
-
-  # Math operators
-  result <- gsub("\\\\cdot", "\u00B7", result)
-  result <- gsub("\\\\times", "\u00D7", result)
-  result <- gsub("\\\\pm", "\u00B1", result)
-  result <- gsub("\\\\sqrt\\{([^}]+)\\}", "sqrt(\\1)", result)
-  result <- gsub("\\\\frac\\{([^}]+)\\}\\{([^}]+)\\}", "(\\1)/(\\2)", result)
-  result <- gsub("\\\\exp\\(([^)]+)\\)", "exp(\\1)", result)
-  result <- gsub("\\\\exp", "exp", result)
-  result <- gsub("\\\\mathrm\\{([^}]+)\\}", "\\1", result)
-
-  # Subscripts - convert to parenthetical notation
-  result <- gsub("_\\{([^}]+)\\}", "(\\1)", result)
-
-  # Remove $ delimiters
-  result <- gsub("\\$", "", result)
-
-  # Clean up extra spaces
-  result <- gsub("\\s+", " ", result)
-  result <- trimws(result)
-
-  result
 }
 
 #' @export
@@ -708,6 +676,21 @@ render_to_image.flextable <- function(table, path = NULL) {
   knitr::include_graphics(png_path)
 }
 
+#' Scale a flextable's column widths to fit a target width
+#'
+#' Unlike `flextable::fit_to_width()`, which shrinks fonts (down to unreadable
+#' sizes when a hidden section column has been inflated by `autofit()`), this
+#' scales the existing column widths proportionally and leaves fonts untouched.
+#' @noRd
+fit_flextable_width <- function(ft, max_width) {
+  widths <- flextable::flextable_dim(ft)$widths
+  total <- sum(widths)
+  if (is.finite(total) && total > max_width) {
+    ft <- flextable::width(ft, width = widths * (max_width / total))
+  }
+  ft
+}
+
 #' @export
 render_to_word.flextable <- function(table, path, landscape = FALSE) {
   check_suggested("flextable", reason = "for Word output.")
@@ -717,7 +700,7 @@ render_to_word.flextable <- function(table, path, landscape = FALSE) {
   dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
   fit_width <- if (isTRUE(landscape)) 9.5 else 7
   args <- list(
-    flextable::fit_to_width(table, max_width = fit_width),
+    fit_flextable_width(table, max_width = fit_width),
     path = path
   )
   if (isTRUE(landscape)) {
