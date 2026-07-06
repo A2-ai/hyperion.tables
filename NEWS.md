@@ -1,3 +1,41 @@
+# hyperion.tables (development version)
+
+## Bug Fixes
+
+* Numeric formatting no longer switches to scientific notation for values at or
+  above `10^n_sigfig` (e.g. `1000`, `4090`), matching the significant-figure
+  style used elsewhere; non-finite values are handled instead of padded.
+* Variability rule conditions (e.g. `cv > 30`) are evaluated against raw numeric
+  values instead of formatted strings, so numeric comparisons are no longer
+  lexicographic. The built-in default rule now correctly blanks `cv == 0`.
+* Parameter name resolution matches each row independently and on
+  `(name, kind)`, so an uncommented parameter no longer corrupts the
+  `nonmem_name`/`user_name` of the others, and a THETA sharing a display name
+  with an OMEGA/SIGMA no longer collides.
+* `display_transforms` no longer transforms columns that were not requested when
+  the same column is listed for every kind. `ci_low`/`ci_high` are no longer
+  accepted as (non-functional) transform targets.
+* A missing (`NA`) parameter transform now degrades to an untransformed display
+  with a warning instead of crashing with a low-level index error.
+* Chaining `compare_with()` after `add_model_lineage()` preserves the lineage, so
+  LRT footnotes are retained.
+* Section rule labels may be variables or expressions, not only string literals.
+* `n_decimals_ofv = NA` keeps significant-figure formatting instead of crashing
+  when rendering summary tables; delta-OFV values no longer render as `-0.000`.
+* Duplicate comparison model labels now abort with an actionable error instead of
+  a gt error / silent flextable spanner merge.
+* `apply_table_spec()` validates its `params` argument up front with an
+  actionable message.
+* flextable equation footnotes no longer crash when `equatags` is unavailable.
+* flextable Word export of sectioned tables no longer collapses to unreadable
+  (1–2 pt) fonts; column widths are scaled proportionally instead.
+* gt Word export writes atomically (a failed sanitization no longer leaves a
+  broken file at the target path) and no longer mangles literal dollar amounts
+  into equations.
+* `set_spec_sections()` warns when given the other spec class's assignment
+  argument, and preserves inline items across repeated calls. The deprecated
+  `set_spec_section_filter()` again accepts positional section labels.
+
 # hyperion.tables 0.5.0
 
 ## Breaking Changes
