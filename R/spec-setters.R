@@ -272,7 +272,7 @@ set_spec_footnotes <- function(spec, order, ...) {
 #'     TRUE ~ "Other"
 #'   ) |>
 #'   set_spec_section_filter(exclude = "Other")
-set_spec_section_filter <- function(spec, exclude = NULL, keep = NULL) {
+set_spec_section_filter <- function(spec, ..., exclude = NULL, keep = NULL) {
   lifecycle::deprecate_warn(
     "0.5.0",
     "set_spec_section_filter()",
@@ -286,10 +286,13 @@ set_spec_section_filter <- function(spec, exclude = NULL, keep = NULL) {
   if (!S7::S7_inherits(spec, BaseSpec)) {
     rlang::abort("`spec` must be a <TableSpec> or <SummarySpec> object.")
   }
-  if (
-    (missing(exclude) || is.null(exclude)) &&
-      (missing(keep) || is.null(keep))
-  ) {
+  # 0.4.0 accepted unnamed section labels as exclusions; fold them into
+  # `exclude` so positional multi-label calls keep working.
+  dots <- rlang::list2(...)
+  if (length(dots) > 0) {
+    exclude <- c(exclude, unlist(dots, use.names = FALSE))
+  }
+  if (is.null(exclude) && is.null(keep)) {
     return(set_spec_sections(spec, keep = character(0)))
   }
   set_spec_sections(spec, exclude = exclude, keep = keep)
@@ -433,8 +436,19 @@ build_next_rules <- function(current_rules, sections_arg, dots, overwrite) {
 }
 
 #' @noRd
-drop_named_dots <- function(dots, names) {
+drop_named_dots <- function(dots, names, alt = NULL) {
   dot_names <- rlang::names2(dots)
+  dropped <- unique(dot_names[dot_names %in% names])
+  if (length(dropped) > 0) {
+    msg <- sprintf(
+      "Ignoring unsupported named argument(s): %s",
+      paste(dropped, collapse = ", ")
+    )
+    if (!is.null(alt)) {
+      msg <- c(msg, i = alt)
+    }
+    rlang::warn(msg)
+  }
   dots[!(dot_names %in% names)]
 }
 
@@ -541,7 +555,11 @@ S7::method(set_spec_sections, SummarySpec) <- function(
   keep = NULL,
   exclude = NULL
 ) {
-  dots <- drop_named_dots(rlang::enquos(...), c("parameters", "file"))
+  dots <- drop_named_dots(
+    rlang::enquos(...),
+    c("parameters", "file"),
+    alt = "Did you mean `models`? `parameters`/`file` apply to parameter tables."
+  )
   current <- spec@sections
   meta <- resolve_section_meta(current, order, keep, exclude)
   with_section_options_error("models", {
@@ -574,7 +592,11 @@ S7::method(set_spec_sections, TableSpec) <- function(
   keep = NULL,
   exclude = NULL
 ) {
-  dots <- drop_named_dots(rlang::enquos(...), "models")
+  dots <- drop_named_dots(
+    rlang::enquos(...),
+    "models",
+    alt = "Did you mean `parameters`? `models` applies to summary tables."
+  )
   current <- spec@sections
   if (!is.null(file)) {
     if (!is.character(file) || length(file) != 1L) {
@@ -595,6 +617,9 @@ S7::method(set_spec_sections, TableSpec) <- function(
       order = NULL,
       filter = list()
     )
+    # Preserve inline items accumulated by prior calls so a later
+    # set_spec_sections() does not reset the unmatched-override tracking.
+    next_sections@inline_items <- current@inline_items
 
     if (!is.null(file)) {
       path <- normalizePath(file, mustWork = TRUE)
