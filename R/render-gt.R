@@ -407,12 +407,18 @@ render_to_word.gt_tbl <- function(table, path, landscape = FALSE) {
   dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
 
   segment_lengths <- attr(table, "hyperion_segment_lengths")
-  gt::gtsave(table, path)
+  # Build and sanitize into a tempfile, then copy over the user's path only once
+  # the document is complete. Otherwise a failure mid-sanitize would leave an
+  # unsanitized (Word-repair-prompting) or truncated file at the target path.
+  tmp <- tempfile(fileext = ".docx")
+  on.exit(unlink(tmp), add = TRUE)
+  gt::gtsave(table, tmp)
   sanitize_gt_docx(
-    path,
+    tmp,
     segment_lengths = segment_lengths,
     landscape = landscape
   )
+  file.copy(tmp, path, overwrite = TRUE)
   invisible(path)
 }
 
@@ -890,7 +896,7 @@ rewrite_latex_to_omml <- function(doc, ns) {
       vapply(runs, run_text_with_markdown, character(1), ns = ns),
       collapse = ""
     )
-    if (!grepl("\\$[^$]+\\$", full_text)) {
+    if (!grepl(dollar_math_pattern(), full_text, perl = TRUE)) {
       next
     }
     first_rpr <- xml2::xml_find_first(runs[[1]], "./w:rPr", ns = ns)
@@ -978,9 +984,20 @@ zip_dir_contents <- function(dir, zipfile) {
   zip::zipr(zipfile, files = entries, include_directories = FALSE)
 }
 
+#' Pandoc-style inline-math delimiter pattern
+#'
+#' Matches `$...$` only when the opening `$` is followed by a non-space and the
+#' closing `$` is preceded by a non-space and not followed by a digit, so literal
+#' dollar amounts (e.g. "costs $100 and $200") are left as text rather than
+#' being mangled into an equation.
+#' @noRd
+dollar_math_pattern <- function() {
+  "\\$(?=\\S)[^$]+?(?<=\\S)\\$(?!\\d)"
+}
+
 #' @noRd
 split_on_dollar_math <- function(txt) {
-  m <- gregexpr("\\$[^$]+\\$", txt, perl = TRUE)[[1]]
+  m <- gregexpr(dollar_math_pattern(), txt, perl = TRUE)[[1]]
   if (m[1] == -1) {
     return(list(list(type = "text", value = txt)))
   }
