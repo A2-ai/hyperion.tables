@@ -4,6 +4,7 @@
 
 ^\.github$
 ^\.claude$
+^\.review$
 ^rv$
 ^rproject\.toml$
 ^\.Rprofile$
