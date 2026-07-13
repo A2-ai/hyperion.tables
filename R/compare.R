@@ -85,10 +85,19 @@ resolve_reference_context <- function(
 
 #' Check whether LRT can be shown for a model pair
 #'
-#' @return list(show = logical, reason = character or NULL). When `show` is
-#'   FALSE, `reason` explains why.
+#' Single gate for the comparison-table LRT. Degrees of freedom and the test
+#' statistic are derived from the model summaries (free-parameter counts
+#' captured by `add_summary_info()`), never from the displayed comparison
+#' rows, so row filters and column selections cannot change the result. The
+#' test is oriented by free-parameter count: the model with fewer free
+#' parameters is treated as the reduced model regardless of comparison order.
+#'
+#' @return list(show = logical, reason = character or NULL, df = integer or
+#'   NULL, stat = numeric or NULL). When `show` is FALSE, `reason` explains
+#'   why. When `show` is TRUE, `df` is the model-level degrees of freedom and
+#'   `stat` is OFV(reduced) - OFV(full), the input to `lrt_pvalue()`.
 #' @noRd
-can_show_lrt <- function(comparison, left_idx, right_idx, left_sum, right_sum) {
+can_show_lrt <- function(comparison, left_sum, right_sum) {
   suppress <- function(reason) list(show = FALSE, reason = reason)
 
   lineage <- get_comparison_meta(comparison)$lineage
@@ -114,17 +123,24 @@ can_show_lrt <- function(comparison, left_idx, right_idx, left_sum, right_sum) {
     return(suppress("observation counts differ"))
   }
 
-  fixed1 <- comparison[[paste0("fixed_", left_idx)]]
-  fixed2 <- comparison[[paste0("fixed_", right_idx)]]
-  if (is.null(fixed1) || is.null(fixed2)) {
-    return(suppress("fixed column(s) missing from comparison"))
+  # OFVs from different estimation methods are not comparable; only gate
+  # when both methods are known so show_method = FALSE workflows still work
+  method1 <- safe_summary_field(left_sum, "estimation_method")
+  method2 <- safe_summary_field(right_sum, "estimation_method")
+  if (!is.na(method1) && !is.na(method2) && method1 != method2) {
+    return(suppress("estimation methods differ"))
   }
-  k1 <- sum(!is.na(fixed1) & !fixed1, na.rm = TRUE)
-  k2 <- sum(!is.na(fixed2) & !fixed2, na.rm = TRUE)
+
+  k1 <- safe_summary_field(left_sum, "n_free_parameters")
+  k2 <- safe_summary_field(right_sum, "n_free_parameters")
+  if (is.na(k1) || is.na(k2)) {
+    return(suppress("one or both free-parameter counts are missing"))
+  }
   df <- abs(k2 - k1)
   if (df <= 0) {
     return(suppress("degrees of freedom is zero"))
   }
+  stat <- if (k1 < k2) ofv1 - ofv2 else ofv2 - ofv1
 
   path1 <- safe_summary_field(left_sum, "model_file")
   path2 <- safe_summary_field(right_sum, "model_file")
@@ -140,7 +156,7 @@ can_show_lrt <- function(comparison, left_idx, right_idx, left_sum, right_sum) {
     return(suppress("models not in direct lineage"))
   }
 
-  list(show = TRUE, reason = NULL)
+  list(show = TRUE, reason = NULL, df = df, stat = stat)
 }
 
 #' @noRd
@@ -151,7 +167,7 @@ get_comparison_suffix_cols <- function(
   include_fixed_for_ci = FALSE
 ) {
   if (!is.null(spec)) {
-    cols <- setdiff(spec@columns %||% spec@default_columns, "name")
+    cols <- setdiff(resolve_effective_columns(spec), "name")
   } else {
     cols <- fallback_cols
   }
@@ -341,13 +357,25 @@ resolve_suffix_cols_for_comparison <- function(params1) {
 #'   spec, coalesce_cols
 #' @noRd
 compute_model_positions <- function(params1, params2, suffix_cols) {
-  coalesce_cols <- c("kind", "section", "random_effect", "diagonal")
+  # transforms is coalesced through the join so CV-formula footnote
+  # detection works on comparison frames (see detect_table_statistics)
+  coalesce_cols <- c("kind", "section", "random_effect", "diagonal", "transforms")
 
   spec1 <- get_table_spec(params1)
   spec2 <- get_table_spec(params2)
   sum2 <- attr(params2, "model_summary")
 
   is_comparison <- inherits(params1, "hyperion_comparison")
+
+  if (is_comparison && length(get_comparison_meta(params1)) == 0) {
+    # Class survives base-R subsetting but the metadata does not; without
+    # it the earlier models' labels, summaries, and pct-change references
+    # are silently fabricated
+    rlang::warn(c(
+      "params1 is a comparison whose metadata was stripped; labels, model summaries, and pct-change references from the earlier comparison are lost.",
+      i = "Subsetting a comparison with `[` or subset() drops its metadata; filter rows via the spec instead."
+    ))
+  }
 
   if (is_comparison) {
     meta <- normalize_comparison_meta(params1, suffix_cols)
@@ -457,8 +485,62 @@ join_comparison_params <- function(params1, params2, suffix_cols, positions) {
   }
 }
 
+#' Resolve the join keys for a comparison
+#'
+#' Parameters are identified by name AND kind whenever both frames carry
+#' `kind`: joining on name alone silently pairs e.g. a THETA named "CL"
+#' with an OMEGA commented "CL" and fans out duplicated rows.
+#' @noRd
+comparison_join_keys <- function(x, y) {
+  if ("kind" %in% names(x) && "kind" %in% names(y)) {
+    c("name", "kind")
+  } else {
+    "name"
+  }
+}
+
+#' Abort when a frame carries duplicated parameter identities
+#'
+#' A duplicated (name, kind) pair would silently duplicate and cross-match
+#' rows in the comparison join, producing wrong numbers with no warning.
+#' @noRd
+check_duplicate_join_keys <- function(df, join_keys, label) {
+  keys <- df[intersect(join_keys, names(df))]
+  if (ncol(keys) == 0 || nrow(keys) == 0) {
+    return(invisible(NULL))
+  }
+  dup <- duplicated(keys)
+  if (any(dup)) {
+    dup_desc <- unique(vapply(
+      which(dup),
+      function(i) {
+        paste(
+          vapply(keys[i, , drop = FALSE], as.character, character(1)),
+          collapse = "/"
+        )
+      },
+      character(1)
+    ))
+    rlang::abort(c(
+      sprintf(
+        "%s contains duplicated parameter identities (%s): %s",
+        label,
+        paste(join_keys, collapse = " + "),
+        paste(dup_desc, collapse = ", ")
+      ),
+      i = "Duplicated identities would silently duplicate and mismatch rows in the comparison join.",
+      i = "Disambiguate the parameter names (e.g. distinct comment names) before comparing."
+    ))
+  }
+  invisible(NULL)
+}
+
 #' @noRd
 join_comparison_chained <- function(params1, p2, suffix_cols, coalesce_cols) {
+  join_keys <- comparison_join_keys(params1, p2)
+  check_duplicate_join_keys(params1, join_keys, "The existing comparison")
+  check_duplicate_join_keys(p2, join_keys, "params2")
+
   base_suffix_pattern <- paste0(
     "^(",
     paste(suffix_cols, collapse = "|"),
@@ -466,27 +548,28 @@ join_comparison_chained <- function(params1, p2, suffix_cols, coalesce_cols) {
   )
   pct_pattern <- "^pct_change(_\\d+)?$"
   keep_base <- unique(c(
-    "name",
+    join_keys,
     grep(base_suffix_pattern, names(params1), value = TRUE),
     grep(pct_pattern, names(params1), value = TRUE)
   ))
   base_suffix <- dplyr::select(params1, dplyr::all_of(keep_base))
 
+  other_coalesce <- setdiff(coalesce_cols, join_keys)
   base_coalesce <- dplyr::select(
     params1,
-    dplyr::any_of(c("name", coalesce_cols))
+    dplyr::any_of(c(join_keys, other_coalesce))
   )
-  p2_coalesce <- dplyr::select(p2, dplyr::any_of(c("name", coalesce_cols)))
+  p2_coalesce <- dplyr::select(p2, dplyr::any_of(c(join_keys, other_coalesce)))
 
-  comparison <- dplyr::full_join(base_suffix, p2, by = "name")
+  comparison <- dplyr::full_join(base_suffix, p2, by = join_keys)
 
   coalesce_df <- dplyr::full_join(
     base_coalesce,
     p2_coalesce,
-    by = "name",
+    by = join_keys,
     suffix = c("_prev", "_new")
   )
-  for (col in coalesce_cols) {
+  for (col in other_coalesce) {
     col_prev <- paste0(col, "_prev")
     col_new <- paste0(col, "_new")
     if (col_prev %in% names(coalesce_df) || col_new %in% names(coalesce_df)) {
@@ -500,8 +583,8 @@ join_comparison_chained <- function(params1, p2, suffix_cols, coalesce_cols) {
       )
     }
   }
-  comparison <- dplyr::select(comparison, -dplyr::any_of(coalesce_cols))
-  dplyr::left_join(comparison, coalesce_df, by = "name")
+  comparison <- dplyr::select(comparison, -dplyr::any_of(other_coalesce))
+  dplyr::left_join(comparison, coalesce_df, by = join_keys)
 }
 
 #' @noRd
@@ -515,6 +598,10 @@ join_comparison_initial <- function(
   keep_cols1 <- intersect(keep_cols, names(params1))
   p1 <- dplyr::select(params1, dplyr::all_of(keep_cols1))
 
+  join_keys <- comparison_join_keys(p1, p2)
+  check_duplicate_join_keys(p1, join_keys, "params1")
+  check_duplicate_join_keys(p2, join_keys, "params2")
+
   # Rename suffix columns with _1 and _2
   for (col in suffix_cols) {
     if (col %in% names(p1)) {
@@ -525,9 +612,9 @@ join_comparison_initial <- function(
     }
   }
 
-  comparison <- dplyr::full_join(p1, p2, by = "name", suffix = c("_1", "_2"))
+  comparison <- dplyr::full_join(p1, p2, by = join_keys, suffix = c("_1", "_2"))
 
-  for (col in coalesce_cols) {
+  for (col in setdiff(coalesce_cols, join_keys)) {
     col1 <- paste0(col, "_1")
     col2 <- paste0(col, "_2")
     if (col1 %in% names(comparison) && col2 %in% names(comparison)) {

@@ -31,6 +31,11 @@ format_numeric_for_rules <- function(data, n_sigfig) {
 }
 
 #' Format numeric values with fixed significant figures
+#'
+#' Values render in fixed notation up to the magnitude band
+#' [1e-4, 1e6); beyond it, scientific notation is used with the full
+#' n_sigfig significant digits so extremes stay readable without table
+#' body cells silently flipping to notation like "1e+03".
 #' @noRd
 format_sigfig_pad <- function(x, n_sigfig) {
   if (is.na(x)) {
@@ -42,7 +47,11 @@ format_sigfig_pad <- function(x, n_sigfig) {
 
   base <- trimws(formatC(x, digits = n_sigfig, format = "g"))
   if (grepl("[eE]", base)) {
-    return(base)
+    ax <- abs(x)
+    if (ax != 0 && (ax >= 1e6 || ax < 1e-4)) {
+      return(trimws(formatC(x, digits = max(n_sigfig - 1, 0), format = "e")))
+    }
+    base <- format(signif(x, n_sigfig), scientific = FALSE, trim = TRUE)
   }
 
   sign <- if (startsWith(base, "-")) "-" else ""
@@ -137,19 +146,12 @@ build_variability_comparison <- function(data, spec, suffix_cols) {
 
 #' @noRd
 wants_variability_column <- function(spec) {
-  base_cols <- spec@columns %||% spec@default_columns
-  "variability" %in%
-    c(base_cols, spec@add_columns %||% character(0)) &&
-    !"variability" %in% spec@drop_columns
+  "variability" %in% resolve_effective_columns(spec)
 }
 
 #' @noRd
 wants_variability_components <- function(spec) {
-  base_cols <- spec@columns %||% spec@default_columns
-  any(
-    c("cv", "corr", "sd") %in%
-      c(base_cols, spec@add_columns %||% character(0))
-  )
+  any(c("cv", "corr", "sd") %in% resolve_effective_columns(spec))
 }
 
 #' @noRd

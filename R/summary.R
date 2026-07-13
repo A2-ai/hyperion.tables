@@ -200,13 +200,34 @@ build_metadata_df <- function(tree) {
       name = tools::file_path_sans_ext(basename(node$name)),
       path = node$name,
       description = node$model$description %||% NA_character_,
-      tags = I(list(as.character(unlist(node$model$tags)) %||% character(0))),
+      tags = I(list(as.character(unlist(node$model$tags %||% list())))),
       based_on = I(list(tools::file_path_sans_ext(basename(parents)))),
       stringsAsFactors = FALSE
     )
   })
 
-  dplyr::bind_rows(rows)
+  df <- dplyr::bind_rows(rows)
+
+  # The whole summary pipeline (model loading, OFV/dOFV lookups, parent
+  # matching) identifies models by basename stem. Colliding stems would
+  # silently load the wrong model and compute dOFV against the wrong
+  # parent, so refuse to continue.
+  dup <- unique(df$name[duplicated(df$name)])
+  if (length(dup) > 0) {
+    rlang::abort(c(
+      sprintf(
+        "Lineage tree contains models with colliding basename stems: %s",
+        paste(dup, collapse = ", ")
+      ),
+      i = sprintf(
+        "Colliding paths: %s",
+        paste(df$path[df$name %in% dup], collapse = ", ")
+      ),
+      i = "Rename the models or filter the tree so basename stems are unique."
+    ))
+  }
+
+  df
 }
 
 #' Topological sort of models based on based_on relationships
@@ -377,11 +398,12 @@ build_summary_section <- function(df, rules) {
     function(f) identical(rlang::f_lhs(f), TRUE),
     logical(1)
   )
-  labels <- vapply(formulas, rlang::f_rhs, character(1))
+  labels <- vapply(formulas, rule_label, character(1))
 
   n <- nrow(df)
   result <- character(n)
   multi_matches <- vector("list", n)
+  rule_errors <- vector("list", length(formulas))
 
   for (i in seq_len(n)) {
     # Build row data: unwrap list columns to their scalar element
@@ -399,7 +421,10 @@ build_summary_section <- function(df, rules) {
           data = row_data,
           env = rlang::f_env(f)
         ),
-        error = function(e) FALSE
+        error = function(e) {
+          rule_errors[[j]] <<- conditionMessage(e)
+          FALSE
+        }
       )
       if (isTRUE(res)) {
         if (is.na(first_match)) {
@@ -411,6 +436,21 @@ build_summary_section <- function(df, rules) {
 
     result[i] <- first_match
     if (length(unique(matched_nc)) > 1) multi_matches[[i]] <- matched_nc
+  }
+
+  # Surface rules that errored (e.g. a typo'd column) instead of silently
+  # matching nothing — the parameter-table path surfaces these too
+  failed <- which(!vapply(rule_errors, is.null, logical(1)))
+  if (length(failed) > 0) {
+    msgs <- vapply(
+      failed,
+      function(j) sprintf("rule for '%s': %s", labels[j], rule_errors[[j]]),
+      character(1)
+    )
+    rlang::warn(c(
+      "Some summary section rules failed to evaluate and matched no rows:",
+      stats::setNames(msgs, rep("*", length(msgs)))
+    ))
   }
 
   # Warn for multi-match rows
@@ -445,8 +485,14 @@ build_summary_section <- function(df, rules) {
 #' Build summary data frame from loaded models
 #' @noRd
 build_summary_df <- function(models, model_names, metadata_df, spec) {
-  resolved_cols <- get_spec_columns(spec)
-  needs_dofv <- any(c("dofv", "pvalue", "df") %in% resolved_cols)
+  # Fetch the pre-drop superset so summary_filter can reference dropped
+  # columns; display subtraction happens in select_output_columns() and the
+  # drop_columns select in apply_summary_spec().
+  resolved_cols <- unique(c(
+    spec@columns %||% spec@default_columns,
+    spec@add_columns %||% character(0)
+  ))
+  needs_dofv <- any(c("dofv", "pvalue", "df") %in% get_spec_columns(spec))
 
   run_detail_cols <- c(
     "problem",
@@ -465,7 +511,12 @@ build_summary_df <- function(models, model_names, metadata_df, spec) {
   needed_from_run_details <- intersect(resolved_cols, run_detail_cols)
   needed_from_min_results <- intersect(resolved_cols, min_result_cols)
   if (needs_dofv) {
-    needed_from_run_details <- unique(c(needed_from_run_details, "number_obs"))
+    # estimation_method is needed to refuse cross-method dOFV comparisons
+    needed_from_run_details <- unique(c(
+      needed_from_run_details,
+      "number_obs",
+      "estimation_method"
+    ))
     needed_from_min_results <- unique(c(needed_from_min_results, "ofv"))
   }
   needs_summary <- length(needed_from_run_details) > 0 ||
@@ -547,14 +598,7 @@ build_summary_df <- function(models, model_names, metadata_df, spec) {
 
         # n_parameters
         if ("n_parameters" %in% resolved_cols || needs_dofv) {
-          params <- mod_sum$parameters
-          row$n_parameters <- if (
-            !is.null(params) && nrow(params) > 0 && "fixed" %in% names(params)
-          ) {
-            as.integer(sum(!params$fixed, na.rm = TRUE))
-          } else {
-            NA_integer_
-          }
+          row$n_parameters <- count_free_parameters(mod_sum)
         }
 
         # run_details (last row)
@@ -598,9 +642,14 @@ build_summary_df <- function(models, model_names, metadata_df, spec) {
 
   if (needs_dofv) {
     # Ensure dofv-required columns exist (may be absent if all summaries failed)
-    for (col in c("ofv", "number_obs", "n_parameters")) {
+    for (col in c("ofv", "number_obs", "n_parameters", "estimation_method")) {
       if (!col %in% names(df)) {
-        df[[col]] <- if (col == "n_parameters") NA_integer_ else NA_real_
+        df[[col]] <- switch(
+          col,
+          n_parameters = NA_integer_,
+          estimation_method = NA_character_,
+          NA_real_
+        )
       }
     }
     df <- calculate_dofv(df, spec)
@@ -618,6 +667,7 @@ calculate_dofv <- function(df, spec) {
   ofv_lookup <- stats::setNames(df$ofv, df$.name)
   nobs_lookup <- stats::setNames(df$number_obs, df$.name)
   npar_lookup <- stats::setNames(df$n_parameters, df$.name)
+  est_lookup <- stats::setNames(df$estimation_method, df$.name)
 
   resolved_cols <- get_spec_columns(spec)
   needs_pvalue <- "pvalue" %in% resolved_cols || "df" %in% resolved_cols
@@ -645,6 +695,14 @@ calculate_dofv <- function(df, spec) {
 
     # Check if parent is in our data
     if (!parent_name %in% names(ofv_lookup)) {
+      rlang::inform(c(
+        sprintf(
+          "dOFV not calculated for '%s': reference model '%s' is not in the summary table.",
+          df$.name[i],
+          parent_name
+        ),
+        i = "Include the reference model (check models_to_include and tag filters) to enable dOFV."
+      ))
       return(list(dofv = NA_real_, df = NA_integer_, pvalue = NA_real_))
     }
 
@@ -666,6 +724,25 @@ calculate_dofv <- function(df, spec) {
           if (is.na(parent_nobs)) "NA" else as.character(parent_nobs)
         ),
         i = "dOFV is only calculated when the number of observations matches the reference model."
+      ))
+      return(list(dofv = NA_real_, df = NA_integer_, pvalue = NA_real_))
+    }
+
+    # OFVs from different estimation methods are on different likelihood
+    # approximations; refuse the comparison when both methods are known
+    # and differ
+    parent_est <- est_lookup[[parent_name]]
+    model_est <- df$estimation_method[i]
+    if (!is.na(model_est) && !is.na(parent_est) && model_est != parent_est) {
+      rlang::inform(c(
+        sprintf(
+          "dOFV not calculated for '%s' vs '%s': estimation methods differ (%s vs %s).",
+          df$.name[i],
+          parent_name,
+          model_est,
+          parent_est
+        ),
+        i = "dOFV/LRT are only meaningful when both models use the same estimation method."
       ))
       return(list(dofv = NA_real_, df = NA_integer_, pvalue = NA_real_))
     }
@@ -833,19 +910,6 @@ make_summary_table <- function(
     render_to_gt(htable)
   )
   table
-}
-
-#' Render summary table as gt (internal)
-#'
-#' Preserves the original gt rendering logic for backwards compatibility.
-#'
-#' @param data Data frame from apply_summary_spec()
-#' @param spec SummarySpec object
-#' @return gt table object
-#' @noRd
-render_gt_summary_table <- function(data, spec) {
-  htable <- hyperion_summary_table(data, spec)
-  render_to_gt(htable)
 }
 
 #' Get time format suffix for column labels

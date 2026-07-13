@@ -432,10 +432,37 @@ build_next_rules <- function(current_rules, sections_arg, dots, overwrite) {
   }
 }
 
+#' Abort when set_spec_sections() receives arguments belonging to the
+#' other spec type, instead of silently dropping them
 #' @noRd
-drop_named_dots <- function(dots, names) {
-  dot_names <- rlang::names2(dots)
-  dots[!(dot_names %in% names)]
+abort_foreign_dots <- function(dots, names, spec_type, hint) {
+  bad <- intersect(rlang::names2(dots), names)
+  if (length(bad) > 0) {
+    rlang::abort(c(
+      sprintf(
+        "`%s` %s not supported by set_spec_sections() for a %s.",
+        paste(bad, collapse = "`, `"),
+        if (length(bad) > 1) "are" else "is",
+        spec_type
+      ),
+      i = hint
+    ))
+  }
+  dots
+}
+
+#' Silently drop dots belonging to the other spec type
+#'
+#' Unlike [abort_foreign_dots()], this removes the named arguments without
+#' erroring. Used by the SummarySpec method so that `parameters`/`file`
+#' (which only apply to TableSpec) are ignored rather than rejected.
+#' @noRd
+drop_foreign_dots <- function(dots, names) {
+  bad <- intersect(rlang::names2(dots), names)
+  if (length(bad) > 0) {
+    dots <- dots[!rlang::names2(dots) %in% names]
+  }
+  dots
 }
 
 #' @noRd
@@ -541,7 +568,10 @@ S7::method(set_spec_sections, SummarySpec) <- function(
   keep = NULL,
   exclude = NULL
 ) {
-  dots <- drop_named_dots(rlang::enquos(...), c("parameters", "file"))
+  dots <- drop_foreign_dots(
+    rlang::enquos(...),
+    c("parameters", "file")
+  )
   current <- spec@sections
   meta <- resolve_section_meta(current, order, keep, exclude)
   with_section_options_error("models", {
@@ -574,7 +604,12 @@ S7::method(set_spec_sections, TableSpec) <- function(
   keep = NULL,
   exclude = NULL
 ) {
-  dots <- drop_named_dots(rlang::enquos(...), "models")
+  dots <- abort_foreign_dots(
+    rlang::enquos(...),
+    "models",
+    "TableSpec",
+    "`models =` applies to SummarySpec only; use `parameters =` to assign parameters to sections."
+  )
   current <- spec@sections
   if (!is.null(file)) {
     if (!is.character(file) || length(file) != 1L) {

@@ -94,6 +94,59 @@ safe_summary_field <- function(summary, field) {
   summary[[field]]
 }
 
+#' Resolve a section rule's label
+#'
+#' Resolves the right-hand side of a section rule (`lhs ~ label`) to a
+#' single character label the same way the SectionOptions validator does:
+#' literal strings pass through, any other expression (e.g. a variable or
+#' `paste0()` call) is evaluated in the rule's environment. Aborts with a
+#' clear message when the label cannot be resolved, instead of the opaque
+#' vapply type error the raw `rlang::f_rhs()` extraction produced.
+#'
+#' @param rule A quosure wrapping a formula, or a formula
+#' @return Length-1 character label
+#' @noRd
+rule_label <- function(rule) {
+  f <- if (rlang::is_quosure(rule)) rlang::eval_tidy(rule) else rule
+  rhs <- rlang::f_rhs(f)
+  if (is.character(rhs) && length(rhs) == 1L) {
+    return(rhs)
+  }
+  resolved <- tryCatch(
+    eval(rhs, envir = rlang::f_env(f) %||% rlang::caller_env()),
+    error = function(e) NULL
+  )
+  if (is.character(resolved) && length(resolved) == 1L) {
+    return(resolved)
+  }
+  rlang::abort(c(
+    sprintf(
+      "Could not resolve section rule label: `%s`",
+      rlang::expr_deparse(rhs)
+    ),
+    i = "The right-hand side of a section rule must evaluate to a single character label."
+  ))
+}
+
+#' Count free (non-fixed) parameters in a model summary
+#'
+#' Single source of truth for LRT degrees of freedom: both the summary and
+#' comparison paths derive df from this model-level count, never from
+#' displayed table rows.
+#'
+#' @param model_sum Full model summary object carrying a `parameters` data
+#'   frame with a `fixed` column
+#' @return Integer count of free parameters, or NA if unavailable
+#' @noRd
+count_free_parameters <- function(model_sum) {
+  params <- model_sum$parameters
+  if (!is.null(params) && nrow(params) > 0 && "fixed" %in% names(params)) {
+    as.integer(sum(!params$fixed, na.rm = TRUE))
+  } else {
+    NA_integer_
+  }
+}
+
 #' Compute LRT p-value from a test statistic and degrees of freedom
 #'
 #' Negative values of `test_stat` (i.e., the child model has a higher OFV than
@@ -130,6 +183,8 @@ format_pvalue_string <- function(pval, n_sigfig, scientific, threshold = NULL) {
   if (scientific) {
     format(pval, scientific = TRUE, digits = n_sigfig)
   } else {
-    as.character(signif(pval, n_sigfig))
+    # as.character() falls back to scientific notation for small values,
+    # which would ignore the user's scientific = FALSE choice
+    format(signif(pval, n_sigfig), scientific = FALSE)
   }
 }

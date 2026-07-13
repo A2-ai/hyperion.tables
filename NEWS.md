@@ -1,3 +1,120 @@
+# hyperion.tables (development version)
+
+## Breaking Changes
+
+* Column precedence is now resolved in one place with the documented rule
+  `(columns %||% default_columns) ∪ add_columns − drop_columns` (drop beats
+  add). `get_spec_columns()` now subtracts `drop_columns` as its
+  documentation always promised, and every internal consumer (section
+  ordering, hidden-column resolution, footnote statistic detection,
+  variability planning, comparison column selection, description
+  enrichment) uses the same resolver. Code relying on the old
+  inconsistencies (e.g. a column listed in both `add_columns` and
+  `drop_columns` still displaying) will see the documented behavior instead.
+* `add_columns` now works for comparison tables: added columns are carried
+  through the join with model suffixes instead of silently no-oping.
+* Dropping a per-model CI alias (`ci_1`, `ci_left`, ...) no longer removes
+  the *other* models' CI columns from the effective column set; only the
+  plain `"ci"` alias means "drop CI everywhere".
+* `compare_with()` joins parameters by name AND kind when both frames carry
+  `kind`, and aborts on duplicated (name, kind) identities. Previously a
+  THETA named "CL" silently paired with an OMEGA commented "CL", fanning
+  out duplicated rows and cross-kind percent changes.
+* `apply_summary_spec()` aborts when a lineage tree contains models whose
+  basename stems collide (e.g. `base/run001.mod` and `covariate/run001.mod`).
+  The summary pipeline identifies models by stem, so colliding stems
+  silently loaded the wrong model and computed dOFV against the wrong
+  parent.
+* `set_spec_sections()` now aborts (with a pointer to the right argument)
+  when given the other spec type's arguments (`models =` on a TableSpec;
+  `parameters =` / `file =` on a SummarySpec) instead of silently dropping
+  them.
+* dOFV/LRT are suppressed (with an explanatory message) when the two models'
+  estimation methods are known and differ — OFVs from different likelihood
+  approximations are not comparable. Applies to both summary and comparison
+  tables.
+* Requires R >= 4.2 (matching the tested matrix) and dplyr >= 1.0.0 (the
+  attribute-preservation semantics the pipeline relies on).
+
+## Bug Fixes
+
+* Comparison-table LRT degrees of freedom are now computed from the models'
+  free-parameter counts (captured by `add_summary_info()`), not from the rows
+  that survived display filtering. Row/section filters and column selections
+  (e.g. specs without CI or variability columns) no longer silently change or
+  suppress the printed p-value, and the comparison table now always agrees
+  with the run-summary table for the same model pair.
+* The comparison LRT is oriented by free-parameter count: the model with fewer
+  free parameters is treated as the reduced model, so `compare_with()` called
+  in reversed (child, parent) order now prints the correct p-value instead of
+  a value near 1.
+* When the LRT is suppressed despite both OFVs and matching observation counts
+  being present (e.g. zero degrees of freedom or missing free-parameter
+  counts), an explanatory message is now emitted instead of the footnote
+  silently vanishing.
+* Large-magnitude values no longer flip to scientific notation mid-table:
+  the default formatter renders fixed notation up to the band
+  [1e-4, 1e6) (`1000` now renders as `"1000"`, not `"1e+03"`), and values
+  beyond it use scientific notation with the full number of significant
+  figures (`1e-05` renders as `"1.00e-05"`, not `"1e-05"`).
+* Comparison-table footnote statistic detection is suffix-aware: CV/SD/Corr
+  abbreviations and CV% formula footnotes now appear for comparison tables
+  (the `transforms` column is carried through the join), RSE/SE/shrinkage
+  detection covers any model count (not just `_1`/`_2`), and abbreviations
+  are no longer emitted for statistics the table doesn't display.
+* Word export (`render_to_word()`): summary/comparison headers no longer
+  show literal `**` around math-bearing labels (the LaTeX rewrite now runs
+  before header bolding); the sanitized document is zipped to a tempfile
+  and swapped in so a zip failure can't destroy the file; a sanitization
+  failure now raises an error naming the unsanitized file instead of
+  silently shipping it; `\$` escapes a literal dollar sign so text like
+  "costs \$5,000" is not rewritten as math; landscape export warns when no
+  section properties exist to modify; malformed `gridSpan` values no longer
+  crash the table-grid pass.
+* Flextable output matches gt: `bold_locations` from the table IR is
+  honored (titles/spanners/row groups are no longer unconditionally bold),
+  IR borders apply to the body only (as in gt), comparison tables get the
+  same black model-boundary border gt draws, and a left border on the first
+  column no longer produces an invalid `vline(j = 0)` call.
+* The no-equatags flextable footnote fallback transliterates LaTeX
+  generically (innermost-first reduction with protected subscripts) instead
+  of byte-matching whole formulas — editing a formula can no longer produce
+  a mathematically different plain-text form (e.g. the `- 1` migrating
+  outside a square root). Column labels share the same transliteration, so
+  LaTeX labels degrade to the same plain text in both renderers.
+* Dynamic section rule labels (`kind == "THETA" ~ label_var`) no longer
+  crash with an opaque vapply type error: labels are resolved the same way
+  the validator resolves them, with a clear error when a label cannot be
+  resolved to a single string.
+* `set_spec_ofv_decimals(NA)` no longer crashes summary rendering; NA/unset
+  OFV decimals route through the same hyperion formatter the comparison
+  path uses.
+* With `pvalue_scientific = FALSE`, small p-values now honor the setting
+  instead of falling back to scientific notation.
+* A computed p-value with a missing df now displays without the df suffix
+  instead of rendering as an empty cell.
+* dOFV now explains itself when the reference model is missing from the
+  summary table, and summary section rules that fail to evaluate (e.g. a
+  typo'd column name) warn instead of silently matching nothing.
+* `time_format = "auto"` no longer guesses the time unit from already-
+  divided values when the unit attribute was stripped (the guess was wrong
+  in every decidable case); it warns and omits the unit suffix instead.
+* Comparison tables built from metadata-stripped inputs are loud:
+  `make_comparison_table()` aborts naming base-R subsetting as the cause,
+  and chaining `compare_with()` onto a stripped comparison warns that the
+  earlier labels/summaries/references are lost.
+* The release workflow now runs `R CMD check` (including the test suite) on
+  the tagged commit before building or publishing anything.
+
+## Internal
+
+* Removed dead code: the unused second footnote pipeline
+  (`add_footnotes()`, `add_conditional_footnotes()`,
+  `apply_comparison_footnotes()`, `apply_model_spanners()`,
+  `convert_footnote_to_text()`), `render_gt_summary_table()`,
+  `get_comparison_last_two()`, and the unused `include_associated_theta`
+  argument of `comment_keys_for()`.
+
 # hyperion.tables 0.5.0
 
 ## Breaking Changes

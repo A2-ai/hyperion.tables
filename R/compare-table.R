@@ -7,22 +7,6 @@
 #' @param comparison Data frame from compare_with()
 #' @return Named list of logicals indicating which stats are present
 #' @noRd
-get_comparison_last_two <- function(comparison, suffix_cols) {
-  meta <- normalize_comparison_meta(comparison, suffix_cols)
-  labels <- meta$labels
-  summaries <- meta$summaries
-  if (length(labels) < 2) {
-    labels <- c(labels, "Model")
-  }
-  if (length(summaries) < 2) {
-    summaries <- c(summaries, list(NULL))
-  }
-  list(
-    labels = utils::tail(labels, 2),
-    summaries = utils::tail(summaries, 2)
-  )
-}
-
 detect_comparison_statistics <- function(comparison) {
   fallback_suffix_cols <- comparison_suffix_columns()
   spec <- get_comparison_meta(comparison)$table_spec
@@ -96,8 +80,6 @@ detect_comparison_statistics <- function(comparison) {
       )
       lrt_result <- can_show_lrt(
         comparison,
-        ref_ctx$left_idx,
-        right_idx,
         ref_ctx$left_sum,
         right_sum
       )
@@ -191,8 +173,6 @@ format_nobs_footnote <- function(left_sum, right_sum, left_label, right_label) {
 #' @noRd
 format_ofv_lrt_footnote <- function(
   comparison,
-  left_idx,
-  right_idx,
   left_sum,
   right_sum,
   left_label,
@@ -234,54 +214,37 @@ format_ofv_lrt_footnote <- function(
     same_nobs <- !is.na(nobs1) && !is.na(nobs2) && nobs1 == nobs2
     if (same_nobs) {
       delta_ofv <- ofv2 - ofv1
-      fixed1 <- comparison[[paste0("fixed_", left_idx)]]
-      fixed2 <- comparison[[paste0("fixed_", right_idx)]]
-
-      if (!is.null(fixed1) && !is.null(fixed2)) {
-        k1 <- sum(!is.na(fixed1) & !fixed1, na.rm = TRUE)
-        k2 <- sum(!is.na(fixed2) & !fixed2, na.rm = TRUE)
-        df <- abs(k2 - k1)
-
-        if (df > 0) {
-          lrt_result <- can_show_lrt(
-            comparison,
-            left_idx,
-            right_idx,
-            left_sum,
-            right_sum
+      lrt_result <- can_show_lrt(comparison, left_sum, right_sum)
+      if (lrt_result$show) {
+        p_value <- lrt_pvalue(lrt_result$stat, lrt_result$df)
+        pval_str <- format_pvalue_string(
+          p_value,
+          n_sigfig,
+          pvalue_scientific,
+          pvalue_threshold
+        )
+        ofv_parts <- c(
+          ofv_parts,
+          sprintf(
+            "delta = %s, LRT p-value = %s (df=%d)",
+            hyperion::format_hyperion_decimal_string(
+              delta_ofv,
+              ofv_decimals
+            ),
+            pval_str,
+            lrt_result$df
           )
-          if (lrt_result$show) {
-            p_value <- lrt_pvalue(-delta_ofv, df)
-            pval_str <- format_pvalue_string(
-              p_value,
-              n_sigfig,
-              pvalue_scientific,
-              pvalue_threshold
-            )
-            ofv_parts <- c(
-              ofv_parts,
-              sprintf(
-                "delta = %s, LRT p-value = %s (df=%d)",
-                hyperion::format_hyperion_decimal_string(
-                  delta_ofv,
-                  ofv_decimals
-                ),
-                pval_str,
-                df
-              )
-            )
-          } else {
-            rlang::inform(c(
-              sprintf(
-                "LRT suppressed for %s vs %s: %s",
-                left_label,
-                right_label,
-                lrt_result$reason
-              ),
-              i = "Both OFVs and matching observation counts are present, but LRT conditions are not met."
-            ))
-          }
-        }
+        )
+      } else {
+        rlang::inform(c(
+          sprintf(
+            "LRT suppressed for %s vs %s: %s",
+            left_label,
+            right_label,
+            lrt_result$reason
+          ),
+          i = "Both OFVs and matching observation counts are present, but LRT conditions are not met."
+        ))
       }
     }
   }
@@ -351,7 +314,6 @@ build_comparison_footnote <- function(
       summaries,
       fallback_pos = i - 1
     )
-    left_idx <- ref_ctx$left_idx
     left_label <- ref_ctx$left_label
     left_sum <- ref_ctx$left_sum
 
@@ -381,8 +343,6 @@ build_comparison_footnote <- function(
 
     ofv_line <- format_ofv_lrt_footnote(
       comparison,
-      left_idx,
-      right_idx,
       left_sum,
       right_sum,
       left_label,
@@ -447,8 +407,19 @@ make_comparison_table <- function(
   }
 
   # Preserve attributes before dplyr operations (which strip custom attrs)
-  spec <- get_comparison_meta(comparison)$table_spec
+  meta <- get_comparison_meta(comparison)
+  spec <- meta$table_spec
   if (is.null(spec)) {
+    if (length(meta) == 0) {
+      # The class survives base-R subsetting but the metadata does not:
+      # this signature means the attributes were stripped, not that the
+      # pipeline was skipped
+      rlang::abort(c(
+        "Comparison metadata is missing.",
+        i = "Subsetting a comparison with `[`, subset(), or similar base-R operations strips its metadata (labels, model summaries, table spec).",
+        i = "Rebuild the comparison with compare_with() and filter rows via the spec instead of subsetting."
+      ))
+    }
     rlang::abort(
       "TableSpec not found. Run apply_table_spec(params, spec, info) first."
     )
@@ -742,7 +713,13 @@ compute_comparison_layout <- function(
     display_cols <- sub("^fixed$", "fixed_fmt", display_cols)
   }
 
-  hide_cols <- c("kind", "random_effect", "diagonal", ".appear_order")
+  hide_cols <- c(
+    "kind",
+    "random_effect",
+    "diagonal",
+    "transforms",
+    ".appear_order"
+  )
   hide_suffix <- grep(
     "^(fixed|fixed_fmt|stderr|variability|shrinkage|cv|corr|sd)_\\d+$",
     names(comparison),
@@ -891,10 +868,11 @@ compute_comparison_layout <- function(
         paste0("ci_high_", model_indices)
       )
     }
-    if (any(drop_cols %in% c("ci_left", "ci_1"))) {
+    # _left/_right aliases were already rewritten to _1/_2 above
+    if ("ci_1" %in% drop_cols) {
       drop_expanded <- c(drop_expanded, "ci_low_1", "ci_high_1")
     }
-    if (any(drop_cols %in% c("ci_right", "ci_2"))) {
+    if ("ci_2" %in% drop_cols) {
       drop_expanded <- c(drop_expanded, "ci_low_2", "ci_high_2")
     }
     drop_num <- grep("^ci_\\d+$", drop_cols, value = TRUE)
@@ -1039,54 +1017,6 @@ build_comparison_label_map <- function(
     intersect(names(label_map), names(comparison)),
     hide_cols
   )]
-}
-
-#' Apply model spanners to comparison table
-#' @noRd
-apply_model_spanners <- function(table, model_cols, labels) {
-  for (i in seq_along(model_cols)) {
-    cols <- model_cols[[i]]
-    if (length(cols) > 0) {
-      label <- if (length(labels) >= i) labels[i] else paste0("Model ", i)
-      table <- table |>
-        gt::tab_spanner(label = label, columns = dplyr::all_of(cols))
-    }
-  }
-  table
-}
-
-#' Apply comparison table footnotes
-#' @noRd
-apply_comparison_footnotes <- function(
-  table,
-  comparison,
-  spec,
-  n_sigfig,
-  ci_pct
-) {
-  ofv_decimals <- if (!is.null(spec) && !is.na(spec@n_decimals_ofv)) {
-    spec@n_decimals_ofv
-  } else {
-    NULL
-  }
-  pvalue_scientific <- if (!is.null(spec)) spec@pvalue_scientific else TRUE
-  pvalue_threshold <- if (!is.null(spec)) spec@pvalue_threshold else NULL
-  summary_note <- build_comparison_footnote(
-    comparison,
-    n_sigfig,
-    ofv_decimals,
-    pvalue_scientific,
-    pvalue_threshold
-  )
-
-  comparison_stats <- detect_comparison_statistics(comparison)
-  add_conditional_footnotes(
-    table,
-    comparison,
-    spec,
-    comparison_stats = comparison_stats,
-    summary_note = summary_note
-  )
 }
 
 #' Prepare comparison table data and layout

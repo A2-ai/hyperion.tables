@@ -52,7 +52,9 @@ build_summary_footnote <- function(params, n_sigfig, ofv_decimals = NULL) {
 #'
 #' Attaches estimation method, OFV, condition number, and number of
 #' observations to parameter data for display as the first footnote in
-#' the parameter table.
+#' the parameter table. The model's count of free (non-fixed) parameters is
+#' always captured as well; comparison tables use it to compute
+#' likelihood-ratio-test degrees of freedom.
 #'
 #' @param params Enriched parameter data frame from `apply_table_spec()`
 #' @param model_sum Summary object from `summary()`, or NULL to skip
@@ -105,7 +107,8 @@ add_summary_info <- function(
     estimation_method = est_method,
     ofv = ofv,
     condition_number = cn,
-    number_obs = n_obs
+    number_obs = n_obs,
+    n_free_parameters = count_free_parameters(model_sum)
   )
   params
 }
@@ -163,13 +166,9 @@ order_sections <- function(params, spec) {
   # Only include internal columns that actually exist in the data
   internal_cols <- intersect(internal_cols, names(params))
 
-  drop_columns <- expand_ci_drop_columns(spec@drop_columns)
-  add_cols <- spec@add_columns %||% character(0)
-  base_cols <- spec@columns %||% spec@default_columns
-  select_cols <- setdiff(base_cols, drop_columns)
-  if (length(add_cols) > 0) {
-    select_cols <- unique(c(select_cols, add_cols))
-  }
+  select_cols <- resolve_effective_columns(spec)
+  # Requested (not auto-added-for-CI) before select_cols gains extras below
+  fixed_requested <- "fixed" %in% select_cols
   if ("description" %in% select_cols && is.null(spec@columns)) {
     select_cols <- c(
       "name",
@@ -183,7 +182,6 @@ order_sections <- function(params, spec) {
   ) {
     select_cols <- unique(c(select_cols, "fixed"))
   }
-  fixed_requested <- "fixed" %in% c(base_cols, add_cols)
   if (fixed_requested && "fixed_fmt" %in% names(params)) {
     select_cols <- unique(c(select_cols, "fixed_fmt"))
   }
@@ -443,6 +441,12 @@ resolve_hidden_columns <- function(params, spec) {
   } else {
     unique(add_cols)
   }
+  # Drop beats add: an explicitly dropped column is not "requested"
+  requested_cols <- setdiff(
+    requested_cols,
+    expand_ci_drop_columns(spec@drop_columns %||% character(0))
+  )
+  fixed_requested <- "fixed" %in% requested_cols
   if ("fixed" %in% requested_cols && "fixed_fmt" %in% names(params)) {
     requested_cols <- unique(c(setdiff(requested_cols, "fixed"), "fixed_fmt"))
   }
@@ -478,13 +482,6 @@ resolve_hidden_columns <- function(params, spec) {
   }
   if (plan$wants_components) {
     hide_cols <- unique(c(hide_cols, "variability"))
-  }
-
-  # Fixed column visibility (single check, was previously duplicated)
-  fixed_requested <- if (!is.null(spec@columns)) {
-    "fixed" %in% c(spec@columns, add_cols)
-  } else {
-    "fixed" %in% add_cols
   }
 
   # Raw `fixed` column is always hidden (display uses `fixed_fmt`)

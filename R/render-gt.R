@@ -242,98 +242,6 @@ apply_gt_footnotes <- function(gt_table, table) {
   gt_table
 }
 
-#' Add footnotes to a gt table in specified order
-#'
-#' Coordinator function that applies footnotes from builders in the order
-#' specified by spec@footnote_order.
-#'
-#' @param table A gt table object
-#' @param spec TableSpec or SummarySpec object (can be NULL)
-#' @param summary_note Character string for summary info, or NULL
-#' @param equations List of footnote content for equations, or NULL
-#' @param abbreviations Character vector for abbreviations, or NULL
-#' @return gt table with footnotes added
-#' @noRd
-add_footnotes <- function(
-  table,
-  spec,
-  summary_note,
-  equations,
-  abbreviations
-) {
-  # Get footnote order from spec - return early if NULL (disabled)
-  footnote_order <- if (
-    !is.null(spec) && "footnote_order" %in% names(S7::props(spec))
-  ) {
-    spec@footnote_order
-  }
-  if (is.null(footnote_order)) {
-    return(table)
-  }
-
-  footnotes <- list(
-    summary_info = summary_note,
-    equations = equations,
-    abbreviations = abbreviations
-  )
-
-  for (section in footnote_order) {
-    content <- footnotes[[section]]
-    if (!is.null(content)) {
-      for (line in content) {
-        # equations are markdown strings; other sections are plain text
-        line <- if (section == "equations") gt::md(line) else line
-        table <- table |> gt::tab_footnote(line)
-      }
-    }
-  }
-
-  table
-}
-
-#' Add conditional footnotes based on table contents
-#'
-#' @param table A gt table object
-#' @param params Parameter data frame (or comparison data frame or summary data frame)
-#' @param spec TableSpec or SummarySpec object
-#' @param comparison_stats Optional list with has_ofv and has_lrt for comparison tables
-#' @param summary_stats Optional list with has_ofv, has_dofv, has_cond_num for summary tables
-#' @param summary_note Optional character string for summary info footnote
-#' @return gt table with appropriate footnotes added
-#' @noRd
-add_conditional_footnotes <- function(
-  table,
-  params,
-  spec,
-  comparison_stats = NULL,
-  summary_stats = NULL,
-  summary_note = NULL
-) {
-  stats <- detect_table_statistics(params, spec)
-
-  ci_pct <- if (!is.null(spec) && "ci" %in% names(S7::props(spec))) {
-    round(spec@ci@level * 100)
-  } else {
-    95
-  }
-
-  # Build footnote content using builder functions
-  abbreviations <- build_abbreviations_footnote(
-    stats,
-    comparison_stats,
-    summary_stats
-  )
-  equations <- build_equations_footnote(
-    stats,
-    ci_pct,
-    comparison_stats,
-    summary_stats
-  )
-
-  # Add footnotes in specified order
-  add_footnotes(table, spec, summary_note, equations, abbreviations)
-}
-
 #' @export
 render_to_image.gt_tbl <- function(table, path = NULL) {
   check_suggested("webshot2", reason = "for image output.")
@@ -408,10 +316,21 @@ render_to_word.gt_tbl <- function(table, path, landscape = FALSE) {
 
   segment_lengths <- attr(table, "hyperion_segment_lengths")
   gt::gtsave(table, path)
-  sanitize_gt_docx(
-    path,
-    segment_lengths = segment_lengths,
-    landscape = landscape
+  tryCatch(
+    sanitize_gt_docx(
+      path,
+      segment_lengths = segment_lengths,
+      landscape = landscape
+    ),
+    error = function(e) {
+      rlang::abort(
+        c(
+          sprintf("Failed to sanitize '%s' for Word.", path),
+          i = "The file on disk is gt's raw output and may trigger repair prompts when opened in Word."
+        ),
+        parent = e
+      )
+    }
   )
   invisible(path)
 }
@@ -423,8 +342,9 @@ render_to_word.gt_tbl <- function(table, path, landscape = FALSE) {
 #' bug (column-label bold), the "contains fields" SEQ-Table warning,
 #' aesthetic decisions (cell borders), and our LaTeX → OMML rewrite.
 #' Ordering notes: grids are injected before the reorder pass; math is
-#' rewritten last so it sees the final structure; xmlns dedup runs on the
-#' serialized bytes since xml2 can't remove a binding without breaking it.
+#' rewritten before bold_header_rows so synthesized bold is never
+#' reconstructed as literal "**"; xmlns dedup runs on the serialized bytes
+#' since xml2 can't remove a binding without breaking it.
 #' @noRd
 sanitize_gt_docx <- function(path, segment_lengths = NULL, landscape = FALSE) {
   stage <- tempfile("gt-docx-")
@@ -443,11 +363,14 @@ sanitize_gt_docx <- function(path, segment_lengths = NULL, landscape = FALSE) {
   strip_tc_borders(doc, ns)
   add_vertical_borders(doc, ns, segment_lengths)
   strip_seq_table_field(doc, ns)
+  # Math must be rewritten BEFORE bold_header_rows: the rewrite reconstructs
+  # pandoc-consumed markdown from run formatting, so bold synthesized by
+  # bold_header_rows would come back as literal "**" around header labels
+  rewrite_latex_to_omml(doc, ns)
   bold_header_rows(doc, ns)
   fill_empty_cells(doc, ns)
   inject_table_grids(doc, ns)
   reorder_ooxml_sequences(doc, ns)
-  rewrite_latex_to_omml(doc, ns)
   if (isTRUE(landscape)) {
     set_landscape_orientation(doc, ns)
   }
@@ -456,8 +379,19 @@ sanitize_gt_docx <- function(path, segment_lengths = NULL, landscape = FALSE) {
   dedupe_xmlns_w(doc_path, ns)
   set_word_compat_mode(stage, ns)
 
-  unlink(path)
-  zip_dir_contents(stage, path)
+  # Zip to a sibling tempfile and swap it in, so a zip failure (disk full,
+  # file locked by Word/OneDrive) never destroys the user's file
+  tmp_zip <- paste0(path, ".sanitize-tmp")
+  on.exit(unlink(tmp_zip), add = TRUE)
+  zip_dir_contents(stage, tmp_zip)
+  if (!suppressWarnings(file.rename(tmp_zip, path))) {
+    if (!file.copy(tmp_zip, path, overwrite = TRUE)) {
+      rlang::abort(sprintf(
+        "Failed to replace '%s' with the sanitized document; the original gt output was left in place.",
+        path
+      ))
+    }
+  }
 }
 
 # --- sanitize_gt_docx helpers --------------------------------------------
@@ -520,6 +454,9 @@ set_landscape_orientation <- function(doc, ns) {
   height <- as.integer(8.5 * inch)
   sect <- xml2::xml_find_first(doc, ".//w:body/w:sectPr", ns = ns)
   if (inherits(sect, "xml_missing")) {
+    rlang::warn(
+      "landscape = TRUE was requested but the document has no <w:sectPr>; the document is left in portrait orientation."
+    )
     return(invisible())
   }
   pg_size <- xml2::xml_find_first(sect, "./w:pgSz", ns = ns)
@@ -596,16 +533,26 @@ add_vertical_borders <- function(doc, ns, segment_lengths) {
         if (col %in% boundary_positions) {
           add_left_border(tc, ns)
         }
-        span <- xml2::xml_find_first(tc, "./w:tcPr/w:gridSpan", ns = ns)
-        width <- if (inherits(span, "xml_missing")) {
-          1L
-        } else {
-          as.integer(xml2::xml_attr(span, "val"))
-        }
-        col <- col + width
+        col <- col + grid_span_width(tc, ns)
       }
     }
   }
+}
+
+# Width in grid columns of a <w:tc>, from its gridSpan if present. Falls
+# back to 1 on a missing/unparseable value so column walks never go NA.
+#' @noRd
+grid_span_width <- function(tc, ns) {
+  span <- xml2::xml_find_first(tc, "./w:tcPr/w:gridSpan", ns = ns)
+  if (inherits(span, "xml_missing")) {
+    return(1L)
+  }
+  val <- xml2::xml_attr(span, "w:val")
+  if (is.na(val)) {
+    val <- xml2::xml_attr(span, "val")
+  }
+  width <- suppressWarnings(as.integer(val))
+  if (is.na(width) || width < 1L) 1L else width
 }
 
 # Ensure <w:tc> has <w:tcPr><w:tcBorders><w:left .../></w:tcBorders></w:tcPr>.
@@ -697,6 +644,9 @@ strip_seq_table_field <- function(doc, ns) {
       }
     }
     if (is.na(end_idx)) {
+      rlang::warn(
+        "Found a field-begin marker with no matching end while stripping SEQ fields; the field was left in place and Word may warn about linked fields."
+      )
       next
     }
     for (i in seq(begin_idx, end_idx)) {
@@ -746,18 +696,7 @@ inject_table_grids <- function(doc, ns) {
       next
     }
     tcs <- xml2::xml_find_all(first_tr, "./w:tc", ns = ns)
-    n_cols <- sum(vapply(
-      tcs,
-      function(tc) {
-        span <- xml2::xml_find_first(tc, "./w:tcPr/w:gridSpan", ns = ns)
-        if (inherits(span, "xml_missing")) {
-          1L
-        } else {
-          as.integer(xml2::xml_attr(span, "val"))
-        }
-      },
-      integer(1)
-    ))
+    n_cols <- sum(vapply(tcs, grid_span_width, integer(1), ns = ns))
     if (n_cols == 0) {
       next
     }
@@ -878,7 +817,8 @@ reorder_ooxml_sequences <- function(doc, ns) {
 # spans there, and rebuild the paragraph's runs. The first run's <w:rPr>
 # is applied to the reconstructed text — any mid-paragraph pandoc-inferred
 # formatting is lost, which is intentional: the intent was math, not
-# emphasis. Runs last so it sees the final structure.
+# emphasis. Runs before bold_header_rows so synthesized header bold is
+# never reconstructed as literal "**".
 #' @noRd
 rewrite_latex_to_omml <- function(doc, ns) {
   for (p in xml2::xml_find_all(doc, ".//w:p", ns = ns)) {
@@ -890,7 +830,7 @@ rewrite_latex_to_omml <- function(doc, ns) {
       vapply(runs, run_text_with_markdown, character(1), ns = ns),
       collapse = ""
     )
-    if (!grepl("\\$[^$]+\\$", full_text)) {
+    if (!grepl("(?<!\\\\)\\$[^$]+(?<!\\\\)\\$", full_text, perl = TRUE)) {
       next
     }
     first_rpr <- xml2::xml_find_first(runs[[1]], "./w:rPr", ns = ns)
@@ -980,7 +920,8 @@ zip_dir_contents <- function(dir, zipfile) {
 
 #' @noRd
 split_on_dollar_math <- function(txt) {
-  m <- gregexpr("\\$[^$]+\\$", txt, perl = TRUE)[[1]]
+  # A backslash-escaped \$ is a literal dollar sign, not a math delimiter
+  m <- gregexpr("(?<!\\\\)\\$[^$]+(?<!\\\\)\\$", txt, perl = TRUE)[[1]]
   if (m[1] == -1) {
     return(list(list(type = "text", value = txt)))
   }
@@ -1016,11 +957,13 @@ render_latex_part <- function(part, rpr_xml) {
     if (!nzchar(part$value)) {
       return("")
     }
+    # Escaped \$ delimiters render as literal dollar signs
+    value <- gsub("\\$", "$", part$value, fixed = TRUE)
     paste0(
       "<w:r>",
       rpr_xml,
       "<w:t xml:space=\"preserve\">",
-      xml_escape(part$value),
+      xml_escape(value),
       "</w:t>",
       "</w:r>"
     )

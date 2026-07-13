@@ -25,11 +25,24 @@ get_spec_columns <- function(spec, ...) {
   if (!S7::S7_inherits(spec, BaseSpec)) {
     rlang::abort("`spec` must be a <TableSpec> or <SummarySpec> object.")
   }
+  resolve_effective_columns(spec)
+}
+
+#' Resolve the effective display columns for a spec
+#'
+#' Single source of truth for column precedence:
+#' `(columns %||% default_columns) ∪ add_columns − drop_columns`, with CI
+#' aliases in `drop_columns` expanded. Drop beats add. Every site that needs
+#' "which columns does this spec display" must consume this resolver rather
+#' than re-deriving from the spec properties.
+#' @noRd
+resolve_effective_columns <- function(spec) {
   cols <- spec@columns %||% spec@default_columns
   if (!is.null(spec@add_columns)) {
     cols <- unique(c(cols, spec@add_columns))
   }
-  cols
+  drop <- expand_ci_drop_columns(spec@drop_columns %||% character(0))
+  setdiff(cols, drop)
 }
 
 #' Get title from a spec

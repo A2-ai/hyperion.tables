@@ -123,7 +123,8 @@ apply_summary_render_overrides <- function(table, data, numeric_cols) {
         }
         df_val <- data$df[i]
         if (is.na(df_val)) {
-          return(NA_character_)
+          # A computed p-value without a df still deserves display
+          return(format_p)
         }
         sprintf("%s (df = %d)", format_p, df_val)
       },
@@ -136,6 +137,10 @@ apply_summary_render_overrides <- function(table, data, numeric_cols) {
 
   ofv_cols <- intersect(c("ofv", "dofv"), names(data))
   if (length(ofv_cols) > 0) {
+    # formatC(digits = NA) crashes; mirror the comparison path, which
+    # routes NA/unset ofv decimals through the hyperion formatter
+    ofv_digits <- spec@n_decimals_ofv
+    fixed_digits <- !is.null(ofv_digits) && !is.na(ofv_digits)
     for (col in ofv_cols) {
       if (is.numeric(data[[col]])) {
         data[[col]] <- vapply(
@@ -144,7 +149,11 @@ apply_summary_render_overrides <- function(table, data, numeric_cols) {
             if (is.na(x)) {
               return("")
             }
-            formatC(x, digits = spec@n_decimals_ofv, format = "f")
+            if (fixed_digits) {
+              formatC(x, digits = ofv_digits, format = "f")
+            } else {
+              hyperion::format_hyperion_decimal_string(x, ofv_digits)
+            }
           },
           character(1)
         )

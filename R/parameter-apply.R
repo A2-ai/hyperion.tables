@@ -96,9 +96,7 @@ compute_derived_columns <- function(params, spec, info) {
 #' Add description column if requested (before name transformation)
 #' @noRd
 maybe_enrich_description <- function(df, spec, info) {
-  want_description <- "description" %in%
-    get_spec_columns(spec) &&
-    !"description" %in% spec@drop_columns
+  want_description <- "description" %in% resolve_effective_columns(spec)
 
   if (!want_description) {
     return(df)
@@ -362,7 +360,7 @@ build_section <- function(data, spec) {
 #' Warn when rows match multiple non-catch-all section rules
 #' @noRd
 warn_multi_match_sections <- function(formulas, data) {
-  labels <- vapply(formulas, function(f) rlang::f_rhs(f), character(1))
+  labels <- vapply(formulas, rule_label, character(1))
   is_catchall <- vapply(
     formulas,
     function(f) identical(rlang::f_lhs(f), TRUE),
@@ -422,13 +420,7 @@ warn_multi_match_sections <- function(formulas, data) {
 #' Get section order from spec
 #' @noRd
 get_section_order <- function(spec) {
-  vapply(
-    spec@sections@rules,
-    function(rule) {
-      rlang::f_rhs(rlang::eval_tidy(rule))
-    },
-    character(1)
-  )
+  vapply(spec@sections@rules, rule_label, character(1))
 }
 
 #' Resolve final section levels, honoring `set_spec_section_order()` if set,
@@ -451,7 +443,7 @@ resolve_section_levels <- function(data, spec) {
 }
 
 #' @noRd
-comment_keys_for <- function(nonmem, comment, include_associated_theta = TRUE) {
+comment_keys_for <- function(nonmem, comment) {
   keys <- c(nonmem)
 
   if (!is.null(comment@name)) {
@@ -499,7 +491,7 @@ build_name_lookup <- function(info, parameter_names) {
       cmt <- comments[[nonmem]]
       target <- get_raw_name(cmt, nonmem)
 
-      keys <- comment_keys_for(nonmem, cmt, include_associated_theta = TRUE)
+      keys <- comment_keys_for(nonmem, cmt)
 
       data.frame(
         key = keys,
@@ -560,7 +552,7 @@ enrich_description <- function(df, info) {
         desc <- NA_character_
       }
 
-      keys <- comment_keys_for(nonmem, cmt, include_associated_theta = TRUE)
+      keys <- comment_keys_for(nonmem, cmt)
 
       data.frame(
         key = keys,

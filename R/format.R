@@ -159,9 +159,8 @@ adjust_ci_labels <- function(label_map, spec, ci_pct) {
     return(label_map)
   }
 
-  # Get effective columns (requested minus dropped)
-  dropped <- expand_ci_drop_columns(spec@drop_columns)
-  effective_cols <- setdiff(get_spec_columns(spec), dropped)
+  # Effective columns (requested minus dropped)
+  effective_cols <- get_spec_columns(spec)
 
   ci_low_shown <- "ci_low" %in% effective_cols
   ci_high_shown <- "ci_high" %in% effective_cols
@@ -187,33 +186,48 @@ detect_table_statistics <- function(params, spec = NULL) {
   if (is.null(spec)) {
     ci_ok <- cv_ok <- sd_ok <- corr_ok <- TRUE
   } else {
-    base_cols <- spec@columns %||% spec@default_columns
-    effective <- setdiff(
-      c(base_cols, spec@add_columns %||% character(0)),
-      spec@drop_columns %||% character(0)
-    )
+    effective <- resolve_effective_columns(spec)
     vary <- "variability" %in% effective
     cv_ok <- vary || "cv" %in% effective
     sd_ok <- vary || "sd" %in% effective
     corr_ok <- vary || "corr" %in% effective
-    dropped <- expand_ci_drop_columns(spec@drop_columns %||% character(0))
-    ci_ok <- !all(c("ci_low", "ci_high") %in% dropped)
+    ci_ok <- any(c("ci_low", "ci_high") %in% effective)
   }
-  has_cv_col <- "cv" %in% names(params) && cv_ok
-  has_sd_col <- "sd" %in% names(params) && sd_ok
-  has_corr_col <- "corr" %in% names(params) && corr_ok
-  has_transforms <- "transforms" %in% names(params)
   col_names <- names(params)
 
-  # Helper to check for CV with specific kind and transform
+  # All comparison-suffix variants of a stat column present in the data
+  # (e.g. "cv" -> c("cv", "cv_1", "cv_2", ...)), for any model count
+  stat_cols <- function(col) {
+    grep(paste0("^", col, "(_\\d+)?$"), col_names, value = TRUE)
+  }
+  # Suffix-aware presence: TRUE when any variant carries a non-NA value
+  stat_present <- function(col) {
+    cols <- stat_cols(col)
+    length(cols) > 0 &&
+      any(vapply(cols, function(cn) any(!is.na(params[[cn]])), logical(1)))
+  }
+
+  has_cv_col <- length(stat_cols("cv")) > 0 && cv_ok
+  has_sd_col <- length(stat_cols("sd")) > 0 && sd_ok
+  has_corr_col <- length(stat_cols("corr")) > 0 && corr_ok
+  has_transforms <- "transforms" %in% col_names
+
+  # Helper to check for CV with specific kind and transform, across all
+  # model suffixes (transforms and kind are coalesced in comparisons)
   cv_with <- function(kind, transforms) {
-    has_cv_col &&
-      has_transforms &&
-      any(
-        !is.na(params$cv) &
-          params$kind == kind &
-          tolower(params$transforms) %in% tolower(transforms)
-      )
+    if (!has_cv_col || !has_transforms) {
+      return(FALSE)
+    }
+    cv_non_na <- Reduce(
+      `|`,
+      lapply(stat_cols("cv"), function(cn) !is.na(params[[cn]]))
+    )
+    any(
+      cv_non_na &
+        params$kind == kind &
+        tolower(params$transforms) %in% tolower(transforms),
+      na.rm = TRUE
+    )
   }
 
   # Check for any CI columns (ci_low, ci_high, ci_low_1, ci_high_2, etc.)
@@ -222,25 +236,33 @@ detect_table_statistics <- function(params, spec = NULL) {
     length(ci_cols) > 0 &&
     any(vapply(ci_cols, function(col) any(!is.na(params[[col]])), logical(1)))
 
-  # Check for RSE columns (handle both regular and comparison table column names)
-  has_rse_regular <- "rse" %in% col_names && any(!is.na(params$rse))
-  has_rse_comparison <- ("rse_1" %in% col_names && any(!is.na(params$rse_1))) ||
-    ("rse_2" %in% col_names && any(!is.na(params$rse_2)))
+  # SD is disclosed only where it renders alone (no CV/Corr in the same
+  # cell), checked per model suffix
+  sd_alone <- any(vapply(
+    stat_cols("sd"),
+    function(cn) {
+      suffix <- sub("^sd", "", cn)
+      cv_cn <- paste0("cv", suffix)
+      corr_cn <- paste0("corr", suffix)
+      sd_v <- params[[cn]]
+      cv_v <- if (cv_cn %in% col_names) params[[cv_cn]] else NA
+      corr_v <- if (corr_cn %in% col_names) params[[corr_cn]] else NA
+      any(!is.na(sd_v) & is.na(cv_v) & is.na(corr_v))
+    },
+    logical(1)
+  ))
 
   list(
-    # Column presence
+    # Column presence (suffix-aware for comparison tables)
     has_ci = has_ci,
-    has_rse = has_rse_regular || has_rse_comparison,
-    has_stderr = "stderr" %in% col_names && any(!is.na(params$stderr)),
-    has_shrinkage = "shrinkage" %in%
-      names(params) &&
-      any(!is.na(params$shrinkage)),
+    has_rse = stat_present("rse"),
+    has_stderr = stat_present("stderr"),
+    has_shrinkage = stat_present("shrinkage"),
 
     # Merged column statistics (cv/sd/corr)
-    has_cv = has_cv_col && any(!is.na(params$cv)),
-    has_sd = has_sd_col &&
-      any(!is.na(params$sd) & is.na(params$cv) & is.na(params$corr)),
-    has_corr = has_corr_col && any(!is.na(params$corr)),
+    has_cv = has_cv_col && stat_present("cv"),
+    has_sd = has_sd_col && sd_alone,
+    has_corr = has_corr_col && stat_present("corr"),
 
     # CV formula detection by kind and transform
     # Theta LogAddErr: sqrt(exp(Est^2) - 1) * 100

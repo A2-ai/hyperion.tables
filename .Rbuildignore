@@ -13,3 +13,4 @@
 ^pharos\.toml$
 ^_starlightr\.toml$
 ^\.positai$
+^\.review$

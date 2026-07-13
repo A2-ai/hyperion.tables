@@ -48,6 +48,58 @@ jobs:
           echo "tag=$TAG" >> $GITHUB_OUTPUT
 
   # ===========================================================================
+  # CHECK
+  # Runs R CMD check (including the test suite) on the tagged commit before
+  # anything is built or published: build-primary needs this job, so no
+  # binaries or release assets ship from an unchecked tag.
+  # ===========================================================================
+  check:
+    name: R-CMD-check (release gate)
+    needs: determine-tag
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+      CARGO_NET_GIT_FETCH_WITH_CLI: "true"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ needs['determine-tag'].outputs.tag }}
+
+      - name: Configure git for private dependencies
+        run: |
+          git config --global url."https://${{ secrets.PRIVATE_REPO_ACCESS_TOKEN }}@github.com/".insteadOf "https://github.com/"
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: '4.5'
+          use-public-rspm: true
+
+      - uses: a2-ai/setup-rv@main
+
+      - name: rv-sysdeps-install
+        run: |
+          MISSING_DEPS=$(rv plan --json | jq -r '.installed[].sys_deps[]? | select(.status == "absent") | .name')
+          if [ -n "$MISSING_DEPS" ]; then
+            echo "Found missing system dependencies:"
+            echo "$MISSING_DEPS"
+            echo "Installing..."
+            echo "$MISSING_DEPS" | xargs sudo apt install
+          else
+            echo "All system dependencies are present"
+          fi
+
+      - name: rv-sync
+        run: rv sync
+
+      - uses: r-lib/actions/check-r-package@v2
+        with:
+          upload-snapshots: true
+          build_args: 'c("--no-manual","--compact-vignettes=gs+qpdf")'
+
+  # ===========================================================================
   # PLAN-MATRICES
   # Sets up the build matrices for the build-bin jobs, one
   # for platforms that require containers and one for bare-metal platforms.
@@ -98,7 +150,7 @@ jobs:
   # This job runs first; every other job depends on its outputs.
   # ===========================================================================
   build-primary:
-    needs: determine-tag
+    needs: [determine-tag, check]
     runs-on: ubuntu-latest
     container:
       image: almalinux:8

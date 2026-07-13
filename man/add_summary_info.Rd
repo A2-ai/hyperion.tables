@@ -32,5 +32,7 @@ Data frame with model_summary attribute attached
 \description{
 Attaches estimation method, OFV, condition number, and number of
 observations to parameter data for display as the first footnote in
-the parameter table.
+the parameter table. The model's count of free (non-fixed) parameters is
+always captured as well; comparison tables use it to compute
+likelihood-ratio-test degrees of freedom.
 }

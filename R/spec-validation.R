@@ -96,8 +96,11 @@ expand_ci_drop_columns <- function(drop_columns) {
     return(drop_columns)
   }
 
-  ci_aliases <- c("ci", "ci_1", "ci_2", "ci_left", "ci_right")
-  if (any(drop_columns %in% ci_aliases)) {
+  # Only the plain "ci" alias means "drop CI everywhere". Per-model aliases
+  # (ci_1, ci_2, ci_left, ci_right) are expanded per model in the comparison
+  # layout; expanding them globally here would also strip the *other*
+  # models' CI columns from the effective set.
+  if ("ci" %in% drop_columns) {
     drop_columns <- unique(c(drop_columns, "ci_low", "ci_high"))
   }
 

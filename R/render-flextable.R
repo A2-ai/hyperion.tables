@@ -49,6 +49,24 @@ render_to_flextable <- function(table) {
   # Apply borders
   ft <- apply_flextable_borders(ft, table, visible_cols)
 
+  # Comparison tables: left border between model groups on body rows,
+  # matching the gt renderer's model-boundary border
+  rendered_cols <- setdiff(visible_cols, groupname_col %||% character(0))
+  segments <- comparison_column_segments(table, rendered_cols)
+  if (!is.null(segments)) {
+    for (bc in segments$boundary_cols) {
+      idx <- match(bc, rendered_cols)
+      if (!is.na(idx) && idx > 1) {
+        ft <- flextable::vline(
+          ft,
+          j = rendered_cols[idx - 1L],
+          border = officer::fp_border(color = "black", width = 1),
+          part = "body"
+        )
+      }
+    }
+  }
+
   # Add title
   ft <- apply_flextable_title(ft, table)
 
@@ -104,8 +122,8 @@ create_grouped_flextable <- function(data, table) {
     ft <- flextable::merge_h(ft, i = row_idx, part = "body")
   }
 
-  # Bold the group rows
-  if (length(group_rows) > 0) {
+  # Bold the group rows when the IR asks for it (parity with gt)
+  if (length(group_rows) > 0 && "row_groups" %in% table@bold_locations) {
     ft <- flextable::bold(ft, i = group_rows, bold = TRUE)
   }
 
@@ -245,15 +263,13 @@ apply_flextable_labels <- function(ft, table, visible_cols) {
 }
 
 #' Convert markdown label to plain text
+#'
+#' Shares transliterate_latex() with the footnote fallback so any LaTeX a
+#' label map can carry (Greek letters, operators) degrades to the same
+#' plain text instead of rendering as raw markup.
 #' @noRd
 convert_md_label <- function(x) {
-  # Convert LaTeX Delta to Unicode
-  result <- gsub("\\$\\\\Delta\\$", "\u0394", x)
-  result <- gsub("\\\\Delta", "\u0394", result)
-  result <- gsub("\\\\delta", "\u03B4", result)
-  # Remove remaining $ delimiters
-  result <- gsub("\\$", "", result)
-  result
+  transliterate_latex(x)
 }
 
 #' Apply spanners to flextable
@@ -297,8 +313,10 @@ apply_flextable_spanners <- function(ft, table, visible_cols) {
     # Merge adjacent cells with same spanner label
     ft <- flextable::merge_h(ft, part = "header")
 
-    # Bold spanner row
-    ft <- flextable::bold(ft, i = 1, part = "header")
+    # Bold spanner row when the IR asks for it (parity with gt)
+    if ("spanners" %in% table@bold_locations) {
+      ft <- flextable::bold(ft, i = 1, part = "header")
+    }
   }
 
   ft
@@ -335,7 +353,10 @@ apply_flextable_title <- function(ft, table) {
   }
 
   ft <- flextable::add_header_lines(ft, values = table@title, top = TRUE)
-  ft <- flextable::bold(ft, i = 1, part = "header")
+  # Bold only when the IR asks for it (parity with gt)
+  if ("title" %in% table@bold_locations) {
+    ft <- flextable::bold(ft, i = 1, part = "header")
+  }
 
   ft
 }
@@ -357,25 +378,37 @@ apply_flextable_borders <- function(ft, table, visible_cols) {
     # Map column names to indices
     col_indices <- which(visible_cols %in% cols)
 
+    # part = "body" for parity with gt, which applies borders to body
+    # cells only
     if ("right" %in% border$sides) {
       for (idx in col_indices) {
         ft <- flextable::vline(
           ft,
           j = idx,
           border = officer::fp_border(color = border$color),
-          part = "all"
+          part = "body"
         )
       }
     }
 
     if ("left" %in% border$sides) {
       for (idx in col_indices) {
-        ft <- flextable::vline(
-          ft,
-          j = idx - 1,
-          border = officer::fp_border(color = border$color),
-          part = "all"
-        )
+        if (idx > 1) {
+          ft <- flextable::vline(
+            ft,
+            j = idx - 1,
+            border = officer::fp_border(color = border$color),
+            part = "body"
+          )
+        } else {
+          # vline(j = 0) is invalid; the left edge of the first column is
+          # the table's outer left border
+          ft <- flextable::vline_left(
+            ft,
+            border = officer::fp_border(color = border$color),
+            part = "body"
+          )
+        }
       }
     }
 
@@ -500,28 +533,29 @@ convert_to_single_equation <- function(content) {
 #' @return A flextable as_paragraph object
 #' @noRd
 build_footnote_paragraph <- function(content) {
-  # Convert LaTeX to text with subscripts using as_sub()
-  result <- content
+  result <- transliterate_latex(content)
 
-  # Handle specific complex formulas with nested braces FIRST
-  # CV% formula: sqrt(exp(Estimate) - 1) × 100
-  result <- gsub(
-    "\\$\\\\sqrt\\{\\\\exp\\(\\\\mathrm\\{Estimate\\}\\) - 1\\} \\\\times 100\\$",
-    "sqrt(exp(Estimate) - 1) \u00D7 100",
-    result
-  )
-  # CV% formula variant with ^2: sqrt(exp(Estimate^2) - 1) × 100
-  result <- gsub(
-    "\\$\\\\sqrt\\{\\\\exp\\(\\\\mathrm\\{Estimate\\}\\^2\\) - 1\\} \\\\times 100\\$",
-    "sqrt(exp(Estimate\u00B2) - 1) \u00D7 100",
-    result
-  )
-  # % Change formula: (Estimate_model - Estimate_ref) / Estimate_ref · 100
-  result <- gsub(
-    "\\$\\\\frac\\{\\\\mathrm\\{Estimate\\}_\\{\\\\mathrm\\{model\\}\\} - \\\\mathrm\\{Estimate\\}_\\{\\\\mathrm\\{ref\\}\\}\\}\\{\\\\mathrm\\{Estimate\\}_\\{\\\\mathrm\\{ref\\}\\}\\} \\\\cdot 100\\$",
-    "(Estimate_{model} - Estimate_{ref}) / Estimate_{ref} \u00B7 100",
-    result
-  )
+  # Now parse for subscripts and build paragraph chunks
+  chunks <- parse_subscripts_to_chunks(result)
+
+  # Build the paragraph from chunks
+  flextable::as_paragraph(!!!chunks)
+}
+
+#' Transliterate LaTeX footnote markup to plain text
+#'
+#' One generic path (no per-formula byte matching): leaf commands are
+#' replaced first, subscripts are protected, then \\sqrt and \\frac are
+#' reduced innermost-first until no braces remain -- so an edit to a formula
+#' in build_equations_footnote() cannot silently produce a mathematically
+#' different plain-text form.
+#'
+#' @param content Character string with $...$ LaTeX markup
+#' @return Plain-text string, with _{...} subscript notation preserved for
+#'   parse_subscripts_to_chunks()
+#' @noRd
+transliterate_latex <- function(content) {
+  result <- content
 
   # Greek letters
   result <- gsub("\\\\theta", "\u03B8", result)
@@ -533,24 +567,45 @@ build_footnote_paragraph <- function(content) {
   result <- gsub("\\\\Delta", "\u0394", result)
   result <- gsub("\\\\delta", "\u03B4", result)
 
-  # Math operators
+  # Simple operators and leaf commands (no brace nesting concerns)
   result <- gsub("\\\\cdot", "\u00B7", result)
   result <- gsub("\\\\times", "\u00D7", result)
   result <- gsub("\\\\pm", "\u00B1", result)
-  result <- gsub("\\\\sqrt\\{([^}]+)\\}", "sqrt(\\1)", result)
-  result <- gsub("\\\\frac\\{([^}]+)\\}\\{([^}]+)\\}", "(\\1)/(\\2)", result)
-  result <- gsub("\\\\exp\\(([^)]+)\\)", "exp(\\1)", result)
   result <- gsub("\\\\exp", "exp", result)
-  result <- gsub("\\\\mathrm\\{([^}]+)\\}", "\\1", result)
+  result <- gsub("\\^2", "\u00B2", result)
+
+  # \mathrm{...} wrappers contain no nested braces; strip repeatedly so
+  # wrappers inside other commands are gone before brace reduction
+  repeat {
+    stripped <- gsub("\\\\mathrm\\{([^{}]*)\\}", "\\1", result)
+    if (identical(stripped, result)) {
+      break
+    }
+    result <- stripped
+  }
+
+  # Protect subscript braces so \sqrt/\frac reduction can't consume them
+  result <- gsub("_\\{([^{}]*)\\}", "_\u27E8\\1\u27E9", result)
+
+  # Reduce \sqrt{...} and \frac{...}{...} innermost-first
+  repeat {
+    reduced <- gsub("\\\\sqrt\\{([^{}]*)\\}", "sqrt(\\1)", result)
+    reduced <- gsub(
+      "\\\\frac\\{([^{}]*)\\}\\{([^{}]*)\\}",
+      "(\\1)/(\\2)",
+      reduced
+    )
+    if (identical(reduced, result)) {
+      break
+    }
+    result <- reduced
+  }
+
+  # Restore subscript notation
+  result <- gsub("_\u27E8([^\u27E8\u27E9]*)\u27E9", "_{\\1}", result)
 
   # Remove $ delimiters
-  result <- gsub("\\$", "", result)
-
-  # Now parse for subscripts and build paragraph chunks
-  chunks <- parse_subscripts_to_chunks(result)
-
-  # Build the paragraph from chunks
-  flextable::as_paragraph(!!!chunks)
+  gsub("\\$", "", result)
 }
 
 #' Parse text with subscripts into flextable chunks
@@ -597,47 +652,6 @@ parse_subscripts_to_chunks <- function(text) {
   }
 
   chunks
-}
-
-#' Convert markdown/LaTeX footnote to plain text
-#'
-#' @param content Character string with markdown/LaTeX
-#' @return Plain text version
-#' @noRd
-convert_footnote_to_text <- function(content) {
-  result <- content
-
-  # Greek letters
-  result <- gsub("\\\\theta", "\u03B8", result)
-  result <- gsub("\\\\Theta", "\u0398", result)
-  result <- gsub("\\\\Omega", "\u03A9", result)
-  result <- gsub("\\\\omega", "\u03C9", result)
-  result <- gsub("\\\\Sigma", "\u03A3", result)
-  result <- gsub("\\\\sigma", "\u03C3", result)
-  result <- gsub("\\\\Delta", "\u0394", result)
-  result <- gsub("\\\\delta", "\u03B4", result)
-
-  # Math operators
-  result <- gsub("\\\\cdot", "\u00B7", result)
-  result <- gsub("\\\\times", "\u00D7", result)
-  result <- gsub("\\\\pm", "\u00B1", result)
-  result <- gsub("\\\\sqrt\\{([^}]+)\\}", "sqrt(\\1)", result)
-  result <- gsub("\\\\frac\\{([^}]+)\\}\\{([^}]+)\\}", "(\\1)/(\\2)", result)
-  result <- gsub("\\\\exp\\(([^)]+)\\)", "exp(\\1)", result)
-  result <- gsub("\\\\exp", "exp", result)
-  result <- gsub("\\\\mathrm\\{([^}]+)\\}", "\\1", result)
-
-  # Subscripts - convert to parenthetical notation
-  result <- gsub("_\\{([^}]+)\\}", "(\\1)", result)
-
-  # Remove $ delimiters
-  result <- gsub("\\$", "", result)
-
-  # Clean up extra spaces
-  result <- gsub("\\s+", " ", result)
-  result <- trimws(result)
-
-  result
 }
 
 #' @export
