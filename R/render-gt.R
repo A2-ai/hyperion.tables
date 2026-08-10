@@ -972,6 +972,15 @@ dedupe_xmlns_w <- function(path, ns) {
 # required anyway.
 #' @noRd
 zip_dir_contents <- function(dir, zipfile) {
+  # Resolve to an absolute path before setwd(): zip::zipr() opens `zipfile`
+  # relative to the working directory, so a relative `path` would otherwise be
+  # written inside `dir` (the temp stage), which is then deleted. normalizePath()
+  # leaves a non-existent file untouched on macOS, so normalize the (already
+  # created) parent directory and rejoin the basename.
+  zipfile <- file.path(
+    normalizePath(dirname(zipfile), mustWork = FALSE),
+    basename(zipfile)
+  )
   entries <- list.files(dir, all.files = TRUE, no.. = TRUE)
   old <- setwd(dir)
   on.exit(setwd(old))
