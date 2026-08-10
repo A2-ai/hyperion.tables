@@ -208,7 +208,7 @@ jobs:
           resave-data: false          # Set to true if your package ships data/ that needs resaving
           md5: true
           user: r-releaser
-          build-vignettes: false      # Set to true if your package includes vignettes
+          build-vignettes: false      # Vignettes render tables via webshot2/Chrome, which is unavailable in this runner
           metadata: |
             {
               "PrismRemoteType": "git",

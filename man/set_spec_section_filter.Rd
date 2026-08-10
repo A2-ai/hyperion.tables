@@ -4,7 +4,7 @@
 \alias{set_spec_section_filter}
 \title{Set section filter for a spec}
 \usage{
-set_spec_section_filter(spec, exclude = NULL, keep = NULL)
+set_spec_section_filter(spec, ..., exclude = NULL, keep = NULL)
 }
 \arguments{
 \item{spec}{A TableSpec or SummarySpec object.}

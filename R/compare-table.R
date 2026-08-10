@@ -7,22 +7,6 @@
 #' @param comparison Data frame from compare_with()
 #' @return Named list of logicals indicating which stats are present
 #' @noRd
-get_comparison_last_two <- function(comparison, suffix_cols) {
-  meta <- normalize_comparison_meta(comparison, suffix_cols)
-  labels <- meta$labels
-  summaries <- meta$summaries
-  if (length(labels) < 2) {
-    labels <- c(labels, "Model")
-  }
-  if (length(summaries) < 2) {
-    summaries <- c(summaries, list(NULL))
-  }
-  list(
-    labels = utils::tail(labels, 2),
-    summaries = utils::tail(summaries, 2)
-  )
-}
-
 detect_comparison_statistics <- function(comparison) {
   fallback_suffix_cols <- comparison_suffix_columns()
   spec <- get_comparison_meta(comparison)$table_spec
@@ -262,10 +246,10 @@ format_ofv_lrt_footnote <- function(
               ofv_parts,
               sprintf(
                 "delta = %s, LRT p-value = %s (df=%d)",
-                hyperion::format_hyperion_decimal_string(
+                strip_negative_zero(hyperion::format_hyperion_decimal_string(
                   delta_ofv,
                   ofv_decimals
-                ),
+                )),
                 pval_str,
                 df
               )
@@ -524,35 +508,6 @@ make_comparison_table <- function(
     render_to_gt(htable)
   )
   table
-}
-
-#' Render comparison table as gt (internal)
-#'
-#' Preserves the original gt rendering logic for backwards compatibility.
-#'
-#' @noRd
-render_gt_comparison_table <- function(
-  comparison,
-  layout,
-  model_cols,
-  labels,
-  spec,
-  label_map,
-  model_indices,
-  n_sigfig,
-  ci_pct,
-  pct_change_cols
-) {
-  htable <- hyperion_comparison_table(
-    comparison,
-    layout,
-    model_cols,
-    labels,
-    spec,
-    label_map,
-    model_indices
-  )
-  render_to_gt(htable)
 }
 
 # ==============================================================================
@@ -1039,54 +994,6 @@ build_comparison_label_map <- function(
     intersect(names(label_map), names(comparison)),
     hide_cols
   )]
-}
-
-#' Apply model spanners to comparison table
-#' @noRd
-apply_model_spanners <- function(table, model_cols, labels) {
-  for (i in seq_along(model_cols)) {
-    cols <- model_cols[[i]]
-    if (length(cols) > 0) {
-      label <- if (length(labels) >= i) labels[i] else paste0("Model ", i)
-      table <- table |>
-        gt::tab_spanner(label = label, columns = dplyr::all_of(cols))
-    }
-  }
-  table
-}
-
-#' Apply comparison table footnotes
-#' @noRd
-apply_comparison_footnotes <- function(
-  table,
-  comparison,
-  spec,
-  n_sigfig,
-  ci_pct
-) {
-  ofv_decimals <- if (!is.null(spec) && !is.na(spec@n_decimals_ofv)) {
-    spec@n_decimals_ofv
-  } else {
-    NULL
-  }
-  pvalue_scientific <- if (!is.null(spec)) spec@pvalue_scientific else TRUE
-  pvalue_threshold <- if (!is.null(spec)) spec@pvalue_threshold else NULL
-  summary_note <- build_comparison_footnote(
-    comparison,
-    n_sigfig,
-    ofv_decimals,
-    pvalue_scientific,
-    pvalue_threshold
-  )
-
-  comparison_stats <- detect_comparison_statistics(comparison)
-  add_conditional_footnotes(
-    table,
-    comparison,
-    spec,
-    comparison_stats = comparison_stats,
-    summary_note = summary_note
-  )
 }
 
 #' Prepare comparison table data and layout

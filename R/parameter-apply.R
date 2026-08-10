@@ -23,6 +23,7 @@ apply_table_spec <- function(params, spec, info = NULL) {
   if (!is.null(info) && !S7::S7_inherits(info, ModelComments)) {
     rlang::abort("info must be a ModelComments object or NULL")
   }
+  validate_apply_params(params)
 
   df <- compute_derived_columns(params, spec, info)
   df <- maybe_enrich_description(df, spec, info)
@@ -55,6 +56,7 @@ compute_derived_columns <- function(params, spec, info) {
   if (!is.null(info)) {
     transforms_vec <- get_parameter_transform(info, params$name, params$kind)
     unit_vec <- get_parameter_unit(info, params$name, params$kind)
+    transforms_vec <- coalesce_missing_transforms(transforms_vec, params$name)
   } else {
     transforms_vec <- rep("identity", nrow(params))
     unit_vec <- rep(NA_character_, nrow(params))
@@ -93,6 +95,47 @@ compute_derived_columns <- function(params, spec, info) {
     )
 }
 
+#' Validate the params data frame passed to apply_table_spec
+#'
+#' The spec side has thorough validators; this guards the data side so a wrong
+#' input fails with an actionable message instead of a deep dplyr error.
+#' @noRd
+validate_apply_params <- function(params) {
+  if (!is.data.frame(params)) {
+    rlang::abort(c(
+      "`params` must be a data frame.",
+      i = "Did you pass the result of `hyperion::get_parameters(model)`?"
+    ))
+  }
+  required <- c("name", "kind", "estimate", "stderr", "fixed", "diagonal", "random_effect")
+  missing <- setdiff(required, names(params))
+  if (length(missing) > 0) {
+    rlang::abort(c(
+      sprintf("`params` is missing required column(s): %s", paste(missing, collapse = ", ")),
+      i = "Did you pass the result of `hyperion::get_parameters(model)`?"
+    ))
+  }
+  invisible(params)
+}
+
+#' Coalesce NA transforms to "identity" with a warning naming the parameters
+#'
+#' `hyperion::get_parameter_transform()` can return NA (e.g. a name collision
+#' across kinds). Passing NA into the compute functions crashes with an opaque
+#' index error, so degrade to an untransformed display and tell the user.
+#' @noRd
+coalesce_missing_transforms <- function(transforms_vec, names_vec) {
+  na_idx <- which(is.na(transforms_vec))
+  if (length(na_idx) > 0) {
+    rlang::warn(sprintf(
+      "No transform found for parameter(s) %s; displaying untransformed values.",
+      paste(names_vec[na_idx], collapse = ", ")
+    ))
+    transforms_vec[na_idx] <- "identity"
+  }
+  transforms_vec
+}
+
 #' Add description column if requested (before name transformation)
 #' @noRd
 maybe_enrich_description <- function(df, spec, info) {
@@ -122,10 +165,15 @@ resolve_name_columns <- function(df, spec, info) {
   if (!is.null(info)) {
     labels <- get_parameter_names(info)
 
-    match_idx <- match(df$name, rownames(labels))
-    if (all(is.na(match_idx))) {
-      match_idx <- match(df$name, labels$name)
-    }
+    # Match each row independently by NONMEM name, then by display name, keyed on
+    # (name, kind) so a THETA and an OMEGA/SIGMA sharing a display name do not
+    # collide. An all-or-nothing fallback would corrupt every commented row as
+    # soon as a single parameter is uncommented (its name is its NONMEM name).
+    labels_kind <- toupper(sub("^([A-Za-z]+).*", "\\1", rownames(labels)))
+    query_key <- paste(df$name, df$kind)
+    by_nonmem <- match(query_key, paste(rownames(labels), labels_kind))
+    by_user <- match(query_key, paste(labels$name, labels_kind))
+    match_idx <- ifelse(is.na(by_nonmem), by_user, by_nonmem)
 
     df$nonmem_name <- rownames(labels)[match_idx]
     df$user_name <- labels$name[match_idx]
@@ -328,9 +376,12 @@ build_display_transforms <- function(spec) {
   }) |>
     stats::setNames(groups)
 
-  # Always provide dt_all as a fallback transform mapping for every kind
+  # dt_all is the fallback transform mapping for columns not named in any kind's
+  # list. A column should be transformed only for kinds that opted in via "all";
+  # if no kind used "all", unlisted columns must stay untransformed rather than
+  # be transformed for every kind.
   if (!"all" %in% names(dt_kinds)) {
-    dt_kinds[["all"]] <- toupper(names(dt))
+    dt_kinds[["all"]] <- character(0)
   }
 
   dt_kinds
@@ -359,10 +410,26 @@ build_section <- function(data, spec) {
   dplyr::case_when(!!!args)
 }
 
+#' Resolve a section rule's label (formula RHS) to a character scalar
+#'
+#' The RHS may be a string literal or a non-literal expression (a variable or
+#' call) that the SectionOptions validator explicitly supports. Evaluate it in
+#' the formula's environment; fall back to deparsing if evaluation does not yield
+#' a character scalar.
+#' @noRd
+resolve_rule_label <- function(f, env = rlang::f_env(f)) {
+  rhs <- rlang::f_rhs(f)
+  val <- tryCatch(eval(rhs, envir = env), error = function(e) NULL)
+  if (is.character(val) && length(val) == 1L) {
+    return(val)
+  }
+  rlang::as_label(rhs)
+}
+
 #' Warn when rows match multiple non-catch-all section rules
 #' @noRd
 warn_multi_match_sections <- function(formulas, data) {
-  labels <- vapply(formulas, function(f) rlang::f_rhs(f), character(1))
+  labels <- vapply(formulas, resolve_rule_label, character(1))
   is_catchall <- vapply(
     formulas,
     function(f) identical(rlang::f_lhs(f), TRUE),
@@ -425,7 +492,7 @@ get_section_order <- function(spec) {
   vapply(
     spec@sections@rules,
     function(rule) {
-      rlang::f_rhs(rlang::eval_tidy(rule))
+      resolve_rule_label(rlang::eval_tidy(rule), rlang::quo_get_env(rule))
     },
     character(1)
   )
@@ -451,7 +518,7 @@ resolve_section_levels <- function(data, spec) {
 }
 
 #' @noRd
-comment_keys_for <- function(nonmem, comment, include_associated_theta = TRUE) {
+comment_keys_for <- function(nonmem, comment) {
   keys <- c(nonmem)
 
   if (!is.null(comment@name)) {
@@ -499,7 +566,7 @@ build_name_lookup <- function(info, parameter_names) {
       cmt <- comments[[nonmem]]
       target <- get_raw_name(cmt, nonmem)
 
-      keys <- comment_keys_for(nonmem, cmt, include_associated_theta = TRUE)
+      keys <- comment_keys_for(nonmem, cmt)
 
       data.frame(
         key = keys,
@@ -560,7 +627,7 @@ enrich_description <- function(df, info) {
         desc <- NA_character_
       }
 
-      keys <- comment_keys_for(nonmem, cmt, include_associated_theta = TRUE)
+      keys <- comment_keys_for(nonmem, cmt)
 
       data.frame(
         key = keys,

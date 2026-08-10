@@ -91,6 +91,11 @@ apply_summary_spec <- function(tree, spec) {
   needs_dofv <- taken$value
   df <- taken$df
 
+  # Capture the time-unit attribute up front; the dplyr verbs below can drop
+  # data-frame attributes depending on the frame's class, so restore it once at
+  # the end rather than relying on any single verb preserving it.
+  time_unit <- attr(df, "summary_time_unit")
+
   # Evaluate section rules (before column trim so rule-referenced cols available)
   has_section_config <- length(spec@sections@rules) > 0 ||
     length(spec@sections@order) > 0 ||
@@ -111,11 +116,7 @@ apply_summary_spec <- function(tree, spec) {
   df <- dplyr::select(df, -dplyr::any_of("tags"))
 
   # Select and reorder output columns
-  time_unit <- attr(df, "summary_time_unit")
   df <- select_output_columns(df, spec, needs_dofv)
-  if (!is.null(time_unit)) {
-    attr(df, "summary_time_unit") <- time_unit
-  }
 
   # Apply summary_filter rules to summary columns
   if (length(spec@summary_filter) > 0) {
@@ -128,6 +129,10 @@ apply_summary_spec <- function(tree, spec) {
   # Apply drop_columns
   if (!is.null(spec@drop_columns)) {
     df <- dplyr::select(df, -dplyr::any_of(spec@drop_columns))
+  }
+
+  if (!is.null(time_unit)) {
+    attr(df, "summary_time_unit") <- time_unit
   }
 
   attach_hyperion_spec(df, spec, SummarySpec)
@@ -833,19 +838,6 @@ make_summary_table <- function(
     render_to_gt(htable)
   )
   table
-}
-
-#' Render summary table as gt (internal)
-#'
-#' Preserves the original gt rendering logic for backwards compatibility.
-#'
-#' @param data Data frame from apply_summary_spec()
-#' @param spec SummarySpec object
-#' @return gt table object
-#' @noRd
-render_gt_summary_table <- function(data, spec) {
-  htable <- hyperion_summary_table(data, spec)
-  render_to_gt(htable)
 }
 
 #' Get time format suffix for column labels
