@@ -54,6 +54,7 @@ Collate:
     'render-flextable.R'
     'render-gt.R'
     'spec-getters.R'
+    'spec-presets.R'
     'spec-rules.R'
     'spec-setters.R'
     'spec-validation.R'
