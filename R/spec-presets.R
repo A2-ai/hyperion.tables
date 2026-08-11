@@ -29,11 +29,12 @@
 #' spec <- parameter_table_spec() |>
 #'   set_spec_sigfig(4)
 parameter_table_spec <- function(
-    theta_section_label = "Structural model parameters",
-    omega_section_label = "Interindividual variability",
-    sigma_section_label = "Residual error",
-    other_section_label = "Other",
-    title = NULL) {
+  theta_section_label = "Structural model parameters",
+  omega_section_label = "Interindividual variability",
+  sigma_section_label = "Residual error",
+  other_section_label = "Other",
+  title = NULL
+) {
   labels <- list(
     theta_section_label = theta_section_label,
     omega_section_label = omega_section_label,

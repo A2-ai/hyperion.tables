@@ -29,8 +29,7 @@ A \link{TableSpec} object.
 }
 \description{
 \code{parameter_table_spec()} returns a \link{TableSpec} configured for the common
-parameter table layout: omega estimates displayed as CV, display names
-from the parameter lookup, and parameters grouped into sections by kind
+parameter table layout: omegas are transformed in the CV column, and parameters grouped into sections by kind
 (THETA/OMEGA/SIGMA). The returned spec can be customized further with the
 \verb{set_spec_*()} modifiers.
 }
@@ -42,5 +41,5 @@ spec <- parameter_table_spec() |>
   set_spec_sigfig(4)
 }
 \seealso{
-\link{TableSpec}, \code{\link[=set_spec_sections]{set_spec_sections()}}, \code{\link[=make_parameter_table]{make_parameter_table()}}.
+\link{TableSpec}, \code{\link[=make_parameter_table]{make_parameter_table()}}.
 }
