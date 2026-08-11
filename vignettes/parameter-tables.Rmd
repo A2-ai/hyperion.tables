@@ -91,14 +91,7 @@ get_parameters(mod) |>
 
 ### Title interaction section
 
-If we use the title input but leave it empty, we receive an error message
-because title needs an input
-
-```{r, error=TRUE}
-parameter_table_spec(title = , theta_section_label = "Fixed")
-```
-
-For comparison, a bare `TableSpec()` defaults its title to
+A bare `TableSpec()` defaults its title to
 `"Model Parameters"`, so this is what the preset would inherit if the NULL
 default were guarded instead of erroring:
 

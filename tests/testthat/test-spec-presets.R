@@ -68,10 +68,12 @@ test_that("parameter_table_spec result can be customized with modifiers", {
     )
 
   expect_equal(get_spec_sigfig(spec), 4)
-  expect_length(spec@sections@rules, 5)
+
+  rules <- get_spec_sections(spec)@rules
+  expect_length(rules, 5)
 
   labels <- unname(vapply(
-    spec@sections@rules,
+    rules,
     function(q) rlang::quo_get_expr(q)[[3]],
     character(1)
   ))
