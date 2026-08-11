@@ -12,15 +12,15 @@ test_that("parameter_table_spec returns a configured TableSpec", {
   expect_true(S7::S7_inherits(spec, TableSpec))
   expect_equal(get_spec_transforms(spec)$omega, "cv")
   expect_equal(get_spec_parameter_names(spec)@source, "display")
-  expect_length(spec@sections@rules, 4)
-  expect_equal(spec@title, "Model Parameters")
+  expect_length(get_spec_sections(spec)@rules, 4)
+  expect_equal(get_spec_title(spec), "Model Parameters")
 })
 
 test_that("parameter_table_spec assigns default section labels in order", {
   spec <- parameter_table_spec(title = "Model Parameters")
 
   labels <- unname(vapply(
-    spec@sections@rules,
+    get_spec_sections(spec)@rules,
     function(q) rlang::quo_get_expr(q)[[3]],
     character(1)
   ))
@@ -45,7 +45,7 @@ test_that("parameter_table_spec injects custom section labels into rules", {
   )
 
   labels <- unname(vapply(
-    spec@sections@rules,
+    get_spec_sections(spec)@rules,
     function(q) rlang::quo_get_expr(q)[[3]],
     character(1)
   ))
@@ -56,6 +56,18 @@ test_that("parameter_table_spec injects custom section labels into rules", {
 })
 
 test_that("parameter_table_spec result can be customized with modifiers", {
+  model_dir <- system.file(
+    "extdata",
+    "models",
+    "onecmt",
+    package = "hyperion.tables"
+  )
+  testthat::skip_if_not(nzchar(model_dir), "Test data directory not found")
+
+  mod <- hyperion::read_model(file.path(model_dir, "run003.mod"))
+  params <- hyperion::get_parameters(mod)
+  mod_info <- hyperion::get_model_parameter_info(mod)
+
   spec <- parameter_table_spec(title = "Model Parameters") |>
     set_spec_sigfig(4) |>
     set_spec_sections(
@@ -69,23 +81,18 @@ test_that("parameter_table_spec result can be customized with modifiers", {
 
   expect_equal(get_spec_sigfig(spec), 4)
 
-  rules <- get_spec_sections(spec)@rules
-  expect_length(rules, 5)
+  df <- apply_table_spec(params, spec, mod_info)
 
-  labels <- unname(vapply(
-    rules,
-    function(q) rlang::quo_get_expr(q)[[3]],
-    character(1)
-  ))
+  offdiag <- df$kind == "OMEGA" & !df$diagonal
+  expect_true(any(offdiag))
+  expect_equal(unique(df$section[offdiag]), "Covariances")
   expect_equal(
-    labels,
-    c(
-      "Structural model parameters",
-      "Interindividual variability",
-      "Covariances",
-      "Residual error",
-      "Other"
-    )
+    unique(df$section[df$kind == "OMEGA" & df$diagonal]),
+    "Interindividual variability"
+  )
+  expect_equal(
+    unique(df$section[df$kind == "THETA"]),
+    "Structural model parameters"
   )
 })
 
@@ -93,11 +100,11 @@ test_that("parameter_table_spec defaults the title to the TableSpec default", {
   spec <- parameter_table_spec()
 
   expect_true(S7::S7_inherits(spec, TableSpec))
-  expect_equal(spec@title, "Model Parameters")
+  expect_equal(get_spec_title(spec), "Model Parameters")
 })
 
 test_that("parameter_table_spec empty title gives a titleless spec", {
-  expect_equal(parameter_table_spec(title = "")@title, "")
+  expect_equal(get_spec_title(parameter_table_spec(title = "")), "")
 })
 
 test_that("parameter_table_spec rejects non-string section labels", {
