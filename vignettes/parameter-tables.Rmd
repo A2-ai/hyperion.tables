@@ -5,9 +5,6 @@ vignette: >
   %\VignetteIndexEntry{parameter-tables}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
-editor_options: 
-  markdown: 
-    wrap: 72
 ---
 
 ```{r, include = FALSE}
@@ -62,8 +59,8 @@ get_parameters(mod) |>
 ```
 
 The preset gives the same layout as the hand-built spec above in one
-call. Only intentional difference: a single OMEGA section instead of the
-diagonal/off-diagonal split.
+call, except using only one line of code. The only intentional difference: 
+a single OMEGA section instead of the diagonal/off-diagonal split.
 
 ```{r}
 preset_spec <- parameter_table_spec(title = paste(model_run, "Parameters"))
@@ -94,10 +91,11 @@ get_parameters(mod) |>
 
 ### Title interaction section
 
-Testing what happens if we don't give a title
+If we use the title input but leave it empty, we receive an error message
+because title needs an input
 
 ```{r, error=TRUE}
-parameter_table_spec(title = "", theta_section_label = "Fixed")
+parameter_table_spec(title = , theta_section_label = "Fixed")
 ```
 
 For comparison, a bare `TableSpec()` defaults its title to
@@ -131,7 +129,7 @@ get_parameters(mod) |>
   render_to_image()
 ```
 
-Section to get the diagonal/off-diagonal split -- is this where we differ?
+## Showing how we can get a diagonal/off-diagonal split
 
 ```{r}
 split_spec <- parameter_table_spec(title = paste(model_run, "Parameters")) |>
