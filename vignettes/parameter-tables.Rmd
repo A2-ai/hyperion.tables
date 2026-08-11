@@ -91,9 +91,7 @@ get_parameters(mod) |>
 
 ### Title interaction section
 
-A bare `TableSpec()` defaults its title to
-`"Model Parameters"`, so this is what the preset would inherit if the NULL
-default were guarded instead of erroring:
+A bare `TableSpec()` defaults its title to `"Model Parameters"`:
 
 ```{r}
 TableSpec()@title
