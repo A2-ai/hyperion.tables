@@ -20,7 +20,7 @@
 #'   title ("Model Parameters") is used; use `""` for no title.
 #'
 #' @return A [TableSpec] object.
-#' @seealso [TableSpec], [set_spec_sections()], [make_parameter_table()].
+#' @seealso [TableSpec], [make_parameter_table()].
 #' @export
 #' @examples
 #' spec <- parameter_table_spec(title = "Parameter Estimates")
