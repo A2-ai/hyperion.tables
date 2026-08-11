@@ -61,14 +61,6 @@ get_parameters(mod) |>
 	render_to_image()
 ```
 
-## TEMP: experimenting with `parameter_table_spec()`
-
-```{=html}
-<!-- TEMP (local dev): scratch section for the new preset. Polish or remove
-     before committing. Tables print inline here (no render_to_image()) so
-     the chunks also run on machines without a working headless Chrome. -->
-```
-
 The preset gives the same layout as the hand-built spec above in one
 call. Only intentional difference: a single OMEGA section instead of the
 diagonal/off-diagonal split.
