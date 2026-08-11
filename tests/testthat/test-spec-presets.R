@@ -58,10 +58,33 @@ test_that("parameter_table_spec injects custom section labels into rules", {
 test_that("parameter_table_spec result can be customized with modifiers", {
   spec <- parameter_table_spec(title = "Model Parameters") |>
     set_spec_sigfig(4) |>
-    set_spec_sections(kind == "OMEGA" & !diagonal ~ "Covariances")
+    set_spec_sections(
+      kind == "THETA" ~ "Structural model parameters",
+      kind == "OMEGA" & diagonal ~ "Interindividual variability",
+      kind == "OMEGA" & !diagonal ~ "Covariances",
+      kind == "SIGMA" ~ "Residual error",
+      TRUE ~ "Other",
+      overwrite = TRUE
+    )
 
   expect_equal(get_spec_sigfig(spec), 4)
   expect_length(spec@sections@rules, 5)
+
+  labels <- unname(vapply(
+    spec@sections@rules,
+    function(q) rlang::quo_get_expr(q)[[3]],
+    character(1)
+  ))
+  expect_equal(
+    labels,
+    c(
+      "Structural model parameters",
+      "Interindividual variability",
+      "Covariances",
+      "Residual error",
+      "Other"
+    )
+  )
 })
 
 test_that("parameter_table_spec defaults the title to the TableSpec default", {
