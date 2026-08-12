@@ -91,11 +91,22 @@ get_parameters(mod) |>
 
 ### Title interaction section
 
-We can give an empty string if we want a true "no title" table
+Omitting `title` keeps the standard "Model Parameters" title:
 
 ```{r}
 get_parameters(mod) |>
-  apply_table_spec(parameter_table_spec(title = ""), info) |>
+  apply_table_spec(parameter_table_spec(), info) |>
+  add_summary_info(mod_sum) |>
+  make_parameter_table() |>
+  render_to_image()
+```
+
+For a true "no title" table, pass `title = NULL` (an empty string `""` works
+the same way):
+
+```{r}
+get_parameters(mod) |>
+  apply_table_spec(parameter_table_spec(title = NULL), info) |>
   add_summary_info(mod_sum) |>
   make_parameter_table() |>
   render_to_image()

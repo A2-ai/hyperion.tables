@@ -103,6 +103,10 @@ test_that("parameter_table_spec defaults the title to the TableSpec default", {
   expect_equal(get_spec_title(spec), "Model Parameters")
 })
 
+test_that("parameter_table_spec NULL title gives a titleless spec", {
+  expect_equal(get_spec_title(parameter_table_spec(title = NULL)), "")
+})
+
 test_that("parameter_table_spec empty title gives a titleless spec", {
   expect_equal(get_spec_title(parameter_table_spec(title = "")), "")
 })
