@@ -91,12 +91,6 @@ get_parameters(mod) |>
 
 ### Title interaction section
 
-A bare `TableSpec()` defaults its title to `"Model Parameters"`:
-
-```{r}
-TableSpec()@title
-```
-
 We can give an empty string if we want a true "no title" table
 
 ```{r}
