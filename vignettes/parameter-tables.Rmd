@@ -3,8 +3,8 @@ title: "parameter-tables"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{parameter-tables}
-  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
 ---
 
 ```{r, include = FALSE}
@@ -25,7 +25,6 @@ model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tabl
 options(hyperion.config_dir = system.file(package = "hyperion.tables"))
 model_run <- "run003"
 ```
-
 
 ```{r}
 spec <- TableSpec() |>
@@ -59,6 +58,84 @@ get_parameters(mod) |>
 	render_to_image()
 ```
 
+The preset gives the same layout as the hand-built spec above in one
+call, except using only one line of code. The only intentional difference: 
+a single OMEGA section instead of the diagonal/off-diagonal split.
+
+```{r}
+preset_spec <- parameter_table_spec(title = paste(model_run, "Parameters"))
+
+get_parameters(mod) |>
+  apply_table_spec(preset_spec, info) |>
+  add_summary_info(mod_sum) |>
+  make_parameter_table() |>
+  render_to_image()
+```
+
+Custom section labels are injected into the section rules:
+
+```{r}
+custom_spec <- parameter_table_spec(
+  theta_section_label = "Fixed Effects",
+  omega_section_label = "Between-subject variability",
+  sigma_section_label = "Residual variability",
+  title = "PK Parameter Estimates"
+)
+
+get_parameters(mod) |>
+  apply_table_spec(custom_spec, info) |>
+  add_summary_info(mod_sum) |>
+  make_parameter_table() |>
+  render_to_image()
+```
+
+### Title interaction section
+
+`title = NULL` is the default, so a bare `parameter_table_spec()` gives a
+table with no title:
+
+```{r}
+get_parameters(mod) |>
+  apply_table_spec(parameter_table_spec(), info) |>
+  add_summary_info(mod_sum) |>
+  make_parameter_table() |>
+  render_to_image()
+```
+
+Pass a string to set a title, as in the earlier examples.
+
+The preset composes with the existing modifiers, e.g. changing sig figs:
+
+```{r}
+tweaked_spec <- parameter_table_spec(title = paste(model_run, "Parameters")) |>
+  set_spec_sigfig(4)
+
+get_parameters(mod) |>
+  apply_table_spec(tweaked_spec, info) |>
+  add_summary_info(mod_sum) |>
+  make_parameter_table() |>
+  render_to_image()
+```
+
+## Showing how we can get a diagonal/off-diagonal split
+
+```{r}
+split_spec <- parameter_table_spec(title = paste(model_run, "Parameters")) |>
+  set_spec_sections(
+    kind == "THETA" ~ "Structural model parameters",
+    kind == "OMEGA" & diagonal ~ "Interindividual variance parameters",
+    kind == "OMEGA" & !diagonal ~ "Interindividual covariance parameters",
+    kind == "SIGMA" ~ "Residual error",
+    TRUE ~ "Other",
+    overwrite = TRUE
+  )
+
+get_parameters(mod) |>
+  apply_table_spec(split_spec, info) |>
+  add_summary_info(mod_sum) |>
+  make_parameter_table() |>
+  render_to_image()
+```
 
 ## Changing display names with `set_spec_parameter_names()`
 
@@ -154,6 +231,7 @@ get_parameters(mod) |>
 ```
 
 ## Random Effect Parameters only
+
 ```{r}
 re_spec <- TableSpec() |>
   set_spec_sections(
@@ -171,6 +249,7 @@ get_parameters(mod) |>
 ```
 
 ## Confidence Interval level
+
 ```{r}
 spec <- TableSpec() |>
   set_spec_transforms(omega = "cv") |>
@@ -236,10 +315,10 @@ get_parameters(mod) |>
 	render_to_image()
 ```
 
-
 ## Transformation Reference
 
-The following table shows how CV, RSE, and CI are computed for each transform and parameter type combination.
+The following table shows how CV, RSE, and CI are computed for each
+transform and parameter type combination.
 
 ```{r transformation-reference, echo=FALSE}
 # Default formulas
