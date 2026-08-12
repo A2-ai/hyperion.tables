@@ -21,8 +21,8 @@ parameter_table_spec(
 
 \item{other_section_label}{Section label for parameters matching no other rule.}
 
-\item{title}{Table title. If omitted, the standard \link{TableSpec} title
-("Model Parameters") is used; pass \code{NULL} (or \code{""}) for no title.}
+\item{title}{Table title. \code{NULL} (the default) gives a table with no
+title; pass a string to set one.}
 }
 \value{
 A \link{TableSpec} object.

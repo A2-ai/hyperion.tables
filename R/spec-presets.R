@@ -16,8 +16,8 @@
 #' @param omega_section_label Section label for OMEGA parameters.
 #' @param sigma_section_label Section label for SIGMA parameters.
 #' @param other_section_label Section label for parameters matching no other rule.
-#' @param title Table title. If omitted, the standard [TableSpec] title
-#'   ("Model Parameters") is used; pass `NULL` (or `""`) for no title.
+#' @param title Table title. `NULL` (the default) gives a table with no
+#'   title; pass a string to set one.
 #'
 #' @return A [TableSpec] object.
 #' @seealso [TableSpec], [make_parameter_table()].
@@ -60,9 +60,7 @@ parameter_table_spec <- function(
     ) |>
     set_spec_parameter_names(source = "display")
 
-  if (missing(title)) {
-    # keep the TableSpec() constructor default title ("Model Parameters")
-  } else if (is.null(title)) {
+  if (is.null(title)) {
     spec <- set_spec_title(spec, "")
   } else {
     spec <- set_spec_title(spec, title)

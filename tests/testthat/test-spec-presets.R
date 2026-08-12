@@ -96,19 +96,22 @@ test_that("parameter_table_spec result can be customized with modifiers", {
   )
 })
 
-test_that("parameter_table_spec defaults the title to the TableSpec default", {
+test_that("parameter_table_spec defaults to a titleless spec", {
   spec <- parameter_table_spec()
 
   expect_true(S7::S7_inherits(spec, TableSpec))
-  expect_equal(get_spec_title(spec), "Model Parameters")
+  expect_equal(get_spec_title(spec), "")
 })
 
 test_that("parameter_table_spec NULL title gives a titleless spec", {
   expect_equal(get_spec_title(parameter_table_spec(title = NULL)), "")
 })
 
-test_that("parameter_table_spec empty title gives a titleless spec", {
-  expect_equal(get_spec_title(parameter_table_spec(title = "")), "")
+test_that("parameter_table_spec sets an explicit title", {
+  expect_equal(
+    get_spec_title(parameter_table_spec(title = "PK Parameter Estimates")),
+    "PK Parameter Estimates"
+  )
 })
 
 test_that("parameter_table_spec rejects non-string section labels", {

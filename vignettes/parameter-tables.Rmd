@@ -91,7 +91,8 @@ get_parameters(mod) |>
 
 ### Title interaction section
 
-Omitting `title` keeps the standard "Model Parameters" title:
+`title = NULL` is the default, so a bare `parameter_table_spec()` gives a
+table with no title:
 
 ```{r}
 get_parameters(mod) |>
@@ -101,16 +102,7 @@ get_parameters(mod) |>
   render_to_image()
 ```
 
-For a true "no title" table, pass `title = NULL` (an empty string `""` works
-the same way):
-
-```{r}
-get_parameters(mod) |>
-  apply_table_spec(parameter_table_spec(title = NULL), info) |>
-  add_summary_info(mod_sum) |>
-  make_parameter_table() |>
-  render_to_image()
-```
+Pass a string to set a title, as in the earlier examples.
 
 The preset composes with the existing modifiers, e.g. changing sig figs:
 
