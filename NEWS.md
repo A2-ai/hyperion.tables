@@ -1,3 +1,23 @@
+# hyperion.tables 0.6.0
+
+## New Features
+
+* Added `parameter_table_spec()`, a ready-to-use `TableSpec` preset with OMEGA CV transforms, display parameter names, and sections for THETA ("Structural model parameters"), OMEGA ("Interindividual variability"), SIGMA ("Residual error"), and unmatched parameters ("Other"). Section labels are customizable, and the returned spec works with the existing `set_spec_*()` modifiers. The default `title = NULL` suppresses the table title; pass a string to set one.
+
+## Bug Fixes
+
+* `render_to_word()` now correctly saves `gt` tables to relative paths. Previously, the output could be written inside a temporary staging directory and deleted during cleanup.
+
+## Documentation and Maintenance
+
+* Expanded the parameter tables vignette with preset examples, custom section labels, title configuration, and separate sections for diagonal and off-diagonal OMEGA parameters.
+* Updated documentation navigation for section options, spec getters, and Word export, and refreshed the bundled model metadata to use relative `model_path` values.
+* Migrated release automation to the PRISM-generated workflow and updated the development dependency snapshot for R 4.6 compatibility.
+
+## Deprecations
+
+* `set_spec_section_filter()` remains available but deprecated in this release, despite the removal planned in the 0.5.0 notes. Use `set_spec_sections(keep = ...)` or `set_spec_sections(exclude = ...)` instead.
+
 # hyperion.tables 0.5.0
 
 ## Breaking Changes

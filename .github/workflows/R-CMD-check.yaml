@@ -31,6 +31,8 @@ jobs:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
       CARGO_NET_GIT_FETCH_WITH_CLI: "true"
+      RV_R_VERSION: ${{ matrix.config.r }}
+      RV_R_BIN: R
 
     steps:
       - uses: actions/checkout@v4
@@ -53,30 +55,13 @@ jobs:
 
       - uses: a2-ai/setup-rv@main
 
-      - name: replace-rversion
-        run: |
-          perl -i -pe 's|^r_version = "4\.[0-9\.]+"$|r_version = "${{ matrix.config.r }}"|' rproject.toml
-          cat rproject.toml
-        if: runner.os != 'Windows'
-
-      - name: replace-rversion (Windows)
-        run: |
-          $rVersion = "${{ matrix.config.r }}"
-          (Get-Content rproject.toml) -replace '^r_version = "4\.[0-9\.]+"$', "r_version = `"$rVersion`"" | Set-Content rproject.toml
-          Get-Content rproject.toml
-        shell: pwsh
-        if: runner.os == 'Windows'
-
       - name: rv-plan
+        shell: bash
         run: rv plan
-        if: runner.os != 'Windows'
 
-      - name: rv-plan (Windows)
-        run: rv.exe plan
-        shell: cmd
-        if: runner.os == 'Windows'
       - name: rv-sysdeps-install (Linux)
         if: runner.os == 'Linux'
+        shell: bash
         run: |
           MISSING_DEPS=$(rv plan --json | jq -r '.installed[].sys_deps[]? | select(.status == "absent") | .name')
           if [ -n "$MISSING_DEPS" ]; then
@@ -88,13 +73,15 @@ jobs:
             echo "All system dependencies are present"
           fi
       - name: rv-sync
+        shell: bash
         run: rv sync
-        if: runner.os != 'Windows'
 
-      - name: rv-sync (Windows)
-        run: rv.exe sync -vvv
-        shell: cmd
-        if: runner.os == 'Windows'
+      - name: Use the rv library for package checks
+        shell: bash
+        run: |
+          touch "$RUNNER_TEMP/empty.Rprofile"
+          echo "R_PROFILE_USER=$RUNNER_TEMP/empty.Rprofile" >> "$GITHUB_ENV"
+          echo "R_LIBS_USER=$GITHUB_WORKSPACE/$(rv library)" >> "$GITHUB_ENV"
 
       - uses: r-lib/actions/check-r-package@v2
         with:
