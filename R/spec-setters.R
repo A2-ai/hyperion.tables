@@ -248,51 +248,34 @@ set_spec_footnotes <- function(spec, order, ...) {
   spec
 }
 
-#' Set section filter for a spec
+#' Defunct section filter setter
 #'
 #' @description
 #' `r lifecycle::badge("deprecated")`
 #'
-#' `set_spec_section_filter()` was deprecated in hyperion.tables 0.5.0 and
-#' will be removed in 0.6.0. Use [set_spec_sections()] with `keep` or
-#' `exclude` instead. Calling with no filter arguments still clears the
-#' existing filter for backward compatibility.
+#' `set_spec_section_filter()` was deprecated in 0.5.0 and is defunct as of
+#' 0.6.0. It always errors with migration guidance.
+#'
+#' Use [set_spec_sections()] with `keep` or `exclude` instead. To clear a
+#' filter, use `set_spec_sections(spec, keep = character(0))`; `NULL` leaves
+#' the existing filter unchanged.
 #'
 #' @param spec A TableSpec or SummarySpec object.
-#' @param exclude Character vector of section labels to drop, optionally
-#'   including `NA` to also drop unmatched rows.
-#' @param keep Character vector of section labels to keep (everything else
-#'   is dropped), optionally including `NA` to also keep unmatched rows.
-#' @return Modified spec.
+#' @param exclude Character vector of section labels to drop.
+#' @param keep Character vector of section labels to keep.
+#' @return No value; always raises a defunct-function error.
+#' @seealso [set_spec_sections()].
 #' @export
-#' @examples
-#' spec <- SummarySpec() |>
-#'   set_spec_sections(
-#'     "base" %in% tags ~ "Base Models",
-#'     TRUE ~ "Other"
-#'   ) |>
-#'   set_spec_section_filter(exclude = "Other")
 set_spec_section_filter <- function(spec, exclude = NULL, keep = NULL) {
-  lifecycle::deprecate_warn(
-    "0.5.0",
+  lifecycle::deprecate_stop(
+    "0.6.0",
     "set_spec_section_filter()",
     "set_spec_sections()",
-    details = paste0(
-      "`set_spec_section_filter()` will be removed in hyperion.tables 0.6.0. ",
-      "Use `set_spec_sections(keep = ...)` or ",
-      "`set_spec_sections(exclude = ...)` instead."
+    details = c(
+      "Use `set_spec_sections(keep = ...)` or `set_spec_sections(exclude = ...)` instead.",
+      "To clear a filter, use `set_spec_sections(keep = character(0))`; `NULL` leaves it unchanged."
     )
   )
-  if (!S7::S7_inherits(spec, BaseSpec)) {
-    rlang::abort("`spec` must be a <TableSpec> or <SummarySpec> object.")
-  }
-  if (
-    (missing(exclude) || is.null(exclude)) &&
-      (missing(keep) || is.null(keep))
-  ) {
-    return(set_spec_sections(spec, keep = character(0)))
-  }
-  set_spec_sections(spec, exclude = exclude, keep = keep)
 }
 
 # ==============================================================================

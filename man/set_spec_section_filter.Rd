@@ -2,35 +2,30 @@
 % Please edit documentation in R/spec-setters.R
 \name{set_spec_section_filter}
 \alias{set_spec_section_filter}
-\title{Set section filter for a spec}
+\title{Defunct section filter setter}
 \usage{
 set_spec_section_filter(spec, exclude = NULL, keep = NULL)
 }
 \arguments{
 \item{spec}{A TableSpec or SummarySpec object.}
 
-\item{exclude}{Character vector of section labels to drop, optionally
-including \code{NA} to also drop unmatched rows.}
+\item{exclude}{Character vector of section labels to drop.}
 
-\item{keep}{Character vector of section labels to keep (everything else
-is dropped), optionally including \code{NA} to also keep unmatched rows.}
+\item{keep}{Character vector of section labels to keep.}
 }
 \value{
-Modified spec.
+No value; always raises a defunct-function error.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
 
-\code{set_spec_section_filter()} was deprecated in hyperion.tables 0.5.0 and
-will be removed in 0.6.0. Use \code{\link[=set_spec_sections]{set_spec_sections()}} with \code{keep} or
-\code{exclude} instead. Calling with no filter arguments still clears the
-existing filter for backward compatibility.
+\code{set_spec_section_filter()} was deprecated in 0.5.0 and is defunct as of
+0.6.0. It always errors with migration guidance.
+
+Use \code{\link[=set_spec_sections]{set_spec_sections()}} with \code{keep} or \code{exclude} instead. To clear a
+filter, use \code{set_spec_sections(spec, keep = character(0))}; \code{NULL} leaves
+the existing filter unchanged.
 }
-\examples{
-spec <- SummarySpec() |>
-  set_spec_sections(
-    "base" \%in\% tags ~ "Base Models",
-    TRUE ~ "Other"
-  ) |>
-  set_spec_section_filter(exclude = "Other")
+\seealso{
+\code{\link[=set_spec_sections]{set_spec_sections()}}.
 }

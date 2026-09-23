@@ -206,17 +206,19 @@ test_that("set_spec_sections clears section filter with character(0)", {
   expect_length(spec@sections@filter, 0L)
 })
 
-test_that("set_spec_section_filter is deprecated but delegates", {
-  base <- TableSpec() |>
-    set_spec_sections(kind == "THETA" ~ "Other")
-  expect_warning(
-    spec <- base |> set_spec_section_filter(exclude = "Other"),
-    "deprecated"
-  )
-  expect_identical(spec@sections@filter, list(exclude = "Other"))
-
-  cleared <- suppressWarnings(spec |> set_spec_section_filter(exclude = NULL))
-  expect_length(cleared@sections@filter, 0L)
+test_that("set_spec_section_filter is defunct and explains migration", {
+  for (spec in list(TableSpec(), SummarySpec())) {
+    for (args in list(list(), list(keep = "Other"), list(exclude = "Other"))) {
+      err <- expect_error(
+        do.call(set_spec_section_filter, c(list(spec = spec), args)),
+        class = "lifecycle_error_deprecated"
+      )
+      expect_match(conditionMessage(err), "0.6.0", fixed = TRUE)
+      expect_match(conditionMessage(err), "set_spec_sections(keep = ...)", fixed = TRUE)
+      expect_match(conditionMessage(err), "set_spec_sections(exclude = ...)", fixed = TRUE)
+      expect_match(conditionMessage(err), "keep = character(0)", fixed = TRUE)
+    }
+  }
 })
 
 test_that("set_spec_sections(order=) stores order config", {
