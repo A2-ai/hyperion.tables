@@ -21,7 +21,9 @@ jobs:
       matrix:
         config:
           #- {os: windows-latest, r: '4.5', rust-version: 'stable-msvc', rust-target: 'x86_64-pc-windows-gnu'}
+          - {os: macos-latest,   r: '4.6', rust-version: 'stable'}
           - {os: macos-latest,   r: '4.5', rust-version: 'stable'}
+          - {os: ubuntu-latest,  r: '4.6', rust-version: 'stable'}
           - {os: ubuntu-latest,  r: '4.5', rust-version: 'stable'}
           - {os: ubuntu-latest,  r: '4.4', rust-version: 'stable'}
           - {os: ubuntu-latest,  r: '4.3', rust-version: 'stable'}
