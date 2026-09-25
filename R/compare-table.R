@@ -526,35 +526,6 @@ make_comparison_table <- function(
   table
 }
 
-#' Render comparison table as gt (internal)
-#'
-#' Preserves the original gt rendering logic for backwards compatibility.
-#'
-#' @noRd
-render_gt_comparison_table <- function(
-  comparison,
-  layout,
-  model_cols,
-  labels,
-  spec,
-  label_map,
-  model_indices,
-  n_sigfig,
-  ci_pct,
-  pct_change_cols
-) {
-  htable <- hyperion_comparison_table(
-    comparison,
-    layout,
-    model_cols,
-    labels,
-    spec,
-    label_map,
-    model_indices
-  )
-  render_to_gt(htable)
-}
-
 # ==============================================================================
 # HyperionTable Constructor for Comparison Tables
 # ==============================================================================

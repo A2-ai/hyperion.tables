@@ -251,7 +251,7 @@ set_spec_footnotes <- function(spec, order, ...) {
 #' Defunct section filter setter
 #'
 #' @description
-#' `r lifecycle::badge("deprecated")`
+#' `r lifecycle::badge("defunct")`
 #'
 #' `set_spec_section_filter()` was deprecated in 0.5.0 and is defunct as of
 #' 0.6.0. It always errors with migration guidance.
@@ -268,7 +268,7 @@ set_spec_footnotes <- function(spec, order, ...) {
 #' @export
 set_spec_section_filter <- function(spec, exclude = NULL, keep = NULL) {
   lifecycle::deprecate_stop(
-    "0.6.0",
+    "0.5.0",
     "set_spec_section_filter()",
     "set_spec_sections()",
     details = c(

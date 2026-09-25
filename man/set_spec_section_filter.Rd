@@ -17,7 +17,7 @@ set_spec_section_filter(spec, exclude = NULL, keep = NULL)
 No value; always raises a defunct-function error.
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#defunct}{\figure{lifecycle-defunct.svg}{options: alt='[Defunct]'}}}{\strong{[Defunct]}}
 
 \code{set_spec_section_filter()} was deprecated in 0.5.0 and is defunct as of
 0.6.0. It always errors with migration guidance.
