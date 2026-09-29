@@ -1,3 +1,23 @@
+# hyperion.tables 0.6.0
+
+## Breaking changes
+
+- `set_spec_section_filter()` is defunct; use `set_spec_sections(keep = ...)`
+  or `set_spec_sections(exclude = ...)`.
+
+## New features
+
+- `parameter_table_spec()` returns a `TableSpec` preset with CV% omegas,
+  display names, and THETA/OMEGA/SIGMA sections with customizable labels.
+
+## Bug fixes
+
+- `render_to_word()` saves `gt` tables to relative paths.
+
+## Dependencies
+
+- Requires hyperion 0.6.0.
+
 # hyperion.tables 0.5.0
 
 ## Breaking Changes

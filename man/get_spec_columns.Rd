@@ -15,9 +15,10 @@ get_spec_columns(spec, ...)
 Character vector of column names.
 }
 \description{
-\code{get_spec_columns()} returns the current columns list from the spec. The
-result is resolved as
-\verb{(columns \%||\% default_columns) ∪ add_columns − drop_columns}.
+\code{get_spec_columns()} returns \code{columns}, or \code{default_columns} when \code{columns}
+is \code{NULL}, with \code{add_columns} appended and duplicates removed when additions
+are present. It does not apply \code{drop_columns}; exclusions are handled later
+in the table-building pipeline.
 }
 \examples{
 spec <- TableSpec()

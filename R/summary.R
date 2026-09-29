@@ -835,19 +835,6 @@ make_summary_table <- function(
   table
 }
 
-#' Render summary table as gt (internal)
-#'
-#' Preserves the original gt rendering logic for backwards compatibility.
-#'
-#' @param data Data frame from apply_summary_spec()
-#' @param spec SummarySpec object
-#' @return gt table object
-#' @noRd
-render_gt_summary_table <- function(data, spec) {
-  htable <- hyperion_summary_table(data, spec)
-  render_to_gt(htable)
-}
-
 #' Get time format suffix for column labels
 #' @noRd
 get_time_suffix <- function(time_format, data) {

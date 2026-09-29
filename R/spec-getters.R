@@ -9,9 +9,10 @@
 
 #' Get columns from a spec
 #'
-#' `get_spec_columns()` returns the current columns list from the spec. The
-#' result is resolved as
-#' `(columns %||% default_columns) ∪ add_columns − drop_columns`.
+#' `get_spec_columns()` returns `columns`, or `default_columns` when `columns`
+#' is `NULL`, with `add_columns` appended and duplicates removed when additions
+#' are present. It does not apply `drop_columns`; exclusions are handled later
+#' in the table-building pipeline.
 #'
 #' @param spec A TableSpec or SummarySpec object.
 #' @param ... Not used.
