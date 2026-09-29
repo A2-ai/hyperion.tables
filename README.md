@@ -21,12 +21,15 @@ pak::pak("A2-ai/hyperion.tables")
 ```
 
 ``` r
+# Use the example project bundled with hyperion.tables
+options(hyperion.config_dir = system.file(package = "hyperion.tables"))
+
 library(gt)
 library(hyperion)
-#> 
-#> 
 #> ── pharos configuration ────────────────────────────────────────────────────────
-#> ✔ pharos.toml found: /Users/mattsmith/Documents/hyperion.tables/pharos.toml
+#> ✔ pharos CLI: 0.6.0
+#> ✔ pharos.toml found: <R library>/hyperion.tables/pharos.toml
+#>     └ hyperion.config_dir : <R library>/hyperion.tables
 #> ── hyperion options ────────────────────────────────────────────────────────────
 #> ✔ hyperion.significant_number_display : 4
 #> ── hyperion nonmem object options ──────────────────────────────────────────────
@@ -108,8 +111,7 @@ get_parameters(run002) |>
 ### Summary table
 
 ``` r
-model_dir <- system.file("extdata", "models", "onecmt", package = "hyperion.tables")
-tree <- get_model_lineage(model_dir)
+tree <- get_model_lineage()
 
 tree |>
   apply_summary_spec(SummarySpec()) |>

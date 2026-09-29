@@ -29,9 +29,16 @@ A \link{TableSpec} object.
 }
 \description{
 \code{parameter_table_spec()} returns a \link{TableSpec} configured for the common
-parameter table layout: omegas are transformed in the CV column, and parameters grouped into sections by kind
+parameter table layout: omegas are shown as CV, parameter names use their
+display names, and parameters are grouped into sections by kind
 (THETA/OMEGA/SIGMA). The returned spec can be customized further with the
 \verb{set_spec_*()} modifiers.
+}
+\details{
+Section rules are matched in order and the preset ends with a catch-all
+rule, so rules appended with \code{\link[=set_spec_sections]{set_spec_sections()}} never apply. To change
+the sections, pass \code{overwrite = TRUE} to replace the preset's rules, or
+assign specific parameters with \verb{parameters =}.
 }
 \examples{
 spec <- parameter_table_spec(title = "Parameter Estimates")
