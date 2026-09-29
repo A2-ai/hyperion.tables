@@ -55,7 +55,7 @@ test_that("parameter_table_spec injects custom section labels into rules", {
   )
 })
 
-test_that("parameter_table_spec result can be customized with modifiers", {
+test_that("parameter_table_spec sections can be replaced with overwrite = TRUE", {
   model_dir <- system.file(
     "extdata",
     "models",

@@ -1,16 +1,15 @@
-# ==============================================================================
-# Spec Presets
-# ==============================================================================
-# Pre-configured spec constructors for common table patterns. Each preset
-# returns a ready-to-use spec that can be customized further with the
-# set_spec_*() modifiers.
-
 #' Pre-configured TableSpec for a standard parameter table
 #'
 #' `parameter_table_spec()` returns a [TableSpec] configured for the common
-#' parameter table layout: omegas are transformed in the CV column, and parameters grouped into sections by kind
+#' parameter table layout: omegas are shown as CV, parameter names use their
+#' display names, and parameters are grouped into sections by kind
 #' (THETA/OMEGA/SIGMA). The returned spec can be customized further with the
 #' `set_spec_*()` modifiers.
+#'
+#' Section rules are matched in order and the preset ends with a catch-all
+#' rule, so rules appended with [set_spec_sections()] never apply. To change
+#' the sections, pass `overwrite = TRUE` to replace the preset's rules, or
+#' assign specific parameters with `parameters =`.
 #'
 #' @param theta_section_label Section label for THETA parameters.
 #' @param omega_section_label Section label for OMEGA parameters.
@@ -60,10 +59,5 @@ parameter_table_spec <- function(
     ) |>
     set_spec_parameter_names(source = "display")
 
-  if (is.null(title)) {
-    spec <- set_spec_title(spec, "")
-  } else {
-    spec <- set_spec_title(spec, title)
-  }
-  spec
+  set_spec_title(spec, title %||% "")
 }

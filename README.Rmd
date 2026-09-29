@@ -12,7 +12,6 @@ knitr::opts_chunk$set(
   out.width = "100%"
 )
 dir.create("man/figures", recursive = TRUE, showWarnings = FALSE)
-options(hyperion.config_dir = system.file(package = "hyperion.tables"))
 ```
 
 # hyperion.tables
@@ -33,6 +32,9 @@ pak::pak("A2-ai/hyperion.tables")
 ```
 
 ```{r}
+# Use the example project bundled with hyperion.tables
+options(hyperion.config_dir = system.file(package = "hyperion.tables"))
+
 library(gt)
 library(hyperion)
 library(hyperion.tables)
