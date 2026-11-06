@@ -103,11 +103,6 @@ HyperionTable <- S7::new_class(
       class = S7::class_character,
       default = c("column_labels")
     ),
-    bold_rows = S7::new_property(
-      # Body row indices (into @data) rendered bold, e.g. section header rows
-      class = S7::class_integer,
-      default = integer(0)
-    ),
     borders = S7::new_property(
       class = S7::class_list,
       default = list()

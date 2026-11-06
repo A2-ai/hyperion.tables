@@ -133,66 +133,7 @@ apply_summary_spec <- function(tree, spec) {
     df <- dplyr::select(df, -dplyr::any_of(spec@drop_columns))
   }
 
-  df <- add_section_header_rows(df, spec)
-
   attach_hyperion_spec(df, spec, SummarySpec)
-}
-
-#' Put each section's header rows ahead of its models
-#'
-#' The spec's `section_header` function gives the rows; they get the output
-#' columns it leaves out as NA, the section, and `.header = TRUE`, which the
-#' renderers bold and hide. With no function, or no sections, the data is
-#' returned as is.
-#' @noRd
-add_section_header_rows <- function(df, spec) {
-  fn <- spec@section_header
-  if (is.null(fn) || !"section" %in% names(df) || nrow(df) == 0) {
-    return(df)
-  }
-  time_unit <- attr(df, "summary_time_unit")
-  settable <- setdiff(names(df), "section")
-
-  pieces <- lapply(unique(df$section), function(section) {
-    rows <- df[df$section == section, , drop = FALSE]
-    header <- fn(section, rows)
-    if (!is.data.frame(header)) {
-      rlang::abort("the section header function must return a data frame.")
-    }
-    bad <- setdiff(names(header), settable)
-    if (length(bad) > 0) {
-      rlang::abort(sprintf(
-        "the section header for '%s' has columns not in the table: %s",
-        section,
-        paste(bad, collapse = ", ")
-      ))
-    }
-    # All-NA rows of the table's own types, then the given columns.
-    template <- df[rep(NA_integer_, nrow(header)), , drop = FALSE]
-    for (col in names(header)) {
-      value <- header[[col]]
-      if (is.character(df[[col]]) != is.character(value)) {
-        rlang::abort(sprintf(
-          "the section header for '%s' gives `%s` as %s; the table has it as %s.",
-          section,
-          col,
-          class(value)[1],
-          class(df[[col]])[1]
-        ))
-      }
-      template[[col]] <- value
-    }
-    template$section <- section
-    template$.header <- rep(TRUE, nrow(header))
-    rows$.header <- rep(FALSE, nrow(rows))
-    rbind(template, rows)
-  })
-  out <- do.call(rbind, pieces)
-  rownames(out) <- NULL
-  if (!is.null(time_unit)) {
-    attr(out, "summary_time_unit") <- time_unit
-  }
-  out
 }
 
 #' Filter metadata data frame by tag and model name
@@ -999,7 +940,7 @@ hyperion_summary_table <- function(data, spec) {
   label_map <- build_summary_label_map()
   label_map <- label_map[intersect(names(label_map), names(data))]
   # A column a mutate rule computed is labelled from its name: "action" -> "Action".
-  for (col in setdiff(names(data), c(names(label_map), "section", ".header"))) {
+  for (col in setdiff(names(data), c(names(label_map), "section"))) {
     label_map[[col]] <- tools::toTitleCase(gsub("_", " ", col, fixed = TRUE))
   }
 
@@ -1039,19 +980,12 @@ hyperion_summary_table <- function(data, spec) {
     names(data)
   )
 
-  # Determine section grouping: row groups, or header rows in the body when
-  # the spec's section_header gave them (then the section column is hidden).
+  # Determine section grouping
   has_sections <- "section" %in% names(data) && !all(is.na(data$section))
-  has_header_rows <- ".header" %in% names(data)
-  groupname_col <- if (has_sections && !has_header_rows) "section" else NULL
+  groupname_col <- if (has_sections) "section" else NULL
   bold_locs <- c("column_labels", "title")
-  if (!is.null(groupname_col)) {
+  if (has_sections) {
     bold_locs <- c(bold_locs, "row_groups")
-  }
-  bold_rows <- integer(0)
-  if (has_header_rows) {
-    empty_cols <- union(empty_cols, c("section", ".header"))
-    bold_rows <- which(data$.header)
   }
 
   HyperionTable(
@@ -1067,7 +1001,6 @@ hyperion_summary_table <- function(data, spec) {
     ci_merges = list(),
     ci_missing_rows = integer(0),
     bold_locations = bold_locs,
-    bold_rows = bold_rows,
     borders = list(),
     footnotes = footnotes,
     source_spec = spec

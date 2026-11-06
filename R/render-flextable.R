@@ -320,10 +320,6 @@ apply_flextable_bold <- function(ft, table) {
 
   # Note: row_groups are handled separately in their creation
 
-  if (length(table@bold_rows) > 0) {
-    ft <- flextable::bold(ft, i = table@bold_rows, part = "body")
-  }
-
   ft
 }
 

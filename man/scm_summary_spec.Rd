@@ -4,12 +4,14 @@
 \alias{scm_summary_spec}
 \title{Pre-configured SummarySpec for a stepwise covariate modeling process}
 \usage{
-scm_summary_spec(scm, title = NULL, other_section_label = "Other")
+scm_summary_spec(lineage, title = NULL, other_section_label = "Other")
 }
 \arguments{
-\item{scm}{The SCM process: a \code{hyperion_nonmem_scm} object or its config
-(\verb{<stem>scm.toml}). The lineage alone is not enough, since the retained
-covariates come from the process record.}
+\item{lineage}{The \code{hyperion_nonmem_tree} holding the SCM fits:
+\code{hyperion::get_model_lineage()} of the project, which reads the metadata
+pharos wrote beside each fit, or \code{hyperion::get_scm_lineage()} of the
+process, built from its record. A \code{hyperion_nonmem_scm} object or SCM
+config (\verb{<stem>scm.toml}) is passed to the latter.}
 
 \item{title}{Table title. \code{NULL} (the default) gives a table with no
 title; pass a string to set one.}
@@ -21,26 +23,21 @@ A \link{SummarySpec} object.
 }
 \description{
 \code{scm_summary_spec()} returns a \link{SummarySpec} for the run summary table of
-an SCM process: one section per round, in the order the process ran them,
-from the round tags \code{hyperion::get_scm_lineage()} puts on each fit. Every
-fit in that lineage is based on the model its round tested against, so
-each candidate's dOFV is the round's own.
+an SCM process: the fits tagged \code{"scm"}, in one section per round, from
+the round tag pharos writes to each fit's metadata (\code{"base"} or \code{"full"},
+\code{"forward_round1"}, ..., \code{"forward_final"}, \code{"final"}), in the order the
+process ran them. It composes the usual spec settings and nothing else:
+it is what you would write by hand with \code{\link[=set_spec_sections]{set_spec_sections()}}, as in
+\code{set_spec_sections("base" \%in\% tags ~ "Base model", "forward_round1" \%in\% tags ~ "Forward round 1", ...)}, for however many rounds the process ran.
 }
 \details{
-Each section opens with header rows in the table body, in bold, rather
-than a row group: a title row with the round's name under Model and the
-model the round tested against under Reference, then, once the process
-has retained something, a row such as \code{"Retained: WT_CL, CRCL_CL"}, from
-the process record. The forward and final models' sections list what
-they keep.
-
-The columns are Reference, OFV, dOFV and Action. Reference is filled on
-the title rows only. The reference, forward and final models show their
-OFV and no dOFV; each candidate shows its dOFV and no OFV, and the
-candidate its round selected shows "Selected" in Action. The table has no
-footnotes. The spec sets \code{pvalue_direction = "both"}, so selecting the
-\code{pvalue} column with \code{\link[=set_spec_columns]{set_spec_columns()}} tests the backward steps too.
-The returned spec can be customized further with the \verb{set_spec_*()}
+Every fit is based on the model its round tested against, so dOFV is the
+round's own. The columns are Reference, Description (the fit's action,
+such as "SCM forward_round1: add WT_CL (attempt 1)"), OFV, dOFV and
+Action, which shows "Selected" for the candidate its round kept, from the
+\code{"selected"} tag. The table has no footnotes, and \code{pvalue_direction} is
+\code{"both"}, so selecting the \code{pvalue} column with \code{\link[=set_spec_columns]{set_spec_columns()}} tests
+the backward steps too. Customize further with the \verb{set_spec_*()}
 modifiers.
 
 The section rules end with a catch-all, so rules appended with
@@ -48,19 +45,26 @@ The section rules end with a catch-all, so rules appended with
 }
 \examples{
 \dontrun{
-scm <- hyperion::read_scm("model/nonmem/scm/run001scm.toml")
+# From the fits' metadata, as any other lineage
+lineage <- hyperion::get_model_lineage()
+lineage |>
+  apply_summary_spec(scm_summary_spec(lineage)) |>
+  make_summary_table()
 
+# From the process record
+scm <- hyperion::read_scm("model/nonmem/scm/run001scm.toml")
 scm |>
   hyperion::get_scm_lineage() |>
-  apply_summary_spec(scm_summary_spec(scm)) |>
+  apply_summary_spec(scm_summary_spec(scm, title = "Covariate search")) |>
   make_summary_table()
 
 # Customize further with modifiers
-spec <- scm_summary_spec(scm, title = "Covariate search") |>
+spec <- scm_summary_spec(scm) |>
   set_spec_columns("based_on", "ofv", "dofv", "pvalue", "action") |>
   set_spec_pvalue(scientific = TRUE)
 }
 }
 \seealso{
-\link{SummarySpec}, \code{\link[=apply_summary_spec]{apply_summary_spec()}}, \code{\link[=make_summary_table]{make_summary_table()}}.
+\link{SummarySpec}, \code{\link[=set_spec_sections]{set_spec_sections()}}, \code{\link[=apply_summary_spec]{apply_summary_spec()}},
+\code{\link[=make_summary_table]{make_summary_table()}}.
 }

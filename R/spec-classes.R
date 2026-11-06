@@ -502,9 +502,6 @@ TableSpec <- S7::new_class(
 #'   elimination step.
 #' @param mutate Named list of quosures computing columns from each model's
 #'   row, usually set with [set_spec_mutate()]. Default is an empty list.
-#' @param section_header NULL (the default), or a function giving each
-#'   section header rows in the table body in place of a row group, usually
-#'   set with [set_spec_section_header()].
 #' @param footnote_order Character vector controlling the order of footnote sections,
 #'   or NULL to disable footnotes. Valid value for SummarySpec: "abbreviations".
 #'   Default is c("abbreviations").
@@ -545,10 +542,6 @@ SummarySpec <- S7::new_class(
     mutate = S7::new_property(
       class = S7::class_list,
       default = list()
-    ),
-    section_header = S7::new_property(
-      class = S7::class_function | NULL,
-      default = NULL
     ),
     default_columns = S7::new_property(
       class = S7::class_character,
@@ -656,7 +649,6 @@ SummarySpec <- S7::new_class(
     pvalue_threshold = NULL,
     pvalue_direction = "forward",
     mutate = list(),
-    section_header = NULL,
     footnote_order = "abbreviations"
   ) {
     S7::new_object(
@@ -679,7 +671,6 @@ SummarySpec <- S7::new_class(
       pvalue_threshold = pvalue_threshold,
       pvalue_direction = pvalue_direction,
       mutate = mutate,
-      section_header = section_header,
       footnote_order = footnote_order
     )
   }

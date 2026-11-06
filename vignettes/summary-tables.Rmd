@@ -128,15 +128,15 @@ tree |>
 
 An SCM process (`hyperion::submit_scm_to_slurm()`) fits a model per
 candidate covariate in each round, against the model that round started
-from. `hyperion::get_scm_lineage()` builds the lineage of those fits from
-the process record, with every fit based on its round's reference model and
-tagged with its round, so it summarizes like any other lineage.
-`scm_summary_spec()` is the preset for it: a section per round, in the order
-the process ran them, each opening with a bold title row that names the
-model the round tested against, and a row listing the covariates retained
-going into it. The reference, forward and final models show their OFV; each
-candidate shows its dOFV, and the candidate the round selected is marked in
-the Action column.
+from. pharos writes each fit's metadata with the reference model as its
+`based_on` and tags naming the round (`"scm"`, `"forward_round1"`, ...), so
+`hyperion::get_model_lineage()` includes the fits like any other models,
+and sections by round are ordinary section rules such as
+`"forward_round1" %in% tags ~ "Forward round 1"`. `scm_summary_spec()`
+writes those rules for however many rounds the process ran, keeps the fits
+tagged `"scm"`, and marks the candidate each round selected in an Action
+column. `hyperion::get_scm_lineage()` builds the same lineage from the
+process record, which is what this example uses.
 
 ```{r scm-summary}
 scm_root <- system.file(package = "hyperion")

@@ -15,116 +15,130 @@ section_labels <- function(spec) {
   ))
 }
 
-# The fixture's sections, in order, with the catch-all last.
-scm_fixture_sections <- function(other = "Other") {
-  c(
-    "Base model", "Forward round 1", "Forward round 2", "Forward round 3",
-    "Forward final model", "Backward round 1", "Backward round 2", "Final model",
-    other
+# A lineage as hyperion::get_model_lineage() gives it, from the metadata
+# pharos writes beside each SCM fit.
+scm_node <- function(path, based_on, description, tags) {
+  list(
+    name = path,
+    model = list(
+      based_on = if (is.null(based_on)) list() else list(based_on),
+      copied_from = "",
+      description = description,
+      tags = as.list(tags)
+    )
   )
 }
 
-test_that("scm_summary_spec() sections the rounds in the order the process ran them", {
-  testthat::skip_if_not(nzchar(scm_fixture_config()), "hyperion's SCM fixture not found")
-  withr::local_options(hyperion.config_dir = system.file(package = "hyperion"))
+pharos_tagged_lineage <- function() {
+  nodes <- list(
+    scm_node("model/nonmem/run001.mod", NULL, "structural model", "structural"),
+    scm_node("scm/base/run001_base.mod", "model/nonmem/run001.mod", "SCM reference: fit base model (attempt 1)", c("scm", "base")),
+    scm_node("scm/forward_round1/run001_wt_cl.mod", "scm/base/run001_base.mod", "SCM forward_round1: add WT_CL (attempt 1)", c("scm", "forward_round1", "selected")),
+    scm_node("scm/forward_round1/run001_wt_v.mod", "scm/base/run001_base.mod", "SCM forward_round1: add WT_V (attempt 1)", c("scm", "forward_round1")),
+    scm_node("scm/forward_round2/run001_wt_v_try2.mod", "scm/forward_round1/run001_wt_cl.mod", "SCM forward_round2: add WT_V (attempt 2)", c("scm", "forward_round2", "retry")),
+    scm_node("scm/forward_final/run001_scm_forward_final.mod", "scm/forward_round1/run001_wt_cl.mod", "SCM forward model: retained WT_CL; cov step on", c("scm", "forward_final")),
+    scm_node("scm/backward_round1/run001_wt_cl.mod", "scm/forward_round1/run001_wt_cl.mod", "SCM backward_round1: drop WT_CL (attempt 1)", c("scm", "backward_round1")),
+    scm_node("scm/final/run001_scm_final.mod", "scm/forward_round1/run001_wt_cl.mod", "SCM final model: retained WT_CL; cov step on", c("scm", "final"))
+  )
+  structure(list(nodes = nodes), class = "hyperion_nonmem_tree")
+}
 
-  spec <- scm_summary_spec(scm_fixture_config())
+test_that("scm_summary_spec() sections the rounds pharos tagged, in the order they ran", {
+  spec <- scm_summary_spec(pharos_tagged_lineage())
   expect_true(S7::S7_inherits(spec, SummarySpec))
-  expect_equal(section_labels(spec), scm_fixture_sections())
-  expect_equal(get_spec_title(spec), "")
-  expect_equal(get_spec_pvalue(spec)$direction, "both")
-  expect_equal(get_spec_columns(spec), c("based_on", "ofv", "dofv", "action"))
-  expect_named(get_spec_mutate(spec), c("based_on", "ofv", "dofv", "action"))
-  expect_true(is.function(get_spec_section_header(spec)))
-  expect_null(get_spec_footnotes(spec))
-  expect_equal(get_spec_title(scm_summary_spec(scm_fixture_config(), title = "SCM")), "SCM")
   expect_equal(
-    section_labels(scm_summary_spec(scm_fixture_config(), other_section_label = "Else"))[9],
+    section_labels(spec),
+    c(
+      "Base model", "Forward round 1", "Forward round 2", "Forward final model",
+      "Backward round 1", "Final model", "Other"
+    )
+  )
+  # The preset is the usual spec settings and nothing else.
+  expect_equal(get_spec_tag_filter(spec)$include, "scm")
+  expect_equal(get_spec_columns(spec), c("based_on", "description", "ofv", "dofv", "action"))
+  expect_named(get_spec_mutate(spec), "action")
+  expect_equal(get_spec_pvalue(spec)$direction, "both")
+  expect_null(get_spec_footnotes(spec))
+  expect_equal(get_spec_title(spec), "")
+  expect_equal(get_spec_title(scm_summary_spec(pharos_tagged_lineage(), title = "SCM")), "SCM")
+  expect_equal(
+    section_labels(scm_summary_spec(pharos_tagged_lineage(), other_section_label = "Else"))[7],
     "Else"
   )
 
-  # The SCM object works as the input too; the lineage alone does not.
-  scm <- hyperion::read_scm(scm_fixture_config())
-  expect_equal(section_labels(scm_summary_spec(scm)), section_labels(spec))
-  expect_error(scm_summary_spec(hyperion::get_scm_lineage(scm)), "process record")
+  # A backward-first process starts from the full model.
+  full_first <- pharos_tagged_lineage()
+  full_first$nodes[[2]]$model$tags <- list("scm", "full")
+  expect_equal(section_labels(scm_summary_spec(full_first))[1], "Full model")
 
-  expect_error(scm_summary_spec(scm_fixture_config(), title = 1), "`title` must be")
-  expect_error(scm_summary_spec(scm_fixture_config(), other_section_label = NULL), "`other_section_label` must be")
-  expect_error(scm_summary_spec(hyperion::get_model_lineage()), "no SCM fits")
+  expect_error(scm_summary_spec(pharos_tagged_lineage(), title = 1), "`title` must be")
+  expect_error(
+    scm_summary_spec(pharos_tagged_lineage(), other_section_label = NULL),
+    "`other_section_label` must be"
+  )
+  no_scm <- pharos_tagged_lineage()
+  no_scm$nodes <- no_scm$nodes[1]
+  expect_error(scm_summary_spec(no_scm), "no SCM fits")
+})
+
+test_that("scm_summary_spec() reads hyperion's record lineage too", {
+  testthat::skip_if_not(nzchar(scm_fixture_config()), "hyperion's SCM fixture not found")
+  withr::local_options(hyperion.config_dir = system.file(package = "hyperion"))
+
+  sections <- c(
+    "Reference model", "Forward round 1", "Forward round 2", "Forward round 3",
+    "Forward final model", "Backward round 1", "Backward round 2", "Final model",
+    "Other"
+  )
+  expect_equal(section_labels(scm_summary_spec(scm_fixture_config())), sections)
+  scm <- hyperion::read_scm(scm_fixture_config())
+  expect_equal(section_labels(scm_summary_spec(scm)), sections)
+  expect_equal(section_labels(scm_summary_spec(hyperion::get_scm_lineage(scm))), sections)
 })
 
 test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", {
   testthat::skip_if_not(nzchar(scm_fixture_config()), "hyperion's SCM fixture not found")
   withr::local_options(hyperion.config_dir = system.file(package = "hyperion"))
 
-  scm <- hyperion::read_scm(scm_fixture_config())
-  tree <- hyperion::get_scm_lineage(scm)
-  data <- apply_summary_spec(tree, scm_summary_spec(scm))
+  tree <- hyperion::get_scm_lineage(scm_fixture_config())
+  data <- apply_summary_spec(tree, scm_summary_spec(tree))
 
   expect_equal(
     names(data),
-    c("model", "based_on", "ofv", "dofv", "action", "section", ".header")
+    c("model", "based_on", "description", "ofv", "dofv", "action", "section")
   )
-  sections <- scm_fixture_sections()[1:8]
-  expect_equal(unique(data$section), sections)
-
-  # Each section opens with a bold title row carrying the round's reference
-  # model, then a retained row once the process has kept something.
-  headers <- data[data$.header, ]
-  expect_true(all(is.na(headers$ofv)) && all(is.na(headers$dofv)) && all(is.na(headers$action)))
-  expect_equal(
-    headers$model,
-    c(
-      "Base model",
-      "Forward round 1",
-      "Forward round 2", "Retained: WT_CL",
-      "Forward round 3", "Retained: WT_CL, CRCL_CL",
-      "Forward final model", "Retained: WT_CL, CRCL_CL",
-      "Backward round 1", "Retained: WT_CL, CRCL_CL",
-      "Backward round 2", "Retained: WT_CL",
-      "Final model", "Retained: WT_CL"
-    )
-  )
-  titles <- headers[headers$model %in% sections, ]
-  expect_equal(
-    titles$based_on,
-    c(NA, "1001_base", "1001_wt_cl", "1001_crcl_cl", "1001_crcl_cl", "1001_crcl_cl", "1001_crcl_cl", "1001_crcl_cl")
-  )
-  expect_true(all(is.na(headers$based_on[!headers$model %in% sections])))
-  # The title row leads its section.
-  expect_equal(which(data$model %in% sections), match(sections, data$section))
-
-  # Every fit gets a row, although the same stem recurs across rounds, and
-  # the reference is on the title row only.
-  data <- data[!data$.header, ]
+  # Every fit gets a row, although the same stem recurs across rounds.
   expect_equal(nrow(data), 12)
   expect_equal(sum(data$model == "1001_wt_v"), 2)
-  expect_true(all(is.na(data$based_on)))
+  expect_equal(
+    unique(data$section),
+    c(
+      "Reference model", "Forward round 1", "Forward round 2", "Forward round 3",
+      "Forward final model", "Backward round 1", "Backward round 2", "Final model"
+    )
+  )
 
   row <- function(model, section) data[data$model == model & data$section == section, ]
-  # The stage models show their OFV and no dOFV.
-  stage_sections <- sections[c(1, 5, 8)]
-  stages <- data[data$section %in% stage_sections, ]
-  expect_equal(stages$model, c("1001_base", "1001_scm_forward_final", "1001_scm_final"))
-  expect_equal(stages$ofv, c(1000, 973.8, 979.5))
-  expect_true(all(is.na(stages$dofv)))
-  expect_true(all(is.na(stages$action)))
-  # The candidates show their round's dOFV and no OFV; the kept one is marked.
-  candidates <- data[!data$section %in% stage_sections, ]
-  expect_true(all(is.na(candidates$ofv)))
-  expect_false(anyNA(candidates$dofv))
-  added <- row("1001_wt_cl", sections[2])
+  # A forward step: the candidate adds a parameter to its round's reference.
+  added <- row("1001_wt_cl", "Forward round 1")
+  expect_equal(added$based_on, "1001_base")
   expect_equal(added$dofv, -20)
   expect_equal(added$action, "Selected")
-  expect_true(is.na(row("1001_wt_v", sections[2])$action))
+  expect_true(is.na(row("1001_wt_v", "Forward round 1")$action))
   # A backward step: the candidate drops one, and the reference is the fuller model.
-  dropped <- row("1001_crcl_cl", sections[6])
+  dropped <- row("1001_crcl_cl", "Backward round 1")
+  expect_equal(dropped$based_on, "1001_crcl_cl")
   expect_equal(dropped$dofv, 6)
+  # The reference and final fits are not candidates, so they are never "Selected".
+  expect_true(is.na(row("1001_base", "Reference model")$dofv))
+  expect_true(all(is.na(data$action[data$section %in% c("Reference model", "Forward final model", "Final model")])))
 
-  shown <- as.data.frame(data)[, c("section", "model", "ofv", "dofv", "action")]
+  shown <- as.data.frame(data)[, c(
+    "section", "model", "based_on", "description", "ofv", "dofv", "action"
+  )]
   expect_snapshot(print(shown, digits = 4, row.names = FALSE))
 
-  table <- make_summary_table(apply_summary_spec(tree, scm_summary_spec(scm)))
+  table <- make_summary_table(data)
   snapshot_gt(table, "scm-summary-gt")
 })
 
@@ -132,27 +146,25 @@ test_that("the SCM preset tests both directions when the p-value column is selec
   testthat::skip_if_not(nzchar(scm_fixture_config()), "hyperion's SCM fixture not found")
   withr::local_options(hyperion.config_dir = system.file(package = "hyperion"))
 
-  scm <- hyperion::read_scm(scm_fixture_config())
-  tree <- hyperion::get_scm_lineage(scm)
-  spec <- scm_summary_spec(scm) |>
-    set_spec_columns("dofv", "pvalue")
+  tree <- hyperion::get_scm_lineage(scm_fixture_config())
+  spec <- scm_summary_spec(tree) |>
+    set_spec_columns("based_on", "dofv", "pvalue")
   data <- apply_summary_spec(tree, spec)
-  sections <- scm_fixture_sections()
   row <- function(model, section) data[data$model == model & data$section == section, ]
 
   # A forward step: the candidate adds a parameter to its round's reference.
-  added <- row("1001_wt_cl", sections[2])
+  added <- row("1001_wt_cl", "Forward round 1")
   expect_equal(added$df, 1L)
   expect_equal(added$pvalue, stats::pchisq(20, 1, lower.tail = FALSE))
   # A backward step: the candidate drops one, and the reference is the fuller model.
-  dropped <- row("1001_crcl_cl", sections[6])
+  dropped <- row("1001_crcl_cl", "Backward round 1")
   expect_equal(dropped$df, 1L)
   expect_equal(dropped$pvalue, stats::pchisq(6, 1, lower.tail = FALSE))
 
   # The default direction keeps the backward step's dOFV but gives it no test.
   forward_only <- apply_summary_spec(tree, set_spec_pvalue(spec, direction = "forward"))
   dropped <- forward_only[
-    forward_only$model == "1001_crcl_cl" & forward_only$section == sections[6],
+    forward_only$model == "1001_crcl_cl" & forward_only$section == "Backward round 1",
   ]
   expect_equal(dropped$dofv, 6)
   expect_true(is.na(dropped$df))

@@ -3,19 +3,13 @@
 ## New features
 
 - `scm_summary_spec()` returns a `SummarySpec` preset for a stepwise
-  covariate modeling process: a section per round, in the order the process
-  ran them, so `hyperion::get_scm_lineage(scm) |> apply_summary_spec(spec) |>
-  make_summary_table()` gives one row per fit. Each round opens with bold
-  header rows: its name with the model it tested against under Reference,
-  then the covariates the process had retained going into it. The
-  reference, forward and final models show their OFV; each candidate shows
-  its dOFV and, when the round kept it, "Selected" in the Action column.
-  Requires hyperion with `get_scm_lineage()`.
-- `set_spec_section_header()` renders a `SummarySpec`'s sections as bold
-  header rows in the table body, given by a function of the section, in
-  place of row groups, so a header can put a value in a chosen column;
-  `get_spec_section_header()` reads it. `HyperionTable` gains `bold_rows`
-  for it.
+  covariate modeling process, composed of the usual spec settings: the fits
+  tagged `"scm"`, in a section per round from the round tag pharos writes to
+  each fit's metadata (`"base"`, `"forward_round1"`, ..., `"final"`), in the
+  order the process ran them, with Reference, Description, OFV, dOFV and an
+  Action column that marks the candidate each round selected. It takes the
+  lineage from `hyperion::get_model_lineage()` or
+  `hyperion::get_scm_lineage()`.
 - `set_spec_mutate()` adds computed columns to a `SummarySpec`, or rewrites
   existing ones, from expressions evaluated against each model's row with
   its `tags`; `get_spec_mutate()` reads them. A computed column is
