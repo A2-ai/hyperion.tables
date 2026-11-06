@@ -208,8 +208,8 @@ scm_round_reference <- function(tree, round) {
 # "forward_round2" -> "Forward round 2"; the stages get their own names.
 scm_round_label <- function(round) {
   stages <- c(
-    reference = "Reference",
-    forward_final = "Forward model",
+    reference = "Base model",
+    forward_final = "Forward final model",
     final = "Final model"
   )
   if (round %in% names(stages)) {

@@ -18,8 +18,8 @@ section_labels <- function(spec) {
 # The fixture's sections, in order, with the catch-all last.
 scm_fixture_sections <- function(other = "Other") {
   c(
-    "Reference", "Forward round 1", "Forward round 2", "Forward round 3",
-    "Forward model", "Backward round 1", "Backward round 2", "Final model",
+    "Base model", "Forward round 1", "Forward round 2", "Forward round 3",
+    "Forward final model", "Backward round 1", "Backward round 2", "Final model",
     other
   )
 }
@@ -75,11 +75,11 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
   expect_equal(
     headers$model,
     c(
-      "Reference",
+      "Base model",
       "Forward round 1",
       "Forward round 2", "Retained: WT_CL",
       "Forward round 3", "Retained: WT_CL, CRCL_CL",
-      "Forward model", "Retained: WT_CL, CRCL_CL",
+      "Forward final model", "Retained: WT_CL, CRCL_CL",
       "Backward round 1", "Retained: WT_CL, CRCL_CL",
       "Backward round 2", "Retained: WT_CL",
       "Final model", "Retained: WT_CL"
