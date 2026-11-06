@@ -5,10 +5,12 @@
 - `scm_summary_spec()` returns a `SummarySpec` preset for a stepwise
   covariate modeling process: a section per round, in the order the process
   ran them, so `hyperion::get_scm_lineage(scm) |> apply_summary_spec(spec) |>
-  make_summary_table()` gives one row per fit. The reference, forward and
-  final models show their OFV; each candidate shows its dOFV against the
-  model its round tested and, when the round kept it, "Selected" in the
-  Action column. Requires hyperion with `get_scm_lineage()`.
+  make_summary_table()` gives one row per fit. Each section's label names
+  the round, the model it tested against and the covariates the process had
+  retained going into it; the reference, forward and final models show
+  their OFV; each candidate shows its dOFV and, when the round kept it,
+  "Selected" in the Action column. Requires hyperion with
+  `get_scm_lineage()`.
 - `set_spec_mutate()` adds computed columns to a `SummarySpec`, or rewrites
   existing ones, from expressions evaluated against each model's row with
   its `tags`; `get_spec_mutate()` reads them. A computed column is

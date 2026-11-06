@@ -7,9 +7,9 @@
 scm_summary_spec(scm, title = NULL, other_section_label = "Other")
 }
 \arguments{
-\item{scm}{The SCM process: a \code{hyperion_nonmem_scm} object, its config
-(\verb{<stem>scm.toml}), or the \code{hyperion_nonmem_tree} that
-\code{hyperion::get_scm_lineage()} built from it.}
+\item{scm}{The SCM process: a \code{hyperion_nonmem_scm} object or its config
+(\verb{<stem>scm.toml}). The lineage alone is not enough, since the retained
+covariates come from the process record.}
 
 \item{title}{Table title. \code{NULL} (the default) gives a table with no
 title; pass a string to set one.}
@@ -27,13 +27,19 @@ fit in that lineage is based on the model its round tested against, so
 each candidate's dOFV is the round's own.
 }
 \details{
-The columns are the reference model, the description, OFV, dOFV and
-Action. The reference, forward and final models show their OFV and no
-dOFV; each candidate shows its dOFV and no OFV, and the candidate its
-round selected shows "Selected" in Action. The spec sets
-\code{pvalue_direction = "both"}, so selecting the \code{pvalue} column with
-\code{\link[=set_spec_columns]{set_spec_columns()}} tests the backward steps too. The returned spec can
-be customized further with the \verb{set_spec_*()} modifiers.
+Each section's label names the round, the model the round tested against
+and the covariates the process had retained going into it, from the
+process record, e.g. \code{"Forward round 2 — reference: run001_wt_cl; retained: WT_CL"}; a part that does not apply is left out, so the
+reference section is just \code{"Reference"}. The forward and final models'
+sections list what they keep.
+
+The columns are OFV, dOFV and Action. The reference, forward and final
+models show their OFV and no dOFV; each candidate shows its dOFV and no
+OFV, and the candidate its round selected shows "Selected" in Action. The
+table has no footnotes. The spec sets \code{pvalue_direction = "both"}, so
+selecting the \code{pvalue} column with \code{\link[=set_spec_columns]{set_spec_columns()}} tests the
+backward steps too. The returned spec can be customized further with the
+\verb{set_spec_*()} modifiers.
 
 The section rules end with a catch-all, so rules appended with
 \code{\link[=set_spec_sections]{set_spec_sections()}} never apply; pass \code{overwrite = TRUE} to replace them.
@@ -49,7 +55,7 @@ scm |>
 
 # Customize further with modifiers
 spec <- scm_summary_spec(scm, title = "Covariate search") |>
-  set_spec_columns("based_on", "ofv", "dofv", "pvalue", "action") |>
+  set_spec_columns("ofv", "dofv", "pvalue", "action") |>
   set_spec_pvalue(scientific = TRUE)
 }
 }
