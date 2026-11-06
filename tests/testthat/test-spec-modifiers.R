@@ -165,6 +165,17 @@ test_that("set_spec_mutate stores named rules and makes them selectable", {
   expect_error(get_spec_mutate(TableSpec()), "<SummarySpec>")
 })
 
+test_that("set_spec_section_header stores a function or NULL", {
+  expect_null(get_spec_section_header(SummarySpec()))
+  fn <- function(section, rows) data.frame(model = section)
+  spec <- set_spec_section_header(SummarySpec(), fn)
+  expect_identical(get_spec_section_header(spec), fn)
+  expect_null(get_spec_section_header(set_spec_section_header(spec, NULL)))
+  expect_error(set_spec_section_header(SummarySpec(), "x"), "must be a function")
+  expect_error(set_spec_section_header(TableSpec(), fn), "<SummarySpec>")
+  expect_error(get_spec_section_header(TableSpec()), "<SummarySpec>")
+})
+
 test_that("set_spec_pvalue sets direction on a SummarySpec only", {
   expect_equal(SummarySpec()@pvalue_direction, "forward")
   spec <- SummarySpec() |> set_spec_pvalue(direction = "both")

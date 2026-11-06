@@ -203,6 +203,9 @@ apply_gt_bold <- function(gt_table, table) {
       list(gt::cells_column_spanners(dplyr::everything()))
     )
   }
+  if (length(table@bold_rows) > 0) {
+    locations <- c(locations, list(gt::cells_body(rows = table@bold_rows)))
+  }
 
   if (length(locations) > 0) {
     gt_table <- gt_table |>

@@ -23,6 +23,7 @@ SummarySpec(
   pvalue_threshold = NULL,
   pvalue_direction = "forward",
   mutate = list(),
+  section_header = NULL,
   footnote_order = "abbreviations"
 )
 }
@@ -90,6 +91,10 @@ elimination step.}
 
 \item{mutate}{Named list of quosures computing columns from each model's
 row, usually set with \code{\link[=set_spec_mutate]{set_spec_mutate()}}. Default is an empty list.}
+
+\item{section_header}{NULL (the default), or a function giving each
+section header rows in the table body in place of a row group, usually
+set with \code{\link[=set_spec_section_header]{set_spec_section_header()}}.}
 
 \item{footnote_order}{Character vector controlling the order of footnote sections,
 or NULL to disable footnotes. Valid value for SummarySpec: "abbreviations".

@@ -1021,3 +1021,36 @@ set_spec_mutate <- function(spec, ..., overwrite = FALSE) {
   }
   spec
 }
+
+#' Set section header rows for a SummarySpec
+#'
+#' `set_spec_section_header()` renders each section as rows in the table
+#' body rather than as a row group: the rows `fn` returns, in bold, then the
+#' section's models. That puts a value in a chosen column of the header,
+#' which a row group cannot. Operates on `SummarySpec` only.
+#'
+#' @param spec A SummarySpec object.
+#' @param fn A function of `section` (its label) and `rows` (the section's
+#'   models, as the summary data frame) returning a data frame, one row per
+#'   header row, whose columns are a subset of the summary columns, e.g.
+#'   `model` for the text and `based_on` for a value under Reference.
+#'   Columns it leaves out are blank. NULL restores row groups.
+#' @return Modified spec.
+#' @seealso [get_spec_section_header()], [set_spec_sections()].
+#' @export
+#' @examples
+#' spec <- SummarySpec() |>
+#'   set_spec_sections("final" %in% tags ~ "Final", TRUE ~ "Other") |>
+#'   set_spec_section_header(function(section, rows) {
+#'     data.frame(model = section, based_on = rows$based_on[1])
+#'   })
+set_spec_section_header <- function(spec, fn) {
+  if (!S7::S7_inherits(spec, SummarySpec)) {
+    rlang::abort("`spec` must be a <SummarySpec> object.")
+  }
+  if (!is.null(fn) && !is.function(fn)) {
+    rlang::abort("`fn` must be a function of `section` and `rows`, or NULL.")
+  }
+  spec@section_header <- fn
+  spec
+}

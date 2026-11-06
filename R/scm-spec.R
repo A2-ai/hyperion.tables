@@ -6,20 +6,21 @@
 #' fit in that lineage is based on the model its round tested against, so
 #' each candidate's dOFV is the round's own.
 #'
-#' Each section's label names the round, the model the round tested against
-#' and the covariates the process had retained going into it, from the
-#' process record, e.g. `"Forward round 2 — reference: run001_wt_cl;
-#' retained: WT_CL"`; a part that does not apply is left out, so the
-#' reference section is just `"Reference"`. The forward and final models'
-#' sections list what they keep.
+#' Each section opens with header rows in the table body, in bold, rather
+#' than a row group: a title row with the round's name under Model and the
+#' model the round tested against under Reference, then, once the process
+#' has retained something, a row such as `"Retained: WT_CL, CRCL_CL"`, from
+#' the process record. The forward and final models' sections list what
+#' they keep.
 #'
-#' The columns are OFV, dOFV and Action. The reference, forward and final
-#' models show their OFV and no dOFV; each candidate shows its dOFV and no
-#' OFV, and the candidate its round selected shows "Selected" in Action. The
-#' table has no footnotes. The spec sets `pvalue_direction = "both"`, so
-#' selecting the `pvalue` column with [set_spec_columns()] tests the
-#' backward steps too. The returned spec can be customized further with the
-#' `set_spec_*()` modifiers.
+#' The columns are Reference, OFV, dOFV and Action. Reference is filled on
+#' the title rows only. The reference, forward and final models show their
+#' OFV and no dOFV; each candidate shows its dOFV and no OFV, and the
+#' candidate its round selected shows "Selected" in Action. The table has no
+#' footnotes. The spec sets `pvalue_direction = "both"`, so selecting the
+#' `pvalue` column with [set_spec_columns()] tests the backward steps too.
+#' The returned spec can be customized further with the `set_spec_*()`
+#' modifiers.
 #'
 #' The section rules end with a catch-all, so rules appended with
 #' [set_spec_sections()] never apply; pass `overwrite = TRUE` to replace them.
@@ -44,7 +45,7 @@
 #'
 #' # Customize further with modifiers
 #' spec <- scm_summary_spec(scm, title = "Covariate search") |>
-#'   set_spec_columns("ofv", "dofv", "pvalue", "action") |>
+#'   set_spec_columns("based_on", "ofv", "dofv", "pvalue", "action") |>
 #'   set_spec_pvalue(scientific = TRUE)
 #' }
 scm_summary_spec <- function(scm, title = NULL, other_section_label = "Other") {
@@ -73,25 +74,37 @@ scm_summary_spec <- function(scm, title = NULL, other_section_label = "Other") {
   }
   # The rules evaluate against each row with `tags` unwrapped; they need
   # base R for `%in%`, nothing else.
-  rules <- lapply(rounds, function(round) {
+  labels <- vapply(rounds, scm_round_label, character(1))
+  rules <- lapply(seq_along(rounds), function(i) {
     rlang::new_formula(
-      rlang::call2("%in%", round, rlang::sym("tags")),
-      scm_section_label(
-        round,
-        reference = scm_round_reference(tree, round),
-        retained = if (round %in% names(retained)) retained[[round]] else NA_character_
-      ),
+      rlang::call2("%in%", rounds[[i]], rlang::sym("tags")),
+      labels[[i]],
       env = baseenv()
     )
   })
   rules <- c(rules, list(rlang::new_formula(TRUE, other_section_label, env = baseenv())))
 
+  # What each section's header rows show, keyed by its label.
+  reference_by_label <- stats::setNames(
+    vapply(rounds, function(round) scm_round_reference(tree, round), character(1)),
+    labels
+  )
+  retained_by_label <- stats::setNames(
+    vapply(
+      rounds,
+      function(round) if (round %in% names(retained)) retained[[round]] else NA_character_,
+      character(1)
+    ),
+    labels
+  )
+
   spec <- rlang::inject(set_spec_sections(SummarySpec(), !!!rules))
   spec <- set_spec_pvalue(spec, direction = "both")
   # The stage models show their OFV; the candidates show their round's dOFV
-  # and whether the round kept them.
+  # and whether the round kept them. The reference goes on the title row only.
   spec <- set_spec_mutate(
     spec,
+    based_on = NA_character_,
     ofv = if (any(!!scm_stage_tags %in% tags)) ofv else NA_real_,
     dofv = if (any(!!scm_stage_tags %in% tags)) NA_real_ else dofv,
     action = if ("selected" %in% tags && !any(!!scm_stage_tags %in% tags)) {
@@ -100,9 +113,40 @@ scm_summary_spec <- function(scm, title = NULL, other_section_label = "Other") {
       NA_character_
     }
   )
-  spec <- set_spec_columns(spec, "ofv", "dofv", "action")
+  spec <- set_spec_section_header(spec, function(section, rows) {
+    scm_section_header_rows(
+      section,
+      reference = reference_by_label[section],
+      retained = retained_by_label[section]
+    )
+  })
+  spec <- set_spec_columns(spec, "based_on", "ofv", "dofv", "action")
   spec <- set_spec_footnotes(spec, NULL)
   set_spec_title(spec, title %||% "")
+}
+
+# A section's header rows: its title with the round's reference model, then
+# the retained covariates once there are any. A value missing from the
+# lookups (an "Other" section) leaves that part blank.
+scm_section_header_rows <- function(section, reference, retained) {
+  reference <- unname(reference)
+  retained <- unname(retained)
+  rows <- data.frame(
+    model = section,
+    based_on = if (length(reference) == 1) reference else NA_character_,
+    stringsAsFactors = FALSE
+  )
+  if (length(retained) == 1 && !is.na(retained)) {
+    rows <- rbind(
+      rows,
+      data.frame(
+        model = paste0("Retained: ", retained),
+        based_on = NA_character_,
+        stringsAsFactors = FALSE
+      )
+    )
+  }
+  rows
 }
 
 # The tags of the fits that are not round candidates.
@@ -159,20 +203,6 @@ scm_round_reference <- function(tree, round) {
   }
   refs <- unique(refs)
   if (length(refs) == 0) NA_character_ else paste(refs, collapse = ", ")
-}
-
-# The section label: the round's name, then the parts that apply, e.g.
-# "Forward round 2 \u2014 reference: run001_wt_cl; retained: WT_CL".
-scm_section_label <- function(round, reference, retained) {
-  parts <- c(
-    if (!is.na(reference)) paste0("reference: ", reference),
-    if (!is.na(retained)) paste0("retained: ", retained)
-  )
-  label <- scm_round_label(round)
-  if (length(parts) == 0) {
-    return(label)
-  }
-  paste0(label, " \u2014 ", paste(parts, collapse = "; "))
 }
 
 # "forward_round2" -> "Forward round 2"; the stages get their own names.

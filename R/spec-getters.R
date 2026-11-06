@@ -449,6 +449,25 @@ get_spec_mutate <- function(spec, ...) {
   spec@mutate
 }
 
+#' Get the section header function from a SummarySpec
+#'
+#' `get_spec_section_header()` returns the function that gives each section
+#' its header rows, or NULL when sections render as row groups.
+#'
+#' @param spec A SummarySpec object.
+#' @param ... Not used.
+#' @return A function or NULL.
+#' @seealso [set_spec_section_header()].
+#' @export
+#' @examples
+#' get_spec_section_header(SummarySpec())
+get_spec_section_header <- function(spec, ...) {
+  if (!S7::S7_inherits(spec, SummarySpec)) {
+    rlang::abort("`spec` must be a <SummarySpec> object.")
+  }
+  spec@section_header
+}
+
 #' Get time format from a SummarySpec
 #'
 #' `get_spec_time_format()` returns the time format setting. Operates on

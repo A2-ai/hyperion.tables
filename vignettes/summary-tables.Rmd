@@ -132,10 +132,11 @@ from. `hyperion::get_scm_lineage()` builds the lineage of those fits from
 the process record, with every fit based on its round's reference model and
 tagged with its round, so it summarizes like any other lineage.
 `scm_summary_spec()` is the preset for it: a section per round, in the order
-the process ran them, each labelled with the model the round tested against
-and the covariates retained going into it. The reference, forward and final
-models show their OFV; each candidate shows its dOFV, and the candidate the
-round selected is marked in the Action column.
+the process ran them, each opening with a bold title row that names the
+model the round tested against, and a row listing the covariates retained
+going into it. The reference, forward and final models show their OFV; each
+candidate shows its dOFV, and the candidate the round selected is marked in
+the Action column.
 
 ```{r scm-summary}
 scm_root <- system.file(package = "hyperion")

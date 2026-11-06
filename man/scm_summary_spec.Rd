@@ -27,19 +27,21 @@ fit in that lineage is based on the model its round tested against, so
 each candidate's dOFV is the round's own.
 }
 \details{
-Each section's label names the round, the model the round tested against
-and the covariates the process had retained going into it, from the
-process record, e.g. \code{"Forward round 2 — reference: run001_wt_cl; retained: WT_CL"}; a part that does not apply is left out, so the
-reference section is just \code{"Reference"}. The forward and final models'
-sections list what they keep.
+Each section opens with header rows in the table body, in bold, rather
+than a row group: a title row with the round's name under Model and the
+model the round tested against under Reference, then, once the process
+has retained something, a row such as \code{"Retained: WT_CL, CRCL_CL"}, from
+the process record. The forward and final models' sections list what
+they keep.
 
-The columns are OFV, dOFV and Action. The reference, forward and final
-models show their OFV and no dOFV; each candidate shows its dOFV and no
-OFV, and the candidate its round selected shows "Selected" in Action. The
-table has no footnotes. The spec sets \code{pvalue_direction = "both"}, so
-selecting the \code{pvalue} column with \code{\link[=set_spec_columns]{set_spec_columns()}} tests the
-backward steps too. The returned spec can be customized further with the
-\verb{set_spec_*()} modifiers.
+The columns are Reference, OFV, dOFV and Action. Reference is filled on
+the title rows only. The reference, forward and final models show their
+OFV and no dOFV; each candidate shows its dOFV and no OFV, and the
+candidate its round selected shows "Selected" in Action. The table has no
+footnotes. The spec sets \code{pvalue_direction = "both"}, so selecting the
+\code{pvalue} column with \code{\link[=set_spec_columns]{set_spec_columns()}} tests the backward steps too.
+The returned spec can be customized further with the \verb{set_spec_*()}
+modifiers.
 
 The section rules end with a catch-all, so rules appended with
 \code{\link[=set_spec_sections]{set_spec_sections()}} never apply; pass \code{overwrite = TRUE} to replace them.
@@ -55,7 +57,7 @@ scm |>
 
 # Customize further with modifiers
 spec <- scm_summary_spec(scm, title = "Covariate search") |>
-  set_spec_columns("ofv", "dofv", "pvalue", "action") |>
+  set_spec_columns("based_on", "ofv", "dofv", "pvalue", "action") |>
   set_spec_pvalue(scientific = TRUE)
 }
 }

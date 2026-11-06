@@ -53,6 +53,7 @@
 #'   \item [get_spec_variability()] - Get variability rules
 #'   \item [get_spec_time_format()] - Get time format from a SummarySpec
 #'   \item [get_spec_mutate()] - Get computed column rules from a SummarySpec
+#'   \item [get_spec_section_header()] - Get the section header function
 #' }
 #'
 #' @section Spec Modifiers - Columns:
@@ -95,6 +96,7 @@
 #'   \item [set_spec_remove_unrun()] - Control unrun model filtering
 #'   \item [set_spec_summary_filter()] - Set summary filter rules
 #'   \item [set_spec_mutate()] - Add computed columns
+#'   \item [set_spec_section_header()] - Render sections as header rows
 #' }
 #'
 #' @section Rule Builders:
