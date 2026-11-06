@@ -91,6 +91,9 @@ apply_summary_spec <- function(tree, spec) {
   needs_dofv <- taken$value
   df <- taken$df
 
+  # Computed columns, before the section rules so those can use them.
+  df <- apply_summary_mutate(df, spec@mutate)
+
   # Evaluate section rules (before column trim so rule-referenced cols available)
   has_section_config <- length(spec@sections@rules) > 0 ||
     length(spec@sections@order) > 0 ||
@@ -446,6 +449,37 @@ build_summary_section <- function(df, rules) {
   result
 }
 
+#' Add or rewrite columns from the spec's mutate rules
+#'
+#' Each rule is evaluated against one model's row at a time, with list columns
+#' such as `tags` unwrapped to their element, the way section rules see a row.
+#' @noRd
+apply_summary_mutate <- function(df, rules) {
+  if (length(rules) == 0) {
+    return(df)
+  }
+  n <- nrow(df)
+  for (col in names(rules)) {
+    rule <- rules[[col]]
+    values <- lapply(seq_len(n), function(i) {
+      row_data <- lapply(df, function(x) x[[i]])
+      names(row_data) <- names(df)
+      value <- rlang::eval_tidy(rule, data = row_data)
+      if (length(value) != 1) {
+        rlang::abort(sprintf(
+          "mutate rule for `%s` must give one value per model; got %d for '%s'.",
+          col,
+          length(value),
+          basename(df$.name[i])
+        ))
+      }
+      value
+    })
+    df[[col]] <- if (n == 0) logical(0) else unlist(values, use.names = FALSE)
+  }
+  df
+}
+
 #' Build summary data frame from loaded models
 #' @noRd
 build_summary_df <- function(models, model_names, metadata_df, spec) {
@@ -687,12 +721,17 @@ calculate_dofv <- function(df, spec) {
 
     if (needs_pvalue && !is.na(model_npar) && !is.na(parent_npar)) {
       df_calc <- as.integer(model_npar - parent_npar)
-      # The LRT statistic is the fuller model's OFV drop: the model's when it
-      # adds parameters, the parent's when the model drops them (an SCM
-      # backward step). Nested models with the same count have no test.
-      if (!is.na(df_calc) && df_calc != 0) {
-        df_val <- abs(df_calc)
-        pvalue <- lrt_pvalue(if (df_calc > 0) -dofv else dofv, df_val)
+      if (!is.na(df_calc) && df_calc > 0) {
+        # The model adds parameters: its OFV drop is the LRT statistic.
+        df_val <- df_calc
+        pvalue <- lrt_pvalue(-dofv, df_val)
+      } else if (
+        !is.na(df_calc) && df_calc < 0 && spec@pvalue_direction == "both"
+      ) {
+        # The model drops parameters (an SCM backward step): the parent is
+        # the fuller model, so its OFV drop is the statistic.
+        df_val <- -df_calc
+        pvalue <- lrt_pvalue(dofv, df_val)
       }
     }
 
@@ -900,6 +939,10 @@ hyperion_summary_table <- function(data, spec) {
   # Build label map
   label_map <- build_summary_label_map()
   label_map <- label_map[intersect(names(label_map), names(data))]
+  # A column a mutate rule computed is labelled from its name: "action" -> "Action".
+  for (col in setdiff(names(data), c(names(label_map), "section"))) {
+    label_map[[col]] <- tools::toTitleCase(gsub("_", " ", col, fixed = TRUE))
+  }
 
   # Add time format suffix
   time_suffix <- get_time_suffix(spec@time_format, data)

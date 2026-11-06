@@ -21,6 +21,8 @@ SummarySpec(
   time_format = "seconds",
   pvalue_scientific = FALSE,
   pvalue_threshold = NULL,
+  pvalue_direction = "forward",
+  mutate = list(),
   footnote_order = "abbreviations"
 )
 }
@@ -79,6 +81,15 @@ from n_sigfig.}
 
 \item{pvalue_threshold}{Numeric or NULL. If set, p-values below this threshold
 are displayed as "< threshold" (e.g., "< 0.05"). Default is NULL (no threshold).}
+
+\item{pvalue_direction}{Which nested comparisons get a likelihood-ratio test
+p-value. "forward" (default) tests a model only when it has more
+parameters than the model it is based on. "both" also tests a model with
+fewer parameters, with its parent as the fuller model, as in a backward
+elimination step.}
+
+\item{mutate}{Named list of quosures computing columns from each model's
+row, usually set with \code{\link[=set_spec_mutate]{set_spec_mutate()}}. Default is an empty list.}
 
 \item{footnote_order}{Character vector controlling the order of footnote sections,
 or NULL to disable footnotes. Valid value for SummarySpec: "abbreviations".

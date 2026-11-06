@@ -495,6 +495,13 @@ TableSpec <- S7::new_class(
 #'   from n_sigfig.
 #' @param pvalue_threshold Numeric or NULL. If set, p-values below this threshold
 #'   are displayed as "< threshold" (e.g., "< 0.05"). Default is NULL (no threshold).
+#' @param pvalue_direction Which nested comparisons get a likelihood-ratio test
+#'   p-value. "forward" (default) tests a model only when it has more
+#'   parameters than the model it is based on. "both" also tests a model with
+#'   fewer parameters, with its parent as the fuller model, as in a backward
+#'   elimination step.
+#' @param mutate Named list of quosures computing columns from each model's
+#'   row, usually set with [set_spec_mutate()]. Default is an empty list.
 #' @param footnote_order Character vector controlling the order of footnote sections,
 #'   or NULL to disable footnotes. Valid value for SummarySpec: "abbreviations".
 #'   Default is c("abbreviations").
@@ -528,6 +535,14 @@ SummarySpec <- S7::new_class(
       class = S7::class_character,
       default = "seconds"
     ),
+    pvalue_direction = S7::new_property(
+      class = S7::class_character,
+      default = "forward"
+    ),
+    mutate = S7::new_property(
+      class = S7::class_list,
+      default = list()
+    ),
     default_columns = S7::new_property(
       class = S7::class_character,
       getter = function(self) {
@@ -548,7 +563,12 @@ SummarySpec <- S7::new_class(
     )
   ),
   validator = function(self) {
-    valid_fields <- summary_spec_valid_columns()
+    mutate_msg <- validate_summary_mutate(self@mutate)
+    if (!is.null(mutate_msg)) {
+      return(mutate_msg)
+    }
+    # A column a mutate rule computes is selectable like a built-in one.
+    valid_fields <- c(summary_spec_valid_columns(), names(self@mutate))
     columns_msg <- validate_columns_in_set(
       self@columns,
       valid_fields,
@@ -580,6 +600,16 @@ SummarySpec <- S7::new_class(
       length(self@remove_unrun_models) != 1 || is.na(self@remove_unrun_models)
     ) {
       return("@remove_unrun_models must be TRUE or FALSE")
+    }
+
+    if (
+      length(self@pvalue_direction) != 1 ||
+        !self@pvalue_direction %in% c("forward", "both")
+    ) {
+      return(sprintf(
+        "@pvalue_direction must be 'forward' or 'both'. Got: '%s'",
+        paste(self@pvalue_direction, collapse = ", ")
+      ))
     }
 
     if (
@@ -617,6 +647,8 @@ SummarySpec <- S7::new_class(
     time_format = "seconds",
     pvalue_scientific = FALSE,
     pvalue_threshold = NULL,
+    pvalue_direction = "forward",
+    mutate = list(),
     footnote_order = "abbreviations"
   ) {
     S7::new_object(
@@ -637,6 +669,8 @@ SummarySpec <- S7::new_class(
       tag_exclude = tag_exclude,
       pvalue_scientific = pvalue_scientific,
       pvalue_threshold = pvalue_threshold,
+      pvalue_direction = pvalue_direction,
+      mutate = mutate,
       footnote_order = footnote_order
     )
   }

@@ -4,8 +4,15 @@
 #' an SCM process: one section per round, in the order the process ran them,
 #' from the round tags `hyperion::get_scm_lineage()` puts on each fit. Every
 #' fit in that lineage is based on the model its round tested against, so
-#' the table's dOFV and p-value are the round's own. The returned spec can be
-#' customized further with the `set_spec_*()` modifiers.
+#' each candidate's dOFV is the round's own.
+#'
+#' The columns are the reference model, the description, OFV, dOFV and
+#' Action. The reference, forward and final models show their OFV and no
+#' dOFV; each candidate shows its dOFV and no OFV, and the candidate its
+#' round selected shows "Selected" in Action. The spec sets
+#' `pvalue_direction = "both"`, so selecting the `pvalue` column with
+#' [set_spec_columns()] tests the backward steps too. The returned spec can
+#' be customized further with the `set_spec_*()` modifiers.
 #'
 #' The section rules end with a catch-all, so rules appended with
 #' [set_spec_sections()] never apply; pass `overwrite = TRUE` to replace them.
@@ -30,7 +37,7 @@
 #'
 #' # Customize further with modifiers
 #' spec <- scm_summary_spec(scm, title = "Covariate search") |>
-#'   drop_spec_columns("condition_number") |>
+#'   set_spec_columns("based_on", "ofv", "dofv", "pvalue", "action") |>
 #'   set_spec_pvalue(scientific = TRUE)
 #' }
 scm_summary_spec <- function(scm, title = NULL, other_section_label = "Other") {
@@ -64,8 +71,25 @@ scm_summary_spec <- function(scm, title = NULL, other_section_label = "Other") {
   rules <- c(rules, list(rlang::new_formula(TRUE, other_section_label, env = baseenv())))
 
   spec <- rlang::inject(set_spec_sections(SummarySpec(), !!!rules))
+  spec <- set_spec_pvalue(spec, direction = "both")
+  # The stage models show their OFV; the candidates show their round's dOFV
+  # and whether the round kept them.
+  spec <- set_spec_mutate(
+    spec,
+    ofv = if (any(!!scm_stage_tags %in% tags)) ofv else NA_real_,
+    dofv = if (any(!!scm_stage_tags %in% tags)) NA_real_ else dofv,
+    action = if ("selected" %in% tags && !any(!!scm_stage_tags %in% tags)) {
+      "Selected"
+    } else {
+      NA_character_
+    }
+  )
+  spec <- set_spec_columns(spec, "based_on", "description", "ofv", "dofv", "action")
   set_spec_title(spec, title %||% "")
 }
+
+# The tags of the fits that are not round candidates.
+scm_stage_tags <- c("reference", "forward_final", "final")
 
 # The rounds in the lineage, in the order their fits appear: each fit's tag
 # other than "scm", "selected" and "retry".

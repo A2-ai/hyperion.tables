@@ -136,6 +136,52 @@ test_that("set_spec_pvalue allows clearing threshold", {
   expect_null(spec@pvalue_threshold)
 })
 
+test_that("set_spec_mutate stores named rules and makes them selectable", {
+  spec <- SummarySpec() |>
+    set_spec_mutate(stage = if ("final" %in% tags) "Final" else NA)
+  expect_named(get_spec_mutate(spec), "stage")
+  expect_true(rlang::is_quosure(get_spec_mutate(spec)$stage))
+
+  # A computed column passes column validation like a built-in one.
+  spec <- set_spec_columns(spec, "based_on", "ofv", "stage")
+  expect_equal(get_spec_columns(spec), c("based_on", "ofv", "stage"))
+  expect_error(set_spec_columns(SummarySpec(), "stage"), "@columns must be in")
+
+  # Rules add by name; the same name replaces; overwrite drops the rest.
+  spec <- set_spec_mutate(spec, flag = TRUE)
+  expect_named(get_spec_mutate(spec), c("stage", "flag"))
+  spec <- set_spec_mutate(spec, stage = "x")
+  expect_named(get_spec_mutate(spec), c("flag", "stage"))
+  expect_equal(rlang::quo_get_expr(get_spec_mutate(spec)$stage), "x")
+  # Dropping a rule a selected column depends on fails validation.
+  expect_error(set_spec_mutate(spec, only = 1, overwrite = TRUE), "@columns must be in")
+  fresh <- SummarySpec() |>
+    set_spec_mutate(a = 1, b = 2) |>
+    set_spec_mutate(only = 1, overwrite = TRUE)
+  expect_named(get_spec_mutate(fresh), "only")
+
+  expect_error(set_spec_mutate(SummarySpec(), "final" %in% tags), "must be named")
+  expect_error(set_spec_mutate(TableSpec(), a = 1), "<SummarySpec>")
+  expect_error(get_spec_mutate(TableSpec()), "<SummarySpec>")
+})
+
+test_that("set_spec_pvalue sets direction on a SummarySpec only", {
+  expect_equal(SummarySpec()@pvalue_direction, "forward")
+  spec <- SummarySpec() |> set_spec_pvalue(direction = "both")
+  expect_equal(spec@pvalue_direction, "both")
+  expect_equal(get_spec_pvalue(spec)$direction, "both")
+  expect_null(get_spec_pvalue(TableSpec())$direction)
+
+  expect_error(
+    SummarySpec() |> set_spec_pvalue(direction = "backward"),
+    "@pvalue_direction must be"
+  )
+  expect_error(
+    TableSpec() |> set_spec_pvalue(direction = "both"),
+    "applies to a <SummarySpec> only"
+  )
+})
+
 test_that("set_spec_footnotes works", {
   spec <- TableSpec() |> set_spec_footnotes(c("abbreviations", "equations"))
   expect_equal(spec@footnote_order, c("abbreviations", "equations"))

@@ -118,7 +118,8 @@ get_spec_hide_empty <- function(spec, ...) {
 #'
 #' @param spec A TableSpec or SummarySpec object.
 #' @param ... Not used.
-#' @return A named list with elements `threshold` and `scientific`.
+#' @return A named list with elements `threshold` and `scientific`, plus
+#'   `direction` for a SummarySpec.
 #' @seealso [set_spec_pvalue()].
 #' @export
 #' @examples
@@ -128,10 +129,14 @@ get_spec_pvalue <- function(spec, ...) {
   if (!S7::S7_inherits(spec, BaseSpec)) {
     rlang::abort("`spec` must be a <TableSpec> or <SummarySpec> object.")
   }
-  list(
+  options <- list(
     threshold = spec@pvalue_threshold,
     scientific = spec@pvalue_scientific
   )
+  if (S7::S7_inherits(spec, SummarySpec)) {
+    options$direction <- spec@pvalue_direction
+  }
+  options
 }
 
 #' Get footnote order from a spec
@@ -421,6 +426,27 @@ get_spec_summary_filter <- function(spec, ...) {
     rlang::abort("`spec` must be a <SummarySpec> object.")
   }
   spec@summary_filter
+}
+
+#' Get computed column rules from a SummarySpec
+#'
+#' `get_spec_mutate()` returns the computed column rules as a named list of
+#' quosures, one per column.
+#'
+#' @param spec A SummarySpec object.
+#' @param ... Not used.
+#' @return Named list of quosures.
+#' @seealso [set_spec_mutate()].
+#' @export
+#' @examples
+#' spec <- SummarySpec() |>
+#'   set_spec_mutate(stage = if ("final" %in% tags) "Final" else NA)
+#' get_spec_mutate(spec)
+get_spec_mutate <- function(spec, ...) {
+  if (!S7::S7_inherits(spec, SummarySpec)) {
+    rlang::abort("`spec` must be a <SummarySpec> object.")
+  }
+  spec@mutate
 }
 
 #' Get time format from a SummarySpec

@@ -66,6 +66,7 @@ Functions for reading spec properties:
 \item \code{\link[=get_spec_transforms]{get_spec_transforms()}} - Get display transforms
 \item \code{\link[=get_spec_variability]{get_spec_variability()}} - Get variability rules
 \item \code{\link[=get_spec_time_format]{get_spec_time_format()}} - Get time format from a SummarySpec
+\item \code{\link[=get_spec_mutate]{get_spec_mutate()}} - Get computed column rules from a SummarySpec
 }
 }
 
@@ -115,6 +116,7 @@ Functions specific to SummarySpec:
 \item \code{\link[=set_spec_tag_filter]{set_spec_tag_filter()}} - Filter by model tags
 \item \code{\link[=set_spec_remove_unrun]{set_spec_remove_unrun()}} - Control unrun model filtering
 \item \code{\link[=set_spec_summary_filter]{set_spec_summary_filter()}} - Set summary filter rules
+\item \code{\link[=set_spec_mutate]{set_spec_mutate()}} - Add computed columns
 }
 }
 

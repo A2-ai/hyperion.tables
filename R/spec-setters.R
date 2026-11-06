@@ -201,13 +201,21 @@ set_spec_hide_empty <- function(spec, hide, ...) {
 #' @param threshold Numeric threshold below which p-values display as "< threshold",
 #'   or NULL to disable threshold display.
 #' @param scientific Logical. If TRUE, use scientific notation for p-values.
+#' @param direction SummarySpec only. Which nested comparisons get a
+#'   likelihood-ratio test p-value: "forward" tests a model only when it has
+#'   more parameters than the model it is based on; "both" also tests a model
+#'   with fewer parameters, with its parent as the fuller model.
 #' @return Modified spec.
 #' @seealso [get_spec_pvalue()].
 #' @export
 #' @examples
 #' spec <- TableSpec() |>
 #'   set_spec_pvalue(threshold = 0.001, scientific = TRUE)
-set_spec_pvalue <- function(spec, ..., threshold, scientific) {
+#'
+#' # Also test backward steps in a run summary
+#' summary_spec <- SummarySpec() |>
+#'   set_spec_pvalue(direction = "both")
+set_spec_pvalue <- function(spec, ..., threshold, scientific, direction) {
   if (!S7::S7_inherits(spec, BaseSpec)) {
     rlang::abort("`spec` must be a <TableSpec> or <SummarySpec> object.")
   }
@@ -216,6 +224,12 @@ set_spec_pvalue <- function(spec, ..., threshold, scientific) {
   }
   if (!missing(scientific)) {
     spec@pvalue_scientific <- scientific
+  }
+  if (!missing(direction)) {
+    if (!S7::S7_inherits(spec, SummarySpec)) {
+      rlang::abort("`direction` applies to a <SummarySpec> only.")
+    }
+    spec@pvalue_direction <- direction
   }
   spec
 }
@@ -966,6 +980,44 @@ set_spec_summary_filter <- function(spec, ..., overwrite = FALSE) {
     spec@summary_filter <- new_rules
   } else {
     spec@summary_filter <- c(spec@summary_filter, new_rules)
+  }
+  spec
+}
+
+#' Set computed columns for a SummarySpec
+#'
+#' `set_spec_mutate()` adds columns to the summary data, or rewrites existing
+#' ones, from expressions evaluated against each model's row, one row at a
+#' time. The row holds the summary columns the spec builds (`ofv`, `dofv`,
+#' `based_on`, ...) and `tags`, the model's tags as a character vector. A new
+#' column is selectable with [set_spec_columns()] and gets a label made from
+#' its name. Operates on `SummarySpec` only.
+#'
+#' @param spec A SummarySpec object.
+#' @param ... Named expressions, one per column, each giving one value for a
+#'   model, e.g. `action = if ("selected" %in% tags) "Selected" else NA`.
+#' @param overwrite If FALSE (default), add to the existing rules, replacing
+#'   any for the same column. If TRUE, replace all existing rules.
+#' @return Modified spec.
+#' @seealso [get_spec_mutate()].
+#' @export
+#' @examples
+#' spec <- SummarySpec() |>
+#'   set_spec_mutate(stage = if ("final" %in% tags) "Final" else NA) |>
+#'   set_spec_columns("based_on", "ofv", "stage")
+set_spec_mutate <- function(spec, ..., overwrite = FALSE) {
+  if (!S7::S7_inherits(spec, SummarySpec)) {
+    rlang::abort("`spec` must be a <SummarySpec> object.")
+  }
+  rules <- rlang::enquos(...)
+  if (any(rlang::names2(rules) == "")) {
+    rlang::abort("Every argument in `...` must be named: the name is the column.")
+  }
+  if (overwrite) {
+    spec@mutate <- rules
+  } else {
+    kept <- spec@mutate[setdiff(names(spec@mutate), names(rules))]
+    spec@mutate <- c(kept, rules)
   }
   spec
 }

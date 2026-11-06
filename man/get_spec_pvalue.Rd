@@ -12,7 +12,8 @@ get_spec_pvalue(spec, ...)
 \item{...}{Not used.}
 }
 \value{
-A named list with elements \code{threshold} and \code{scientific}.
+A named list with elements \code{threshold} and \code{scientific}, plus
+\code{direction} for a SummarySpec.
 }
 \description{
 \code{get_spec_pvalue()} returns the p-value formatting options as a named list.

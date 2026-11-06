@@ -115,6 +115,21 @@ summary_spec_valid_columns <- function() {
 }
 
 #' @noRd
+validate_summary_mutate <- function(rules) {
+  if (length(rules) == 0) {
+    return(NULL)
+  }
+  nms <- rlang::names2(rules)
+  if (any(nms == "") || anyDuplicated(nms) > 0) {
+    return("@mutate rules must be uniquely named: one expression per column.")
+  }
+  if (!all(vapply(rules, rlang::is_quosure, logical(1)))) {
+    return("@mutate rules must be created with set_spec_mutate()")
+  }
+  NULL
+}
+
+#' @noRd
 validate_columns_in_set <- function(cols, valid, label) {
   if (is.null(cols)) {
     return(NULL)

@@ -24,10 +24,17 @@ A \link{SummarySpec} object.
 an SCM process: one section per round, in the order the process ran them,
 from the round tags \code{hyperion::get_scm_lineage()} puts on each fit. Every
 fit in that lineage is based on the model its round tested against, so
-the table's dOFV and p-value are the round's own. The returned spec can be
-customized further with the \verb{set_spec_*()} modifiers.
+each candidate's dOFV is the round's own.
 }
 \details{
+The columns are the reference model, the description, OFV, dOFV and
+Action. The reference, forward and final models show their OFV and no
+dOFV; each candidate shows its dOFV and no OFV, and the candidate its
+round selected shows "Selected" in Action. The spec sets
+\code{pvalue_direction = "both"}, so selecting the \code{pvalue} column with
+\code{\link[=set_spec_columns]{set_spec_columns()}} tests the backward steps too. The returned spec can
+be customized further with the \verb{set_spec_*()} modifiers.
+
 The section rules end with a catch-all, so rules appended with
 \code{\link[=set_spec_sections]{set_spec_sections()}} never apply; pass \code{overwrite = TRUE} to replace them.
 }
@@ -42,7 +49,7 @@ scm |>
 
 # Customize further with modifiers
 spec <- scm_summary_spec(scm, title = "Covariate search") |>
-  drop_spec_columns("condition_number") |>
+  set_spec_columns("based_on", "ofv", "dofv", "pvalue", "action") |>
   set_spec_pvalue(scientific = TRUE)
 }
 }

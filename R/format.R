@@ -144,7 +144,7 @@ build_summary_label_map <- function() {
     function_evaluations = "Func. Evals",
     significant_digits = "Sig. Digits",
     ofv = "OFV",
-    dofv = "$\\Delta$OFV",
+    dofv = "\u0394OFV",
     condition_number = "Cond. No.",
     termination_status = "Termination",
     pvalue = "p-value",

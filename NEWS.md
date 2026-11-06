@@ -5,18 +5,29 @@
 - `scm_summary_spec()` returns a `SummarySpec` preset for a stepwise
   covariate modeling process: a section per round, in the order the process
   ran them, so `hyperion::get_scm_lineage(scm) |> apply_summary_spec(spec) |>
-  make_summary_table()` gives one row per fit with its dOFV and p-value
-  against the model its round tested. Requires hyperion with
-  `get_scm_lineage()`.
+  make_summary_table()` gives one row per fit. The reference, forward and
+  final models show their OFV; each candidate shows its dOFV against the
+  model its round tested and, when the round kept it, "Selected" in the
+  Action column. Requires hyperion with `get_scm_lineage()`.
+- `set_spec_mutate()` adds computed columns to a `SummarySpec`, or rewrites
+  existing ones, from expressions evaluated against each model's row with
+  its `tags`; `get_spec_mutate()` reads them. A computed column is
+  selectable with `set_spec_columns()` and labelled from its name.
+- `SummarySpec()` gains `pvalue_direction`, also set with
+  `set_spec_pvalue(direction = )`. The default, `"forward"`, keeps the
+  existing behavior: a p-value only for a model with more parameters than
+  its parent. `"both"` also tests a model with fewer parameters, with the
+  parent as the fuller model, as in an SCM backward step;
+  `scm_summary_spec()` sets it.
 
 ## Bug fixes
 
 - Summary tables key models by their path, not their file stem, so models
   with the same stem in different directories (an SCM process fits the same
   stem in several rounds) each get a row.
-- Summary tables give a dOFV p-value to a model with fewer parameters than
-  its parent, with the parent as the fuller model, as in an SCM backward
-  step. Before, only a model with more parameters got one.
+- The gt dOFV column label is a plain "ΔOFV" rather than LaTeX, so it no
+  longer needs KaTeX or markdown rendering in the heading cell, which could
+  show a scroll bar in Quarto output. The flextable label is unchanged.
 
 # hyperion.tables 0.6.0
 

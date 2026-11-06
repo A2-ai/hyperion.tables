@@ -52,6 +52,7 @@
 #'   \item [get_spec_transforms()] - Get display transforms
 #'   \item [get_spec_variability()] - Get variability rules
 #'   \item [get_spec_time_format()] - Get time format from a SummarySpec
+#'   \item [get_spec_mutate()] - Get computed column rules from a SummarySpec
 #' }
 #'
 #' @section Spec Modifiers - Columns:
@@ -93,6 +94,7 @@
 #'   \item [set_spec_tag_filter()] - Filter by model tags
 #'   \item [set_spec_remove_unrun()] - Control unrun model filtering
 #'   \item [set_spec_summary_filter()] - Set summary filter rules
+#'   \item [set_spec_mutate()] - Add computed columns
 #' }
 #'
 #' @section Rule Builders:
