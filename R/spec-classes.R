@@ -500,8 +500,12 @@ TableSpec <- S7::new_class(
 #'   parameters than the model it is based on. "both" also tests a model with
 #'   fewer parameters, with its parent as the fuller model, as in a backward
 #'   elimination step.
-#' @param mutate Named list of quosures computing columns from each model's
-#'   row, usually set with [set_spec_mutate()]. Default is an empty list.
+#' @param bold_rows List of quosures, one per rule; a model whose row
+#'   satisfies any is rendered in bold. Usually set with
+#'   [set_spec_bold_rows()]. Default is an empty list.
+#' @param description_transform NULL (the default), or a function applied to
+#'   the description column, as a character vector, before the table is
+#'   built. Usually set with [set_spec_description_transform()].
 #' @param footnote_order Character vector controlling the order of footnote sections,
 #'   or NULL to disable footnotes. Valid value for SummarySpec: "abbreviations".
 #'   Default is c("abbreviations").
@@ -539,9 +543,13 @@ SummarySpec <- S7::new_class(
       class = S7::class_character,
       default = "forward"
     ),
-    mutate = S7::new_property(
+    bold_rows = S7::new_property(
       class = S7::class_list,
       default = list()
+    ),
+    description_transform = S7::new_property(
+      class = S7::class_function | NULL,
+      default = NULL
     ),
     default_columns = S7::new_property(
       class = S7::class_character,
@@ -563,12 +571,11 @@ SummarySpec <- S7::new_class(
     )
   ),
   validator = function(self) {
-    mutate_msg <- validate_summary_mutate(self@mutate)
-    if (!is.null(mutate_msg)) {
-      return(mutate_msg)
+    bold_msg <- validate_summary_row_rules(self@bold_rows, "@bold_rows")
+    if (!is.null(bold_msg)) {
+      return(bold_msg)
     }
-    # A column a mutate rule computes is selectable like a built-in one.
-    valid_fields <- c(summary_spec_valid_columns(), names(self@mutate))
+    valid_fields <- summary_spec_valid_columns()
     columns_msg <- validate_columns_in_set(
       self@columns,
       valid_fields,
@@ -648,7 +655,8 @@ SummarySpec <- S7::new_class(
     pvalue_scientific = FALSE,
     pvalue_threshold = NULL,
     pvalue_direction = "forward",
-    mutate = list(),
+    bold_rows = list(),
+    description_transform = NULL,
     footnote_order = "abbreviations"
   ) {
     S7::new_object(
@@ -670,7 +678,8 @@ SummarySpec <- S7::new_class(
       pvalue_scientific = pvalue_scientific,
       pvalue_threshold = pvalue_threshold,
       pvalue_direction = pvalue_direction,
-      mutate = mutate,
+      bold_rows = bold_rows,
+      description_transform = description_transform,
       footnote_order = footnote_order
     )
   }

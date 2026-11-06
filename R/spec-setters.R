@@ -984,41 +984,60 @@ set_spec_summary_filter <- function(spec, ..., overwrite = FALSE) {
   spec
 }
 
-#' Set computed columns for a SummarySpec
+#' Set bold row rules for a SummarySpec
 #'
-#' `set_spec_mutate()` adds columns to the summary data, or rewrites existing
-#' ones, from expressions evaluated against each model's row, one row at a
-#' time. The row holds the summary columns the spec builds (`ofv`, `dofv`,
-#' `based_on`, ...) and `tags`, the model's tags as a character vector. A new
-#' column is selectable with [set_spec_columns()] and gets a label made from
-#' its name. Operates on `SummarySpec` only.
+#' `set_spec_bold_rows()` renders in bold the row of every model satisfying
+#' any of the rules. A rule is evaluated against one model at a time, like
+#' a section rule, with the summary columns and `tags`, the model's tags as
+#' a character vector. Operates on `SummarySpec` only.
 #'
 #' @param spec A SummarySpec object.
-#' @param ... Named expressions, one per column, each giving one value for a
-#'   model, e.g. `action = if ("selected" %in% tags) "Selected" else NA`.
-#' @param overwrite If FALSE (default), add to the existing rules, replacing
-#'   any for the same column. If TRUE, replace all existing rules.
+#' @param ... Rule expressions, e.g. `"selected" %in% tags`.
+#' @param overwrite If FALSE (default), append to existing rules. If TRUE,
+#'   replace all existing rules.
 #' @return Modified spec.
-#' @seealso [get_spec_mutate()].
+#' @seealso [get_spec_bold_rows()], [set_spec_sections()].
 #' @export
 #' @examples
 #' spec <- SummarySpec() |>
-#'   set_spec_mutate(stage = if ("final" %in% tags) "Final" else NA) |>
-#'   set_spec_columns("based_on", "ofv", "stage")
-set_spec_mutate <- function(spec, ..., overwrite = FALSE) {
+#'   set_spec_bold_rows("final" %in% tags)
+set_spec_bold_rows <- function(spec, ..., overwrite = FALSE) {
   if (!S7::S7_inherits(spec, SummarySpec)) {
     rlang::abort("`spec` must be a <SummarySpec> object.")
   }
-  rules <- rlang::enquos(...)
-  if (any(rlang::names2(rules) == "")) {
-    rlang::abort("Every argument in `...` must be named: the name is the column.")
-  }
+  new_rules <- capture_unnamed_dots(...)
   if (overwrite) {
-    spec@mutate <- rules
+    spec@bold_rows <- new_rules
   } else {
-    kept <- spec@mutate[setdiff(names(spec@mutate), names(rules))]
-    spec@mutate <- c(kept, rules)
+    spec@bold_rows <- c(spec@bold_rows, new_rules)
   }
   spec
 }
+
+#' Set a description transform for a SummarySpec
+#'
+#' `set_spec_description_transform()` rewrites the Description column with
+#' a function of the descriptions the lineage gave, as a character vector,
+#' before the table is built. Operates on `SummarySpec` only.
+#'
+#' @param spec A SummarySpec object.
+#' @param transform A function from a character vector to one of the same
+#'   length, or NULL to show the descriptions as they are.
+#' @return Modified spec.
+#' @seealso [get_spec_description_transform()].
+#' @export
+#' @examples
+#' spec <- SummarySpec() |>
+#'   set_spec_description_transform(toupper)
+set_spec_description_transform <- function(spec, transform) {
+  if (!S7::S7_inherits(spec, SummarySpec)) {
+    rlang::abort("`spec` must be a <SummarySpec> object.")
+  }
+  if (!is.null(transform) && !is.function(transform)) {
+    rlang::abort("`transform` must be a function of a character vector, or NULL.")
+  }
+  spec@description_transform <- transform
+  spec
+}
+
 

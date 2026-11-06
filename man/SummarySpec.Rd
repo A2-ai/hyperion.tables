@@ -22,7 +22,8 @@ SummarySpec(
   pvalue_scientific = FALSE,
   pvalue_threshold = NULL,
   pvalue_direction = "forward",
-  mutate = list(),
+  bold_rows = list(),
+  description_transform = NULL,
   footnote_order = "abbreviations"
 )
 }
@@ -88,8 +89,13 @@ parameters than the model it is based on. "both" also tests a model with
 fewer parameters, with its parent as the fuller model, as in a backward
 elimination step.}
 
-\item{mutate}{Named list of quosures computing columns from each model's
-row, usually set with \code{\link[=set_spec_mutate]{set_spec_mutate()}}. Default is an empty list.}
+\item{bold_rows}{List of quosures, one per rule; a model whose row
+satisfies any is rendered in bold. Usually set with
+\code{\link[=set_spec_bold_rows]{set_spec_bold_rows()}}. Default is an empty list.}
+
+\item{description_transform}{NULL (the default), or a function applied to
+the description column, as a character vector, before the table is
+built. Usually set with \code{\link[=set_spec_description_transform]{set_spec_description_transform()}}.}
 
 \item{footnote_order}{Character vector controlling the order of footnote sections,
 or NULL to disable footnotes. Valid value for SummarySpec: "abbreviations".

@@ -55,8 +55,26 @@ test_that("scm_summary_spec() sections the rounds pharos tagged, in the order th
   )
   # The preset is the usual spec settings and nothing else.
   expect_equal(get_spec_tag_filter(spec)$include, "scm")
-  expect_equal(get_spec_columns(spec), c("based_on", "description", "ofv", "dofv", "action"))
-  expect_named(get_spec_mutate(spec), "action")
+  expect_equal(get_spec_columns(spec), c("based_on", "description", "ofv", "dofv"))
+  expect_length(get_spec_bold_rows(spec), 1)
+
+  # The Description column shows the step, or the model's covariates, from
+  # the description pharos writes; one without the part is left alone.
+  written <- c(
+    "SCM forward_round2: add CRCL_CL (attempt 1); covariates: WT_CL, CRCL_CL",
+    "SCM reference: fit base model (attempt 1); covariates: none",
+    "structural model"
+  )
+  expect_equal(
+    get_spec_description_transform(spec)(written),
+    c("SCM forward_round2: add CRCL_CL (attempt 1)", "SCM reference: fit base model (attempt 1)", "structural model")
+  )
+  covariates <- scm_summary_spec(pharos_tagged_lineage(), description = "covariates")
+  expect_equal(
+    get_spec_description_transform(covariates)(written),
+    c("WT_CL, CRCL_CL", "none", "structural model")
+  )
+  expect_error(scm_summary_spec(pharos_tagged_lineage(), description = "x"), "should be one of")
   expect_equal(get_spec_pvalue(spec)$direction, "both")
   expect_null(get_spec_footnotes(spec))
   expect_equal(get_spec_title(spec), "")
@@ -105,7 +123,7 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
 
   expect_equal(
     names(data),
-    c("model", "based_on", "description", "ofv", "dofv", "action", "section")
+    c("model", "based_on", "description", "ofv", "dofv", "section", ".bold")
   )
   # Every fit gets a row, although the same stem recurs across rounds.
   expect_equal(nrow(data), 12)
@@ -122,19 +140,36 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
   # A forward step: the candidate adds a parameter to its round's reference.
   added <- row("1001_wt_cl", "Forward round 1")
   expect_equal(added$based_on, "1001_base")
+  expect_equal(added$description, "add WT_CL")
   expect_equal(added$dofv, -20)
-  expect_equal(added$action, "Selected")
-  expect_true(is.na(row("1001_wt_v", "Forward round 1")$action))
+  # The candidate a round kept is the one in bold.
+  expect_true(added$.bold)
+  expect_false(row("1001_wt_v", "Forward round 1")$.bold)
   # A backward step: the candidate drops one, and the reference is the fuller model.
   dropped <- row("1001_crcl_cl", "Backward round 1")
   expect_equal(dropped$based_on, "1001_crcl_cl")
   expect_equal(dropped$dofv, 6)
-  # The reference and final fits are not candidates, so they are never "Selected".
+  # The forward final and final models are based on the reference fit.
+  forward_final <- row("1001_scm_forward_final", "Forward final model")
+  expect_equal(forward_final$based_on, "1001_base")
+  expect_equal(forward_final$dofv, 973.8 - 1000)
+  final <- row("1001_scm_final", "Final model")
+  expect_equal(final$based_on, "1001_base")
+  expect_equal(final$dofv, 979.5 - 1000)
+
+  # With description = "covariates", each row lists what its model has.
+  with_covariates <- apply_summary_spec(tree, scm_summary_spec(tree, description = "covariates"))
+  expect_equal(
+    with_covariates$description[with_covariates$section == "Forward round 2"],
+    c("WT_CL, CRCL_CL", "WT_CL, WT_V")
+  )
+
+  # The reference and final fits are not candidates, so they are never in bold.
   expect_true(is.na(row("1001_base", "Reference model")$dofv))
-  expect_true(all(is.na(data$action[data$section %in% c("Reference model", "Forward final model", "Final model")])))
+  expect_false(any(data$.bold[data$section %in% c("Reference model", "Forward final model", "Final model")]))
 
   shown <- as.data.frame(data)[, c(
-    "section", "model", "based_on", "description", "ofv", "dofv", "action"
+    "section", "model", "based_on", "description", "ofv", "dofv", ".bold"
   )]
   expect_snapshot(print(shown, digits = 4, row.names = FALSE))
 

@@ -320,6 +320,18 @@ apply_flextable_bold <- function(ft, table) {
 
   # Note: row_groups are handled separately in their creation
 
+  if (length(table@bold_rows) > 0) {
+    rows <- table@bold_rows
+    group_col <- normalize_groupname_col(table@groupname_col, names(ft$body$dataset))
+    if (!is.null(group_col)) {
+      # as_grouped_data() put a heading row before each group, with the
+      # group's name in the group column; the models' rows have none there.
+      model_rows <- which(is.na(ft$body$dataset[[group_col]]))
+      rows <- model_rows[rows]
+    }
+    ft <- flextable::bold(ft, i = rows, part = "body")
+  }
+
   ft
 }
 

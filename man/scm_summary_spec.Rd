@@ -4,7 +4,12 @@
 \alias{scm_summary_spec}
 \title{Pre-configured SummarySpec for a stepwise covariate modeling process}
 \usage{
-scm_summary_spec(lineage, title = NULL, other_section_label = "Other")
+scm_summary_spec(
+  lineage,
+  title = NULL,
+  description = c("step", "covariates"),
+  other_section_label = "Other"
+)
 }
 \arguments{
 \item{lineage}{The \code{hyperion_nonmem_tree} holding the SCM fits:
@@ -15,6 +20,10 @@ config (\verb{<stem>scm.toml}) is passed to the latter.}
 
 \item{title}{Table title. \code{NULL} (the default) gives a table with no
 title; pass a string to set one.}
+
+\item{description}{What the Description column shows for each fit:
+\code{"step"} (the default), its action, or \code{"covariates"}, the covariates
+its model has.}
 
 \item{other_section_label}{Section label for a model matching no round.}
 }
@@ -32,13 +41,20 @@ it is what you would write by hand with \code{\link[=set_spec_sections]{set_spec
 }
 \details{
 Every fit is based on the model its round tested against, so dOFV is the
-round's own. The columns are Reference, Description (the fit's action,
-such as "SCM forward_round1: add WT_CL (attempt 1)"), OFV, dOFV and
-Action, which shows "Selected" for the candidate its round kept, from the
-\code{"selected"} tag. The table has no footnotes, and \code{pvalue_direction} is
-\code{"both"}, so selecting the \code{pvalue} column with \code{\link[=set_spec_columns]{set_spec_columns()}} tests
-the backward steps too. Customize further with the \verb{set_spec_*()}
-modifiers.
+round's own; the forward final and final models are based on the
+reference fit, so theirs is against it. The columns are Reference,
+Description, OFV and dOFV, and the candidate each round kept, tagged
+\code{"selected"}, is in bold. The table has no footnotes, and
+\code{pvalue_direction} is \code{"both"}, so selecting the \code{pvalue} column with
+\code{\link[=set_spec_columns]{set_spec_columns()}} tests the backward steps too. Customize further with
+the \verb{set_spec_*()} modifiers.
+
+pharos ends every SCM fit's description with the covariates its model
+has, e.g. \code{"SCM forward_round2: add CRCL_CL (attempt 1); covariates: WT_CL, CRCL_CL"}, as does \code{hyperion::get_scm_lineage()}. \code{description}
+picks which part the Description column shows: \code{"step"} (the default),
+the fit's action, or \code{"covariates"}, the covariates the model has, so
+a fourth-round candidate reads "WT_CL, CRCL_CL, WT_V" rather than
+"add WT_V". A description without that part shows as it is.
 
 The section rules end with a catch-all, so rules appended with
 \code{\link[=set_spec_sections]{set_spec_sections()}} never apply; pass \code{overwrite = TRUE} to replace them.
@@ -58,9 +74,12 @@ scm |>
   apply_summary_spec(scm_summary_spec(scm, title = "Covariate search")) |>
   make_summary_table()
 
+# Show each model's covariates instead of the step
+scm_summary_spec(scm, description = "covariates")
+
 # Customize further with modifiers
 spec <- scm_summary_spec(scm) |>
-  set_spec_columns("based_on", "ofv", "dofv", "pvalue", "action") |>
+  set_spec_columns("based_on", "ofv", "dofv", "pvalue") |>
   set_spec_pvalue(scientific = TRUE)
 }
 }

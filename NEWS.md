@@ -6,14 +6,18 @@
   covariate modeling process, composed of the usual spec settings: the fits
   tagged `"scm"`, in a section per round from the round tag pharos writes to
   each fit's metadata (`"base"`, `"forward_round1"`, ..., `"final"`), in the
-  order the process ran them, with Reference, Description, OFV, dOFV and an
-  Action column that marks the candidate each round selected. It takes the
-  lineage from `hyperion::get_model_lineage()` or
-  `hyperion::get_scm_lineage()`.
-- `set_spec_mutate()` adds computed columns to a `SummarySpec`, or rewrites
-  existing ones, from expressions evaluated against each model's row with
-  its `tags`; `get_spec_mutate()` reads them. A computed column is
-  selectable with `set_spec_columns()` and labelled from its name.
+  order the process ran them, with Reference, Description, OFV and dOFV,
+  and the candidate each round selected in bold. Its `description`
+  argument shows either each fit's step (the default) or the covariates its
+  model has, from the description pharos writes. It takes the lineage from
+  `hyperion::get_model_lineage()` or `hyperion::get_scm_lineage()`.
+- `set_spec_description_transform()` rewrites a `SummarySpec` table's
+  Description column with a function of the descriptions the lineage gave;
+  `get_spec_description_transform()` reads it.
+- `set_spec_bold_rows()` renders in bold the rows of a `SummarySpec` table
+  whose models satisfy a rule, evaluated like a section rule with the
+  model's `tags`, e.g. `"selected" %in% tags`; `get_spec_bold_rows()` reads
+  the rules. `HyperionTable` gains `bold_rows` for it.
 - `SummarySpec()` gains `pvalue_direction`, also set with
   `set_spec_pvalue(direction = )`. The default, `"forward"`, keeps the
   existing behavior: a p-value only for a model with more parameters than

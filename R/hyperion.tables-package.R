@@ -52,7 +52,8 @@
 #'   \item [get_spec_transforms()] - Get display transforms
 #'   \item [get_spec_variability()] - Get variability rules
 #'   \item [get_spec_time_format()] - Get time format from a SummarySpec
-#'   \item [get_spec_mutate()] - Get computed column rules from a SummarySpec
+#'   \item [get_spec_bold_rows()] - Get bold row rules from a SummarySpec
+#'   \item [get_spec_description_transform()] - Get the description transform
 #' }
 #'
 #' @section Spec Modifiers - Columns:
@@ -94,7 +95,8 @@
 #'   \item [set_spec_tag_filter()] - Filter by model tags
 #'   \item [set_spec_remove_unrun()] - Control unrun model filtering
 #'   \item [set_spec_summary_filter()] - Set summary filter rules
-#'   \item [set_spec_mutate()] - Add computed columns
+#'   \item [set_spec_bold_rows()] - Bold the rows matching rules
+#'   \item [set_spec_description_transform()] - Rewrite the Description column
 #' }
 #'
 #' @section Rule Builders:

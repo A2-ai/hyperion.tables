@@ -136,33 +136,28 @@ test_that("set_spec_pvalue allows clearing threshold", {
   expect_null(spec@pvalue_threshold)
 })
 
-test_that("set_spec_mutate stores named rules and makes them selectable", {
-  spec <- SummarySpec() |>
-    set_spec_mutate(stage = if ("final" %in% tags) "Final" else NA)
-  expect_named(get_spec_mutate(spec), "stage")
-  expect_true(rlang::is_quosure(get_spec_mutate(spec)$stage))
+test_that("set_spec_bold_rows stores rules on a SummarySpec only", {
+  expect_length(get_spec_bold_rows(SummarySpec()), 0)
+  spec <- SummarySpec() |> set_spec_bold_rows("selected" %in% tags)
+  expect_length(get_spec_bold_rows(spec), 1)
+  expect_true(rlang::is_quosure(get_spec_bold_rows(spec)[[1]]))
+  spec <- set_spec_bold_rows(spec, ofv < 100)
+  expect_length(get_spec_bold_rows(spec), 2)
+  spec <- set_spec_bold_rows(spec, "final" %in% tags, overwrite = TRUE)
+  expect_length(get_spec_bold_rows(spec), 1)
+  expect_equal(rlang::quo_get_expr(get_spec_bold_rows(spec)[[1]]), quote("final" %in% tags))
+  expect_error(set_spec_bold_rows(TableSpec(), a == 1), "<SummarySpec>")
+  expect_error(get_spec_bold_rows(TableSpec()), "<SummarySpec>")
+})
 
-  # A computed column passes column validation like a built-in one.
-  spec <- set_spec_columns(spec, "based_on", "ofv", "stage")
-  expect_equal(get_spec_columns(spec), c("based_on", "ofv", "stage"))
-  expect_error(set_spec_columns(SummarySpec(), "stage"), "@columns must be in")
-
-  # Rules add by name; the same name replaces; overwrite drops the rest.
-  spec <- set_spec_mutate(spec, flag = TRUE)
-  expect_named(get_spec_mutate(spec), c("stage", "flag"))
-  spec <- set_spec_mutate(spec, stage = "x")
-  expect_named(get_spec_mutate(spec), c("flag", "stage"))
-  expect_equal(rlang::quo_get_expr(get_spec_mutate(spec)$stage), "x")
-  # Dropping a rule a selected column depends on fails validation.
-  expect_error(set_spec_mutate(spec, only = 1, overwrite = TRUE), "@columns must be in")
-  fresh <- SummarySpec() |>
-    set_spec_mutate(a = 1, b = 2) |>
-    set_spec_mutate(only = 1, overwrite = TRUE)
-  expect_named(get_spec_mutate(fresh), "only")
-
-  expect_error(set_spec_mutate(SummarySpec(), "final" %in% tags), "must be named")
-  expect_error(set_spec_mutate(TableSpec(), a = 1), "<SummarySpec>")
-  expect_error(get_spec_mutate(TableSpec()), "<SummarySpec>")
+test_that("set_spec_description_transform stores a function or NULL", {
+  expect_null(get_spec_description_transform(SummarySpec()))
+  spec <- set_spec_description_transform(SummarySpec(), toupper)
+  expect_identical(get_spec_description_transform(spec), toupper)
+  expect_null(get_spec_description_transform(set_spec_description_transform(spec, NULL)))
+  expect_error(set_spec_description_transform(SummarySpec(), "x"), "must be a function")
+  expect_error(set_spec_description_transform(TableSpec(), toupper), "<SummarySpec>")
+  expect_error(get_spec_description_transform(TableSpec()), "<SummarySpec>")
 })
 
 test_that("set_spec_pvalue sets direction on a SummarySpec only", {

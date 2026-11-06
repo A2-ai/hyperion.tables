@@ -91,8 +91,16 @@ apply_summary_spec <- function(tree, spec) {
   needs_dofv <- taken$value
   df <- taken$df
 
-  # Computed columns, before the section rules so those can use them.
-  df <- apply_summary_mutate(df, spec@mutate)
+  # The spec's description transform, on the text as the lineage gave it
+  if (!is.null(spec@description_transform) && "description" %in% names(df)) {
+    transformed <- spec@description_transform(df$description)
+    if (!is.character(transformed) || length(transformed) != nrow(df)) {
+      rlang::abort(
+        "the description transform must return a character vector, one element per model."
+      )
+    }
+    df$description <- transformed
+  }
 
   # Evaluate section rules (before column trim so rule-referenced cols available)
   has_section_config <- length(spec@sections@rules) > 0 ||
@@ -107,6 +115,11 @@ apply_summary_spec <- function(tree, spec) {
     df$section <- as.character(df$section)
 
     df <- filter_sections(df, spec)
+  }
+
+  # Which rows render in bold, while `tags` is still there to ask about
+  if (length(spec@bold_rows) > 0) {
+    df$.bold <- eval_summary_row_rules(df, spec@bold_rows)
   }
 
   # Drop internal tags column
@@ -356,9 +369,11 @@ select_output_columns <- function(df, spec, needs_dofv) {
       col_order <- append(col_order, "df", after = pvalue_idx)
     }
   }
-  # Preserve section column for grouped rendering
-  if ("section" %in% names(df) && !"section" %in% col_order) {
-    col_order <- c(col_order, "section")
+  # Preserve section column for grouped rendering, and the bold flag
+  for (col in c("section", ".bold")) {
+    if (col %in% names(df) && !col %in% col_order) {
+      col_order <- c(col_order, col)
+    }
   }
   dplyr::select(df, dplyr::all_of(col_order))
 }
@@ -449,35 +464,21 @@ build_summary_section <- function(df, rules) {
   result
 }
 
-#' Add or rewrite columns from the spec's mutate rules
+#' TRUE for each row satisfying any of the rules
 #'
-#' Each rule is evaluated against one model's row at a time, with list columns
-#' such as `tags` unwrapped to their element, the way section rules see a row.
+#' A rule is evaluated against one row at a time, with list columns such as
+#' `tags` unwrapped to their element, the way section rules see a row.
 #' @noRd
-apply_summary_mutate <- function(df, rules) {
-  if (length(rules) == 0) {
-    return(df)
-  }
-  n <- nrow(df)
-  for (col in names(rules)) {
-    rule <- rules[[col]]
-    values <- lapply(seq_len(n), function(i) {
-      row_data <- lapply(df, function(x) x[[i]])
-      names(row_data) <- names(df)
-      value <- rlang::eval_tidy(rule, data = row_data)
-      if (length(value) != 1) {
-        rlang::abort(sprintf(
-          "mutate rule for `%s` must give one value per model; got %d for '%s'.",
-          col,
-          length(value),
-          basename(df$.name[i])
-        ))
-      }
-      value
-    })
-    df[[col]] <- if (n == 0) logical(0) else unlist(values, use.names = FALSE)
-  }
-  df
+eval_summary_row_rules <- function(df, rules) {
+  vapply(seq_len(nrow(df)), function(i) {
+    row_data <- lapply(df, function(x) x[[i]])
+    names(row_data) <- names(df)
+    any(vapply(
+      rules,
+      function(rule) isTRUE(rlang::eval_tidy(rule, data = row_data)),
+      logical(1)
+    ))
+  }, logical(1))
 }
 
 #' Build summary data frame from loaded models
@@ -939,10 +940,6 @@ hyperion_summary_table <- function(data, spec) {
   # Build label map
   label_map <- build_summary_label_map()
   label_map <- label_map[intersect(names(label_map), names(data))]
-  # A column a mutate rule computed is labelled from its name: "action" -> "Action".
-  for (col in setdiff(names(data), c(names(label_map), "section"))) {
-    label_map[[col]] <- tools::toTitleCase(gsub("_", " ", col, fixed = TRUE))
-  }
 
   # Add time format suffix
   time_suffix <- get_time_suffix(spec@time_format, data)
@@ -988,6 +985,13 @@ hyperion_summary_table <- function(data, spec) {
     bold_locs <- c(bold_locs, "row_groups")
   }
 
+  # Rows the spec's bold rules picked; the flag itself is not shown
+  bold_rows <- integer(0)
+  if (".bold" %in% names(data)) {
+    bold_rows <- which(data$.bold)
+    empty_cols <- union(empty_cols, ".bold")
+  }
+
   HyperionTable(
     data = data,
     table_type = "summary",
@@ -1001,6 +1005,7 @@ hyperion_summary_table <- function(data, spec) {
     ci_merges = list(),
     ci_missing_rows = integer(0),
     bold_locations = bold_locs,
+    bold_rows = bold_rows,
     borders = list(),
     footnotes = footnotes,
     source_spec = spec
