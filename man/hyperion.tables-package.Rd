@@ -148,6 +148,14 @@ Functions for comparing models:
 }
 }
 
+\section{Stepwise Covariate Modeling}{
+
+A run summary table of an SCM process, from the lineage \code{hyperion::get_scm_lineage()} builds:
+\itemize{
+\item \code{\link[=scm_summary_spec]{scm_summary_spec()}} - SummarySpec preset with a section per round
+}
+}
+
 \author{
 \strong{Maintainer}: Matt Smith \email{matthews@a2-ai.com}
 

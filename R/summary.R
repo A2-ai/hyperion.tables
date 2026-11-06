@@ -154,7 +154,7 @@ filter_metadata <- function(metadata_df, spec) {
     include_stems <- tolower(tools::file_path_sans_ext(spec@models_to_include))
     metadata_df <- metadata_df |>
       dplyr::filter(
-        tolower(tools::file_path_sans_ext(.data$name)) %in% include_stems
+        tolower(basename(.data$name)) %in% include_stems
       )
   }
 
@@ -192,16 +192,20 @@ filter_metadata <- function(metadata_df, spec) {
 # ==============================================================================
 
 #' Build metadata data frame from tree nodes
+#'
+#' `name` keys a model by its path without the extension, not by its file
+#' stem: an SCM process fits the same stem in several rounds, and `based_on`
+#' keeps the same form so parents match.
 #' @noRd
 build_metadata_df <- function(tree) {
   rows <- lapply(tree$nodes, function(node) {
     parents <- as.character(unlist(node$model$based_on %||% list()))
     data.frame(
-      name = tools::file_path_sans_ext(basename(node$name)),
+      name = tools::file_path_sans_ext(node$name),
       path = node$name,
       description = node$model$description %||% NA_character_,
       tags = I(list(as.character(unlist(node$model$tags)) %||% character(0))),
-      based_on = I(list(tools::file_path_sans_ext(basename(parents)))),
+      based_on = I(list(tools::file_path_sans_ext(parents))),
       stringsAsFactors = FALSE
     )
   })
@@ -489,8 +493,8 @@ build_summary_df <- function(models, model_names, metadata_df, spec) {
     # Metadata columns (from tree, not model)
     if ("based_on" %in% resolved_cols || needs_dofv) {
       parents <- metadata_df$based_on[[meta_idx[i]]]
-      # .based_on_raw: list-column storing full file paths of parent models.
-      # Used for OFV lookups in calculate_dofv(); removed before output.
+      # .based_on_raw: list-column of the parents' keys (paths without the
+      # extension). Used for OFV lookups in calculate_dofv(); removed before output.
       row$.based_on_raw <- list(parents)
       row$based_on <- if (length(parents) == 0) {
         NA_character_
@@ -634,9 +638,9 @@ calculate_dofv <- function(df, spec) {
       rlang::warn(
         sprintf(
           "model '%s' has multiple parents (%s); using '%s' for dOFV/LRT",
-          df$.name[i],
-          paste(parents, collapse = ", "),
-          parents[1]
+          basename(df$.name[i]),
+          paste(basename(parents), collapse = ", "),
+          basename(parents[1])
         )
       )
     }
@@ -660,8 +664,8 @@ calculate_dofv <- function(df, spec) {
       rlang::inform(c(
         sprintf(
           "dOFV not calculated for '%s' vs '%s': observation counts differ (%s vs %s).",
-          df$.name[i],
-          parent_name,
+          basename(df$.name[i]),
+          basename(parent_name),
           if (is.na(model_nobs)) "NA" else as.character(model_nobs),
           if (is.na(parent_nobs)) "NA" else as.character(parent_nobs)
         ),
@@ -683,10 +687,12 @@ calculate_dofv <- function(df, spec) {
 
     if (needs_pvalue && !is.na(model_npar) && !is.na(parent_npar)) {
       df_calc <- as.integer(model_npar - parent_npar)
-      # Only calculate p-value if df > 0 (more complex model)
-      if (!is.na(df_calc) && df_calc > 0) {
-        df_val <- df_calc
-        pvalue <- lrt_pvalue(-dofv, df_val)
+      # The LRT statistic is the fuller model's OFV drop: the model's when it
+      # adds parameters, the parent's when the model drops them (an SCM
+      # backward step). Nested models with the same count have no test.
+      if (!is.na(df_calc) && df_calc != 0) {
+        df_val <- abs(df_calc)
+        pvalue <- lrt_pvalue(if (df_calc > 0) -dofv else dofv, df_val)
       }
     }
 

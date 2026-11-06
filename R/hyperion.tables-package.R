@@ -119,6 +119,12 @@
 #'   \item [add_summary_info()] - Attach summary info for table footnotes
 #' }
 #'
+#' @section Stepwise Covariate Modeling:
+#' A run summary table of an SCM process, from the lineage `hyperion::get_scm_lineage()` builds:
+#' \itemize{
+#'   \item [scm_summary_spec()] - SummarySpec preset with a section per round
+#' }
+#'
 ## usethis namespace: start
 #' @importFrom hyperion ModelComments
 #' @importFrom hyperion OmegaComment

@@ -53,6 +53,7 @@ Collate:
     'render-common.R'
     'render-flextable.R'
     'render-gt.R'
+    'scm-spec.R'
     'spec-getters.R'
     'spec-presets.R'
     'spec-rules.R'

@@ -123,3 +123,25 @@ tree |>
   make_summary_table() |>
 	render_to_image()
 ```
+
+## Stepwise Covariate Modeling
+
+An SCM process (`hyperion::submit_scm_to_slurm()`) fits a model per
+candidate covariate in each round, against the model that round started
+from. `hyperion::get_scm_lineage()` builds the lineage of those fits from
+the process record, with every fit based on its round's reference model and
+tagged with its round, so it summarizes like any other lineage.
+`scm_summary_spec()` is the preset for it: a section per round, in the order
+the process ran them. The dOFV and p-value of each row are the round's own.
+
+```{r scm-summary}
+scm_root <- system.file(package = "hyperion")
+scm <- file.path(scm_root, "extdata", "models", "scm-complete", "scm", "1001scm.toml")
+options(hyperion.config_dir = scm_root)
+
+scm |>
+  hyperion::get_scm_lineage() |>
+  apply_summary_spec(scm_summary_spec(scm, title = "Covariate search")) |>
+  make_summary_table() |>
+  render_to_image()
+```

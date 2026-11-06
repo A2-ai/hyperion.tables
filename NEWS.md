@@ -1,3 +1,23 @@
+# hyperion.tables (development version)
+
+## New features
+
+- `scm_summary_spec()` returns a `SummarySpec` preset for a stepwise
+  covariate modeling process: a section per round, in the order the process
+  ran them, so `hyperion::get_scm_lineage(scm) |> apply_summary_spec(spec) |>
+  make_summary_table()` gives one row per fit with its dOFV and p-value
+  against the model its round tested. Requires hyperion with
+  `get_scm_lineage()`.
+
+## Bug fixes
+
+- Summary tables key models by their path, not their file stem, so models
+  with the same stem in different directories (an SCM process fits the same
+  stem in several rounds) each get a row.
+- Summary tables give a dOFV p-value to a model with fewer parameters than
+  its parent, with the parent as the fuller model, as in an SCM backward
+  step. Before, only a model with more parameters got one.
+
 # hyperion.tables 0.6.0
 
 ## Breaking changes
