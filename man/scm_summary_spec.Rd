@@ -43,11 +43,11 @@ it is what you would write by hand with \code{\link[=set_spec_sections]{set_spec
 Every fit is based on the model its round tested against, so dOFV is the
 round's own; the forward final and final models are based on the
 reference fit, so theirs is against it. The columns are Reference,
-Description, OFV and dOFV, and the candidate each round kept, tagged
-\code{"selected"}, is in bold. The table has no footnotes, and
-\code{pvalue_direction} is \code{"both"}, so selecting the \code{pvalue} column with
-\code{\link[=set_spec_columns]{set_spec_columns()}} tests the backward steps too. Customize further with
-the \verb{set_spec_*()} modifiers.
+Description, OFV, dOFV and p-value, and the candidate each round kept,
+tagged \code{"selected"}, is in bold. \code{pvalue_direction} is \code{"both"}, so the
+backward steps are tested too, with the round's reference as the fuller
+model. The table has no footnotes. Customize further with the
+\verb{set_spec_*()} modifiers.
 
 pharos ends every SCM fit's description with the covariates its model
 has, e.g. \code{"SCM forward_round2: add CRCL_CL (attempt 1); covariates: WT_CL, CRCL_CL"}, as does \code{hyperion::get_scm_lineage()}. \code{description}
@@ -79,8 +79,10 @@ scm_summary_spec(scm, description = "covariates")
 
 # Customize further with modifiers
 spec <- scm_summary_spec(scm) |>
-  set_spec_columns("based_on", "ofv", "dofv", "pvalue") |>
   set_spec_pvalue(scientific = TRUE)
+# Or without the p-value
+spec <- scm_summary_spec(scm) |>
+  set_spec_columns("based_on", "description", "ofv", "dofv")
 }
 }
 \seealso{

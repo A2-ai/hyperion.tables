@@ -12,11 +12,11 @@
 #' Every fit is based on the model its round tested against, so dOFV is the
 #' round's own; the forward final and final models are based on the
 #' reference fit, so theirs is against it. The columns are Reference,
-#' Description, OFV and dOFV, and the candidate each round kept, tagged
-#' `"selected"`, is in bold. The table has no footnotes, and
-#' `pvalue_direction` is `"both"`, so selecting the `pvalue` column with
-#' [set_spec_columns()] tests the backward steps too. Customize further with
-#' the `set_spec_*()` modifiers.
+#' Description, OFV, dOFV and p-value, and the candidate each round kept,
+#' tagged `"selected"`, is in bold. `pvalue_direction` is `"both"`, so the
+#' backward steps are tested too, with the round's reference as the fuller
+#' model. The table has no footnotes. Customize further with the
+#' `set_spec_*()` modifiers.
 #'
 #' pharos ends every SCM fit's description with the covariates its model
 #' has, e.g. `"SCM forward_round2: add CRCL_CL (attempt 1); covariates:
@@ -64,8 +64,10 @@
 #'
 #' # Customize further with modifiers
 #' spec <- scm_summary_spec(scm) |>
-#'   set_spec_columns("based_on", "ofv", "dofv", "pvalue") |>
 #'   set_spec_pvalue(scientific = TRUE)
+#' # Or without the p-value
+#' spec <- scm_summary_spec(scm) |>
+#'   set_spec_columns("based_on", "description", "ofv", "dofv")
 #' }
 scm_summary_spec <- function(
   lineage,
@@ -120,7 +122,7 @@ scm_summary_spec <- function(
       covariates = scm_description_covariates
     )
   )
-  spec <- set_spec_columns(spec, "based_on", "description", "ofv", "dofv")
+  spec <- set_spec_columns(spec, "based_on", "description", "ofv", "dofv", "pvalue")
   spec <- set_spec_footnotes(spec, NULL)
   set_spec_title(spec, title %||% "")
 }

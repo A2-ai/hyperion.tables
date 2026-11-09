@@ -55,7 +55,7 @@ test_that("scm_summary_spec() sections the rounds pharos tagged, in the order th
   )
   # The preset is the usual spec settings and nothing else.
   expect_equal(get_spec_tag_filter(spec)$include, "scm")
-  expect_equal(get_spec_columns(spec), c("based_on", "description", "ofv", "dofv"))
+  expect_equal(get_spec_columns(spec), c("based_on", "description", "ofv", "dofv", "pvalue"))
   expect_length(get_spec_bold_rows(spec), 1)
 
   # The Description column shows the step, or the model's covariates, from
@@ -123,7 +123,7 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
 
   expect_equal(
     names(data),
-    c("model", "based_on", "description", "ofv", "dofv", "section", ".bold")
+    c("model", "based_on", "description", "ofv", "dofv", "pvalue", "df", "section", ".bold")
   )
   # Every fit gets a row, although the same stem recurs across rounds.
   expect_equal(nrow(data), 12)
@@ -169,7 +169,7 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
   expect_false(any(data$.bold[data$section %in% c("Reference model", "Forward final model", "Final model")]))
 
   shown <- as.data.frame(data)[, c(
-    "section", "model", "based_on", "description", "ofv", "dofv", ".bold"
+    "section", "model", "based_on", "description", "ofv", "dofv", "pvalue", "df", ".bold"
   )]
   expect_snapshot(print(shown, digits = 4, row.names = FALSE))
 
@@ -177,13 +177,12 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
   snapshot_gt(table, "scm-summary-gt")
 })
 
-test_that("the SCM preset tests both directions when the p-value column is selected", {
+test_that("the SCM preset's p-value column tests both directions", {
   testthat::skip_if_not(nzchar(scm_fixture_config()), "hyperion's SCM fixture not found")
   withr::local_options(hyperion.config_dir = system.file(package = "hyperion"))
 
   tree <- hyperion::get_scm_lineage(scm_fixture_config())
-  spec <- scm_summary_spec(tree) |>
-    set_spec_columns("based_on", "dofv", "pvalue")
+  spec <- scm_summary_spec(tree)
   data <- apply_summary_spec(tree, spec)
   row <- function(model, section) data[data$model == model & data$section == section, ]
 
@@ -195,6 +194,10 @@ test_that("the SCM preset tests both directions when the p-value column is selec
   dropped <- row("1001_crcl_cl", "Backward round 1")
   expect_equal(dropped$df, 1L)
   expect_equal(dropped$pvalue, stats::pchisq(6, 1, lower.tail = FALSE))
+  # The final model is tested against the reference fit it is based on.
+  final <- row("1001_scm_final", "Final model")
+  expect_equal(final$df, 1L)
+  expect_equal(final$pvalue, stats::pchisq(1000 - 979.5, 1, lower.tail = FALSE))
 
   # The default direction keeps the backward step's dOFV but gives it no test.
   forward_only <- apply_summary_spec(tree, set_spec_pvalue(spec, direction = "forward"))

@@ -6,8 +6,9 @@
   covariate modeling process, composed of the usual spec settings: the fits
   tagged `"scm"`, in a section per round from the round tag pharos writes to
   each fit's metadata (`"base"`, `"forward_round1"`, ..., `"final"`), in the
-  order the process ran them, with Reference, Description, OFV and dOFV,
-  and the candidate each round selected in bold. Its `description`
+  order the process ran them, with Reference, Description, OFV, dOFV and
+  p-value (for the backward steps too), and the candidate each round
+  selected in bold. Its `description`
   argument shows either each fit's step (the default) or the covariates its
   model has, from the description pharos writes. It takes the lineage from
   `hyperion::get_model_lineage()` or `hyperion::get_scm_lineage()`.
