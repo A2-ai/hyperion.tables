@@ -506,6 +506,12 @@ TableSpec <- S7::new_class(
 #' @param description_transform NULL (the default), or a function applied to
 #'   the description column, as a character vector, before the table is
 #'   built. Usually set with [set_spec_description_transform()].
+#' @param computed_columns Named list of columns computed from each model's
+#'   row by rules, each `list(rules = <quosures of formulas>, label = )`.
+#'   Usually set with [set_spec_computed_column()]. Default is an empty list.
+#' @param model_filter List of quosures, one per rule; only a model whose row
+#'   satisfies every rule is kept. Usually set with
+#'   [set_spec_model_filter()]. Default is an empty list.
 #' @param footnote_order Character vector controlling the order of footnote sections,
 #'   or NULL to disable footnotes. Valid value for SummarySpec: "abbreviations".
 #'   Default is c("abbreviations").
@@ -551,6 +557,14 @@ SummarySpec <- S7::new_class(
       class = S7::class_function | NULL,
       default = NULL
     ),
+    computed_columns = S7::new_property(
+      class = S7::class_list,
+      default = list()
+    ),
+    model_filter = S7::new_property(
+      class = S7::class_list,
+      default = list()
+    ),
     default_columns = S7::new_property(
       class = S7::class_character,
       getter = function(self) {
@@ -575,7 +589,15 @@ SummarySpec <- S7::new_class(
     if (!is.null(bold_msg)) {
       return(bold_msg)
     }
-    valid_fields <- summary_spec_valid_columns()
+    filter_msg <- validate_summary_row_rules(self@model_filter, "@model_filter")
+    if (!is.null(filter_msg)) {
+      return(filter_msg)
+    }
+    computed_msg <- validate_computed_columns(self@computed_columns)
+    if (!is.null(computed_msg)) {
+      return(computed_msg)
+    }
+    valid_fields <- c(summary_spec_valid_columns(), names(self@computed_columns))
     columns_msg <- validate_columns_in_set(
       self@columns,
       valid_fields,
@@ -657,6 +679,8 @@ SummarySpec <- S7::new_class(
     pvalue_direction = "forward",
     bold_rows = list(),
     description_transform = NULL,
+    computed_columns = list(),
+    model_filter = list(),
     footnote_order = "abbreviations"
   ) {
     S7::new_object(
@@ -680,6 +704,8 @@ SummarySpec <- S7::new_class(
       pvalue_direction = pvalue_direction,
       bold_rows = bold_rows,
       description_transform = description_transform,
+      computed_columns = computed_columns,
+      model_filter = model_filter,
       footnote_order = footnote_order
     )
   }

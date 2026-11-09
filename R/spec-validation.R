@@ -117,7 +117,46 @@ summary_spec_valid_columns <- function() {
 #' @noRd
 validate_summary_row_rules <- function(rules, label) {
   if (length(rules) > 0 && !all(vapply(rules, rlang::is_quosure, logical(1)))) {
-    return(sprintf("%s rules must be created with set_spec_bold_rows()", label))
+    return(sprintf("%s rules must be quosures, as the set_spec_*() modifier makes them", label))
+  }
+  NULL
+}
+
+# Names a computed column may not take: the summary's own columns and the
+# columns the table adds.
+reserved_summary_columns <- function() {
+  c(valid_summary_columns(), "model", "section", "tags", ".bold")
+}
+
+#' @noRd
+validate_computed_columns <- function(columns) {
+  if (length(columns) == 0) {
+    return(NULL)
+  }
+  nms <- rlang::names2(columns)
+  if (any(nms == "") || anyDuplicated(nms) > 0) {
+    return("@computed_columns must be a uniquely named list")
+  }
+  bad <- intersect(nms, reserved_summary_columns())
+  if (length(bad) > 0) {
+    return(sprintf(
+      "@computed_columns may not use the summary's own column names: %s",
+      paste(bad, collapse = ", ")
+    ))
+  }
+  for (nm in nms) {
+    col <- columns[[nm]]
+    ok <- is.list(col) &&
+      all(c("rules", "label") %in% names(col)) &&
+      rlang::is_string(col$label) &&
+      length(col$rules) > 0 &&
+      all(vapply(col$rules, rlang::is_quosure, logical(1)))
+    if (!ok) {
+      return(sprintf(
+        "@computed_columns$%s must be created with set_spec_computed_column()",
+        nm
+      ))
+    }
   }
   NULL
 }

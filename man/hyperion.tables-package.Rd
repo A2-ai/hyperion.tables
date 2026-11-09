@@ -68,6 +68,8 @@ Functions for reading spec properties:
 \item \code{\link[=get_spec_time_format]{get_spec_time_format()}} - Get time format from a SummarySpec
 \item \code{\link[=get_spec_bold_rows]{get_spec_bold_rows()}} - Get bold row rules from a SummarySpec
 \item \code{\link[=get_spec_description_transform]{get_spec_description_transform()}} - Get the description transform
+\item \code{\link[=get_spec_computed_columns]{get_spec_computed_columns()}} - Get the computed columns
+\item \code{\link[=get_spec_model_filter]{get_spec_model_filter()}} - Get model filter rules from a SummarySpec
 }
 }
 
@@ -119,6 +121,8 @@ Functions specific to SummarySpec:
 \item \code{\link[=set_spec_summary_filter]{set_spec_summary_filter()}} - Set summary filter rules
 \item \code{\link[=set_spec_bold_rows]{set_spec_bold_rows()}} - Bold the rows matching rules
 \item \code{\link[=set_spec_description_transform]{set_spec_description_transform()}} - Rewrite the Description column
+\item \code{\link[=set_spec_computed_column]{set_spec_computed_column()}} - Add a column computed by rules
+\item \code{\link[=set_spec_model_filter]{set_spec_model_filter()}} - Keep the models matching rules
 }
 }
 

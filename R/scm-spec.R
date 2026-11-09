@@ -12,11 +12,17 @@
 #' Every fit is based on the model its round tested against, so dOFV is the
 #' round's own; the forward final and final models are based on the
 #' reference fit, so theirs is against it. The columns are Reference,
-#' Description, OFV, dOFV and p-value, and the candidate each round kept,
-#' tagged `"selected"`, is in bold. `pvalue_direction` is `"both"`, so the
-#' backward steps are tested too, with the round's reference as the fuller
-#' model. The table has no footnotes. Customize further with the
-#' `set_spec_*()` modifiers.
+#' Description, OFV, dOFV, p-value and Round Result, which reads "added"
+#' or "dropped" on the candidate each round kept, tagged `"selected"`, and
+#' is empty elsewhere. `selected = "bold"` marks that candidate by rendering
+#' its row in bold instead, without the column. `pvalue_direction` is
+#' `"both"`, so the backward steps are tested too, with the round's
+#' reference as the fuller model. The table has no footnotes. Customize
+#' further with the `set_spec_*()` modifiers.
+#'
+#' `candidates = "selected"` keeps only the models that mattered: the base
+#' (or full) model, the forward final and final models, and in each round
+#' the candidate it kept, so a round that kept none shows no row.
 #'
 #' pharos ends every SCM fit's description with the covariates its model
 #' has, e.g. `"SCM forward_round2: add CRCL_CL (attempt 1); covariates:
@@ -39,6 +45,11 @@
 #' @param description What the Description column shows for each fit:
 #'   `"step"` (the default), its action, or `"covariates"`, the covariates
 #'   its model has.
+#' @param selected How the candidate each round kept is marked: `"column"`
+#'   (the default), a Round Result column reading "added" or "dropped" on
+#'   its row, or `"bold"`, its row in bold.
+#' @param candidates Which of each round's candidates to show: `"all"` (the
+#'   default), or `"selected"`, only the one the round kept.
 #' @param other_section_label Section label for a model matching no round.
 #'
 #' @return A [SummarySpec] object.
@@ -62,6 +73,10 @@
 #' # Show each model's covariates instead of the step
 #' scm_summary_spec(scm, description = "covariates")
 #'
+#' # Bold the kept candidates instead of the Round Result column, and show
+#' # only the models that mattered
+#' scm_summary_spec(scm, selected = "bold", candidates = "selected")
+#'
 #' # Customize further with modifiers
 #' spec <- scm_summary_spec(scm) |>
 #'   set_spec_pvalue(scientific = TRUE)
@@ -73,12 +88,16 @@ scm_summary_spec <- function(
   lineage,
   title = NULL,
   description = c("step", "covariates"),
+  selected = c("column", "bold"),
+  candidates = c("all", "selected"),
   other_section_label = "Other"
 ) {
   if (!is.null(title) && !rlang::is_string(title)) {
     rlang::abort("`title` must be a single character string or NULL.")
   }
   description <- match.arg(description)
+  selected <- match.arg(selected)
+  candidates <- match.arg(candidates)
   if (!rlang::is_string(other_section_label)) {
     rlang::abort("`other_section_label` must be a single character string.")
   }
@@ -108,12 +127,30 @@ scm_summary_spec <- function(
   spec <- rlang::inject(set_spec_sections(SummarySpec(), !!!rules))
   spec <- set_spec_tag_filter(spec, include = "scm")
   spec <- set_spec_pvalue(spec, direction = "both")
-  # The candidate a round kept is in bold; the reference and final fits are
-  # not candidates.
-  spec <- set_spec_bold_rows(
-    spec,
-    "selected" %in% tags && !any(!!scm_stage_tags %in% tags)
-  )
+  # The candidate a round kept gets a Round Result, or its row in bold; the
+  # reference and final fits are not candidates.
+  columns <- c("based_on", "description", "ofv", "dofv", "pvalue")
+  if (selected == "column") {
+    spec <- set_spec_computed_column(
+      spec,
+      "round_result",
+      "selected" %in% tags && any(grepl("^forward_round", tags)) ~ "added",
+      "selected" %in% tags && any(grepl("^backward_round", tags)) ~ "dropped",
+      label = "Round Result"
+    )
+    columns <- c(columns, "round_result")
+  } else {
+    spec <- set_spec_bold_rows(
+      spec,
+      "selected" %in% tags && !any(!!scm_stage_tags %in% tags)
+    )
+  }
+  if (candidates == "selected") {
+    spec <- set_spec_model_filter(
+      spec,
+      "selected" %in% tags || any(!!scm_stage_tags %in% tags)
+    )
+  }
   spec <- set_spec_description_transform(
     spec,
     switch(
@@ -122,7 +159,7 @@ scm_summary_spec <- function(
       covariates = scm_description_covariates
     )
   )
-  spec <- set_spec_columns(spec, "based_on", "description", "ofv", "dofv", "pvalue")
+  spec <- rlang::inject(set_spec_columns(spec, !!!columns))
   spec <- set_spec_footnotes(spec, NULL)
   set_spec_title(spec, title %||% "")
 }

@@ -24,6 +24,8 @@ SummarySpec(
   pvalue_direction = "forward",
   bold_rows = list(),
   description_transform = NULL,
+  computed_columns = list(),
+  model_filter = list(),
   footnote_order = "abbreviations"
 )
 }
@@ -96,6 +98,14 @@ satisfies any is rendered in bold. Usually set with
 \item{description_transform}{NULL (the default), or a function applied to
 the description column, as a character vector, before the table is
 built. Usually set with \code{\link[=set_spec_description_transform]{set_spec_description_transform()}}.}
+
+\item{computed_columns}{Named list of columns computed from each model's
+row by rules, each \verb{list(rules = <quosures of formulas>, label = )}.
+Usually set with \code{\link[=set_spec_computed_column]{set_spec_computed_column()}}. Default is an empty list.}
+
+\item{model_filter}{List of quosures, one per rule; only a model whose row
+satisfies every rule is kept. Usually set with
+\code{\link[=set_spec_model_filter]{set_spec_model_filter()}}. Default is an empty list.}
 
 \item{footnote_order}{Character vector controlling the order of footnote sections,
 or NULL to disable footnotes. Valid value for SummarySpec: "abbreviations".

@@ -8,6 +8,8 @@ scm_summary_spec(
   lineage,
   title = NULL,
   description = c("step", "covariates"),
+  selected = c("column", "bold"),
+  candidates = c("all", "selected"),
   other_section_label = "Other"
 )
 }
@@ -24,6 +26,13 @@ title; pass a string to set one.}
 \item{description}{What the Description column shows for each fit:
 \code{"step"} (the default), its action, or \code{"covariates"}, the covariates
 its model has.}
+
+\item{selected}{How the candidate each round kept is marked: \code{"column"}
+(the default), a Round Result column reading "added" or "dropped" on
+its row, or \code{"bold"}, its row in bold.}
+
+\item{candidates}{Which of each round's candidates to show: \code{"all"} (the
+default), or \code{"selected"}, only the one the round kept.}
 
 \item{other_section_label}{Section label for a model matching no round.}
 }
@@ -43,11 +52,17 @@ it is what you would write by hand with \code{\link[=set_spec_sections]{set_spec
 Every fit is based on the model its round tested against, so dOFV is the
 round's own; the forward final and final models are based on the
 reference fit, so theirs is against it. The columns are Reference,
-Description, OFV, dOFV and p-value, and the candidate each round kept,
-tagged \code{"selected"}, is in bold. \code{pvalue_direction} is \code{"both"}, so the
-backward steps are tested too, with the round's reference as the fuller
-model. The table has no footnotes. Customize further with the
-\verb{set_spec_*()} modifiers.
+Description, OFV, dOFV, p-value and Round Result, which reads "added"
+or "dropped" on the candidate each round kept, tagged \code{"selected"}, and
+is empty elsewhere. \code{selected = "bold"} marks that candidate by rendering
+its row in bold instead, without the column. \code{pvalue_direction} is
+\code{"both"}, so the backward steps are tested too, with the round's
+reference as the fuller model. The table has no footnotes. Customize
+further with the \verb{set_spec_*()} modifiers.
+
+\code{candidates = "selected"} keeps only the models that mattered: the base
+(or full) model, the forward final and final models, and in each round
+the candidate it kept, so a round that kept none shows no row.
 
 pharos ends every SCM fit's description with the covariates its model
 has, e.g. \code{"SCM forward_round2: add CRCL_CL (attempt 1); covariates: WT_CL, CRCL_CL"}, as does \code{hyperion::get_scm_lineage()}. \code{description}
@@ -76,6 +91,10 @@ scm |>
 
 # Show each model's covariates instead of the step
 scm_summary_spec(scm, description = "covariates")
+
+# Bold the kept candidates instead of the Round Result column, and show
+# only the models that mattered
+scm_summary_spec(scm, selected = "bold", candidates = "selected")
 
 # Customize further with modifiers
 spec <- scm_summary_spec(scm) |>

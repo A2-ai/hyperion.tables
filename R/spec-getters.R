@@ -468,6 +468,47 @@ get_spec_description_transform <- function(spec, ...) {
   spec@description_transform
 }
 
+#' Get the computed columns of a SummarySpec
+#'
+#' `get_spec_computed_columns()` returns the columns
+#' [set_spec_computed_column()] added, as a named list of
+#' `list(rules = , label = )`.
+#'
+#' @param spec A SummarySpec object.
+#' @param ... Not used.
+#' @return A named list.
+#' @seealso [set_spec_computed_column()].
+#' @export
+#' @examples
+#' get_spec_computed_columns(SummarySpec())
+get_spec_computed_columns <- function(spec, ...) {
+  if (!S7::S7_inherits(spec, SummarySpec)) {
+    rlang::abort("`spec` must be a <SummarySpec> object.")
+  }
+  spec@computed_columns
+}
+
+#' Get the model filter rules of a SummarySpec
+#'
+#' `get_spec_model_filter()` returns the rules a model must satisfy to be
+#' kept, as a list of quosures.
+#'
+#' @param spec A SummarySpec object.
+#' @param ... Not used.
+#' @return List of quosures.
+#' @seealso [set_spec_model_filter()].
+#' @export
+#' @examples
+#' spec <- SummarySpec() |>
+#'   set_spec_model_filter("final" %in% tags)
+#' get_spec_model_filter(spec)
+get_spec_model_filter <- function(spec, ...) {
+  if (!S7::S7_inherits(spec, SummarySpec)) {
+    rlang::abort("`spec` must be a <SummarySpec> object.")
+  }
+  spec@model_filter
+}
+
 #' Get time format from a SummarySpec
 #'
 #' `get_spec_time_format()` returns the time format setting. Operates on

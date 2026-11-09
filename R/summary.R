@@ -102,6 +102,23 @@ apply_summary_spec <- function(tree, spec) {
     df$description <- transformed
   }
 
+  # The spec's computed columns, from each model's row with `tags` still there
+  for (name in names(spec@computed_columns)) {
+    df[[name]] <- build_summary_section(
+      df,
+      spec@computed_columns[[name]]$rules,
+      what = sprintf("'%s' column", name)
+    )
+  }
+
+  # Keep the models the spec's model filter rules all hold for
+  if (length(spec@model_filter) > 0) {
+    df <- df[eval_summary_row_rules(df, spec@model_filter, all = TRUE), , drop = FALSE]
+    if (nrow(df) == 0) {
+      rlang::abort("No models satisfy the spec's model filter rules.")
+    }
+  }
+
   # Evaluate section rules (before column trim so rule-referenced cols available)
   has_section_config <- length(spec@sections@rules) > 0 ||
     length(spec@sections@order) > 0 ||
@@ -386,9 +403,10 @@ select_output_columns <- function(df, spec, needs_dofv) {
 #'
 #' @param df Data frame with all columns available for rule evaluation
 #' @param rules List of quosures containing formulas
+#' @param what What the rules give, for the multi-match warning
 #' @return Character vector of section labels (NA for unmatched)
 #' @noRd
-build_summary_section <- function(df, rules) {
+build_summary_section <- function(df, rules, what = "section") {
   if (length(rules) == 0) {
     return(rep(NA_character_, nrow(df)))
   }
@@ -456,7 +474,7 @@ build_summary_section <- function(df, rules) {
       character(1)
     )
     rlang::warn(c(
-      "Models matched multiple section rules; first match used:",
+      sprintf("Models matched multiple %s rules; first match used:", what),
       stats::setNames(msgs, rep("*", length(msgs)))
     ))
   }
@@ -464,16 +482,17 @@ build_summary_section <- function(df, rules) {
   result
 }
 
-#' TRUE for each row satisfying any of the rules
+#' TRUE for each row satisfying any of the rules, or every rule with `all`
 #'
 #' A rule is evaluated against one row at a time, with list columns such as
 #' `tags` unwrapped to their element, the way section rules see a row.
 #' @noRd
-eval_summary_row_rules <- function(df, rules) {
+eval_summary_row_rules <- function(df, rules, all = FALSE) {
+  combine <- if (all) base::all else base::any
   vapply(seq_len(nrow(df)), function(i) {
     row_data <- lapply(df, function(x) x[[i]])
     names(row_data) <- names(df)
-    any(vapply(
+    combine(vapply(
       rules,
       function(rule) isTRUE(rlang::eval_tidy(rule, data = row_data)),
       logical(1)
@@ -940,6 +959,9 @@ hyperion_summary_table <- function(data, spec) {
   # Build label map
   label_map <- build_summary_label_map()
   label_map <- label_map[intersect(names(label_map), names(data))]
+  for (name in intersect(names(spec@computed_columns), names(data))) {
+    label_map[[name]] <- spec@computed_columns[[name]]$label
+  }
 
   # Add time format suffix
   time_suffix <- get_time_suffix(spec@time_format, data)

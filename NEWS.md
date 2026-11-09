@@ -6,12 +6,22 @@
   covariate modeling process, composed of the usual spec settings: the fits
   tagged `"scm"`, in a section per round from the round tag pharos writes to
   each fit's metadata (`"base"`, `"forward_round1"`, ..., `"final"`), in the
-  order the process ran them, with Reference, Description, OFV, dOFV and
-  p-value (for the backward steps too), and the candidate each round
-  selected in bold. Its `description`
-  argument shows either each fit's step (the default) or the covariates its
-  model has, from the description pharos writes. It takes the lineage from
+  order the process ran them, with Reference, Description, OFV, dOFV,
+  p-value (for the backward steps too) and a Round Result column reading
+  "added" or "dropped" on the candidate each round selected; `selected =
+  "bold"` renders that candidate's row in bold instead. `candidates =
+  "selected"` keeps only the base, forward final and final models and each
+  round's selected candidate. Its `description` argument shows either each
+  fit's step (the default) or the covariates its model has, from the
+  description pharos writes. It takes the lineage from
   `hyperion::get_model_lineage()` or `hyperion::get_scm_lineage()`.
+- `set_spec_computed_column()` adds a column to a `SummarySpec` table whose
+  value per model comes from rules like section rules, e.g. `"selected"
+  %in% tags ~ "added"`, under a label of its own; `get_spec_computed_columns()`
+  reads them.
+- `set_spec_model_filter()` keeps in a `SummarySpec` table only the models
+  satisfying rules evaluated per model with its `tags`, after dOFV is
+  computed; `get_spec_model_filter()` reads them.
 - `set_spec_description_transform()` rewrites a `SummarySpec` table's
   Description column with a function of the descriptions the lineage gave;
   `get_spec_description_transform()` reads it.

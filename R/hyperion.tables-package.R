@@ -54,6 +54,8 @@
 #'   \item [get_spec_time_format()] - Get time format from a SummarySpec
 #'   \item [get_spec_bold_rows()] - Get bold row rules from a SummarySpec
 #'   \item [get_spec_description_transform()] - Get the description transform
+#'   \item [get_spec_computed_columns()] - Get the computed columns
+#'   \item [get_spec_model_filter()] - Get model filter rules from a SummarySpec
 #' }
 #'
 #' @section Spec Modifiers - Columns:
@@ -97,6 +99,8 @@
 #'   \item [set_spec_summary_filter()] - Set summary filter rules
 #'   \item [set_spec_bold_rows()] - Bold the rows matching rules
 #'   \item [set_spec_description_transform()] - Rewrite the Description column
+#'   \item [set_spec_computed_column()] - Add a column computed by rules
+#'   \item [set_spec_model_filter()] - Keep the models matching rules
 #' }
 #'
 #' @section Rule Builders:

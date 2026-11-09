@@ -150,6 +150,54 @@ test_that("set_spec_bold_rows stores rules on a SummarySpec only", {
   expect_error(get_spec_bold_rows(TableSpec()), "<SummarySpec>")
 })
 
+test_that("set_spec_computed_column stores rules and a label under the column's name", {
+  expect_length(get_spec_computed_columns(SummarySpec()), 0)
+  spec <- SummarySpec() |>
+    set_spec_computed_column(
+      "round_result",
+      "selected" %in% tags && any(grepl("^forward_", tags)) ~ "added",
+      "selected" %in% tags && any(grepl("^backward_", tags)) ~ "dropped",
+      label = "Round Result"
+    )
+  columns <- get_spec_computed_columns(spec)
+  expect_named(columns, "round_result")
+  expect_equal(columns$round_result$label, "Round Result")
+  expect_length(columns$round_result$rules, 2)
+  expect_true(all(vapply(columns$round_result$rules, rlang::is_quosure, logical(1))))
+  # The column can then be selected like the summary's own.
+  expect_equal(get_spec_columns(add_spec_columns(spec, "round_result"))[8], "round_result")
+  expect_true("round_result" %in% get_spec_columns(set_spec_columns(spec, "ofv", "round_result")))
+  expect_error(set_spec_columns(SummarySpec(), "ofv", "round_result"), "@columns must be in")
+  # Setting it again replaces it; the label defaults to the name.
+  spec <- set_spec_computed_column(spec, "round_result", "final" %in% tags ~ "kept")
+  expect_length(get_spec_computed_columns(spec)$round_result$rules, 1)
+  expect_equal(get_spec_computed_columns(spec)$round_result$label, "round_result")
+  spec <- set_spec_computed_column(spec, "stage", "final" %in% tags ~ "final")
+  expect_named(get_spec_computed_columns(spec), c("round_result", "stage"))
+
+  expect_error(set_spec_computed_column(SummarySpec(), "ofv", TRUE ~ "x"), "own column names")
+  expect_error(set_spec_computed_column(SummarySpec(), "section", TRUE ~ "x"), "own column names")
+  expect_error(set_spec_computed_column(SummarySpec(), "x"), "at least one rule")
+  expect_error(set_spec_computed_column(SummarySpec(), c("a", "b"), TRUE ~ "x"), "`name` must be")
+  expect_error(set_spec_computed_column(SummarySpec(), "x", TRUE ~ "x", label = 1), "`label` must be")
+  expect_error(set_spec_computed_column(TableSpec(), "x", TRUE ~ "x"), "<SummarySpec>")
+  expect_error(get_spec_computed_columns(TableSpec()), "<SummarySpec>")
+})
+
+test_that("set_spec_model_filter stores rules on a SummarySpec only", {
+  expect_length(get_spec_model_filter(SummarySpec()), 0)
+  spec <- SummarySpec() |> set_spec_model_filter("selected" %in% tags)
+  expect_length(get_spec_model_filter(spec), 1)
+  expect_true(rlang::is_quosure(get_spec_model_filter(spec)[[1]]))
+  spec <- set_spec_model_filter(spec, ofv < 100)
+  expect_length(get_spec_model_filter(spec), 2)
+  spec <- set_spec_model_filter(spec, "final" %in% tags, overwrite = TRUE)
+  expect_length(get_spec_model_filter(spec), 1)
+  expect_equal(rlang::quo_get_expr(get_spec_model_filter(spec)[[1]]), quote("final" %in% tags))
+  expect_error(set_spec_model_filter(TableSpec(), a == 1), "<SummarySpec>")
+  expect_error(get_spec_model_filter(TableSpec()), "<SummarySpec>")
+})
+
 test_that("set_spec_description_transform stores a function or NULL", {
   expect_null(get_spec_description_transform(SummarySpec()))
   spec <- set_spec_description_transform(SummarySpec(), toupper)
