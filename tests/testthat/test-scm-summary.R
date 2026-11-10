@@ -68,18 +68,26 @@ test_that("scm_summary_spec() sections the rounds pharos tagged, in the order th
   expect_length(get_spec_computed_columns(bold), 0)
   expect_equal(get_spec_columns(bold), c("based_on", "description", "ofv", "dofv", "pvalue"))
   expect_length(get_spec_model_filter(scm_summary_spec(pharos_tagged_lineage(), candidates = "selected")), 1)
+  # With only the kept candidates, the rounds are grouped by direction.
+  expect_equal(
+    section_labels(scm_summary_spec(pharos_tagged_lineage(), candidates = "selected")),
+    c("Base model", "Forward", "Forward final model", "Backward", "Final model", "Other")
+  )
   expect_error(scm_summary_spec(pharos_tagged_lineage(), selected = "x"), "should be one of")
   expect_error(scm_summary_spec(pharos_tagged_lineage(), candidates = "x"), "should be one of")
 
-  # The Description column shows the step, or the model's covariates, from
-  # the description pharos writes; one without the part is left alone.
+  # The Description column shows the description pharos writes as it is by
+  # default, or its step, or the model's covariates; one without the
+  # covariates part is left alone.
   written <- c(
     "SCM forward_round2: add CRCL_CL (attempt 1); covariates: WT_CL, CRCL_CL",
     "SCM reference: fit base model (attempt 1); covariates: none",
     "structural model"
   )
+  expect_null(get_spec_description_transform(spec))
+  step <- scm_summary_spec(pharos_tagged_lineage(), description = "step")
   expect_equal(
-    get_spec_description_transform(spec)(written),
+    get_spec_description_transform(step)(written),
     c("SCM forward_round2: add CRCL_CL (attempt 1)", "SCM reference: fit base model (attempt 1)", "structural model")
   )
   covariates <- scm_summary_spec(pharos_tagged_lineage(), description = "covariates")
@@ -153,7 +161,7 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
   # A forward step: the candidate adds a parameter to its round's reference.
   added <- row("1001_wt_cl", "Forward round 1")
   expect_equal(added$based_on, "1001_base")
-  expect_equal(added$description, "add WT_CL")
+  expect_equal(added$description, "add WT_CL; covariates: WT_CL")
   expect_equal(added$dofv, -20)
   # The candidate a round kept has the round's result; the others none.
   expect_equal(added$round_result, "added")
@@ -171,7 +179,10 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
   expect_equal(final$based_on, "1001_base")
   expect_equal(final$dofv, 979.5 - 1000)
 
-  # With description = "covariates", each row lists what its model has.
+  # With description = "step", each row shows the fit's action alone; with
+  # "covariates", what its model has.
+  with_step <- apply_summary_spec(tree, scm_summary_spec(tree, description = "step"))
+  expect_equal(with_step$description[with_step$model == "1001_wt_cl"][1], "add WT_CL")
   with_covariates <- apply_summary_spec(tree, scm_summary_spec(tree, description = "covariates"))
   expect_equal(
     with_covariates$description[with_covariates$section == "Forward round 2"],
@@ -188,11 +199,30 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
   expect_false("round_result" %in% names(bold))
   expect_equal(bold$.bold, !is.na(data$round_result))
 
-  # With candidates = "selected", only the stages and the kept candidates stay.
+  # With candidates = "selected", only the stages and the kept candidates
+  # stay, with the rounds grouped by direction.
   kept <- apply_summary_spec(tree, scm_summary_spec(tree, candidates = "selected"))
   expect_equal(kept$model, data$model[data$section %in% stages | !is.na(data$round_result)])
   expect_lt(nrow(kept), nrow(data))
-  expect_equal(kept$dofv[kept$model == "1001_wt_cl" & kept$section == "Forward round 1"], -20)
+  expect_equal(
+    kept$section,
+    c("Reference model", "Forward", "Forward", "Forward final model", "Backward", "Final model")
+  )
+  expect_equal(kept$dofv[kept$model == "1001_wt_cl" & kept$section == "Forward"], -20)
+
+  # Without a backward step that dropped anything, the forward final model
+  # is left out: the final model is the result.
+  forward_only <- tree
+  forward_only$nodes <- Filter(
+    function(node) !any(grepl("^backward_round", unlist(node$model$tags))),
+    forward_only$nodes
+  )
+  only <- apply_summary_spec(forward_only, scm_summary_spec(forward_only, candidates = "selected"))
+  expect_equal(only$section, c("Reference model", "Forward", "Forward", "Final model"))
+  expect_false("1001_scm_forward_final" %in% only$model)
+  expect_true("1001_scm_forward_final" %in% kept$model)
+  # With every candidate shown, the rounds keep their own sections.
+  expect_true("Forward round 1" %in% apply_summary_spec(forward_only, scm_summary_spec(forward_only))$section)
 
   shown <- as.data.frame(data)[, c(
     "section", "model", "based_on", "description", "ofv", "dofv", "pvalue", "df", "round_result"

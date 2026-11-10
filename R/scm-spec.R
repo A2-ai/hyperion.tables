@@ -22,15 +22,23 @@
 #'
 #' `candidates = "selected"` keeps only the models that mattered: the base
 #' (or full) model, the forward final and final models, and in each round
-#' the candidate it kept, so a round that kept none shows no row.
+#' the candidate it kept, so a round that kept none shows no row. Since
+#' each round then has at most one row, the rounds are grouped by
+#' direction instead of sectioned one by one: the reference model, then
+#' the forward steps under "Forward", the forward final model, the
+#' backward steps under "Backward", and the final model. When no backward
+#' round dropped anything, the forward final model says nothing the final
+#' model does not, so it is left out too.
 #'
 #' pharos ends every SCM fit's description with the covariates its model
 #' has, e.g. `"SCM forward_round2: add CRCL_CL (attempt 1); covariates:
 #' WT_CL, CRCL_CL"`, as does `hyperion::get_scm_lineage()`. `description`
-#' picks which part the Description column shows: `"step"` (the default),
-#' the fit's action, or `"covariates"`, the covariates the model has, so
-#' a fourth-round candidate reads "WT_CL, CRCL_CL, WT_V" rather than
-#' "add WT_V". A description without that part shows as it is.
+#' picks what the Description column shows: `"full"` (the default), the
+#' description as the lineage gives it, as [SummarySpec()] shows it, so
+#' each row names both the step and the covariates its model has;
+#' `"step"`, the fit's action alone, "add WT_V"; or `"covariates"`, the
+#' covariates alone, "WT_CL, CRCL_CL, WT_V". A description without the
+#' covariates part shows as it is under either.
 #'
 #' The section rules end with a catch-all, so rules appended with
 #' [set_spec_sections()] never apply; pass `overwrite = TRUE` to replace them.
@@ -43,13 +51,15 @@
 #' @param title Table title. `NULL` (the default) gives a table with no
 #'   title; pass a string to set one.
 #' @param description What the Description column shows for each fit:
-#'   `"step"` (the default), its action, or `"covariates"`, the covariates
-#'   its model has.
+#'   `"full"` (the default), the description as the lineage gives it, its
+#'   step and the covariates its model has; `"step"`, its action alone; or
+#'   `"covariates"`, the covariates its model has alone.
 #' @param selected How the candidate each round kept is marked: `"column"`
 #'   (the default), a Round Result column reading "added" or "dropped" on
 #'   its row, or `"bold"`, its row in bold.
 #' @param candidates Which of each round's candidates to show: `"all"` (the
-#'   default), or `"selected"`, only the one the round kept.
+#'   default), with a section per round, or `"selected"`, only the one the
+#'   round kept, with the rounds grouped by direction.
 #' @param other_section_label Section label for a model matching no round.
 #'
 #' @return A [SummarySpec] object.
@@ -70,7 +80,8 @@
 #'   apply_summary_spec(scm_summary_spec(scm, title = "Covariate search")) |>
 #'   make_summary_table()
 #'
-#' # Show each model's covariates instead of the step
+#' # Show only each fit's step, or only its model's covariates
+#' scm_summary_spec(scm, description = "step")
 #' scm_summary_spec(scm, description = "covariates")
 #'
 #' # Bold the kept candidates instead of the Round Result column, and show
@@ -87,7 +98,7 @@
 scm_summary_spec <- function(
   lineage,
   title = NULL,
-  description = c("step", "covariates"),
+  description = c("full", "step", "covariates"),
   selected = c("column", "bold"),
   candidates = c("all", "selected"),
   other_section_label = "Other"
@@ -114,11 +125,20 @@ scm_summary_spec <- function(
     )
   }
   # The rules evaluate against each row with `tags` unwrapped; they need
-  # base R for `%in%`, nothing else.
-  rules <- lapply(rounds, function(round) {
+  # base R for `%in%`, nothing else. With only the kept candidates, the
+  # rounds of a direction share a section, which comes where its first
+  # round ran.
+  label <- if (candidates == "selected") scm_direction_label else scm_round_label
+  labels <- vapply(rounds, label, character(1))
+  rules <- lapply(unique(labels), function(section) {
+    members <- rounds[labels == section]
     rlang::new_formula(
-      rlang::call2("%in%", round, rlang::sym("tags")),
-      scm_round_label(round),
+      if (length(members) == 1) {
+        rlang::call2("%in%", members, rlang::sym("tags"))
+      } else {
+        rlang::call2("any", rlang::call2("%in%", members, rlang::sym("tags")))
+      },
+      section,
       env = baseenv()
     )
   })
@@ -146,27 +166,37 @@ scm_summary_spec <- function(
     )
   }
   if (candidates == "selected") {
+    # Without a backward step the forward final model is the final model
+    # less its cov step, so only the final model stays.
+    stages <- if (scm_lineage_dropped_any(tree)) {
+      scm_stage_tags
+    } else {
+      setdiff(scm_stage_tags, "forward_final")
+    }
     spec <- set_spec_model_filter(
       spec,
-      "selected" %in% tags || any(!!scm_stage_tags %in% tags)
+      "selected" %in% tags || any(!!stages %in% tags)
     )
   }
-  spec <- set_spec_description_transform(
-    spec,
-    switch(
-      description,
-      step = scm_description_step,
-      covariates = scm_description_covariates
+  if (description != "full") {
+    spec <- set_spec_description_transform(
+      spec,
+      switch(
+        description,
+        step = scm_description_step,
+        covariates = scm_description_covariates
+      )
     )
-  )
+  }
   spec <- rlang::inject(set_spec_columns(spec, !!!columns))
   spec <- set_spec_footnotes(spec, NULL)
   set_spec_title(spec, title %||% "")
 }
 
 # pharos and hyperion end an SCM fit's description with the covariates its
-# model has: "add CRCL_CL (attempt 1); covariates: WT_CL, CRCL_CL". The step
-# is what comes before; a description without the part is left alone.
+# model has: "add CRCL_CL (attempt 1); covariates: WT_CL, CRCL_CL". The
+# default shows it whole; the step is what comes before the part, and a
+# description without the part is left alone by both transforms.
 scm_description_step <- function(x) {
   sub("; covariates: .*$", "", x)
 }
@@ -197,21 +227,50 @@ scm_lineage_rounds <- function(tree) {
   unique(rounds)
 }
 
+# Whether any backward round kept a candidate, i.e. dropped a covariate.
+scm_lineage_dropped_any <- function(tree) {
+  for (node in tree$nodes) {
+    tags <- as.character(unlist(node$model$tags))
+    if ("selected" %in% tags && any(grepl("^backward_round", tags))) {
+      return(TRUE)
+    }
+  }
+  FALSE
+}
+
 # "forward_round2" -> "Forward round 2"; the stages get their own names.
 scm_round_label <- function(round) {
-  stages <- c(
-    base = "Base model",
-    full = "Full model",
-    reference = "Reference model",
-    forward_final = "Forward final model",
-    final = "Final model"
-  )
-  if (round %in% names(stages)) {
-    return(stages[[round]])
+  if (round %in% names(scm_stage_labels)) {
+    return(scm_stage_labels[[round]])
   }
-  m <- regmatches(round, regexec("^(forward|backward)_round([0-9]+)$", round))[[1]]
+  m <- scm_round_parts(round)
   if (length(m) == 3) {
     return(sprintf("%s round %s", tools::toTitleCase(m[2]), m[3]))
   }
   round
+}
+
+# "forward_round2" -> "Forward": the rounds of a direction share a section.
+scm_direction_label <- function(round) {
+  if (round %in% names(scm_stage_labels)) {
+    return(scm_stage_labels[[round]])
+  }
+  m <- scm_round_parts(round)
+  if (length(m) == 3) {
+    return(tools::toTitleCase(m[2]))
+  }
+  round
+}
+
+scm_stage_labels <- c(
+  base = "Base model",
+  full = "Full model",
+  reference = "Reference model",
+  forward_final = "Forward final model",
+  final = "Final model"
+)
+
+# c(round, direction, number) for a round tag, or character() for a stage.
+scm_round_parts <- function(round) {
+  regmatches(round, regexec("^(forward|backward)_round([0-9]+)$", round))[[1]]
 }

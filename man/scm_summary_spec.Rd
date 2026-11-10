@@ -7,7 +7,7 @@
 scm_summary_spec(
   lineage,
   title = NULL,
-  description = c("step", "covariates"),
+  description = c("full", "step", "covariates"),
   selected = c("column", "bold"),
   candidates = c("all", "selected"),
   other_section_label = "Other"
@@ -24,15 +24,17 @@ config (\verb{<stem>scm.toml}) is passed to the latter.}
 title; pass a string to set one.}
 
 \item{description}{What the Description column shows for each fit:
-\code{"step"} (the default), its action, or \code{"covariates"}, the covariates
-its model has.}
+\code{"full"} (the default), the description as the lineage gives it, its
+step and the covariates its model has; \code{"step"}, its action alone; or
+\code{"covariates"}, the covariates its model has alone.}
 
 \item{selected}{How the candidate each round kept is marked: \code{"column"}
 (the default), a Round Result column reading "added" or "dropped" on
 its row, or \code{"bold"}, its row in bold.}
 
 \item{candidates}{Which of each round's candidates to show: \code{"all"} (the
-default), or \code{"selected"}, only the one the round kept.}
+default), with a section per round, or \code{"selected"}, only the one the
+round kept, with the rounds grouped by direction.}
 
 \item{other_section_label}{Section label for a model matching no round.}
 }
@@ -62,14 +64,22 @@ further with the \verb{set_spec_*()} modifiers.
 
 \code{candidates = "selected"} keeps only the models that mattered: the base
 (or full) model, the forward final and final models, and in each round
-the candidate it kept, so a round that kept none shows no row.
+the candidate it kept, so a round that kept none shows no row. Since
+each round then has at most one row, the rounds are grouped by
+direction instead of sectioned one by one: the reference model, then
+the forward steps under "Forward", the forward final model, the
+backward steps under "Backward", and the final model. When no backward
+round dropped anything, the forward final model says nothing the final
+model does not, so it is left out too.
 
 pharos ends every SCM fit's description with the covariates its model
 has, e.g. \code{"SCM forward_round2: add CRCL_CL (attempt 1); covariates: WT_CL, CRCL_CL"}, as does \code{hyperion::get_scm_lineage()}. \code{description}
-picks which part the Description column shows: \code{"step"} (the default),
-the fit's action, or \code{"covariates"}, the covariates the model has, so
-a fourth-round candidate reads "WT_CL, CRCL_CL, WT_V" rather than
-"add WT_V". A description without that part shows as it is.
+picks what the Description column shows: \code{"full"} (the default), the
+description as the lineage gives it, as \code{\link[=SummarySpec]{SummarySpec()}} shows it, so
+each row names both the step and the covariates its model has;
+\code{"step"}, the fit's action alone, "add WT_V"; or \code{"covariates"}, the
+covariates alone, "WT_CL, CRCL_CL, WT_V". A description without the
+covariates part shows as it is under either.
 
 The section rules end with a catch-all, so rules appended with
 \code{\link[=set_spec_sections]{set_spec_sections()}} never apply; pass \code{overwrite = TRUE} to replace them.
@@ -89,7 +99,8 @@ scm |>
   apply_summary_spec(scm_summary_spec(scm, title = "Covariate search")) |>
   make_summary_table()
 
-# Show each model's covariates instead of the step
+# Show only each fit's step, or only its model's covariates
+scm_summary_spec(scm, description = "step")
 scm_summary_spec(scm, description = "covariates")
 
 # Bold the kept candidates instead of the Round Result column, and show

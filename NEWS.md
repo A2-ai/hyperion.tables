@@ -11,9 +11,12 @@
   "added" or "dropped" on the candidate each round selected; `selected =
   "bold"` renders that candidate's row in bold instead. `candidates =
   "selected"` keeps only the base, forward final and final models and each
-  round's selected candidate. Its `description` argument shows either each
-  fit's step (the default) or the covariates its model has, from the
-  description pharos writes. It takes the lineage from
+  round's selected candidate, with the rounds grouped into "Forward" and
+  "Backward" sections, and leaves out the forward final model when no
+  backward round dropped anything. Its Description column shows each fit's
+  description as the lineage gives it, the step and the covariates the
+  model has; the `description` argument narrows it to the step or the
+  covariates alone. It takes the lineage from
   `hyperion::get_model_lineage()` or `hyperion::get_scm_lineage()`.
 - `set_spec_computed_column()` adds a column to a `SummarySpec` table whose
   value per model comes from rules like section rules, e.g. `"selected"
