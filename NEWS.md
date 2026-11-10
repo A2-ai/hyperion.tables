@@ -6,15 +6,15 @@
   covariate modeling process, composed of the usual spec settings: the fits
   tagged `"scm"`, in a section per round from the round tag pharos writes to
   each fit's metadata (`"base"`, `"forward_round1"`, ..., `"final"`), in the
-  order the process ran them, with Reference, Description, OFV, dOFV,
-  p-value (for the backward steps too) and a Round Result column reading
-  "added" or "dropped" on the candidate each round selected. Its `selected`
-  argument picks another way to show that candidate: `"bold"` renders its
-  row in bold instead of the column, `"none"` leaves it unmarked, and
-  `"only"` keeps only the base, forward final and final models and each
-  round's selected candidate, unmarked, with the rounds grouped into
-  "Forward" and "Backward" sections, and leaves out the forward final model
-  when no backward round dropped anything. Its Description column shows
+  order the process ran them, with Reference, Description, OFV, dOFV and
+  p-value (for the backward steps too). Its `selected` argument picks how
+  the table shows the candidate each round selected: `"none"` (the
+  default) leaves it unmarked, `"column"` adds a Round Result column
+  reading "added" or "dropped" on its row, `"bold"` renders its row in
+  bold, and `"only"` keeps only the base, forward final and final models
+  and each round's selected candidate, unmarked, with the rounds grouped
+  into "Forward" and "Backward" sections, and leaves out the forward final
+  model when no backward round dropped anything. Its Description column shows
   each fit's description as the lineage gives it, the step and the
   covariates the model has; the `description` argument narrows it to the
   step or the covariates alone. It takes the lineage from

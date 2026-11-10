@@ -20,13 +20,12 @@
 #' `selected` picks the one way the table shows the candidate each round
 #' kept, the fit tagged `"selected"`. The choices exclude one another:
 #' \itemize{
-#'   \item `"column"` (the default) adds a Round Result column, which reads
-#'     "added" or "dropped" on the kept candidate's row and is empty
-#'     elsewhere.
+#'   \item `"none"` (the default) does not mark it: every candidate shows
+#'     alike, with no Round Result column and no bold row.
+#'   \item `"column"` adds a Round Result column, which reads "added" or
+#'     "dropped" on the kept candidate's row and is empty elsewhere.
 #'   \item `"bold"` renders the kept candidate's row in bold. There is no
 #'     Round Result column.
-#'   \item `"none"` does not mark it: every candidate shows alike, with no
-#'     Round Result column and no bold row.
 #'   \item `"only"` shows no other candidate, so there is nothing to mark
 #'     and the table has no Round Result column and no bold row. It keeps
 #'     the models that mattered: the base (or full) model, the forward
@@ -65,12 +64,12 @@
 #'   step and the covariates its model has; `"step"`, its action alone; or
 #'   `"covariates"`, the covariates its model has alone.
 #' @param selected How the table shows the candidate each round kept, one
-#'   of: `"column"` (the default), every candidate with a Round Result
-#'   column reading "added" or "dropped" on the kept one's row; `"bold"`,
-#'   every candidate with the kept one's row in bold and no Round Result
-#'   column; `"none"`, every candidate with the kept one unmarked; or
-#'   `"only"`, the kept candidates alone, unmarked, with the rounds grouped
-#'   by direction.
+#'   of: `"none"` (the default), every candidate with the kept one
+#'   unmarked; `"column"`, every candidate with a Round Result column
+#'   reading "added" or "dropped" on the kept one's row; `"bold"`, every
+#'   candidate with the kept one's row in bold and no Round Result column;
+#'   or `"only"`, the kept candidates alone, unmarked, with the rounds
+#'   grouped by direction.
 #' @param other_section_label Section label for a model matching no round.
 #'
 #' @return A [SummarySpec] object.
@@ -95,10 +94,10 @@
 #' scm_summary_spec(scm, description = "step")
 #' scm_summary_spec(scm, description = "covariates")
 #'
-#' # Bold the kept candidates instead of the Round Result column
+#' # Mark the candidate each round kept: a Round Result column, or its row
+#' # in bold
+#' scm_summary_spec(scm, selected = "column")
 #' scm_summary_spec(scm, selected = "bold")
-#' # Leave them unmarked
-#' scm_summary_spec(scm, selected = "none")
 #' # Show only the models that mattered: no other candidates, nothing marked
 #' scm_summary_spec(scm, selected = "only")
 #'
@@ -113,7 +112,7 @@ scm_summary_spec <- function(
   lineage,
   title = NULL,
   description = c("full", "step", "covariates"),
-  selected = c("column", "bold", "none", "only"),
+  selected = c("none", "column", "bold", "only"),
   other_section_label = "Other"
 ) {
   if (!is.null(title) && !rlang::is_string(title)) {
@@ -159,8 +158,8 @@ scm_summary_spec <- function(
   spec <- rlang::inject(set_spec_sections(SummarySpec(), !!!rules))
   spec <- set_spec_tag_filter(spec, include = "scm")
   spec <- set_spec_pvalue(spec, direction = "both")
-  # The candidate a round kept gets a Round Result, or its row in bold, or
-  # no mark, or is the only one shown; the reference and final fits are not
+  # The candidate a round kept gets no mark, or a Round Result, or its row
+  # in bold, or is the only one shown; the reference and final fits are not
   # candidates.
   columns <- c("based_on", "description", "ofv", "dofv", "pvalue")
   if (selected == "column") {

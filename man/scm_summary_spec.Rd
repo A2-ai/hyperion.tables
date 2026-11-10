@@ -8,7 +8,7 @@ scm_summary_spec(
   lineage,
   title = NULL,
   description = c("full", "step", "covariates"),
-  selected = c("column", "bold", "none", "only"),
+  selected = c("none", "column", "bold", "only"),
   other_section_label = "Other"
 )
 }
@@ -28,12 +28,12 @@ step and the covariates its model has; \code{"step"}, its action alone; or
 \code{"covariates"}, the covariates its model has alone.}
 
 \item{selected}{How the table shows the candidate each round kept, one
-of: \code{"column"} (the default), every candidate with a Round Result
-column reading "added" or "dropped" on the kept one's row; \code{"bold"},
-every candidate with the kept one's row in bold and no Round Result
-column; \code{"none"}, every candidate with the kept one unmarked; or
-\code{"only"}, the kept candidates alone, unmarked, with the rounds grouped
-by direction.}
+of: \code{"none"} (the default), every candidate with the kept one
+unmarked; \code{"column"}, every candidate with a Round Result column
+reading "added" or "dropped" on the kept one's row; \code{"bold"}, every
+candidate with the kept one's row in bold and no Round Result column;
+or \code{"only"}, the kept candidates alone, unmarked, with the rounds
+grouped by direction.}
 
 \item{other_section_label}{Section label for a model matching no round.}
 }
@@ -61,13 +61,12 @@ fuller model. The table has no footnotes. Customize further with the
 \code{selected} picks the one way the table shows the candidate each round
 kept, the fit tagged \code{"selected"}. The choices exclude one another:
 \itemize{
-\item \code{"column"} (the default) adds a Round Result column, which reads
-"added" or "dropped" on the kept candidate's row and is empty
-elsewhere.
+\item \code{"none"} (the default) does not mark it: every candidate shows
+alike, with no Round Result column and no bold row.
+\item \code{"column"} adds a Round Result column, which reads "added" or
+"dropped" on the kept candidate's row and is empty elsewhere.
 \item \code{"bold"} renders the kept candidate's row in bold. There is no
 Round Result column.
-\item \code{"none"} does not mark it: every candidate shows alike, with no
-Round Result column and no bold row.
 \item \code{"only"} shows no other candidate, so there is nothing to mark
 and the table has no Round Result column and no bold row. It keeps
 the models that mattered: the base (or full) model, the forward
@@ -112,10 +111,10 @@ scm |>
 scm_summary_spec(scm, description = "step")
 scm_summary_spec(scm, description = "covariates")
 
-# Bold the kept candidates instead of the Round Result column
+# Mark the candidate each round kept: a Round Result column, or its row
+# in bold
+scm_summary_spec(scm, selected = "column")
 scm_summary_spec(scm, selected = "bold")
-# Leave them unmarked
-scm_summary_spec(scm, selected = "none")
 # Show only the models that mattered: no other candidates, nothing marked
 scm_summary_spec(scm, selected = "only")
 

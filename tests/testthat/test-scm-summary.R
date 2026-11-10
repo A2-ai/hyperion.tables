@@ -55,23 +55,26 @@ test_that("scm_summary_spec() sections the rounds pharos tagged, in the order th
   )
   # The preset is the usual spec settings and nothing else.
   expect_equal(get_spec_tag_filter(spec)$include, "scm")
-  expect_equal(
-    get_spec_columns(spec),
-    c("based_on", "description", "ofv", "dofv", "pvalue", "round_result")
-  )
-  # `selected` picks one way to show the candidate each round kept. By
-  # default its result is a computed column, with every candidate shown.
   plain <- c("based_on", "description", "ofv", "dofv", "pvalue")
-  expect_equal(get_spec_computed_columns(spec)$round_result$label, "Round Result")
+  expect_equal(get_spec_columns(spec), plain)
+  # `selected` picks one way to show the candidate each round kept. By
+  # default every candidate shows and the kept one is not marked.
+  expect_length(get_spec_computed_columns(spec), 0)
   expect_length(get_spec_bold_rows(spec), 0)
   expect_length(get_spec_model_filter(spec), 0)
+  # "column": its result in a computed Round Result column.
+  column <- scm_summary_spec(pharos_tagged_lineage(), selected = "column")
+  expect_equal(get_spec_computed_columns(column)$round_result$label, "Round Result")
+  expect_equal(get_spec_columns(column), c(plain, "round_result"))
+  expect_length(get_spec_bold_rows(column), 0)
+  expect_length(get_spec_model_filter(column), 0)
   # "bold": its row in bold, and no Round Result column.
   bold <- scm_summary_spec(pharos_tagged_lineage(), selected = "bold")
   expect_length(get_spec_bold_rows(bold), 1)
   expect_length(get_spec_computed_columns(bold), 0)
   expect_length(get_spec_model_filter(bold), 0)
   expect_equal(get_spec_columns(bold), plain)
-  # "none": every candidate, the kept one unmarked.
+  # "none" is the default spelled out.
   none <- scm_summary_spec(pharos_tagged_lineage(), selected = "none")
   expect_length(get_spec_bold_rows(none), 0)
   expect_length(get_spec_computed_columns(none), 0)
@@ -159,9 +162,10 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
   tree <- hyperion::get_scm_lineage(scm_fixture_config())
   data <- apply_summary_spec(tree, scm_summary_spec(tree))
 
+  # By default the candidate a round kept is not marked.
   expect_equal(
     names(data),
-    c("model", "based_on", "description", "ofv", "dofv", "pvalue", "df", "round_result", "section")
+    c("model", "based_on", "description", "ofv", "dofv", "pvalue", "df", "section")
   )
   # Every fit gets a row, although the same stem recurs across rounds.
   expect_equal(nrow(data), 12)
@@ -180,14 +184,10 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
   expect_equal(added$based_on, "1001_base")
   expect_equal(added$description, "add WT_CL; covariates: WT_CL")
   expect_equal(added$dofv, -20)
-  # The candidate a round kept has the round's result; the others none.
-  expect_equal(added$round_result, "added")
-  expect_true(is.na(row("1001_wt_v", "Forward round 1")$round_result))
   # A backward step: the candidate drops one, and the reference is the fuller model.
   dropped <- row("1001_crcl_cl", "Backward round 1")
   expect_equal(dropped$based_on, "1001_crcl_cl")
   expect_equal(dropped$dofv, 6)
-  expect_equal(dropped$round_result, "dropped")
   # The forward final and final models are based on the reference fit.
   forward_final <- row("1001_scm_forward_final", "Forward final model")
   expect_equal(forward_final$based_on, "1001_base")
@@ -206,25 +206,35 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
     c("WT_CL, CRCL_CL", "WT_CL, WT_V")
   )
 
-  # The reference and final fits are not candidates, so they have no result.
   stages <- c("Reference model", "Forward final model", "Final model")
   expect_true(is.na(row("1001_base", "Reference model")$dofv))
-  expect_true(all(is.na(data$round_result[data$section %in% stages])))
+
+  # With selected = "column", the same rows gain a Round Result: the round's
+  # result on the candidate it kept, and nothing on the others.
+  marked <- apply_summary_spec(tree, scm_summary_spec(tree, selected = "column"))
+  expect_equal(
+    names(marked),
+    c("model", "based_on", "description", "ofv", "dofv", "pvalue", "df", "round_result", "section")
+  )
+  expect_equal(marked$model, data$model)
+  result <- function(model, section) {
+    marked$round_result[marked$model == model & marked$section == section]
+  }
+  expect_equal(result("1001_wt_cl", "Forward round 1"), "added")
+  expect_true(is.na(result("1001_wt_v", "Forward round 1")))
+  expect_equal(result("1001_crcl_cl", "Backward round 1"), "dropped")
+  # The reference and final fits are not candidates, so they have no result.
+  expect_true(all(is.na(marked$round_result[marked$section %in% stages])))
 
   # With selected = "bold", the kept candidates are in bold and nothing else.
   bold <- apply_summary_spec(tree, scm_summary_spec(tree, selected = "bold"))
   expect_false("round_result" %in% names(bold))
-  expect_equal(bold$.bold, !is.na(data$round_result))
-
-  # With selected = "none", every candidate shows and none is marked.
-  none <- apply_summary_spec(tree, scm_summary_spec(tree, selected = "none"))
-  expect_equal(none$model, data$model)
-  expect_false(any(c("round_result", ".bold") %in% names(none)))
+  expect_equal(bold$.bold, !is.na(marked$round_result))
 
   # With selected = "only", only the stages and the kept candidates stay,
   # unmarked, with the rounds grouped by direction.
   kept <- apply_summary_spec(tree, scm_summary_spec(tree, selected = "only"))
-  expect_equal(kept$model, data$model[data$section %in% stages | !is.na(data$round_result)])
+  expect_equal(kept$model, data$model[data$section %in% stages | !is.na(marked$round_result)])
   expect_false(any(c("round_result", ".bold") %in% names(kept)))
   expect_lt(nrow(kept), nrow(data))
   expect_equal(
@@ -247,13 +257,14 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
   # With every candidate shown, the rounds keep their own sections.
   expect_true("Forward round 1" %in% apply_summary_spec(forward_only, scm_summary_spec(forward_only))$section)
 
-  shown <- as.data.frame(data)[, c(
+  shown <- as.data.frame(marked)[, c(
     "section", "model", "based_on", "description", "ofv", "dofv", "pvalue", "df", "round_result"
   )]
   expect_snapshot(print(shown, digits = 4, row.names = FALSE))
 
-  expect_equal(make_summary_table(data, output = "data")@col_labels$round_result, "Round Result")
+  expect_equal(make_summary_table(marked, output = "data")@col_labels$round_result, "Round Result")
   snapshot_gt(make_summary_table(data), "scm-summary-gt")
+  snapshot_gt(make_summary_table(marked), "scm-summary-column-gt")
   snapshot_gt(make_summary_table(kept), "scm-summary-only-gt")
 })
 
