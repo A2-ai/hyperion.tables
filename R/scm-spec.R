@@ -12,23 +12,33 @@
 #' Every fit is based on the model its round tested against, so dOFV is the
 #' round's own; the forward final and final models are based on the
 #' reference fit, so theirs is against it. The columns are Reference,
-#' Description, OFV, dOFV, p-value and Round Result, which reads "added"
-#' or "dropped" on the candidate each round kept, tagged `"selected"`, and
-#' is empty elsewhere. `selected = "bold"` marks that candidate by rendering
-#' its row in bold instead, without the column. `pvalue_direction` is
-#' `"both"`, so the backward steps are tested too, with the round's
-#' reference as the fuller model. The table has no footnotes. Customize
-#' further with the `set_spec_*()` modifiers.
+#' Description, OFV, dOFV and p-value. `pvalue_direction` is `"both"`, so
+#' the backward steps are tested too, with the round's reference as the
+#' fuller model. The table has no footnotes. Customize further with the
+#' `set_spec_*()` modifiers.
 #'
-#' `candidates = "selected"` keeps only the models that mattered: the base
-#' (or full) model, the forward final and final models, and in each round
-#' the candidate it kept, so a round that kept none shows no row. Since
-#' each round then has at most one row, the rounds are grouped by
-#' direction instead of sectioned one by one: the reference model, then
-#' the forward steps under "Forward", the forward final model, the
-#' backward steps under "Backward", and the final model. When no backward
-#' round dropped anything, the forward final model says nothing the final
-#' model does not, so it is left out too.
+#' `selected` picks the one way the table shows the candidate each round
+#' kept, the fit tagged `"selected"`. The choices exclude one another:
+#' \itemize{
+#'   \item `"column"` (the default) adds a Round Result column, which reads
+#'     "added" or "dropped" on the kept candidate's row and is empty
+#'     elsewhere.
+#'   \item `"bold"` renders the kept candidate's row in bold. There is no
+#'     Round Result column.
+#'   \item `"none"` does not mark it: every candidate shows alike, with no
+#'     Round Result column and no bold row.
+#'   \item `"only"` shows no other candidate, so there is nothing to mark
+#'     and the table has no Round Result column and no bold row. It keeps
+#'     the models that mattered: the base (or full) model, the forward
+#'     final and final models, and in each round the candidate it kept, so
+#'     a round that kept none shows no row. Since each round then has at
+#'     most one row, the rounds are grouped by direction instead of
+#'     sectioned one by one: the reference model, then the forward steps
+#'     under "Forward", the forward final model, the backward steps under
+#'     "Backward", and the final model. When no backward round dropped
+#'     anything, the forward final model says nothing the final model does
+#'     not, so it is left out too.
+#' }
 #'
 #' pharos ends every SCM fit's description with the covariates its model
 #' has, e.g. `"SCM forward_round2: add CRCL_CL (attempt 1); covariates:
@@ -54,12 +64,13 @@
 #'   `"full"` (the default), the description as the lineage gives it, its
 #'   step and the covariates its model has; `"step"`, its action alone; or
 #'   `"covariates"`, the covariates its model has alone.
-#' @param selected How the candidate each round kept is marked: `"column"`
-#'   (the default), a Round Result column reading "added" or "dropped" on
-#'   its row, or `"bold"`, its row in bold.
-#' @param candidates Which of each round's candidates to show: `"all"` (the
-#'   default), with a section per round, or `"selected"`, only the one the
-#'   round kept, with the rounds grouped by direction.
+#' @param selected How the table shows the candidate each round kept, one
+#'   of: `"column"` (the default), every candidate with a Round Result
+#'   column reading "added" or "dropped" on the kept one's row; `"bold"`,
+#'   every candidate with the kept one's row in bold and no Round Result
+#'   column; `"none"`, every candidate with the kept one unmarked; or
+#'   `"only"`, the kept candidates alone, unmarked, with the rounds grouped
+#'   by direction.
 #' @param other_section_label Section label for a model matching no round.
 #'
 #' @return A [SummarySpec] object.
@@ -84,9 +95,12 @@
 #' scm_summary_spec(scm, description = "step")
 #' scm_summary_spec(scm, description = "covariates")
 #'
-#' # Bold the kept candidates instead of the Round Result column, and show
-#' # only the models that mattered
-#' scm_summary_spec(scm, selected = "bold", candidates = "selected")
+#' # Bold the kept candidates instead of the Round Result column
+#' scm_summary_spec(scm, selected = "bold")
+#' # Leave them unmarked
+#' scm_summary_spec(scm, selected = "none")
+#' # Show only the models that mattered: no other candidates, nothing marked
+#' scm_summary_spec(scm, selected = "only")
 #'
 #' # Customize further with modifiers
 #' spec <- scm_summary_spec(scm) |>
@@ -99,8 +113,7 @@ scm_summary_spec <- function(
   lineage,
   title = NULL,
   description = c("full", "step", "covariates"),
-  selected = c("column", "bold"),
-  candidates = c("all", "selected"),
+  selected = c("column", "bold", "none", "only"),
   other_section_label = "Other"
 ) {
   if (!is.null(title) && !rlang::is_string(title)) {
@@ -108,7 +121,6 @@ scm_summary_spec <- function(
   }
   description <- match.arg(description)
   selected <- match.arg(selected)
-  candidates <- match.arg(candidates)
   if (!rlang::is_string(other_section_label)) {
     rlang::abort("`other_section_label` must be a single character string.")
   }
@@ -128,7 +140,7 @@ scm_summary_spec <- function(
   # base R for `%in%`, nothing else. With only the kept candidates, the
   # rounds of a direction share a section, which comes where its first
   # round ran.
-  label <- if (candidates == "selected") scm_direction_label else scm_round_label
+  label <- if (selected == "only") scm_direction_label else scm_round_label
   labels <- vapply(rounds, label, character(1))
   rules <- lapply(unique(labels), function(section) {
     members <- rounds[labels == section]
@@ -147,8 +159,9 @@ scm_summary_spec <- function(
   spec <- rlang::inject(set_spec_sections(SummarySpec(), !!!rules))
   spec <- set_spec_tag_filter(spec, include = "scm")
   spec <- set_spec_pvalue(spec, direction = "both")
-  # The candidate a round kept gets a Round Result, or its row in bold; the
-  # reference and final fits are not candidates.
+  # The candidate a round kept gets a Round Result, or its row in bold, or
+  # no mark, or is the only one shown; the reference and final fits are not
+  # candidates.
   columns <- c("based_on", "description", "ofv", "dofv", "pvalue")
   if (selected == "column") {
     spec <- set_spec_computed_column(
@@ -159,13 +172,12 @@ scm_summary_spec <- function(
       label = "Round Result"
     )
     columns <- c(columns, "round_result")
-  } else {
+  } else if (selected == "bold") {
     spec <- set_spec_bold_rows(
       spec,
       "selected" %in% tags && !any(!!scm_stage_tags %in% tags)
     )
-  }
-  if (candidates == "selected") {
+  } else if (selected == "only") {
     # Without a backward step the forward final model is the final model
     # less its cov step, so only the final model stays.
     stages <- if (scm_lineage_dropped_any(tree)) {

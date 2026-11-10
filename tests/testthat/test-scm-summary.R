@@ -59,22 +59,39 @@ test_that("scm_summary_spec() sections the rounds pharos tagged, in the order th
     get_spec_columns(spec),
     c("based_on", "description", "ofv", "dofv", "pvalue", "round_result")
   )
-  # The round's result is a computed column by default, or the row in bold.
+  # `selected` picks one way to show the candidate each round kept. By
+  # default its result is a computed column, with every candidate shown.
+  plain <- c("based_on", "description", "ofv", "dofv", "pvalue")
   expect_equal(get_spec_computed_columns(spec)$round_result$label, "Round Result")
   expect_length(get_spec_bold_rows(spec), 0)
   expect_length(get_spec_model_filter(spec), 0)
+  # "bold": its row in bold, and no Round Result column.
   bold <- scm_summary_spec(pharos_tagged_lineage(), selected = "bold")
   expect_length(get_spec_bold_rows(bold), 1)
   expect_length(get_spec_computed_columns(bold), 0)
-  expect_equal(get_spec_columns(bold), c("based_on", "description", "ofv", "dofv", "pvalue"))
-  expect_length(get_spec_model_filter(scm_summary_spec(pharos_tagged_lineage(), candidates = "selected")), 1)
-  # With only the kept candidates, the rounds are grouped by direction.
+  expect_length(get_spec_model_filter(bold), 0)
+  expect_equal(get_spec_columns(bold), plain)
+  # "none": every candidate, the kept one unmarked.
+  none <- scm_summary_spec(pharos_tagged_lineage(), selected = "none")
+  expect_length(get_spec_bold_rows(none), 0)
+  expect_length(get_spec_computed_columns(none), 0)
+  expect_length(get_spec_model_filter(none), 0)
+  expect_equal(get_spec_columns(none), plain)
+  expect_equal(section_labels(none), section_labels(spec))
+  # "only": the kept candidates alone, so nothing is marked, and the rounds
+  # are grouped by direction.
+  only <- scm_summary_spec(pharos_tagged_lineage(), selected = "only")
+  expect_length(get_spec_model_filter(only), 1)
+  expect_length(get_spec_bold_rows(only), 0)
+  expect_length(get_spec_computed_columns(only), 0)
+  expect_equal(get_spec_columns(only), plain)
   expect_equal(
-    section_labels(scm_summary_spec(pharos_tagged_lineage(), candidates = "selected")),
+    section_labels(only),
     c("Base model", "Forward", "Forward final model", "Backward", "Final model", "Other")
   )
   expect_error(scm_summary_spec(pharos_tagged_lineage(), selected = "x"), "should be one of")
-  expect_error(scm_summary_spec(pharos_tagged_lineage(), candidates = "x"), "should be one of")
+  # The kept candidates are no longer a separate argument.
+  expect_error(scm_summary_spec(pharos_tagged_lineage(), candidates = "selected"), "unused argument")
 
   # The Description column shows the description pharos writes as it is by
   # default, or its step, or the model's covariates; one without the
@@ -199,10 +216,16 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
   expect_false("round_result" %in% names(bold))
   expect_equal(bold$.bold, !is.na(data$round_result))
 
-  # With candidates = "selected", only the stages and the kept candidates
-  # stay, with the rounds grouped by direction.
-  kept <- apply_summary_spec(tree, scm_summary_spec(tree, candidates = "selected"))
+  # With selected = "none", every candidate shows and none is marked.
+  none <- apply_summary_spec(tree, scm_summary_spec(tree, selected = "none"))
+  expect_equal(none$model, data$model)
+  expect_false(any(c("round_result", ".bold") %in% names(none)))
+
+  # With selected = "only", only the stages and the kept candidates stay,
+  # unmarked, with the rounds grouped by direction.
+  kept <- apply_summary_spec(tree, scm_summary_spec(tree, selected = "only"))
   expect_equal(kept$model, data$model[data$section %in% stages | !is.na(data$round_result)])
+  expect_false(any(c("round_result", ".bold") %in% names(kept)))
   expect_lt(nrow(kept), nrow(data))
   expect_equal(
     kept$section,
@@ -217,7 +240,7 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
     function(node) !any(grepl("^backward_round", unlist(node$model$tags))),
     forward_only$nodes
   )
-  only <- apply_summary_spec(forward_only, scm_summary_spec(forward_only, candidates = "selected"))
+  only <- apply_summary_spec(forward_only, scm_summary_spec(forward_only, selected = "only"))
   expect_equal(only$section, c("Reference model", "Forward", "Forward", "Final model"))
   expect_false("1001_scm_forward_final" %in% only$model)
   expect_true("1001_scm_forward_final" %in% kept$model)
@@ -231,7 +254,7 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
 
   expect_equal(make_summary_table(data, output = "data")@col_labels$round_result, "Round Result")
   snapshot_gt(make_summary_table(data), "scm-summary-gt")
-  snapshot_gt(make_summary_table(kept), "scm-summary-selected-gt")
+  snapshot_gt(make_summary_table(kept), "scm-summary-only-gt")
 })
 
 test_that("the SCM preset's p-value column tests both directions", {
