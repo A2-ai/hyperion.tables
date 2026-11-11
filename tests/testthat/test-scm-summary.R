@@ -36,9 +36,9 @@ pharos_tagged_lineage <- function() {
     scm_node("scm/forward_round1/run001_wt_cl.mod", "scm/base/run001_base.mod", "SCM forward_round1: add WT_CL (attempt 1)", c("scm", "forward_round1", "selected")),
     scm_node("scm/forward_round1/run001_wt_v.mod", "scm/base/run001_base.mod", "SCM forward_round1: add WT_V (attempt 1)", c("scm", "forward_round1")),
     scm_node("scm/forward_round2/run001_wt_v_try2.mod", "scm/forward_round1/run001_wt_cl.mod", "SCM forward_round2: add WT_V (attempt 2)", c("scm", "forward_round2", "retry")),
-    scm_node("scm/forward_final/run001_scm_forward_final.mod", "scm/forward_round1/run001_wt_cl.mod", "SCM working full model: retained WT_CL; cov step on", c("scm", "forward_final")),
+    scm_node("scm/working_full/run001_scm_working_full.mod", "scm/forward_round1/run001_wt_cl.mod", "SCM working full model: retained WT_CL; cov step on", c("scm", "working_full")),
     scm_node("scm/backward_round1/run001_wt_cl.mod", "scm/forward_round1/run001_wt_cl.mod", "SCM backward_round1: drop WT_CL (attempt 1)", c("scm", "backward_round1")),
-    scm_node("scm/final/run001_scm_final.mod", "scm/forward_round1/run001_wt_cl.mod", "SCM reduced covariate model: retained WT_CL; cov step on", c("scm", "final"))
+    scm_node("scm/reduced_covariate/run001_scm_reduced_covariate.mod", "scm/forward_round1/run001_wt_cl.mod", "SCM reduced covariate model: retained WT_CL; cov step on", c("scm", "reduced_covariate"))
   )
   structure(list(nodes = nodes), class = "hyperion_nonmem_tree")
 }
@@ -189,10 +189,10 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
   expect_equal(dropped$based_on, "1001_crcl_cl")
   expect_equal(dropped$dofv, 6)
   # The working full and reduced covariate models are based on the reference fit.
-  forward_final <- row("1001_scm_forward_final", "Working full model")
-  expect_equal(forward_final$based_on, "1001_base")
-  expect_equal(forward_final$dofv, 973.8 - 1000)
-  final <- row("1001_scm_final", "Reduced covariate model")
+  working_full <- row("1001_scm_working_full", "Working full model")
+  expect_equal(working_full$based_on, "1001_base")
+  expect_equal(working_full$dofv, 973.8 - 1000)
+  final <- row("1001_scm_reduced_covariate", "Reduced covariate model")
   expect_equal(final$based_on, "1001_base")
   expect_equal(final$dofv, 979.5 - 1000)
 
@@ -252,8 +252,8 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
   )
   only <- apply_summary_spec(forward_only, scm_summary_spec(forward_only, selected = "only"))
   expect_equal(only$section, c("Reference model", "Forward", "Forward", "Reduced covariate model"))
-  expect_false("1001_scm_forward_final" %in% only$model)
-  expect_true("1001_scm_forward_final" %in% kept$model)
+  expect_false("1001_scm_working_full" %in% only$model)
+  expect_true("1001_scm_working_full" %in% kept$model)
   # With every candidate shown, the rounds keep their own sections.
   expect_true("Forward round 1" %in% apply_summary_spec(forward_only, scm_summary_spec(forward_only))$section)
 
@@ -286,7 +286,7 @@ test_that("the SCM preset's p-value column tests both directions", {
   expect_equal(dropped$df, 1L)
   expect_equal(dropped$pvalue, stats::pchisq(6, 1, lower.tail = FALSE))
   # The reduced covariate model is tested against the reference fit it is based on.
-  final <- row("1001_scm_final", "Reduced covariate model")
+  final <- row("1001_scm_reduced_covariate", "Reduced covariate model")
   expect_equal(final$df, 1L)
   expect_equal(final$pvalue, stats::pchisq(1000 - 979.5, 1, lower.tail = FALSE))
 

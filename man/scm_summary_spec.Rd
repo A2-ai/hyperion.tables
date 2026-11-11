@@ -44,8 +44,9 @@ A \link{SummarySpec} object.
 \code{scm_summary_spec()} returns a \link{SummarySpec} for the run summary table of
 an SCM process: the fits tagged \code{"scm"}, in one section per round, from
 the round tag pharos writes to each fit's metadata (\code{"base"} or \code{"full"},
-\code{"forward_round1"}, ..., \code{"forward_final"}, \code{"final"}), in the order the
-process ran them. It composes the usual spec settings and nothing else:
+\code{"forward_round1"}, ..., \code{"working_full"}, \code{"reduced_covariate"}), in the
+order the process ran them. It composes the usual spec settings and
+nothing else:
 it is what you would write by hand with \code{\link[=set_spec_sections]{set_spec_sections()}}, as in
 \code{set_spec_sections("base" \%in\% tags ~ "Base model", "forward_round1" \%in\% tags ~ "Forward round 1", ...)}, for however many rounds the process ran.
 }

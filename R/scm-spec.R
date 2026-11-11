@@ -3,8 +3,9 @@
 #' `scm_summary_spec()` returns a [SummarySpec] for the run summary table of
 #' an SCM process: the fits tagged `"scm"`, in one section per round, from
 #' the round tag pharos writes to each fit's metadata (`"base"` or `"full"`,
-#' `"forward_round1"`, ..., `"forward_final"`, `"final"`), in the order the
-#' process ran them. It composes the usual spec settings and nothing else:
+#' `"forward_round1"`, ..., `"working_full"`, `"reduced_covariate"`), in the
+#' order the process ran them. It composes the usual spec settings and
+#' nothing else:
 #' it is what you would write by hand with [set_spec_sections()], as in
 #' `set_spec_sections("base" %in% tags ~ "Base model", "forward_round1" %in%
 #' tags ~ "Forward round 1", ...)`, for however many rounds the process ran.
@@ -182,7 +183,7 @@ scm_summary_spec <- function(
     stages <- if (scm_lineage_dropped_any(tree)) {
       scm_stage_tags
     } else {
-      setdiff(scm_stage_tags, "forward_final")
+      setdiff(scm_stage_tags, "working_full")
     }
     spec <- set_spec_model_filter(
       spec,
@@ -220,9 +221,9 @@ scm_description_covariates <- function(x) {
 
 # The round tags of the fits that are not round candidates: the reference
 # fit (`base` or `full` from pharos, `reference` from hyperion's record
-# lineage), the working full model (tagged `forward_final`) and the reduced
-# covariate model (tagged `final`).
-scm_stage_tags <- c("base", "full", "reference", "forward_final", "final")
+# lineage), the working full model (tagged `working_full`) and the reduced
+# covariate model (tagged `reduced_covariate`).
+scm_stage_tags <- c("base", "full", "reference", "working_full", "reduced_covariate")
 
 # The rounds in the lineage, in the order their fits appear: each SCM fit's
 # tag other than "scm", "selected" and "retry".
@@ -278,8 +279,8 @@ scm_stage_labels <- c(
   base = "Base model",
   full = "Full model",
   reference = "Reference model",
-  forward_final = "Working full model",
-  final = "Reduced covariate model"
+  working_full = "Working full model",
+  reduced_covariate = "Reduced covariate model"
 )
 
 # c(round, direction, number) for a round tag, or character() for a stage.

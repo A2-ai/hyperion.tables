@@ -1117,7 +1117,7 @@ set_spec_computed_column <- function(spec, name, ..., label = name) {
 #' @export
 #' @examples
 #' spec <- SummarySpec() |>
-#'   set_spec_model_filter("selected" %in% tags || "final" %in% tags)
+#'   set_spec_model_filter("selected" %in% tags || "reduced_covariate" %in% tags)
 set_spec_model_filter <- function(spec, ..., overwrite = FALSE) {
   if (!S7::S7_inherits(spec, SummarySpec)) {
     rlang::abort("`spec` must be a <SummarySpec> object.")

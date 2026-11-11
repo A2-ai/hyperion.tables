@@ -33,7 +33,7 @@ evaluated over the whole table at once, like \code{\link[dplyr:filter]{dplyr::fi
 }
 \examples{
 spec <- SummarySpec() |>
-  set_spec_model_filter("selected" \%in\% tags || "final" \%in\% tags)
+  set_spec_model_filter("selected" \%in\% tags || "reduced_covariate" \%in\% tags)
 }
 \seealso{
 \code{\link[=get_spec_model_filter]{get_spec_model_filter()}}, \code{\link[=set_spec_summary_filter]{set_spec_summary_filter()}},

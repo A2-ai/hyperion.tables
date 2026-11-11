@@ -5,8 +5,8 @@
 - `scm_summary_spec()` returns a `SummarySpec` preset for a stepwise
   covariate modeling process, composed of the usual spec settings: the fits
   tagged `"scm"`, in a section per round from the round tag pharos writes to
-  each fit's metadata (`"base"`, `"forward_round1"`, ..., `"final"`), in the
-  order the process ran them, with Reference, Description, OFV, dOFV and
+  each fit's metadata (`"base"`, `"forward_round1"`, ...,
+  `"reduced_covariate"`), in the order the process ran them, with Reference, Description, OFV, dOFV and
   p-value (for the backward steps too). Its `selected` argument picks how
   the table shows the candidate each round selected: `"none"` (the
   default) leaves it unmarked, `"column"` adds a Round Result column
@@ -15,9 +15,9 @@
   covariate models and each round's selected candidate, unmarked, with the
   rounds grouped into "Forward" and "Backward" sections, and leaves out the
   working full model when no backward round dropped anything. The fit
-  tagged `"forward_final"` is sectioned as "Working full model" and the
-  one tagged `"final"` as "Reduced covariate model". Its Description column
-  shows each fit's description as the lineage gives it, the step and the
+  tagged `"working_full"` is sectioned as "Working full model" and the
+  one tagged `"reduced_covariate"` as "Reduced covariate model". Its
+  Description column shows each fit's description as the lineage gives it, the step and the
   covariates the model has; the `description` argument narrows it to the
   step or the covariates alone. It takes the lineage from
   `hyperion::get_model_lineage()` or `hyperion::get_scm_lineage()`.
