@@ -137,8 +137,8 @@ needs no lineage: when `apply_summary_spec()` gives it one, it writes those
 rules for however many rounds the process ran. It keeps the fits tagged
 `"scm"` and shows every candidate alike.
 
-- `selected` takes a `ScmSelectedOptions()`, which picks how the candidate
-  each round selected is shown: `column = TRUE` adds a Round Result column
+- `set_spec_scm_selected()` picks how the candidate each round selected is
+  shown: `column = TRUE` adds a Round Result column
   reading "added" or "dropped" on its row, `bold = TRUE` renders its row in
   bold, and `path = TRUE` leaves out the candidates the rounds did not
   select, grouping the steps that remain under "Forward" and "Backward".

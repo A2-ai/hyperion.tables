@@ -20,6 +20,7 @@ by direction. Default \code{FALSE} shows every candidate.}
 }
 \description{
 \code{ScmSelectedOptions()} is what \code{\link[=scm_summary_spec]{scm_summary_spec()}} takes as \code{selected}.
+It is usually set with \code{\link[=set_spec_scm_selected]{set_spec_scm_selected()}}.
 Each round of an SCM process selects at most one candidate, the fit
 tagged \code{"selected"}: the covariate a forward round added, or the one a
 backward round dropped. The table can mark it with a column, with a bold
@@ -53,5 +54,5 @@ ScmSelectedOptions(column = TRUE, bold = TRUE)
 ScmSelectedOptions(path = TRUE)
 }
 \seealso{
-\code{\link[=scm_summary_spec]{scm_summary_spec()}}.
+\code{\link[=set_spec_scm_selected]{set_spec_scm_selected()}}, \code{\link[=scm_summary_spec]{scm_summary_spec()}}.
 }

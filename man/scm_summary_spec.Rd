@@ -73,6 +73,7 @@ a Round Result column reading "added" or "dropped" (\code{column = TRUE}),
 with its row in bold (\code{bold = TRUE}), or alone, as the path the process
 took, with the other candidates left out and the rounds grouped by
 direction (\code{path = TRUE}). The default shows every candidate alike.
+\code{\link[=set_spec_scm_selected]{set_spec_scm_selected()}} sets the same on a spec already made.
 
 Section rules set on the spec with \code{\link[=set_spec_sections]{set_spec_sections()}} replace the ones
 it would work out.
@@ -97,11 +98,14 @@ scm_summary_spec(description = "verbose")
 
 # Mark the candidate each round selected: a Round Result column, its row
 # in bold, or both
-scm_summary_spec(selected = ScmSelectedOptions(column = TRUE))
-scm_summary_spec(selected = ScmSelectedOptions(bold = TRUE))
-scm_summary_spec(selected = ScmSelectedOptions(column = TRUE, bold = TRUE))
+scm_summary_spec() |> set_spec_scm_selected(column = TRUE)
+scm_summary_spec() |> set_spec_scm_selected(bold = TRUE)
+scm_summary_spec() |> set_spec_scm_selected(column = TRUE, bold = TRUE)
 
 # Show the path the process took: only the models that mattered
+scm_summary_spec() |> set_spec_scm_selected(path = TRUE)
+
+# The same in one call
 scm_summary_spec(selected = ScmSelectedOptions(path = TRUE))
 
 # Customize further with modifiers
@@ -113,6 +117,6 @@ spec <- scm_summary_spec() |>
 }
 }
 \seealso{
-\code{\link[=ScmSelectedOptions]{ScmSelectedOptions()}}, \link{SummarySpec}, \code{\link[=apply_summary_spec]{apply_summary_spec()}},
-\code{\link[=make_summary_table]{make_summary_table()}}.
+\code{\link[=set_spec_scm_selected]{set_spec_scm_selected()}}, \code{\link[=ScmSelectedOptions]{ScmSelectedOptions()}}, \link{SummarySpec},
+\code{\link[=apply_summary_spec]{apply_summary_spec()}}, \code{\link[=make_summary_table]{make_summary_table()}}.
 }

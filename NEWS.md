@@ -21,8 +21,9 @@
     The base, working full and reduced covariate models do not repeat their
     section's name there: they show nothing when sparse and their
     covariates when verbose.
-  - `selected` takes a `ScmSelectedOptions()`: how the table shows the
-    candidate each round selected. `column = TRUE` adds a Round Result
+  - `set_spec_scm_selected()` sets how the table shows the candidate each
+    round selected, as does `selected`, which takes the
+    `ScmSelectedOptions()` the modifier builds. `column = TRUE` adds a Round Result
     column reading "added" or "dropped" on its row, and `bold = TRUE`
     renders its row in bold. `path = TRUE` shows the
     path the process took: only the base, working full and reduced

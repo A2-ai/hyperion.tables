@@ -10,6 +10,7 @@
 #' How an SCM summary table shows the candidate each round selected
 #'
 #' `ScmSelectedOptions()` is what [scm_summary_spec()] takes as `selected`.
+#' It is usually set with [set_spec_scm_selected()].
 #' Each round of an SCM process selects at most one candidate, the fit
 #' tagged `"selected"`: the covariate a forward round added, or the one a
 #' backward round dropped. The table can mark it with a column, with a bold
@@ -43,7 +44,7 @@
 #'   \item `path` - Whether the table shows only the selected candidates.
 #' }
 #'
-#' @seealso [scm_summary_spec()].
+#' @seealso [set_spec_scm_selected()], [scm_summary_spec()].
 #' @export
 #' @examples
 #' ScmSelectedOptions(column = TRUE)
@@ -151,6 +152,7 @@ is_scm_summary_spec <- function(spec) {
 #' with its row in bold (`bold = TRUE`), or alone, as the path the process
 #' took, with the other candidates left out and the rounds grouped by
 #' direction (`path = TRUE`). The default shows every candidate alike.
+#' [set_spec_scm_selected()] sets the same on a spec already made.
 #'
 #' Section rules set on the spec with [set_spec_sections()] replace the ones
 #' it would work out.
@@ -167,8 +169,8 @@ is_scm_summary_spec <- function(spec) {
 #' @param other_section_label Section label for a model matching no round.
 #'
 #' @return A [SummarySpec] object.
-#' @seealso [ScmSelectedOptions()], [SummarySpec], [apply_summary_spec()],
-#'   [make_summary_table()].
+#' @seealso [set_spec_scm_selected()], [ScmSelectedOptions()], [SummarySpec],
+#'   [apply_summary_spec()], [make_summary_table()].
 #' @export
 #' @examples \dontrun{
 #' # From the process record: descriptions and each model's covariates
@@ -189,11 +191,14 @@ is_scm_summary_spec <- function(spec) {
 #'
 #' # Mark the candidate each round selected: a Round Result column, its row
 #' # in bold, or both
-#' scm_summary_spec(selected = ScmSelectedOptions(column = TRUE))
-#' scm_summary_spec(selected = ScmSelectedOptions(bold = TRUE))
-#' scm_summary_spec(selected = ScmSelectedOptions(column = TRUE, bold = TRUE))
+#' scm_summary_spec() |> set_spec_scm_selected(column = TRUE)
+#' scm_summary_spec() |> set_spec_scm_selected(bold = TRUE)
+#' scm_summary_spec() |> set_spec_scm_selected(column = TRUE, bold = TRUE)
 #'
 #' # Show the path the process took: only the models that mattered
+#' scm_summary_spec() |> set_spec_scm_selected(path = TRUE)
+#'
+#' # The same in one call
 #' scm_summary_spec(selected = ScmSelectedOptions(path = TRUE))
 #'
 #' # Customize further with modifiers
@@ -238,6 +243,61 @@ scm_summary_spec <- function(
   spec <- set_spec_columns(spec, "based_on", "description", "ofv", "dofv", "pvalue")
   spec <- set_spec_footnotes(spec, NULL)
   set_spec_title(spec, title %||% "")
+}
+
+#' Set how an SCM summary table shows the selected candidates
+#'
+#' `set_spec_scm_selected()` sets how the table of an SCM spec shows the
+#' candidate each round selected: marked with a Round Result column, with
+#' its row in bold, or alone, as the path the process took. It builds the
+#' spec's [ScmSelectedOptions()]; a setting not given keeps its value.
+#' Operates only on a spec from [scm_summary_spec()].
+#'
+#' @param spec A spec from [scm_summary_spec()].
+#' @param ... Not used.
+#' @param column Logical. If TRUE, the table has a Round Result column,
+#'   which reads "added" or "dropped" on the selected candidate's row.
+#' @param bold Logical. If TRUE, the selected candidate's row is rendered in
+#'   bold.
+#' @param path Logical. If TRUE, the table shows only the path the process
+#'   took: the selected candidates and no others, with the rounds grouped
+#'   by direction.
+#' @return Modified spec.
+#' @seealso [ScmSelectedOptions()], [scm_summary_spec()].
+#' @export
+#' @examples
+#' spec <- scm_summary_spec() |>
+#'   set_spec_scm_selected(column = TRUE, bold = TRUE)
+#' # Only the path the process took
+#' spec <- scm_summary_spec() |>
+#'   set_spec_scm_selected(path = TRUE)
+set_spec_scm_selected <- function(
+  spec,
+  ...,
+  column = NULL,
+  bold = NULL,
+  path = NULL
+) {
+  if (!is_scm_summary_spec(spec)) {
+    rlang::abort("`spec` must be a spec from `scm_summary_spec()`.")
+  }
+  rlang::check_dots_empty()
+  selected_args <- list(
+    column = spec@selected@column,
+    bold = spec@selected@bold,
+    path = spec@selected@path
+  )
+  if (!is.null(column)) {
+    selected_args$column <- column
+  }
+  if (!is.null(bold)) {
+    selected_args$bold <- bold
+  }
+  if (!is.null(path)) {
+    selected_args$path <- path
+  }
+  spec@selected <- do.call(ScmSelectedOptions, selected_args)
+  spec
 }
 
 # ------------------------------------------------------------------------------

@@ -103,6 +103,33 @@ test_that("ScmSelectedOptions() holds how the selected candidate is marked", {
   expect_error(ScmSelectedOptions(column_label = "Step"), "unused argument")
 })
 
+test_that("set_spec_scm_selected() sets the selected options of an SCM spec", {
+  spec <- scm_summary_spec() |>
+    set_spec_scm_selected(column = TRUE, bold = TRUE)
+  expect_true(is_scm_summary_spec(spec))
+  expect_true(spec@selected@column)
+  expect_true(spec@selected@bold)
+  expect_false(spec@selected@path)
+
+  # A setting not given keeps its value.
+  spec <- set_spec_scm_selected(spec, path = TRUE, bold = FALSE)
+  expect_true(spec@selected@column)
+  expect_false(spec@selected@bold)
+  expect_true(spec@selected@path)
+  expect_identical(set_spec_scm_selected(spec), spec)
+
+  # It is the same spec as the one made in one call.
+  expect_equal(
+    scm_summary_spec() |> set_spec_scm_selected(path = TRUE),
+    scm_summary_spec(selected = ScmSelectedOptions(path = TRUE))
+  )
+
+  expect_error(set_spec_scm_selected(SummarySpec(), column = TRUE), "scm_summary_spec")
+  expect_error(set_spec_scm_selected(TableSpec(), column = TRUE), "scm_summary_spec")
+  expect_error(set_spec_scm_selected(scm_summary_spec(), column = NA), "@column must be TRUE or FALSE")
+  expect_error(set_spec_scm_selected(scm_summary_spec(), TRUE))
+})
+
 test_that("an SCM spec sections the rounds of the lineage it is applied to", {
   tree <- pharos_tagged_lineage()
   spec <- scm_spec_sections(scm_summary_spec(), tree)

@@ -153,7 +153,8 @@ Functions for comparing models:
 A run summary table of an SCM process, from the lineage \code{hyperion::get_scm_lineage()} builds:
 \itemize{
 \item \code{\link[=scm_summary_spec]{scm_summary_spec()}} - SummarySpec preset with a section per round
-\item \link{ScmSelectedOptions} - How the table marks the candidate each round selected
+\item \code{\link[=set_spec_scm_selected]{set_spec_scm_selected()}} - Set how the table shows the candidate each round selected
+\item \link{ScmSelectedOptions} - The options that modifier builds
 }
 }
 

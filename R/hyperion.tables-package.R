@@ -123,7 +123,8 @@
 #' A run summary table of an SCM process, from the lineage `hyperion::get_scm_lineage()` builds:
 #' \itemize{
 #'   \item [scm_summary_spec()] - SummarySpec preset with a section per round
-#'   \item [ScmSelectedOptions] - How the table marks the candidate each round selected
+#'   \item [set_spec_scm_selected()] - Set how the table shows the candidate each round selected
+#'   \item [ScmSelectedOptions] - The options that modifier builds
 #' }
 #'
 ## usethis namespace: start
