@@ -52,10 +52,6 @@
 #'   \item [get_spec_transforms()] - Get display transforms
 #'   \item [get_spec_variability()] - Get variability rules
 #'   \item [get_spec_time_format()] - Get time format from a SummarySpec
-#'   \item [get_spec_bold_rows()] - Get bold row rules from a SummarySpec
-#'   \item [get_spec_description_transform()] - Get the description transform
-#'   \item [get_spec_computed_columns()] - Get the computed columns
-#'   \item [get_spec_model_filter()] - Get model filter rules from a SummarySpec
 #' }
 #'
 #' @section Spec Modifiers - Columns:
@@ -97,10 +93,6 @@
 #'   \item [set_spec_tag_filter()] - Filter by model tags
 #'   \item [set_spec_remove_unrun()] - Control unrun model filtering
 #'   \item [set_spec_summary_filter()] - Set summary filter rules
-#'   \item [set_spec_bold_rows()] - Bold the rows matching rules
-#'   \item [set_spec_description_transform()] - Rewrite the Description column
-#'   \item [set_spec_computed_column()] - Add a column computed by rules
-#'   \item [set_spec_model_filter()] - Keep the models matching rules
 #' }
 #'
 #' @section Rule Builders:
@@ -131,6 +123,7 @@
 #' A run summary table of an SCM process, from the lineage `hyperion::get_scm_lineage()` builds:
 #' \itemize{
 #'   \item [scm_summary_spec()] - SummarySpec preset with a section per round
+#'   \item [ScmSelectedOptions] - How the table marks the candidate each round selected
 #' }
 #'
 ## usethis namespace: start

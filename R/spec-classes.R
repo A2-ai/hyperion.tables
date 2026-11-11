@@ -495,24 +495,6 @@ TableSpec <- S7::new_class(
 #'   from n_sigfig.
 #' @param pvalue_threshold Numeric or NULL. If set, p-values below this threshold
 #'   are displayed as "< threshold" (e.g., "< 0.05"). Default is NULL (no threshold).
-#' @param pvalue_direction Which nested comparisons get a likelihood-ratio test
-#'   p-value. "forward" (default) tests a model only when it has more
-#'   parameters than the model it is based on. "both" also tests a model with
-#'   fewer parameters, with its parent as the fuller model, as in a backward
-#'   elimination step.
-#' @param bold_rows List of quosures, one per rule; a model whose row
-#'   satisfies any is rendered in bold. Usually set with
-#'   [set_spec_bold_rows()]. Default is an empty list.
-#' @param description_transform NULL (the default), or a function applied to
-#'   the description column, as a character vector, before the table is
-#'   built; one with a `tags` argument also gets the models' tags. Usually
-#'   set with [set_spec_description_transform()].
-#' @param computed_columns Named list of columns computed from each model's
-#'   row by rules, each `list(rules = <quosures of formulas>, label = )`.
-#'   Usually set with [set_spec_computed_column()]. Default is an empty list.
-#' @param model_filter List of quosures, one per rule; only a model whose row
-#'   satisfies every rule is kept. Usually set with
-#'   [set_spec_model_filter()]. Default is an empty list.
 #' @param footnote_order Character vector controlling the order of footnote sections,
 #'   or NULL to disable footnotes. Valid value for SummarySpec: "abbreviations".
 #'   Default is c("abbreviations").
@@ -546,26 +528,6 @@ SummarySpec <- S7::new_class(
       class = S7::class_character,
       default = "seconds"
     ),
-    pvalue_direction = S7::new_property(
-      class = S7::class_character,
-      default = "forward"
-    ),
-    bold_rows = S7::new_property(
-      class = S7::class_list,
-      default = list()
-    ),
-    description_transform = S7::new_property(
-      class = S7::class_function | NULL,
-      default = NULL
-    ),
-    computed_columns = S7::new_property(
-      class = S7::class_list,
-      default = list()
-    ),
-    model_filter = S7::new_property(
-      class = S7::class_list,
-      default = list()
-    ),
     default_columns = S7::new_property(
       class = S7::class_character,
       getter = function(self) {
@@ -586,19 +548,7 @@ SummarySpec <- S7::new_class(
     )
   ),
   validator = function(self) {
-    bold_msg <- validate_summary_row_rules(self@bold_rows, "@bold_rows")
-    if (!is.null(bold_msg)) {
-      return(bold_msg)
-    }
-    filter_msg <- validate_summary_row_rules(self@model_filter, "@model_filter")
-    if (!is.null(filter_msg)) {
-      return(filter_msg)
-    }
-    computed_msg <- validate_computed_columns(self@computed_columns)
-    if (!is.null(computed_msg)) {
-      return(computed_msg)
-    }
-    valid_fields <- c(summary_spec_valid_columns(), names(self@computed_columns))
+    valid_fields <- summary_spec_valid_columns()
     columns_msg <- validate_columns_in_set(
       self@columns,
       valid_fields,
@@ -630,16 +580,6 @@ SummarySpec <- S7::new_class(
       length(self@remove_unrun_models) != 1 || is.na(self@remove_unrun_models)
     ) {
       return("@remove_unrun_models must be TRUE or FALSE")
-    }
-
-    if (
-      length(self@pvalue_direction) != 1 ||
-        !self@pvalue_direction %in% c("forward", "both")
-    ) {
-      return(sprintf(
-        "@pvalue_direction must be 'forward' or 'both'. Got: '%s'",
-        paste(self@pvalue_direction, collapse = ", ")
-      ))
     }
 
     if (
@@ -677,11 +617,6 @@ SummarySpec <- S7::new_class(
     time_format = "seconds",
     pvalue_scientific = FALSE,
     pvalue_threshold = NULL,
-    pvalue_direction = "forward",
-    bold_rows = list(),
-    description_transform = NULL,
-    computed_columns = list(),
-    model_filter = list(),
     footnote_order = "abbreviations"
   ) {
     S7::new_object(
@@ -702,11 +637,6 @@ SummarySpec <- S7::new_class(
       tag_exclude = tag_exclude,
       pvalue_scientific = pvalue_scientific,
       pvalue_threshold = pvalue_threshold,
-      pvalue_direction = pvalue_direction,
-      bold_rows = bold_rows,
-      description_transform = description_transform,
-      computed_columns = computed_columns,
-      model_filter = model_filter,
       footnote_order = footnote_order
     )
   }

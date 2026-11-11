@@ -5,20 +5,14 @@
 \title{Pre-configured SummarySpec for a stepwise covariate modeling process}
 \usage{
 scm_summary_spec(
-  lineage,
   title = NULL,
   description = c("sparse", "verbose"),
-  selected = "none",
+  selected = ScmSelectedOptions(),
+  path = FALSE,
   other_section_label = "Other"
 )
 }
 \arguments{
-\item{lineage}{The \code{hyperion_nonmem_tree} holding the SCM fits:
-\code{hyperion::get_model_lineage()} of the project, which reads the metadata
-pharos wrote beside each fit, or \code{hyperion::get_scm_lineage()} of the
-process, built from its record. A \code{hyperion_nonmem_scm} object or SCM
-config (\verb{<stem>scm.toml}) is passed to the latter.}
-
 \item{title}{Table title. \code{NULL} (the default) gives a table with no
 title; pass a string to set one.}
 
@@ -26,14 +20,12 @@ title; pass a string to set one.}
 \code{"sparse"} (the default), only what it added or dropped; or
 \code{"verbose"}, what it added or dropped and the covariates its model has.}
 
-\item{selected}{How the table shows the candidate each round kept:
-\code{"none"} (the default), every candidate with the kept one unmarked;
-\code{"column"}, every candidate with a Round Result column reading "added"
-or "dropped" on the kept one's row; \code{"bold"}, every candidate with the
-kept one's row in bold; or \code{"path"}, the kept candidates alone,
-unmarked, with the rounds grouped by direction. \code{"column"} and \code{"bold"}
-can be given together, as \code{c("column", "bold")}; the others are given
-alone.}
+\item{selected}{A \code{\link[=ScmSelectedOptions]{ScmSelectedOptions()}} object: how the table marks the
+candidate each round selected. The default marks nothing.}
+
+\item{path}{Logical. If TRUE, show only the path the process took: the
+selected candidates, with the rounds grouped by direction. Default
+\code{FALSE} shows every candidate.}
 
 \item{other_section_label}{Section label for a model matching no round.}
 }
@@ -45,102 +37,93 @@ A \link{SummarySpec} object.
 an SCM process: the fits tagged \code{"scm"}, in one section per round, from
 the round tag pharos writes to each fit's metadata (\code{"base"} or \code{"full"},
 \code{"forward_round1"}, ..., \code{"working_full"}, \code{"reduced_covariate"}), in the
-order the process ran them. It composes the usual spec settings and
-nothing else:
-it is what you would write by hand with \code{\link[=set_spec_sections]{set_spec_sections()}}, as in
-\code{set_spec_sections("base" \%in\% tags ~ "Base model", "forward_round1" \%in\% tags ~ "Forward round 1", ...)}, for however many rounds the process ran.
+order the process ran them. It does not need the lineage: the sections
+are worked out from the rounds of the lineage \code{\link[=apply_summary_spec]{apply_summary_spec()}} is
+given, as the rules you would write by hand with \code{\link[=set_spec_sections]{set_spec_sections()}},
+\code{"base" \%in\% tags ~ "Base model"}, \code{"forward_round1" \%in\% tags ~ "Forward round 1"}, ..., for however many rounds the process ran.
 }
 \details{
 Every fit is based on the model its round tested against, so dOFV is the
 round's own; the working full and reduced covariate models are based on
 the reference fit, so theirs is against it. The columns are Reference,
-Description, OFV, dOFV and p-value. \code{pvalue_direction} is \code{"both"}, so
-the backward steps are tested too, with the round's reference as the
-fuller model. The table has no footnotes. Customize further with the
-\verb{set_spec_*()} modifiers.
-
-\code{selected} picks how the table shows the candidate each round kept, the
-fit tagged \code{"selected"}. \code{"column"} and \code{"bold"} mark it among the other
-candidates and can be given together, \code{selected = c("column", "bold")};
-\code{"none"} and \code{"path"} are each given alone:
-\itemize{
-\item \code{"none"} (the default) does not mark it: every candidate shows
-alike, with no Round Result column and no bold row.
-\item \code{"column"} adds a Round Result column, which reads "added" or
-"dropped" on the kept candidate's row and is empty elsewhere.
-\item \code{"bold"} renders the kept candidate's row in bold.
-\item \code{"path"} shows the path the process took and no other
-candidate, so there is nothing to mark and the table has no Round
-Result column and no bold row. It keeps the models that mattered: the base (or full) model, the working
-full and reduced covariate models, and in each round the candidate
-it kept, so a round that kept none shows no row. Since each round
-then has at most one row, the rounds are grouped by direction
-instead of sectioned one by one: the reference model, then the
-forward steps under "Forward", the working full model, the backward
-steps under "Backward", and the reduced covariate model. When no
-backward round dropped anything, the working full model says
-nothing the reduced covariate model does not, so it is left out too.
-}
+Description, OFV, dOFV and p-value. The backward steps get a p-value
+too, with the round's reference as the fuller model. The table has no
+footnotes. The spec is a \link{SummarySpec}, so the \verb{set_spec_*()} modifiers
+customize it further.
 
 \code{description} picks how much the Description column says about each
 fit:
 \itemize{
-\item \code{"sparse"} (the default) shows only what the fit added or
-dropped: "add CRCL_CL".
-\item \code{"verbose"} shows what the fit added or dropped, then the
-covariates its model has: "add CRCL_CL; covariates: WT_CL, CRCL_CL".
+\item \code{"sparse"} (the default) shows the fit's description, which for
+an SCM fit is what it added or dropped: "add CRCL_CL".
+\item \code{"verbose"} adds the covariates its model has: "add CRCL_CL;
+covariates: WT_CL, CRCL_CL".
 }
 The base (or full), working full and reduced covariate models add or
 drop nothing and their section already names them, so their description
 never repeats the name: it is empty when sparse and "covariates: WT_CL,
 CRCL_CL" when verbose.
 
-Both parts come from the description the lineage gives each fit, which
-pharos and \code{hyperion::get_scm_lineage()} end with the covariates the
-model has, as in \code{"SCM forward_round2: add CRCL_CL (attempt 1); covariates: WT_CL, CRCL_CL"}. The round and attempt pharos writes around
-the step are left out, so the table reads the same from either lineage.
-A fit whose description has no covariates part shows its step alone.
+The covariates a model has are not in its description or its metadata.
+They come from the SCM process record, which
+\code{hyperion::get_scm_lineage()} puts on each fit of the lineage it builds.
+A lineage from \code{hyperion::get_model_lineage()} has none, so \code{"verbose"}
+shows what \code{"sparse"} does for it, with a warning.
 
-The section rules end with a catch-all, so rules appended with
-\code{\link[=set_spec_sections]{set_spec_sections()}} never apply; pass \code{overwrite = TRUE} to replace them.
+\code{selected}, a \code{\link[=ScmSelectedOptions]{ScmSelectedOptions()}}, picks how the table marks the
+candidate each round selected, the fit tagged \code{"selected"}: with a Round
+Result column reading "added" or "dropped", with its row in bold, with
+both, or (the default) not at all.
+
+\code{path = TRUE} shows the path the process took and no other candidate: the
+base (or full) model, the working full and reduced covariate models, and
+in each round the candidate it selected, so a round that selected none
+shows no row. Since each round then has at most one row, the rounds are
+grouped by direction instead of sectioned one by one: the reference
+model, then the forward steps under "Forward", the working full model,
+the backward steps under "Backward", and the reduced covariate model.
+When no backward round dropped anything, the working full model says
+nothing the reduced covariate model does not, so it is left out too.
+
+Section rules set on the spec with \code{\link[=set_spec_sections]{set_spec_sections()}} replace the ones
+it would work out.
 }
 \examples{
 \dontrun{
-# From the fits' metadata, as any other lineage
-lineage <- hyperion::get_model_lineage()
-lineage |>
-  apply_summary_spec(scm_summary_spec(lineage)) |>
-  make_summary_table()
-
-# From the process record
+# From the process record: descriptions and each model's covariates
 scm <- hyperion::read_scm("model/nonmem/scm/run001scm.toml")
 scm |>
   hyperion::get_scm_lineage() |>
-  apply_summary_spec(scm_summary_spec(scm, title = "Covariate search")) |>
+  apply_summary_spec(scm_summary_spec(title = "Covariate search")) |>
+  make_summary_table()
+
+# From the fits' metadata, as any other lineage
+hyperion::get_model_lineage() |>
+  apply_summary_spec(scm_summary_spec()) |>
   make_summary_table()
 
 # Describe each fit by what it added or dropped and its model's
 # covariates
-scm_summary_spec(scm, description = "verbose")
+scm_summary_spec(description = "verbose")
 
-# Mark the candidate each round kept: a Round Result column, its row in
-# bold, or both
-scm_summary_spec(scm, selected = "column")
-scm_summary_spec(scm, selected = "bold")
-scm_summary_spec(scm, selected = c("column", "bold"))
-# Show the path the process took: only the models that mattered, with no
-# other candidates and nothing marked
-scm_summary_spec(scm, selected = "path")
+# Mark the candidate each round selected: a Round Result column, its row
+# in bold, or both
+scm_summary_spec(selected = ScmSelectedOptions(column = TRUE))
+scm_summary_spec(selected = ScmSelectedOptions(bold = TRUE))
+scm_summary_spec(selected = ScmSelectedOptions(column = TRUE, bold = TRUE))
+
+# Show the path the process took: only the models that mattered
+scm_summary_spec(path = TRUE)
 
 # Customize further with modifiers
-spec <- scm_summary_spec(scm) |>
+spec <- scm_summary_spec() |>
   set_spec_pvalue(scientific = TRUE)
 # Or without the p-value
-spec <- scm_summary_spec(scm) |>
+spec <- scm_summary_spec() |>
   set_spec_columns("based_on", "description", "ofv", "dofv")
 }
 }
 \seealso{
-\link{SummarySpec}, \code{\link[=set_spec_sections]{set_spec_sections()}}, \code{\link[=apply_summary_spec]{apply_summary_spec()}},
+\code{\link[=ScmSelectedOptions]{ScmSelectedOptions()}}, \link{SummarySpec}, \code{\link[=apply_summary_spec]{apply_summary_spec()}},
 \code{\link[=make_summary_table]{make_summary_table()}}.
 }

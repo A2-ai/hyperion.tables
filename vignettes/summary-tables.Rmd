@@ -133,16 +133,20 @@ from. pharos writes each fit's metadata with the reference model as its
 `hyperion::get_model_lineage()` includes the fits like any other models,
 and sections by round are ordinary section rules such as
 `"forward_round1" %in% tags ~ "Forward round 1"`. `scm_summary_spec()`
-writes those rules for however many rounds the process ran, keeps the fits
-tagged `"scm"`, and shows every candidate alike. Its `selected` argument
-picks how the candidate each round selected is shown: `"column"` adds a
-Round Result column reading "added" or "dropped" on its row, `"bold"`
-renders its row in bold (give both as `c("column", "bold")`), and
-`"path"` leaves out the candidates the rounds did not keep, grouping the
-steps that remain under "Forward" and "Backward". Its Description column
-shows what each fit added or dropped; `description = "verbose"` adds the
-covariates its model has. `hyperion::get_scm_lineage()` builds the same lineage from the
-process record, which is what this example uses.
+needs no lineage: when `apply_summary_spec()` gives it one, it writes those
+rules for however many rounds the process ran. It keeps the fits tagged
+`"scm"` and shows every candidate alike.
+
+- `selected` takes a `ScmSelectedOptions()`, which picks how the candidate
+  each round selected is marked: `column = TRUE` adds a Round Result column
+  reading "added" or "dropped" on its row, and `bold = TRUE` renders its
+  row in bold.
+- `path = TRUE` leaves out the candidates the rounds did not select,
+  grouping the steps that remain under "Forward" and "Backward".
+- The Description column shows what each fit added or dropped;
+  `description = "verbose"` adds the covariates its model has. Those come
+  from the process record, so they need the lineage
+  `hyperion::get_scm_lineage()` builds, which is what this example uses.
 
 ```{r scm-summary}
 scm_root <- system.file(package = "hyperion")
@@ -151,7 +155,7 @@ options(hyperion.config_dir = scm_root)
 
 scm |>
   hyperion::get_scm_lineage() |>
-  apply_summary_spec(scm_summary_spec(scm, title = "Covariate search")) |>
+  apply_summary_spec(scm_summary_spec(title = "Covariate search")) |>
   make_summary_table() |>
   render_to_image()
 ```

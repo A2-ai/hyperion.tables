@@ -76,6 +76,9 @@ apply_summary_spec <- function(tree, spec) {
     rlang::abort("tree must contain at least one model.")
   }
 
+  # An SCM spec sections the rounds this lineage has
+  spec <- scm_spec_sections(spec, tree)
+
   metadata_df <- build_metadata_df(tree) |>
     filter_metadata(spec)
 
@@ -91,39 +94,8 @@ apply_summary_spec <- function(tree, spec) {
   needs_dofv <- taken$value
   df <- taken$df
 
-  # The spec's description transform, on the text as the lineage gave it; one
-  # with a `tags` argument also gets each model's tags
-  if (!is.null(spec@description_transform) && "description" %in% names(df)) {
-    transform <- spec@description_transform
-    transformed <- if ("tags" %in% names(formals(transform))) {
-      transform(df$description, tags = unclass(df$tags))
-    } else {
-      transform(df$description)
-    }
-    if (!is.character(transformed) || length(transformed) != nrow(df)) {
-      rlang::abort(
-        "the description transform must return a character vector, one element per model."
-      )
-    }
-    df$description <- transformed
-  }
-
-  # The spec's computed columns, from each model's row with `tags` still there
-  for (name in names(spec@computed_columns)) {
-    df[[name]] <- build_summary_section(
-      df,
-      spec@computed_columns[[name]]$rules,
-      what = sprintf("'%s' column", name)
-    )
-  }
-
-  # Keep the models the spec's model filter rules all hold for
-  if (length(spec@model_filter) > 0) {
-    df <- df[eval_summary_row_rules(df, spec@model_filter, all = TRUE), , drop = FALSE]
-    if (nrow(df) == 0) {
-      rlang::abort("No models satisfy the spec's model filter rules.")
-    }
-  }
+  # An SCM spec's own rows: descriptions, Round Result, bold flag, path
+  df <- scm_summary_rows(df, spec, tree)
 
   # Evaluate section rules (before column trim so rule-referenced cols available)
   has_section_config <- length(spec@sections@rules) > 0 ||
@@ -138,11 +110,6 @@ apply_summary_spec <- function(tree, spec) {
     df$section <- as.character(df$section)
 
     df <- filter_sections(df, spec)
-  }
-
-  # Which rows render in bold, while `tags` is still there to ask about
-  if (length(spec@bold_rows) > 0) {
-    df$.bold <- eval_summary_row_rules(df, spec@bold_rows)
   }
 
   # Drop internal tags column
@@ -392,8 +359,9 @@ select_output_columns <- function(df, spec, needs_dofv) {
       col_order <- append(col_order, "df", after = pvalue_idx)
     }
   }
-  # Preserve section column for grouped rendering, and the bold flag
-  for (col in c("section", ".bold")) {
+  # Preserve section column for grouped rendering, and an SCM spec's Round
+  # Result column and bold flag
+  for (col in c("round_result", "section", ".bold")) {
     if (col %in% names(df) && !col %in% col_order) {
       col_order <- c(col_order, col)
     }
@@ -409,10 +377,9 @@ select_output_columns <- function(df, spec, needs_dofv) {
 #'
 #' @param df Data frame with all columns available for rule evaluation
 #' @param rules List of quosures containing formulas
-#' @param what What the rules give, for the multi-match warning
 #' @return Character vector of section labels (NA for unmatched)
 #' @noRd
-build_summary_section <- function(df, rules, what = "section") {
+build_summary_section <- function(df, rules) {
   if (length(rules) == 0) {
     return(rep(NA_character_, nrow(df)))
   }
@@ -480,30 +447,12 @@ build_summary_section <- function(df, rules, what = "section") {
       character(1)
     )
     rlang::warn(c(
-      sprintf("Models matched multiple %s rules; first match used:", what),
+      "Models matched multiple section rules; first match used:",
       stats::setNames(msgs, rep("*", length(msgs)))
     ))
   }
 
   result
-}
-
-#' TRUE for each row satisfying any of the rules, or every rule with `all`
-#'
-#' A rule is evaluated against one row at a time, with list columns such as
-#' `tags` unwrapped to their element, the way section rules see a row.
-#' @noRd
-eval_summary_row_rules <- function(df, rules, all = FALSE) {
-  combine <- if (all) base::all else base::any
-  vapply(seq_len(nrow(df)), function(i) {
-    row_data <- lapply(df, function(x) x[[i]])
-    names(row_data) <- names(df)
-    combine(vapply(
-      rules,
-      function(rule) isTRUE(rlang::eval_tidy(rule, data = row_data)),
-      logical(1)
-    ))
-  }, logical(1))
 }
 
 #' Build summary data frame from loaded models
@@ -752,10 +701,10 @@ calculate_dofv <- function(df, spec) {
         df_val <- df_calc
         pvalue <- lrt_pvalue(-dofv, df_val)
       } else if (
-        !is.na(df_calc) && df_calc < 0 && spec@pvalue_direction == "both"
+        !is.na(df_calc) && df_calc < 0 && is_scm_summary_spec(spec)
       ) {
-        # The model drops parameters (an SCM backward step): the parent is
-        # the fuller model, so its OFV drop is the statistic.
+        # The model drops parameters, which an SCM backward step tests: the
+        # parent is the fuller model, so its OFV drop is the statistic.
         df_val <- -df_calc
         pvalue <- lrt_pvalue(dofv, df_val)
       }
@@ -965,9 +914,7 @@ hyperion_summary_table <- function(data, spec) {
   # Build label map
   label_map <- build_summary_label_map()
   label_map <- label_map[intersect(names(label_map), names(data))]
-  for (name in intersect(names(spec@computed_columns), names(data))) {
-    label_map[[name]] <- spec@computed_columns[[name]]$label
-  }
+  label_map <- scm_summary_labels(label_map, data, spec)
 
   # Add time format suffix
   time_suffix <- get_time_suffix(spec@time_format, data)
@@ -1013,7 +960,7 @@ hyperion_summary_table <- function(data, spec) {
     bold_locs <- c(bold_locs, "row_groups")
   }
 
-  # Rows the spec's bold rules picked; the flag itself is not shown
+  # Rows an SCM spec flagged as bold; the flag itself is not shown
   bold_rows <- integer(0)
   if (".bold" %in% names(data)) {
     bold_rows <- which(data$.bold)

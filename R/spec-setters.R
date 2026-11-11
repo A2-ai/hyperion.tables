@@ -201,21 +201,13 @@ set_spec_hide_empty <- function(spec, hide, ...) {
 #' @param threshold Numeric threshold below which p-values display as "< threshold",
 #'   or NULL to disable threshold display.
 #' @param scientific Logical. If TRUE, use scientific notation for p-values.
-#' @param direction SummarySpec only. Which nested comparisons get a
-#'   likelihood-ratio test p-value: "forward" tests a model only when it has
-#'   more parameters than the model it is based on; "both" also tests a model
-#'   with fewer parameters, with its parent as the fuller model.
 #' @return Modified spec.
 #' @seealso [get_spec_pvalue()].
 #' @export
 #' @examples
 #' spec <- TableSpec() |>
 #'   set_spec_pvalue(threshold = 0.001, scientific = TRUE)
-#'
-#' # Also test backward steps in a run summary
-#' summary_spec <- SummarySpec() |>
-#'   set_spec_pvalue(direction = "both")
-set_spec_pvalue <- function(spec, ..., threshold, scientific, direction) {
+set_spec_pvalue <- function(spec, ..., threshold, scientific) {
   if (!S7::S7_inherits(spec, BaseSpec)) {
     rlang::abort("`spec` must be a <TableSpec> or <SummarySpec> object.")
   }
@@ -224,12 +216,6 @@ set_spec_pvalue <- function(spec, ..., threshold, scientific, direction) {
   }
   if (!missing(scientific)) {
     spec@pvalue_scientific <- scientific
-  }
-  if (!missing(direction)) {
-    if (!S7::S7_inherits(spec, SummarySpec)) {
-      rlang::abort("`direction` applies to a <SummarySpec> only.")
-    }
-    spec@pvalue_direction <- direction
   }
   spec
 }
@@ -983,161 +969,3 @@ set_spec_summary_filter <- function(spec, ..., overwrite = FALSE) {
   }
   spec
 }
-
-#' Set bold row rules for a SummarySpec
-#'
-#' `set_spec_bold_rows()` renders in bold the row of every model satisfying
-#' any of the rules. A rule is evaluated against one model at a time, like
-#' a section rule, with the summary columns and `tags`, the model's tags as
-#' a character vector. Operates on `SummarySpec` only.
-#'
-#' @param spec A SummarySpec object.
-#' @param ... Rule expressions, e.g. `"selected" %in% tags`.
-#' @param overwrite If FALSE (default), append to existing rules. If TRUE,
-#'   replace all existing rules.
-#' @return Modified spec.
-#' @seealso [get_spec_bold_rows()], [set_spec_sections()].
-#' @export
-#' @examples
-#' spec <- SummarySpec() |>
-#'   set_spec_bold_rows("final" %in% tags)
-set_spec_bold_rows <- function(spec, ..., overwrite = FALSE) {
-  if (!S7::S7_inherits(spec, SummarySpec)) {
-    rlang::abort("`spec` must be a <SummarySpec> object.")
-  }
-  new_rules <- capture_unnamed_dots(...)
-  if (overwrite) {
-    spec@bold_rows <- new_rules
-  } else {
-    spec@bold_rows <- c(spec@bold_rows, new_rules)
-  }
-  spec
-}
-
-#' Set a description transform for a SummarySpec
-#'
-#' `set_spec_description_transform()` rewrites the Description column with
-#' a function of the descriptions the lineage gave, as a character vector,
-#' before the table is built. A function with a `tags` argument is also
-#' given the models' tags, a list with one character vector per model, so
-#' it can treat models differently by tag. Operates on `SummarySpec` only.
-#'
-#' @param spec A SummarySpec object.
-#' @param transform A function from a character vector to one of the same
-#'   length, optionally with a `tags` argument, or NULL to show the
-#'   descriptions as they are.
-#' @return Modified spec.
-#' @seealso [get_spec_description_transform()].
-#' @export
-#' @examples
-#' spec <- SummarySpec() |>
-#'   set_spec_description_transform(toupper)
-#' # Blank the description of the models tagged "base"
-#' spec <- SummarySpec() |>
-#'   set_spec_description_transform(function(x, tags) {
-#'     x[vapply(tags, function(t) "base" %in% t, logical(1))] <- ""
-#'     x
-#'   })
-set_spec_description_transform <- function(spec, transform) {
-  if (!S7::S7_inherits(spec, SummarySpec)) {
-    rlang::abort("`spec` must be a <SummarySpec> object.")
-  }
-  if (!is.null(transform) && !is.function(transform)) {
-    rlang::abort("`transform` must be a function of a character vector, or NULL.")
-  }
-  spec@description_transform <- transform
-  spec
-}
-
-#' Add a column computed from each model's row
-#'
-#' `set_spec_computed_column()` adds a column to a `SummarySpec` table whose
-#' value for each model comes from rules, formulas like
-#' `"selected" %in% tags ~ "added"`, evaluated against the model's row one
-#' model at a time, the way section rules are (see [set_spec_sections()]):
-#' the first rule whose left-hand side holds gives the value, and a model
-#' matching none has an empty cell. A rule sees the model's `tags`,
-#' `based_on` and `description`, and the summary columns the spec computes,
-#' such as `ofv` and `dofv`.
-#'
-#' The column is shown once it is selected, with [set_spec_columns()] or
-#' [add_spec_columns()] after this call, under `label` as its heading.
-#' Setting a column again replaces its rules and label.
-#'
-#' @param spec A SummarySpec object.
-#' @param name The column's name, a string, as [set_spec_columns()] takes it.
-#'   It may not be one of the summary's own columns.
-#' @param ... Rules, as formulas `condition ~ "value"`.
-#' @param label The column's heading. Defaults to `name`.
-#' @return Modified spec.
-#' @seealso [get_spec_computed_columns()], [set_spec_sections()],
-#'   [set_spec_bold_rows()].
-#' @export
-#' @examples
-#' spec <- SummarySpec() |>
-#'   set_spec_computed_column(
-#'     "round_result",
-#'     "selected" %in% tags && any(grepl("^forward_", tags)) ~ "added",
-#'     "selected" %in% tags && any(grepl("^backward_", tags)) ~ "dropped",
-#'     label = "Round Result"
-#'   ) |>
-#'   add_spec_columns("round_result")
-set_spec_computed_column <- function(spec, name, ..., label = name) {
-  if (!S7::S7_inherits(spec, SummarySpec)) {
-    rlang::abort("`spec` must be a <SummarySpec> object.")
-  }
-  if (!rlang::is_string(name) || !nzchar(name)) {
-    rlang::abort("`name` must be a single, non-empty character string.")
-  }
-  if (!rlang::is_string(label)) {
-    rlang::abort("`label` must be a single character string.")
-  }
-  rules <- capture_unnamed_dots(...)
-  if (length(rules) == 0) {
-    rlang::abort("`set_spec_computed_column()` needs at least one rule.")
-  }
-  columns <- spec@computed_columns
-  columns[[name]] <- list(rules = rules, label = label)
-  spec@computed_columns <- columns
-  spec
-}
-
-#' Keep only the models satisfying rules
-#'
-#' `set_spec_model_filter()` keeps in a `SummarySpec` table only the models
-#' whose row satisfies every rule. A rule is evaluated against one model at
-#' a time, like a section rule (see [set_spec_sections()]), so it sees the
-#' model's `tags`, `based_on` and `description` as well as the summary
-#' columns the spec computes, e.g. `"selected" %in% tags`. The models are
-#' dropped after dOFV is computed, so a kept model's dOFV still refers to
-#' the model it is based on.
-#'
-#' [set_spec_summary_filter()] is the other filter: its expressions are
-#' evaluated over the whole table at once, like [dplyr::filter()], so
-#' `ofv == min(ofv)` works there, but they see the output columns only.
-#'
-#' @param spec A SummarySpec object.
-#' @param ... Rules, as expressions evaluated against a model's row.
-#' @param overwrite If FALSE (default), append to existing rules.
-#'   If TRUE, replace all existing rules.
-#' @return Modified spec.
-#' @seealso [get_spec_model_filter()], [set_spec_summary_filter()],
-#'   [set_spec_tag_filter()].
-#' @export
-#' @examples
-#' spec <- SummarySpec() |>
-#'   set_spec_model_filter("selected" %in% tags || "reduced_covariate" %in% tags)
-set_spec_model_filter <- function(spec, ..., overwrite = FALSE) {
-  if (!S7::S7_inherits(spec, SummarySpec)) {
-    rlang::abort("`spec` must be a <SummarySpec> object.")
-  }
-  new_rules <- capture_unnamed_dots(...)
-  if (overwrite) {
-    spec@model_filter <- new_rules
-  } else {
-    spec@model_filter <- c(spec@model_filter, new_rules)
-  }
-  spec
-}
-
-

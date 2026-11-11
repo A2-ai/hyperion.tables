@@ -118,8 +118,7 @@ get_spec_hide_empty <- function(spec, ...) {
 #'
 #' @param spec A TableSpec or SummarySpec object.
 #' @param ... Not used.
-#' @return A named list with elements `threshold` and `scientific`, plus
-#'   `direction` for a SummarySpec.
+#' @return A named list with elements `threshold` and `scientific`.
 #' @seealso [set_spec_pvalue()].
 #' @export
 #' @examples
@@ -129,14 +128,10 @@ get_spec_pvalue <- function(spec, ...) {
   if (!S7::S7_inherits(spec, BaseSpec)) {
     rlang::abort("`spec` must be a <TableSpec> or <SummarySpec> object.")
   }
-  options <- list(
+  list(
     threshold = spec@pvalue_threshold,
     scientific = spec@pvalue_scientific
   )
-  if (S7::S7_inherits(spec, SummarySpec)) {
-    options$direction <- spec@pvalue_direction
-  }
-  options
 }
 
 #' Get footnote order from a spec
@@ -426,87 +421,6 @@ get_spec_summary_filter <- function(spec, ...) {
     rlang::abort("`spec` must be a <SummarySpec> object.")
   }
   spec@summary_filter
-}
-
-#' Get bold row rules from a SummarySpec
-#'
-#' `get_spec_bold_rows()` returns the rules whose models render in bold, as
-#' a list of quosures.
-#'
-#' @param spec A SummarySpec object.
-#' @param ... Not used.
-#' @return List of quosures.
-#' @seealso [set_spec_bold_rows()].
-#' @export
-#' @examples
-#' spec <- SummarySpec() |>
-#'   set_spec_bold_rows("final" %in% tags)
-#' get_spec_bold_rows(spec)
-get_spec_bold_rows <- function(spec, ...) {
-  if (!S7::S7_inherits(spec, SummarySpec)) {
-    rlang::abort("`spec` must be a <SummarySpec> object.")
-  }
-  spec@bold_rows
-}
-
-#' Get the description transform from a SummarySpec
-#'
-#' `get_spec_description_transform()` returns the function applied to the
-#' Description column, or NULL when descriptions show as they are.
-#'
-#' @param spec A SummarySpec object.
-#' @param ... Not used.
-#' @return A function or NULL.
-#' @seealso [set_spec_description_transform()].
-#' @export
-#' @examples
-#' get_spec_description_transform(SummarySpec())
-get_spec_description_transform <- function(spec, ...) {
-  if (!S7::S7_inherits(spec, SummarySpec)) {
-    rlang::abort("`spec` must be a <SummarySpec> object.")
-  }
-  spec@description_transform
-}
-
-#' Get the computed columns of a SummarySpec
-#'
-#' `get_spec_computed_columns()` returns the columns
-#' [set_spec_computed_column()] added, as a named list of
-#' `list(rules = , label = )`.
-#'
-#' @param spec A SummarySpec object.
-#' @param ... Not used.
-#' @return A named list.
-#' @seealso [set_spec_computed_column()].
-#' @export
-#' @examples
-#' get_spec_computed_columns(SummarySpec())
-get_spec_computed_columns <- function(spec, ...) {
-  if (!S7::S7_inherits(spec, SummarySpec)) {
-    rlang::abort("`spec` must be a <SummarySpec> object.")
-  }
-  spec@computed_columns
-}
-
-#' Get the model filter rules of a SummarySpec
-#'
-#' `get_spec_model_filter()` returns the rules a model must satisfy to be
-#' kept, as a list of quosures.
-#'
-#' @param spec A SummarySpec object.
-#' @param ... Not used.
-#' @return List of quosures.
-#' @seealso [set_spec_model_filter()].
-#' @export
-#' @examples
-#' spec <- SummarySpec() |>
-#'   set_spec_model_filter("final" %in% tags)
-#' get_spec_model_filter(spec)
-get_spec_model_filter <- function(spec, ...) {
-  if (!S7::S7_inherits(spec, SummarySpec)) {
-    rlang::abort("`spec` must be a <SummarySpec> object.")
-  }
-  spec@model_filter
 }
 
 #' Get time format from a SummarySpec

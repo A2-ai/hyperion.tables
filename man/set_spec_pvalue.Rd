@@ -4,7 +4,7 @@
 \alias{set_spec_pvalue}
 \title{Set p-value formatting for a spec}
 \usage{
-set_spec_pvalue(spec, ..., threshold, scientific, direction)
+set_spec_pvalue(spec, ..., threshold, scientific)
 }
 \arguments{
 \item{spec}{A TableSpec or SummarySpec object.}
@@ -15,11 +15,6 @@ set_spec_pvalue(spec, ..., threshold, scientific, direction)
 or NULL to disable threshold display.}
 
 \item{scientific}{Logical. If TRUE, use scientific notation for p-values.}
-
-\item{direction}{SummarySpec only. Which nested comparisons get a
-likelihood-ratio test p-value: "forward" tests a model only when it has
-more parameters than the model it is based on; "both" also tests a model
-with fewer parameters, with its parent as the fuller model.}
 }
 \value{
 Modified spec.
@@ -30,10 +25,6 @@ Modified spec.
 \examples{
 spec <- TableSpec() |>
   set_spec_pvalue(threshold = 0.001, scientific = TRUE)
-
-# Also test backward steps in a run summary
-summary_spec <- SummarySpec() |>
-  set_spec_pvalue(direction = "both")
 }
 \seealso{
 \code{\link[=get_spec_pvalue]{get_spec_pvalue()}}.

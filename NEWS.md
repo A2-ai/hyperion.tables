@@ -2,60 +2,40 @@
 
 ## New features
 
-- `scm_summary_spec()` returns a `SummarySpec` preset for a stepwise
-  covariate modeling process, composed of the usual spec settings: the fits
-  tagged `"scm"`, in a section per round from the round tag pharos writes to
-  each fit's metadata (`"base"`, `"forward_round1"`, ...,
-  `"reduced_covariate"`), in the order the process ran them, with Reference, Description, OFV, dOFV and
-  p-value (for the backward steps too). Its `selected` argument picks how
-  the table shows the candidate each round selected: `"none"` (the
-  default) leaves it unmarked, `"column"` adds a Round Result column
-  reading "added" or "dropped" on its row, `"bold"` renders its row in
-  bold (the two can be given together, `selected = c("column", "bold")`),
-  and `"path"` keeps only the base, working full and reduced
-  covariate models and each round's selected candidate, unmarked, with the
-  rounds grouped into "Forward" and "Backward" sections, and leaves out the
-  working full model when no backward round dropped anything. The fit
-  tagged `"working_full"` is sectioned as "Working full model" and the
-  one tagged `"reduced_covariate"` as "Reduced covariate model". Its
-  `description` argument picks how much the Description column says about
-  each fit: `"sparse"` (the default), only what it added or dropped ("add
-  CRCL_CL"); or `"verbose"`, what it added or dropped and the covariates
-  its model has ("add CRCL_CL; covariates: WT_CL, CRCL_CL"). The base,
-  working full and reduced covariate models do not repeat their section's
-  name there: they show nothing when sparse and their covariates when
-  verbose. It takes the lineage from
-  `hyperion::get_model_lineage()` or `hyperion::get_scm_lineage()`.
-- `set_spec_computed_column()` adds a column to a `SummarySpec` table whose
-  value per model comes from rules like section rules, e.g. `"selected"
-  %in% tags ~ "added"`, under a label of its own; `get_spec_computed_columns()`
-  reads them.
-- `set_spec_model_filter()` keeps in a `SummarySpec` table only the models
-  satisfying rules evaluated per model with its `tags`, after dOFV is
-  computed; `get_spec_model_filter()` reads them.
-- `set_spec_description_transform()` rewrites a `SummarySpec` table's
-  Description column with a function of the descriptions the lineage gave,
-  which also gets the models' tags when it has a `tags` argument;
-  `get_spec_description_transform()` reads it.
-- `set_spec_bold_rows()` renders in bold the rows of a `SummarySpec` table
-  whose models satisfy a rule, evaluated like a section rule with the
-  model's `tags`, e.g. `"selected" %in% tags`; `get_spec_bold_rows()` reads
-  the rules. `HyperionTable` gains `bold_rows` for it.
-- `SummarySpec()` gains `pvalue_direction`, also set with
-  `set_spec_pvalue(direction = )`. The default, `"forward"`, keeps the
-  existing behavior: a p-value only for a model with more parameters than
-  its parent. `"both"` also tests a model with fewer parameters, with the
-  parent as the fuller model, as in an SCM backward step;
-  `scm_summary_spec()` sets it.
+- `scm_summary_spec()` returns a `SummarySpec` preset for the run summary
+  table of a stepwise covariate modeling process: the fits tagged `"scm"`,
+  in a section per round from the round tag pharos writes to each fit's
+  metadata (`"base"`, `"forward_round1"`, ..., `"working_full"`,
+  `"reduced_covariate"`), in the order the process ran them, with
+  Reference, Description, OFV, dOFV and p-value (for the backward steps
+  too). It takes no lineage: the sections are worked out from the lineage
+  `apply_summary_spec()` is given, `hyperion::get_scm_lineage()` or
+  `hyperion::get_model_lineage()`. Everything the table adds to a run
+  summary lives behind this preset; `SummarySpec()` and the `set_spec_*()`
+  modifiers are unchanged, and still customize the spec it returns.
+  - `description` picks how much the Description column says about each
+    fit: `"sparse"` (the default), what it added or dropped ("add
+    CRCL_CL"); or `"verbose"`, that and the covariates its model has ("add
+    CRCL_CL; covariates: WT_CL, CRCL_CL"). The covariates come from the SCM
+    process record, on the lineage `hyperion::get_scm_lineage()` builds.
+    The base, working full and reduced covariate models do not repeat their
+    section's name there: they show nothing when sparse and their
+    covariates when verbose.
+  - `selected` takes a `ScmSelectedOptions()`: how the table marks the
+    candidate each round selected, with a Round Result column reading
+    "added" or "dropped" (`column = TRUE`), with its row in bold (`bold =
+    TRUE`), with both, or (the default) not at all. `column_label` renames
+    the column.
+  - `path = TRUE` shows the path the process took: only the base, working
+    full and reduced covariate models and each round's selected candidate,
+    with the rounds grouped into "Forward" and "Backward" sections, leaving
+    out the working full model when no backward round dropped anything.
 
 ## Bug fixes
 
 - Summary tables key models by their path, not their file stem, so models
   with the same stem in different directories (an SCM process fits the same
   stem in several rounds) each get a row.
-- The gt dOFV column label is a plain "ΔOFV" rather than LaTeX, so it no
-  longer needs KaTeX or markdown rendering in the heading cell, which could
-  show a scroll bar in Quarto output. The flextable label is unchanged.
 
 # hyperion.tables 0.6.0
 

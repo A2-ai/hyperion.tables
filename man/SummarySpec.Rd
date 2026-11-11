@@ -21,11 +21,6 @@ SummarySpec(
   time_format = "seconds",
   pvalue_scientific = FALSE,
   pvalue_threshold = NULL,
-  pvalue_direction = "forward",
-  bold_rows = list(),
-  description_transform = NULL,
-  computed_columns = list(),
-  model_filter = list(),
   footnote_order = "abbreviations"
 )
 }
@@ -84,29 +79,6 @@ from n_sigfig.}
 
 \item{pvalue_threshold}{Numeric or NULL. If set, p-values below this threshold
 are displayed as "< threshold" (e.g., "< 0.05"). Default is NULL (no threshold).}
-
-\item{pvalue_direction}{Which nested comparisons get a likelihood-ratio test
-p-value. "forward" (default) tests a model only when it has more
-parameters than the model it is based on. "both" also tests a model with
-fewer parameters, with its parent as the fuller model, as in a backward
-elimination step.}
-
-\item{bold_rows}{List of quosures, one per rule; a model whose row
-satisfies any is rendered in bold. Usually set with
-\code{\link[=set_spec_bold_rows]{set_spec_bold_rows()}}. Default is an empty list.}
-
-\item{description_transform}{NULL (the default), or a function applied to
-the description column, as a character vector, before the table is
-built; one with a \code{tags} argument also gets the models' tags. Usually
-set with \code{\link[=set_spec_description_transform]{set_spec_description_transform()}}.}
-
-\item{computed_columns}{Named list of columns computed from each model's
-row by rules, each \verb{list(rules = <quosures of formulas>, label = )}.
-Usually set with \code{\link[=set_spec_computed_column]{set_spec_computed_column()}}. Default is an empty list.}
-
-\item{model_filter}{List of quosures, one per rule; only a model whose row
-satisfies every rule is kept. Usually set with
-\code{\link[=set_spec_model_filter]{set_spec_model_filter()}}. Default is an empty list.}
 
 \item{footnote_order}{Character vector controlling the order of footnote sections,
 or NULL to disable footnotes. Valid value for SummarySpec: "abbreviations".

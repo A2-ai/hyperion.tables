@@ -16,7 +16,8 @@ section_labels <- function(spec) {
 }
 
 # A lineage as hyperion::get_model_lineage() gives it, from the metadata
-# pharos writes beside each SCM fit.
+# pharos writes beside each SCM fit: each fit's description is its step, and
+# no node says which covariates its model has.
 scm_node <- function(path, based_on, description, tags) {
   list(
     name = path,
@@ -32,20 +33,76 @@ scm_node <- function(path, based_on, description, tags) {
 pharos_tagged_lineage <- function() {
   nodes <- list(
     scm_node("model/nonmem/run001.mod", NULL, "structural model", "structural"),
-    scm_node("scm/base/run001_base.mod", "model/nonmem/run001.mod", "SCM reference: fit base model (attempt 1)", c("scm", "base")),
-    scm_node("scm/forward_round1/run001_wt_cl.mod", "scm/base/run001_base.mod", "SCM forward_round1: add WT_CL (attempt 1)", c("scm", "forward_round1", "selected")),
-    scm_node("scm/forward_round1/run001_wt_v.mod", "scm/base/run001_base.mod", "SCM forward_round1: add WT_V (attempt 1)", c("scm", "forward_round1")),
-    scm_node("scm/forward_round2/run001_wt_v_try2.mod", "scm/forward_round1/run001_wt_cl.mod", "SCM forward_round2: add WT_V (attempt 2)", c("scm", "forward_round2", "retry")),
-    scm_node("scm/working_full/run001_scm_working_full.mod", "scm/forward_round1/run001_wt_cl.mod", "SCM working full model: retained WT_CL; cov step on", c("scm", "working_full")),
-    scm_node("scm/backward_round1/run001_wt_cl.mod", "scm/forward_round1/run001_wt_cl.mod", "SCM backward_round1: drop WT_CL (attempt 1)", c("scm", "backward_round1")),
-    scm_node("scm/reduced_covariate/run001_scm_reduced_covariate.mod", "scm/forward_round1/run001_wt_cl.mod", "SCM reduced covariate model: retained WT_CL; cov step on", c("scm", "reduced_covariate"))
+    scm_node("scm/base/run001_base.mod", "model/nonmem/run001.mod", "base model", c("scm", "base")),
+    scm_node("scm/forward_round1/run001_wt_cl.mod", "scm/base/run001_base.mod", "add WT_CL", c("scm", "forward_round1", "selected")),
+    scm_node("scm/forward_round1/run001_wt_v.mod", "scm/base/run001_base.mod", "add WT_V", c("scm", "forward_round1")),
+    scm_node("scm/forward_round2/run001_wt_v_try2.mod", "scm/forward_round1/run001_wt_cl.mod", "add WT_V", c("scm", "forward_round2", "retry")),
+    scm_node("scm/working_full/run001_scm_working_full.mod", "scm/forward_round1/run001_wt_cl.mod", "working full model", c("scm", "working_full")),
+    scm_node("scm/backward_round1/run001_wt_cl.mod", "scm/forward_round1/run001_wt_cl.mod", "drop WT_CL", c("scm", "backward_round1")),
+    scm_node("scm/reduced_covariate/run001_scm_reduced_covariate.mod", "scm/forward_round1/run001_wt_cl.mod", "reduced covariate model", c("scm", "reduced_covariate"))
   )
   structure(list(nodes = nodes), class = "hyperion_nonmem_tree")
 }
 
-test_that("scm_summary_spec() sections the rounds pharos tagged, in the order they ran", {
-  spec <- scm_summary_spec(pharos_tagged_lineage())
+test_that("scm_summary_spec() is a SummarySpec that needs no lineage", {
+  spec <- scm_summary_spec()
   expect_true(S7::S7_inherits(spec, SummarySpec))
+  expect_true(is_scm_summary_spec(spec))
+  expect_false(is_scm_summary_spec(SummarySpec()))
+
+  # The usual spec settings: the SCM fits, the plain columns, no footnotes.
+  expect_equal(get_spec_tag_filter(spec)$include, "scm")
+  expect_equal(get_spec_columns(spec), c("based_on", "description", "ofv", "dofv", "pvalue"))
+  expect_null(get_spec_footnotes(spec))
+  expect_equal(get_spec_title(spec), "")
+  expect_equal(get_spec_title(scm_summary_spec(title = "Covariate search")), "Covariate search")
+  # Its sections wait for the lineage.
+  expect_length(spec@sections@rules, 0)
+
+  # Its SCM settings, with their defaults.
+  expect_equal(spec@description, "sparse")
+  expect_false(spec@path)
+  expect_false(spec@selected@column)
+  expect_false(spec@selected@bold)
+  expect_equal(scm_summary_spec(description = "verbose")@description, "verbose")
+  expect_true(scm_summary_spec(path = TRUE)@path)
+
+  # The modifiers take it and it stays an SCM spec.
+  modified <- spec |>
+    set_spec_pvalue(scientific = TRUE) |>
+    set_spec_title("Search")
+  expect_true(is_scm_summary_spec(modified))
+  expect_equal(get_spec_title(modified), "Search")
+
+  expect_error(scm_summary_spec(title = 1), "single character string")
+  expect_error(scm_summary_spec(description = "x"), "should be one of")
+  expect_error(scm_summary_spec(description = "covariates"), "should be one of")
+  expect_error(scm_summary_spec(selected = "column"), "<ScmSelectedOptions>")
+  expect_error(scm_summary_spec(path = "yes"), "TRUE or FALSE")
+  expect_error(scm_summary_spec(other_section_label = 1), "single character string")
+  # The lineage goes to apply_summary_spec(), not here.
+  expect_error(scm_summary_spec(pharos_tagged_lineage()), "does not take the lineage")
+})
+
+test_that("ScmSelectedOptions() holds how the selected candidate is marked", {
+  options <- ScmSelectedOptions()
+  expect_false(options@column)
+  expect_false(options@bold)
+  expect_equal(options@column_label, "Round Result")
+
+  both <- ScmSelectedOptions(column = TRUE, bold = TRUE, column_label = "Step")
+  expect_true(both@column)
+  expect_true(both@bold)
+  expect_equal(both@column_label, "Step")
+
+  expect_error(ScmSelectedOptions(column = NA), "@column must be TRUE or FALSE")
+  expect_error(ScmSelectedOptions(bold = c(TRUE, FALSE)), "@bold must be TRUE or FALSE")
+  expect_error(ScmSelectedOptions(column_label = c("a", "b")), "@column_label")
+})
+
+test_that("an SCM spec sections the rounds of the lineage it is applied to", {
+  tree <- pharos_tagged_lineage()
+  spec <- scm_spec_sections(scm_summary_spec(), tree)
   expect_equal(
     section_labels(spec),
     c(
@@ -53,149 +110,112 @@ test_that("scm_summary_spec() sections the rounds pharos tagged, in the order th
       "Backward round 1", "Reduced covariate model", "Other"
     )
   )
-  # The preset is the usual spec settings and nothing else.
-  expect_equal(get_spec_tag_filter(spec)$include, "scm")
-  plain <- c("based_on", "description", "ofv", "dofv", "pvalue")
-  expect_equal(get_spec_columns(spec), plain)
-  # `selected` picks how to show the candidate each round kept. By
-  # default every candidate shows and the kept one is not marked.
-  expect_length(get_spec_computed_columns(spec), 0)
-  expect_length(get_spec_bold_rows(spec), 0)
-  expect_length(get_spec_model_filter(spec), 0)
-  # "column": its result in a computed Round Result column.
-  column <- scm_summary_spec(pharos_tagged_lineage(), selected = "column")
-  expect_equal(get_spec_computed_columns(column)$round_result$label, "Round Result")
-  expect_equal(get_spec_columns(column), c(plain, "round_result"))
-  expect_length(get_spec_bold_rows(column), 0)
-  expect_length(get_spec_model_filter(column), 0)
-  # "bold": its row in bold, and no Round Result column.
-  bold <- scm_summary_spec(pharos_tagged_lineage(), selected = "bold")
-  expect_length(get_spec_bold_rows(bold), 1)
-  expect_length(get_spec_computed_columns(bold), 0)
-  expect_length(get_spec_model_filter(bold), 0)
-  expect_equal(get_spec_columns(bold), plain)
-  # "none" is the default spelled out.
-  none <- scm_summary_spec(pharos_tagged_lineage(), selected = "none")
-  expect_length(get_spec_bold_rows(none), 0)
-  expect_length(get_spec_computed_columns(none), 0)
-  expect_length(get_spec_model_filter(none), 0)
-  expect_equal(get_spec_columns(none), plain)
-  expect_equal(section_labels(none), section_labels(spec))
-  # "path": the kept candidates alone, so nothing is marked, and the rounds
-  # are grouped by direction.
-  path <- scm_summary_spec(pharos_tagged_lineage(), selected = "path")
-  expect_length(get_spec_model_filter(path), 1)
-  expect_length(get_spec_bold_rows(path), 0)
-  expect_length(get_spec_computed_columns(path), 0)
-  expect_equal(get_spec_columns(path), plain)
+  # With only the path shown, the rounds of a direction share a section.
   expect_equal(
-    section_labels(path),
+    section_labels(scm_spec_sections(scm_summary_spec(path = TRUE), tree)),
     c("Base model", "Forward", "Working full model", "Backward", "Reduced covariate model", "Other")
   )
-  # "column" and "bold" together: both marks.
-  both <- scm_summary_spec(pharos_tagged_lineage(), selected = c("column", "bold"))
-  expect_equal(get_spec_columns(both), c(plain, "round_result"))
-  expect_named(get_spec_computed_columns(both), "round_result")
-  expect_length(get_spec_bold_rows(both), 1)
-  expect_length(get_spec_model_filter(both), 0)
-  expect_error(scm_summary_spec(pharos_tagged_lineage(), selected = "x"), "must be")
-  expect_error(scm_summary_spec(pharos_tagged_lineage(), selected = character()), "must be")
-  # The other two are given alone.
-  expect_error(
-    scm_summary_spec(pharos_tagged_lineage(), selected = c("path", "bold")),
-    "given alone"
-  )
-  expect_error(
-    scm_summary_spec(pharos_tagged_lineage(), selected = c("none", "column")),
-    "given alone"
-  )
-  # The kept candidates are no longer a separate argument.
-  expect_error(scm_summary_spec(pharos_tagged_lineage(), candidates = "selected"), "unused argument")
-
-  # The Description column shows what each fit added or dropped by default,
-  # or that and its model's covariates, without
-  # the round and attempt pharos writes around the step. A stage fit has no
-  # step, and a description without the covariates part shows its step alone.
-  written <- c(
-    "SCM forward_round2: add CRCL_CL (attempt 1); covariates: WT_CL, CRCL_CL",
-    "SCM reference: fit base model (attempt 1); covariates: none",
-    "SCM working full model: cov step on (attempt 2); covariates: WT_CL, CRCL_CL",
-    "add WT_V; covariates: WT_CL, WT_V",
-    "reduced covariate model; covariates: WT_CL",
-    "SCM backward_round1: drop WT_CL (attempt 1)",
-    "structural model"
-  )
-  written_tags <- list(
-    c("scm", "forward_round2", "selected"),
-    c("scm", "base"),
-    c("scm", "working_full"),
-    c("scm", "forward_round2"),
-    c("scm", "reduced_covariate"),
-    c("scm", "backward_round1"),
-    "structural"
-  )
   expect_equal(
-    get_spec_description_transform(spec)(written, tags = written_tags),
-    c("add CRCL_CL", "", "", "add WT_V", "", "drop WT_CL", "structural model")
-  )
-  verbose <- scm_summary_spec(pharos_tagged_lineage(), description = "verbose")
-  expect_equal(
-    get_spec_description_transform(verbose)(written, tags = written_tags),
-    c(
-      "add CRCL_CL; covariates: WT_CL, CRCL_CL",
-      "covariates: none",
-      "covariates: WT_CL, CRCL_CL",
-      "add WT_V; covariates: WT_CL, WT_V",
-      "covariates: WT_CL",
-      "drop WT_CL",
-      "structural model"
-    )
-  )
-  # The covariates alone are no longer a choice.
-  expect_error(
-    scm_summary_spec(pharos_tagged_lineage(), description = "covariates"),
-    "should be one of"
-  )
-  expect_error(scm_summary_spec(pharos_tagged_lineage(), description = "x"), "should be one of")
-  # The earlier names for the choices are gone.
-  expect_error(scm_summary_spec(pharos_tagged_lineage(), description = "step"), "should be one of")
-  expect_equal(get_spec_pvalue(spec)$direction, "both")
-  expect_null(get_spec_footnotes(spec))
-  expect_equal(get_spec_title(spec), "")
-  expect_equal(get_spec_title(scm_summary_spec(pharos_tagged_lineage(), title = "SCM")), "SCM")
-  expect_equal(
-    section_labels(scm_summary_spec(pharos_tagged_lineage(), other_section_label = "Else"))[7],
-    "Else"
+    section_labels(scm_spec_sections(scm_summary_spec(other_section_label = "Rest"), tree))[7],
+    "Rest"
   )
 
-  # A backward-first process starts from the full model.
-  full_first <- pharos_tagged_lineage()
-  full_first$nodes[[2]]$model$tags <- list("scm", "full")
-  expect_equal(section_labels(scm_summary_spec(full_first))[1], "Full model")
+  # Section rules the user set replace the ones it would work out.
+  own <- set_spec_sections(scm_summary_spec(), "base" %in% tags ~ "Start")
+  expect_equal(section_labels(scm_spec_sections(own, tree)), "Start")
+  # Any other spec passes through untouched.
+  plain <- SummarySpec()
+  expect_identical(scm_spec_sections(plain, tree), plain)
 
-  expect_error(scm_summary_spec(pharos_tagged_lineage(), title = 1), "`title` must be")
-  expect_error(
-    scm_summary_spec(pharos_tagged_lineage(), other_section_label = NULL),
-    "`other_section_label` must be"
+  no_scm <- structure(
+    list(nodes = list(scm_node("model/nonmem/run001.mod", NULL, "structural model", "structural"))),
+    class = "hyperion_nonmem_tree"
   )
-  no_scm <- pharos_tagged_lineage()
-  no_scm$nodes <- no_scm$nodes[1]
-  expect_error(scm_summary_spec(no_scm), "no SCM fits")
+  expect_error(scm_spec_sections(scm_summary_spec(), no_scm), "has no SCM fits")
 })
 
-test_that("scm_summary_spec() reads hyperion's record lineage too", {
-  testthat::skip_if_not(nzchar(scm_fixture_config()), "hyperion's SCM fixture not found")
-  withr::local_options(hyperion.config_dir = system.file(package = "hyperion"))
-
-  sections <- c(
-    "Reference model", "Forward round 1", "Forward round 2", "Forward round 3",
-    "Working full model", "Backward round 1", "Backward round 2", "Reduced covariate model",
-    "Other"
+test_that("an SCM spec shapes the summary rows and leaves other specs alone", {
+  tree <- pharos_tagged_lineage()
+  scm_nodes <- tree$nodes[-1]
+  df <- data.frame(
+    model = vapply(scm_nodes, function(n) tools::file_path_sans_ext(basename(n$name)), ""),
+    .name = vapply(scm_nodes, function(n) tools::file_path_sans_ext(n$name), ""),
+    description = vapply(scm_nodes, function(n) n$model$description, ""),
+    stringsAsFactors = FALSE
   )
-  expect_equal(section_labels(scm_summary_spec(scm_fixture_config())), sections)
-  scm <- hyperion::read_scm(scm_fixture_config())
-  expect_equal(section_labels(scm_summary_spec(scm)), sections)
-  expect_equal(section_labels(scm_summary_spec(hyperion::get_scm_lineage(scm))), sections)
+  df$tags <- I(lapply(scm_nodes, function(n) as.character(unlist(n$model$tags))))
+
+  expect_identical(scm_summary_rows(df, SummarySpec(), tree), df)
+
+  # Sparse: a candidate shows its step, a stage fit nothing.
+  sparse <- scm_summary_rows(df, scm_summary_spec(), tree)
+  expect_equal(
+    sparse$description,
+    c("", "add WT_CL", "add WT_V", "add WT_V", "", "drop WT_CL", "")
+  )
+  expect_false(any(c("round_result", ".bold") %in% names(sparse)))
+
+  # Verbose needs the covariates on the lineage; pharos' metadata has none.
+  expect_warning(
+    verbose <- scm_summary_rows(df, scm_summary_spec(description = "verbose"), tree),
+    "does not say which covariates"
+  )
+  expect_equal(verbose$description, sparse$description)
+
+  # With them, each row adds its model's covariates; a stage fit shows only those.
+  covariates <- list(
+    character(), "WT_CL", "WT_V", c("WT_CL", "WT_V"), "WT_CL", character(), "WT_CL"
+  )
+  with_covariates <- tree
+  for (i in seq_along(covariates)) {
+    with_covariates$nodes[[i + 1]]$model$covariates <- as.list(covariates[[i]])
+  }
+  verbose <- scm_summary_rows(df, scm_summary_spec(description = "verbose"), with_covariates)
+  expect_equal(
+    verbose$description,
+    c(
+      "covariates: none", "add WT_CL; covariates: WT_CL", "add WT_V; covariates: WT_V",
+      "add WT_V; covariates: WT_CL, WT_V", "covariates: WT_CL",
+      "drop WT_CL; covariates: none", "covariates: WT_CL"
+    )
+  )
+
+  # The selected candidate, marked with a column, a bold row, or both.
+  marked <- scm_summary_rows(
+    df,
+    scm_summary_spec(selected = ScmSelectedOptions(column = TRUE, bold = TRUE)),
+    tree
+  )
+  expect_equal(marked$round_result, c(NA, "added", NA, NA, NA, NA, NA))
+  expect_equal(marked$.bold, c(FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE))
+  column <- scm_summary_rows(df, scm_summary_spec(selected = ScmSelectedOptions(column = TRUE)), tree)
+  expect_false(".bold" %in% names(column))
+  bold <- scm_summary_rows(df, scm_summary_spec(selected = ScmSelectedOptions(bold = TRUE)), tree)
+  expect_false("round_result" %in% names(bold))
+
+  # The path: the stage fits and the selected candidates. No backward round
+  # dropped anything here, so the working full model is left out.
+  path <- scm_summary_rows(df, scm_summary_spec(path = TRUE), tree)
+  expect_equal(path$model, c("run001_base", "run001_wt_cl", "run001_scm_reduced_covariate"))
+
+  # The labels an SCM table adds or changes; any other spec's are untouched.
+  labels <- list(dofv = "$\\Delta$OFV")
+  expect_identical(scm_summary_labels(labels, marked, SummarySpec()), labels)
+  scm_labels <- scm_summary_labels(
+    labels,
+    marked,
+    scm_summary_spec(selected = ScmSelectedOptions(column = TRUE, column_label = "Step"))
+  )
+  expect_equal(scm_labels$round_result, "Step")
+  expect_equal(scm_labels$dofv, "ΔOFV")
+})
+
+test_that("the general spec functions carry no SCM arguments", {
+  expect_false(any(
+    c("pvalue_direction", "bold_rows", "description_transform", "computed_columns", "model_filter") %in%
+      names(formals(SummarySpec))
+  ))
+  expect_false("direction" %in% names(formals(set_spec_pvalue)))
 })
 
 test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", {
@@ -203,9 +223,9 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
   withr::local_options(hyperion.config_dir = system.file(package = "hyperion"))
 
   tree <- hyperion::get_scm_lineage(scm_fixture_config())
-  data <- apply_summary_spec(tree, scm_summary_spec(tree))
+  data <- apply_summary_spec(tree, scm_summary_spec())
 
-  # By default the candidate a round kept is not marked.
+  # By default the candidate a round selected is not marked.
   expect_equal(
     names(data),
     c("model", "based_on", "description", "ofv", "dofv", "pvalue", "df", "section")
@@ -250,8 +270,8 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
   expect_equal(final$description, "")
 
   # With description = "verbose", each row also shows the covariates its
-  # model has, which is all a stage fit shows.
-  verbose <- apply_summary_spec(tree, scm_summary_spec(tree, description = "verbose"))
+  # model has, from the process record, which is all a stage fit shows.
+  verbose <- apply_summary_spec(tree, scm_summary_spec(description = "verbose"))
   expect_equal(verbose$description[verbose$model == "1001_wt_cl"][1], "add WT_CL; covariates: WT_CL")
   expect_equal(
     verbose$description[verbose$section %in% c("Reference model", "Working full model", "Reduced covariate model")],
@@ -265,9 +285,12 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
   stages <- c("Reference model", "Working full model", "Reduced covariate model")
   expect_true(is.na(row("1001_base", "Reference model")$dofv))
 
-  # With selected = "column", the same rows gain a Round Result: the round's
-  # result on the candidate it kept, and nothing on the others.
-  marked <- apply_summary_spec(tree, scm_summary_spec(tree, selected = "column"))
+  # With a Round Result column, the same rows gain the round's result on
+  # the candidate it selected, and nothing on the others.
+  marked <- apply_summary_spec(
+    tree,
+    scm_summary_spec(selected = ScmSelectedOptions(column = TRUE))
+  )
   expect_equal(
     names(marked),
     c("model", "based_on", "description", "ofv", "dofv", "pvalue", "df", "round_result", "section")
@@ -279,22 +302,25 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
   expect_equal(result("1001_wt_cl", "Forward round 1"), "added")
   expect_true(is.na(result("1001_wt_v", "Forward round 1")))
   expect_equal(result("1001_crcl_cl", "Backward round 1"), "dropped")
-  # The reference and final fits are not candidates, so they have no result.
+  # The reference and stage fits are not candidates, so they have no result.
   expect_true(all(is.na(marked$round_result[marked$section %in% stages])))
 
-  # With selected = "bold", the kept candidates are in bold and nothing else.
-  bold <- apply_summary_spec(tree, scm_summary_spec(tree, selected = "bold"))
+  # With bold, the selected candidates are in bold and nothing else.
+  bold <- apply_summary_spec(tree, scm_summary_spec(selected = ScmSelectedOptions(bold = TRUE)))
   expect_false("round_result" %in% names(bold))
   expect_equal(bold$.bold, !is.na(marked$round_result))
 
   # With both, the same rows have the Round Result and the bold rows.
-  both <- apply_summary_spec(tree, scm_summary_spec(tree, selected = c("column", "bold")))
+  both <- apply_summary_spec(
+    tree,
+    scm_summary_spec(selected = ScmSelectedOptions(column = TRUE, bold = TRUE))
+  )
   expect_equal(both$round_result, marked$round_result)
   expect_equal(both$.bold, bold$.bold)
 
-  # With selected = "path", only the stages and the kept candidates stay,
-  # unmarked, with the rounds grouped by direction.
-  kept <- apply_summary_spec(tree, scm_summary_spec(tree, selected = "path"))
+  # With path = TRUE, only the stages and the selected candidates stay,
+  # with the rounds grouped by direction.
+  kept <- apply_summary_spec(tree, scm_summary_spec(path = TRUE))
   expect_equal(kept$model, data$model[data$section %in% stages | !is.na(marked$round_result)])
   expect_false(any(c("round_result", ".bold") %in% names(kept)))
   expect_lt(nrow(kept), nrow(data))
@@ -303,6 +329,12 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
     c("Reference model", "Forward", "Forward", "Working full model", "Backward", "Reduced covariate model")
   )
   expect_equal(kept$dofv[kept$model == "1001_wt_cl" & kept$section == "Forward"], -20)
+  # The path can carry the Round Result too.
+  kept_marked <- apply_summary_spec(
+    tree,
+    scm_summary_spec(path = TRUE, selected = ScmSelectedOptions(column = TRUE))
+  )
+  expect_equal(kept_marked$round_result, c(NA, "added", "added", NA, "dropped", NA))
 
   # Without a backward step that dropped anything, the working full model
   # is left out: the reduced covariate model is the result.
@@ -311,33 +343,33 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
     function(node) !any(grepl("^backward_round", unlist(node$model$tags))),
     forward_only$nodes
   )
-  path <- apply_summary_spec(forward_only, scm_summary_spec(forward_only, selected = "path"))
+  path <- apply_summary_spec(forward_only, scm_summary_spec(path = TRUE))
   expect_equal(path$section, c("Reference model", "Forward", "Forward", "Reduced covariate model"))
   expect_false("1001_scm_working_full" %in% path$model)
-  # The earlier name for the choice is gone.
-  expect_error(scm_summary_spec(tree, selected = "only"), "must be")
   expect_true("1001_scm_working_full" %in% kept$model)
   # With every candidate shown, the rounds keep their own sections.
-  expect_true("Forward round 1" %in% apply_summary_spec(forward_only, scm_summary_spec(forward_only))$section)
+  expect_true("Forward round 1" %in% apply_summary_spec(forward_only, scm_summary_spec())$section)
 
   shown <- as.data.frame(marked)[, c(
     "section", "model", "based_on", "description", "ofv", "dofv", "pvalue", "df", "round_result"
   )]
   expect_snapshot(print(shown, digits = 4, row.names = FALSE))
 
-  expect_equal(make_summary_table(marked, output = "data")@col_labels$round_result, "Round Result")
+  labels <- make_summary_table(marked, output = "data")@col_labels
+  expect_equal(labels$round_result, "Round Result")
+  expect_equal(labels$dofv, "ΔOFV")
   snapshot_gt(make_summary_table(data), "scm-summary-gt")
   snapshot_gt(make_summary_table(marked), "scm-summary-column-gt")
+  snapshot_gt(make_summary_table(both), "scm-summary-bold-gt")
   snapshot_gt(make_summary_table(kept), "scm-summary-path-gt")
 })
 
-test_that("the SCM preset's p-value column tests both directions", {
+test_that("an SCM table's p-value column tests both directions", {
   testthat::skip_if_not(nzchar(scm_fixture_config()), "hyperion's SCM fixture not found")
   withr::local_options(hyperion.config_dir = system.file(package = "hyperion"))
 
   tree <- hyperion::get_scm_lineage(scm_fixture_config())
-  spec <- scm_summary_spec(tree)
-  data <- apply_summary_spec(tree, spec)
+  data <- apply_summary_spec(tree, scm_summary_spec())
   row <- function(model, section) data[data$model == model & data$section == section, ]
 
   # A forward step: the candidate adds a parameter to its round's reference.
@@ -353,12 +385,15 @@ test_that("the SCM preset's p-value column tests both directions", {
   expect_equal(final$df, 1L)
   expect_equal(final$pvalue, stats::pchisq(1000 - 979.5, 1, lower.tail = FALSE))
 
-  # The default direction keeps the backward step's dOFV but gives it no test.
-  forward_only <- apply_summary_spec(tree, set_spec_pvalue(spec, direction = "forward"))
-  dropped <- forward_only[
-    forward_only$model == "1001_crcl_cl" & forward_only$section == "Backward round 1",
-  ]
-  expect_equal(dropped$dofv, 6)
+  # Any other summary spec keeps the backward step's dOFV but gives it no test.
+  plain <- apply_summary_spec(
+    tree,
+    SummarySpec() |>
+      set_spec_tag_filter(include = "scm") |>
+      set_spec_columns("based_on", "ofv", "dofv", "pvalue")
+  )
+  dropped <- plain[which(plain$dofv == 6), ]
+  expect_equal(nrow(dropped), 1)
   expect_true(is.na(dropped$df))
   expect_true(is.na(dropped$pvalue))
 })
