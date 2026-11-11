@@ -51,8 +51,8 @@ it is what you would write by hand with \code{\link[=set_spec_sections]{set_spec
 }
 \details{
 Every fit is based on the model its round tested against, so dOFV is the
-round's own; the forward final and final models are based on the
-reference fit, so theirs is against it. The columns are Reference,
+round's own; the working full and reduced covariate models are based on
+the reference fit, so theirs is against it. The columns are Reference,
 Description, OFV, dOFV and p-value. \code{pvalue_direction} is \code{"both"}, so
 the backward steps are tested too, with the round's reference as the
 fuller model. The table has no footnotes. Customize further with the
@@ -69,15 +69,15 @@ alike, with no Round Result column and no bold row.
 Round Result column.
 \item \code{"only"} shows no other candidate, so there is nothing to mark
 and the table has no Round Result column and no bold row. It keeps
-the models that mattered: the base (or full) model, the forward
-final and final models, and in each round the candidate it kept, so
-a round that kept none shows no row. Since each round then has at
-most one row, the rounds are grouped by direction instead of
-sectioned one by one: the reference model, then the forward steps
-under "Forward", the forward final model, the backward steps under
-"Backward", and the final model. When no backward round dropped
-anything, the forward final model says nothing the final model does
-not, so it is left out too.
+the models that mattered: the base (or full) model, the working
+full and reduced covariate models, and in each round the candidate
+it kept, so a round that kept none shows no row. Since each round
+then has at most one row, the rounds are grouped by direction
+instead of sectioned one by one: the reference model, then the
+forward steps under "Forward", the working full model, the backward
+steps under "Backward", and the reduced covariate model. When no
+backward round dropped anything, the working full model says
+nothing the reduced covariate model does not, so it is left out too.
 }
 
 pharos ends every SCM fit's description with the covariates its model

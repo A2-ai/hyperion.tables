@@ -10,8 +10,8 @@
 #' tags ~ "Forward round 1", ...)`, for however many rounds the process ran.
 #'
 #' Every fit is based on the model its round tested against, so dOFV is the
-#' round's own; the forward final and final models are based on the
-#' reference fit, so theirs is against it. The columns are Reference,
+#' round's own; the working full and reduced covariate models are based on
+#' the reference fit, so theirs is against it. The columns are Reference,
 #' Description, OFV, dOFV and p-value. `pvalue_direction` is `"both"`, so
 #' the backward steps are tested too, with the round's reference as the
 #' fuller model. The table has no footnotes. Customize further with the
@@ -28,15 +28,15 @@
 #'     Round Result column.
 #'   \item `"only"` shows no other candidate, so there is nothing to mark
 #'     and the table has no Round Result column and no bold row. It keeps
-#'     the models that mattered: the base (or full) model, the forward
-#'     final and final models, and in each round the candidate it kept, so
-#'     a round that kept none shows no row. Since each round then has at
-#'     most one row, the rounds are grouped by direction instead of
-#'     sectioned one by one: the reference model, then the forward steps
-#'     under "Forward", the forward final model, the backward steps under
-#'     "Backward", and the final model. When no backward round dropped
-#'     anything, the forward final model says nothing the final model does
-#'     not, so it is left out too.
+#'     the models that mattered: the base (or full) model, the working
+#'     full and reduced covariate models, and in each round the candidate
+#'     it kept, so a round that kept none shows no row. Since each round
+#'     then has at most one row, the rounds are grouped by direction
+#'     instead of sectioned one by one: the reference model, then the
+#'     forward steps under "Forward", the working full model, the backward
+#'     steps under "Backward", and the reduced covariate model. When no
+#'     backward round dropped anything, the working full model says
+#'     nothing the reduced covariate model does not, so it is left out too.
 #' }
 #'
 #' pharos ends every SCM fit's description with the covariates its model
@@ -177,8 +177,8 @@ scm_summary_spec <- function(
       "selected" %in% tags && !any(!!scm_stage_tags %in% tags)
     )
   } else if (selected == "only") {
-    # Without a backward step the forward final model is the final model
-    # less its cov step, so only the final model stays.
+    # Without a backward step the working full model is the reduced
+    # covariate model less its cov step, so only the latter stays.
     stages <- if (scm_lineage_dropped_any(tree)) {
       scm_stage_tags
     } else {
@@ -220,7 +220,8 @@ scm_description_covariates <- function(x) {
 
 # The round tags of the fits that are not round candidates: the reference
 # fit (`base` or `full` from pharos, `reference` from hyperion's record
-# lineage), the forward model and the final model.
+# lineage), the working full model (tagged `forward_final`) and the reduced
+# covariate model (tagged `final`).
 scm_stage_tags <- c("base", "full", "reference", "forward_final", "final")
 
 # The rounds in the lineage, in the order their fits appear: each SCM fit's
@@ -277,8 +278,8 @@ scm_stage_labels <- c(
   base = "Base model",
   full = "Full model",
   reference = "Reference model",
-  forward_final = "Forward final model",
-  final = "Final model"
+  forward_final = "Working full model",
+  final = "Reduced covariate model"
 )
 
 # c(round, direction, number) for a round tag, or character() for a stage.

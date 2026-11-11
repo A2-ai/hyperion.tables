@@ -11,11 +11,13 @@
   the table shows the candidate each round selected: `"none"` (the
   default) leaves it unmarked, `"column"` adds a Round Result column
   reading "added" or "dropped" on its row, `"bold"` renders its row in
-  bold, and `"only"` keeps only the base, forward final and final models
-  and each round's selected candidate, unmarked, with the rounds grouped
-  into "Forward" and "Backward" sections, and leaves out the forward final
-  model when no backward round dropped anything. Its Description column shows
-  each fit's description as the lineage gives it, the step and the
+  bold, and `"only"` keeps only the base, working full and reduced
+  covariate models and each round's selected candidate, unmarked, with the
+  rounds grouped into "Forward" and "Backward" sections, and leaves out the
+  working full model when no backward round dropped anything. The fit
+  tagged `"forward_final"` is sectioned as "Working full model" and the
+  one tagged `"final"` as "Reduced covariate model". Its Description column
+  shows each fit's description as the lineage gives it, the step and the
   covariates the model has; the `description` argument narrows it to the
   step or the covariates alone. It takes the lineage from
   `hyperion::get_model_lineage()` or `hyperion::get_scm_lineage()`.
