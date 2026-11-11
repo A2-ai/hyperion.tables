@@ -23,7 +23,8 @@
     covariates when verbose.
   - `set_spec_scm_selected()` sets how the table shows the candidate each
     round selected, as does `selected`, which takes the
-    `ScmSelectedOptions()` the modifier builds. `column = TRUE` adds a Round Result
+    `ScmSelectedOptions()` the modifier builds; `get_spec_scm_selected()`
+    reads it. `column = TRUE` adds a Round Result
     column reading "added" or "dropped" on its row, and `bold = TRUE`
     renders its row in bold. `path = TRUE` shows the
     path the process took: only the base, working full and reduced

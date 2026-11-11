@@ -263,7 +263,8 @@ scm_summary_spec <- function(
 #'   took: the selected candidates and no others, with the rounds grouped
 #'   by direction.
 #' @return Modified spec.
-#' @seealso [ScmSelectedOptions()], [scm_summary_spec()].
+#' @seealso [get_spec_scm_selected()], [ScmSelectedOptions()],
+#'   [scm_summary_spec()].
 #' @export
 #' @examples
 #' spec <- scm_summary_spec() |>
@@ -298,6 +299,27 @@ set_spec_scm_selected <- function(
   }
   spec@selected <- do.call(ScmSelectedOptions, selected_args)
   spec
+}
+
+#' Get how an SCM summary table shows the selected candidates
+#'
+#' `get_spec_scm_selected()` returns the ScmSelectedOptions object.
+#' Operates only on a spec from [scm_summary_spec()].
+#'
+#' @param spec A spec from [scm_summary_spec()].
+#' @param ... Not used.
+#' @return ScmSelectedOptions object.
+#' @seealso [set_spec_scm_selected()].
+#' @export
+#' @examples
+#' spec <- scm_summary_spec() |>
+#'   set_spec_scm_selected(column = TRUE)
+#' get_spec_scm_selected(spec)
+get_spec_scm_selected <- function(spec, ...) {
+  if (!is_scm_summary_spec(spec)) {
+    rlang::abort("`spec` must be a spec from `scm_summary_spec()`.")
+  }
+  spec@selected
 }
 
 # ------------------------------------------------------------------------------

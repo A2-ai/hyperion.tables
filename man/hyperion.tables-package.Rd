@@ -154,6 +154,7 @@ A run summary table of an SCM process, from the lineage \code{hyperion::get_scm_
 \itemize{
 \item \code{\link[=scm_summary_spec]{scm_summary_spec()}} - SummarySpec preset with a section per round
 \item \code{\link[=set_spec_scm_selected]{set_spec_scm_selected()}} - Set how the table shows the candidate each round selected
+\item \code{\link[=get_spec_scm_selected]{get_spec_scm_selected()}} - Get those options from an SCM spec
 \item \link{ScmSelectedOptions} - The options that modifier builds
 }
 }

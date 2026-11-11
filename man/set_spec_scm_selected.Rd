@@ -39,5 +39,6 @@ spec <- scm_summary_spec() |>
   set_spec_scm_selected(path = TRUE)
 }
 \seealso{
-\code{\link[=ScmSelectedOptions]{ScmSelectedOptions()}}, \code{\link[=scm_summary_spec]{scm_summary_spec()}}.
+\code{\link[=get_spec_scm_selected]{get_spec_scm_selected()}}, \code{\link[=ScmSelectedOptions]{ScmSelectedOptions()}},
+\code{\link[=scm_summary_spec]{scm_summary_spec()}}.
 }

@@ -124,6 +124,7 @@
 #' \itemize{
 #'   \item [scm_summary_spec()] - SummarySpec preset with a section per round
 #'   \item [set_spec_scm_selected()] - Set how the table shows the candidate each round selected
+#'   \item [get_spec_scm_selected()] - Get those options from an SCM spec
 #'   \item [ScmSelectedOptions] - The options that modifier builds
 #' }
 #'

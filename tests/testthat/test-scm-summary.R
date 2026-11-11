@@ -124,6 +124,13 @@ test_that("set_spec_scm_selected() sets the selected options of an SCM spec", {
     scm_summary_spec(selected = ScmSelectedOptions(path = TRUE))
   )
 
+  # The getter returns the options object.
+  expect_identical(get_spec_scm_selected(spec), spec@selected)
+  expect_true(S7::S7_inherits(get_spec_scm_selected(scm_summary_spec()), ScmSelectedOptions))
+  expect_false(get_spec_scm_selected(scm_summary_spec())@column)
+  expect_error(get_spec_scm_selected(SummarySpec()), "scm_summary_spec")
+  expect_error(get_spec_scm_selected(TableSpec()), "scm_summary_spec")
+
   expect_error(set_spec_scm_selected(SummarySpec(), column = TRUE), "scm_summary_spec")
   expect_error(set_spec_scm_selected(TableSpec(), column = TRUE), "scm_summary_spec")
   expect_error(set_spec_scm_selected(scm_summary_spec(), column = NA), "@column must be TRUE or FALSE")
