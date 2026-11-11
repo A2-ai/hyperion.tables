@@ -91,9 +91,15 @@ apply_summary_spec <- function(tree, spec) {
   needs_dofv <- taken$value
   df <- taken$df
 
-  # The spec's description transform, on the text as the lineage gave it
+  # The spec's description transform, on the text as the lineage gave it; one
+  # with a `tags` argument also gets each model's tags
   if (!is.null(spec@description_transform) && "description" %in% names(df)) {
-    transformed <- spec@description_transform(df$description)
+    transform <- spec@description_transform
+    transformed <- if ("tags" %in% names(formals(transform))) {
+      transform(df$description, tags = unclass(df$tags))
+    } else {
+      transform(df$description)
+    }
     if (!is.character(transformed) || length(transformed) != nrow(df)) {
       rlang::abort(
         "the description transform must return a character vector, one element per model."

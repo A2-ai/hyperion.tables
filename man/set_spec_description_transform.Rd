@@ -10,7 +10,8 @@ set_spec_description_transform(spec, transform)
 \item{spec}{A SummarySpec object.}
 
 \item{transform}{A function from a character vector to one of the same
-length, or NULL to show the descriptions as they are.}
+length, optionally with a \code{tags} argument, or NULL to show the
+descriptions as they are.}
 }
 \value{
 Modified spec.
@@ -18,11 +19,19 @@ Modified spec.
 \description{
 \code{set_spec_description_transform()} rewrites the Description column with
 a function of the descriptions the lineage gave, as a character vector,
-before the table is built. Operates on \code{SummarySpec} only.
+before the table is built. A function with a \code{tags} argument is also
+given the models' tags, a list with one character vector per model, so
+it can treat models differently by tag. Operates on \code{SummarySpec} only.
 }
 \examples{
 spec <- SummarySpec() |>
   set_spec_description_transform(toupper)
+# Blank the description of the models tagged "base"
+spec <- SummarySpec() |>
+  set_spec_description_transform(function(x, tags) {
+    x[vapply(tags, function(t) "base" \%in\% t, logical(1))] <- ""
+    x
+  })
 }
 \seealso{
 \code{\link[=get_spec_description_transform]{get_spec_description_transform()}}.

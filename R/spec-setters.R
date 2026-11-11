@@ -1018,17 +1018,26 @@ set_spec_bold_rows <- function(spec, ..., overwrite = FALSE) {
 #'
 #' `set_spec_description_transform()` rewrites the Description column with
 #' a function of the descriptions the lineage gave, as a character vector,
-#' before the table is built. Operates on `SummarySpec` only.
+#' before the table is built. A function with a `tags` argument is also
+#' given the models' tags, a list with one character vector per model, so
+#' it can treat models differently by tag. Operates on `SummarySpec` only.
 #'
 #' @param spec A SummarySpec object.
 #' @param transform A function from a character vector to one of the same
-#'   length, or NULL to show the descriptions as they are.
+#'   length, optionally with a `tags` argument, or NULL to show the
+#'   descriptions as they are.
 #' @return Modified spec.
 #' @seealso [get_spec_description_transform()].
 #' @export
 #' @examples
 #' spec <- SummarySpec() |>
 #'   set_spec_description_transform(toupper)
+#' # Blank the description of the models tagged "base"
+#' spec <- SummarySpec() |>
+#'   set_spec_description_transform(function(x, tags) {
+#'     x[vapply(tags, function(t) "base" %in% t, logical(1))] <- ""
+#'     x
+#'   })
 set_spec_description_transform <- function(spec, transform) {
   if (!S7::S7_inherits(spec, SummarySpec)) {
     rlang::abort("`spec` must be a <SummarySpec> object.")

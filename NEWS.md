@@ -11,15 +11,20 @@
   the table shows the candidate each round selected: `"none"` (the
   default) leaves it unmarked, `"column"` adds a Round Result column
   reading "added" or "dropped" on its row, `"bold"` renders its row in
-  bold, and `"only"` keeps only the base, working full and reduced
+  bold (the two can be given together, `selected = c("column", "bold")`),
+  and `"path"` keeps only the base, working full and reduced
   covariate models and each round's selected candidate, unmarked, with the
   rounds grouped into "Forward" and "Backward" sections, and leaves out the
   working full model when no backward round dropped anything. The fit
   tagged `"working_full"` is sectioned as "Working full model" and the
   one tagged `"reduced_covariate"` as "Reduced covariate model". Its
-  Description column shows each fit's description as the lineage gives it, the step and the
-  covariates the model has; the `description` argument narrows it to the
-  step or the covariates alone. It takes the lineage from
+  `description` argument picks how much the Description column says about
+  each fit: `"sparse"` (the default), only what it added or dropped ("add
+  CRCL_CL"); or `"verbose"`, what it added or dropped and the covariates
+  its model has ("add CRCL_CL; covariates: WT_CL, CRCL_CL"). The base,
+  working full and reduced covariate models do not repeat their section's
+  name there: they show nothing when sparse and their covariates when
+  verbose. It takes the lineage from
   `hyperion::get_model_lineage()` or `hyperion::get_scm_lineage()`.
 - `set_spec_computed_column()` adds a column to a `SummarySpec` table whose
   value per model comes from rules like section rules, e.g. `"selected"
@@ -29,7 +34,8 @@
   satisfying rules evaluated per model with its `tags`, after dOFV is
   computed; `get_spec_model_filter()` reads them.
 - `set_spec_description_transform()` rewrites a `SummarySpec` table's
-  Description column with a function of the descriptions the lineage gave;
+  Description column with a function of the descriptions the lineage gave,
+  which also gets the models' tags when it has a `tags` argument;
   `get_spec_description_transform()` reads it.
 - `set_spec_bold_rows()` renders in bold the rows of a `SummarySpec` table
   whose models satisfy a rule, evaluated like a section rule with the

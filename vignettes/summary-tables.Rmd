@@ -137,12 +137,11 @@ writes those rules for however many rounds the process ran, keeps the fits
 tagged `"scm"`, and shows every candidate alike. Its `selected` argument
 picks how the candidate each round selected is shown: `"column"` adds a
 Round Result column reading "added" or "dropped" on its row, `"bold"`
-renders its row in bold, and `"only"` leaves out the candidates the
-rounds did not keep, grouping the steps that remain under "Forward" and
-"Backward". Its Description column reads
-as in any run summary, each fit's step and the covariates its model has;
-the `description` argument narrows it to the step or the covariates
-alone. `hyperion::get_scm_lineage()` builds the same lineage from the
+renders its row in bold (give both as `c("column", "bold")`), and
+`"path"` leaves out the candidates the rounds did not keep, grouping the
+steps that remain under "Forward" and "Backward". Its Description column
+shows what each fit added or dropped; `description = "verbose"` adds the
+covariates its model has. `hyperion::get_scm_lineage()` builds the same lineage from the
 process record, which is what this example uses.
 
 ```{r scm-summary}

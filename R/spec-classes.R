@@ -505,7 +505,8 @@ TableSpec <- S7::new_class(
 #'   [set_spec_bold_rows()]. Default is an empty list.
 #' @param description_transform NULL (the default), or a function applied to
 #'   the description column, as a character vector, before the table is
-#'   built. Usually set with [set_spec_description_transform()].
+#'   built; one with a `tags` argument also gets the models' tags. Usually
+#'   set with [set_spec_description_transform()].
 #' @param computed_columns Named list of columns computed from each model's
 #'   row by rules, each `list(rules = <quosures of formulas>, label = )`.
 #'   Usually set with [set_spec_computed_column()]. Default is an empty list.

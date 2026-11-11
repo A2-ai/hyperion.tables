@@ -18,18 +18,19 @@
 #' fuller model. The table has no footnotes. Customize further with the
 #' `set_spec_*()` modifiers.
 #'
-#' `selected` picks the one way the table shows the candidate each round
-#' kept, the fit tagged `"selected"`. The choices exclude one another:
+#' `selected` picks how the table shows the candidate each round kept, the
+#' fit tagged `"selected"`. `"column"` and `"bold"` mark it among the other
+#' candidates and can be given together, `selected = c("column", "bold")`;
+#' `"none"` and `"path"` are each given alone:
 #' \itemize{
 #'   \item `"none"` (the default) does not mark it: every candidate shows
 #'     alike, with no Round Result column and no bold row.
 #'   \item `"column"` adds a Round Result column, which reads "added" or
 #'     "dropped" on the kept candidate's row and is empty elsewhere.
-#'   \item `"bold"` renders the kept candidate's row in bold. There is no
-#'     Round Result column.
-#'   \item `"only"` shows no other candidate, so there is nothing to mark
-#'     and the table has no Round Result column and no bold row. It keeps
-#'     the models that mattered: the base (or full) model, the working
+#'   \item `"bold"` renders the kept candidate's row in bold.
+#'   \item `"path"` shows the path the process took and no other
+#'     candidate, so there is nothing to mark and the table has no Round
+#'     Result column and no bold row. It keeps the models that mattered: the base (or full) model, the working
 #'     full and reduced covariate models, and in each round the candidate
 #'     it kept, so a round that kept none shows no row. Since each round
 #'     then has at most one row, the rounds are grouped by direction
@@ -40,15 +41,25 @@
 #'     nothing the reduced covariate model does not, so it is left out too.
 #' }
 #'
-#' pharos ends every SCM fit's description with the covariates its model
-#' has, e.g. `"SCM forward_round2: add CRCL_CL (attempt 1); covariates:
-#' WT_CL, CRCL_CL"`, as does `hyperion::get_scm_lineage()`. `description`
-#' picks what the Description column shows: `"full"` (the default), the
-#' description as the lineage gives it, as [SummarySpec()] shows it, so
-#' each row names both the step and the covariates its model has;
-#' `"step"`, the fit's action alone, "add WT_V"; or `"covariates"`, the
-#' covariates alone, "WT_CL, CRCL_CL, WT_V". A description without the
-#' covariates part shows as it is under either.
+#' `description` picks how much the Description column says about each
+#' fit:
+#' \itemize{
+#'   \item `"sparse"` (the default) shows only what the fit added or
+#'     dropped: "add CRCL_CL".
+#'   \item `"verbose"` shows what the fit added or dropped, then the
+#'     covariates its model has: "add CRCL_CL; covariates: WT_CL, CRCL_CL".
+#' }
+#' The base (or full), working full and reduced covariate models add or
+#' drop nothing and their section already names them, so their description
+#' never repeats the name: it is empty when sparse and "covariates: WT_CL,
+#' CRCL_CL" when verbose.
+#'
+#' Both parts come from the description the lineage gives each fit, which
+#' pharos and `hyperion::get_scm_lineage()` end with the covariates the
+#' model has, as in `"SCM forward_round2: add CRCL_CL (attempt 1);
+#' covariates: WT_CL, CRCL_CL"`. The round and attempt pharos writes around
+#' the step are left out, so the table reads the same from either lineage.
+#' A fit whose description has no covariates part shows its step alone.
 #'
 #' The section rules end with a catch-all, so rules appended with
 #' [set_spec_sections()] never apply; pass `overwrite = TRUE` to replace them.
@@ -60,17 +71,17 @@
 #'   config (`<stem>scm.toml`) is passed to the latter.
 #' @param title Table title. `NULL` (the default) gives a table with no
 #'   title; pass a string to set one.
-#' @param description What the Description column shows for each fit:
-#'   `"full"` (the default), the description as the lineage gives it, its
-#'   step and the covariates its model has; `"step"`, its action alone; or
-#'   `"covariates"`, the covariates its model has alone.
-#' @param selected How the table shows the candidate each round kept, one
-#'   of: `"none"` (the default), every candidate with the kept one
-#'   unmarked; `"column"`, every candidate with a Round Result column
-#'   reading "added" or "dropped" on the kept one's row; `"bold"`, every
-#'   candidate with the kept one's row in bold and no Round Result column;
-#'   or `"only"`, the kept candidates alone, unmarked, with the rounds
-#'   grouped by direction.
+#' @param description How much the Description column says about each fit:
+#'   `"sparse"` (the default), only what it added or dropped; or
+#'   `"verbose"`, what it added or dropped and the covariates its model has.
+#' @param selected How the table shows the candidate each round kept:
+#'   `"none"` (the default), every candidate with the kept one unmarked;
+#'   `"column"`, every candidate with a Round Result column reading "added"
+#'   or "dropped" on the kept one's row; `"bold"`, every candidate with the
+#'   kept one's row in bold; or `"path"`, the kept candidates alone,
+#'   unmarked, with the rounds grouped by direction. `"column"` and `"bold"`
+#'   can be given together, as `c("column", "bold")`; the others are given
+#'   alone.
 #' @param other_section_label Section label for a model matching no round.
 #'
 #' @return A [SummarySpec] object.
@@ -91,16 +102,18 @@
 #'   apply_summary_spec(scm_summary_spec(scm, title = "Covariate search")) |>
 #'   make_summary_table()
 #'
-#' # Show only each fit's step, or only its model's covariates
-#' scm_summary_spec(scm, description = "step")
-#' scm_summary_spec(scm, description = "covariates")
+#' # Describe each fit by what it added or dropped and its model's
+#' # covariates
+#' scm_summary_spec(scm, description = "verbose")
 #'
-#' # Mark the candidate each round kept: a Round Result column, or its row
-#' # in bold
+#' # Mark the candidate each round kept: a Round Result column, its row in
+#' # bold, or both
 #' scm_summary_spec(scm, selected = "column")
 #' scm_summary_spec(scm, selected = "bold")
-#' # Show only the models that mattered: no other candidates, nothing marked
-#' scm_summary_spec(scm, selected = "only")
+#' scm_summary_spec(scm, selected = c("column", "bold"))
+#' # Show the path the process took: only the models that mattered, with no
+#' # other candidates and nothing marked
+#' scm_summary_spec(scm, selected = "path")
 #'
 #' # Customize further with modifiers
 #' spec <- scm_summary_spec(scm) |>
@@ -112,15 +125,15 @@
 scm_summary_spec <- function(
   lineage,
   title = NULL,
-  description = c("full", "step", "covariates"),
-  selected = c("none", "column", "bold", "only"),
+  description = c("sparse", "verbose"),
+  selected = "none",
   other_section_label = "Other"
 ) {
   if (!is.null(title) && !rlang::is_string(title)) {
     rlang::abort("`title` must be a single character string or NULL.")
   }
   description <- match.arg(description)
-  selected <- match.arg(selected)
+  selected <- scm_selected_arg(selected)
   if (!rlang::is_string(other_section_label)) {
     rlang::abort("`other_section_label` must be a single character string.")
   }
@@ -140,7 +153,7 @@ scm_summary_spec <- function(
   # base R for `%in%`, nothing else. With only the kept candidates, the
   # rounds of a direction share a section, which comes where its first
   # round ran.
-  label <- if (selected == "only") scm_direction_label else scm_round_label
+  label <- if ("path" %in% selected) scm_direction_label else scm_round_label
   labels <- vapply(rounds, label, character(1))
   rules <- lapply(unique(labels), function(section) {
     members <- rounds[labels == section]
@@ -163,7 +176,7 @@ scm_summary_spec <- function(
   # in bold, or is the only one shown; the reference and final fits are not
   # candidates.
   columns <- c("based_on", "description", "ofv", "dofv", "pvalue")
-  if (selected == "column") {
+  if ("column" %in% selected) {
     spec <- set_spec_computed_column(
       spec,
       "round_result",
@@ -172,12 +185,14 @@ scm_summary_spec <- function(
       label = "Round Result"
     )
     columns <- c(columns, "round_result")
-  } else if (selected == "bold") {
+  }
+  if ("bold" %in% selected) {
     spec <- set_spec_bold_rows(
       spec,
       "selected" %in% tags && !any(!!scm_stage_tags %in% tags)
     )
-  } else if (selected == "only") {
+  }
+  if ("path" %in% selected) {
     # Without a backward step the working full model is the reduced
     # covariate model less its cov step, so only the latter stays.
     stages <- if (scm_lineage_dropped_any(tree)) {
@@ -190,33 +205,80 @@ scm_summary_spec <- function(
       "selected" %in% tags || any(!!stages %in% tags)
     )
   }
-  if (description != "full") {
-    spec <- set_spec_description_transform(
-      spec,
-      switch(
-        description,
-        step = scm_description_step,
-        covariates = scm_description_covariates
-      )
+  spec <- set_spec_description_transform(
+    spec,
+    switch(
+      description,
+      sparse = scm_description_sparse,
+      verbose = scm_description_verbose
     )
-  }
+  )
   spec <- rlang::inject(set_spec_columns(spec, !!!columns))
   spec <- set_spec_footnotes(spec, NULL)
   set_spec_title(spec, title %||% "")
 }
 
 # pharos and hyperion end an SCM fit's description with the covariates its
-# model has: "add CRCL_CL (attempt 1); covariates: WT_CL, CRCL_CL". The
-# default shows it whole; the step is what comes before the part, and a
-# description without the part is left alone by both transforms.
-scm_description_step <- function(x) {
-  sub("; covariates: .*$", "", x)
+# model has: "add CRCL_CL; covariates: WT_CL, CRCL_CL". The step is what
+# comes before that part, less the round and attempt pharos writes around it
+# ("SCM forward_round2: add CRCL_CL (attempt 1)"), which the row's section
+# already gives. A stage fit (base, working full, reduced covariate) has no
+# step: its section names it. `covariates` is NA for a description without
+# the part.
+scm_description_parts <- function(x, tags) {
+  has_tag <- function(wanted) {
+    vapply(tags, function(t) any(wanted %in% t), logical(1))
+  }
+  is_scm <- has_tag("scm")
+  has_part <- grepl("; covariates: ", x, fixed = TRUE)
+  covariates <- rep(NA_character_, length(x))
+  covariates[has_part] <- sub("^.*; covariates: ", "", x[has_part])
+  step <- sub("; covariates: .*$", "", x)
+  step[is_scm] <- sub("^SCM [^:]+: ", "", step[is_scm])
+  step[is_scm] <- sub(" \\(attempt [0-9]+\\)$", "", step[is_scm])
+  step[is_scm & has_tag(scm_stage_tags)] <- ""
+  list(step = step, covariates = covariates)
 }
 
-scm_description_covariates <- function(x) {
-  has_part <- grepl("; covariates: ", x, fixed = TRUE)
-  x[has_part] <- sub("^.*; covariates: ", "", x[has_part])
-  x
+# What the fit added or dropped, then its model's covariates.
+scm_description_verbose <- function(x, tags) {
+  parts <- scm_description_parts(x, tags)
+  has_part <- !is.na(parts$covariates)
+  listed <- paste0("covariates: ", parts$covariates)
+  with_step <- has_part & nzchar(parts$step)
+  out <- parts$step
+  out[has_part] <- listed[has_part]
+  out[with_step] <- paste0(parts$step[with_step], "; ", listed[with_step])
+  out
+}
+
+# What the fit added or dropped alone.
+scm_description_sparse <- function(x, tags) {
+  scm_description_parts(x, tags)$step
+}
+
+# `selected` as given: one or more of the choices, where only the two that
+# mark the kept candidate among the others combine.
+scm_selected_arg <- function(selected) {
+  choices <- c("none", "column", "bold", "path")
+  if (
+    !is.character(selected) ||
+      length(selected) == 0 ||
+      !all(selected %in% choices)
+  ) {
+    rlang::abort(
+      '`selected` must be "none", "column", "bold", "path", or c("column", "bold").'
+    )
+  }
+  selected <- unique(selected)
+  alone <- intersect(selected, c("none", "path"))
+  if (length(selected) > 1 && length(alone) > 0) {
+    rlang::abort(sprintf(
+      '`selected = "%s"` is given alone; only "column" and "bold" combine.',
+      alone[1]
+    ))
+  }
+  selected
 }
 
 # The round tags of the fits that are not round candidates: the reference

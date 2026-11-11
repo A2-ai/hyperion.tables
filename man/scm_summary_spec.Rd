@@ -7,8 +7,8 @@
 scm_summary_spec(
   lineage,
   title = NULL,
-  description = c("full", "step", "covariates"),
-  selected = c("none", "column", "bold", "only"),
+  description = c("sparse", "verbose"),
+  selected = "none",
   other_section_label = "Other"
 )
 }
@@ -22,18 +22,18 @@ config (\verb{<stem>scm.toml}) is passed to the latter.}
 \item{title}{Table title. \code{NULL} (the default) gives a table with no
 title; pass a string to set one.}
 
-\item{description}{What the Description column shows for each fit:
-\code{"full"} (the default), the description as the lineage gives it, its
-step and the covariates its model has; \code{"step"}, its action alone; or
-\code{"covariates"}, the covariates its model has alone.}
+\item{description}{How much the Description column says about each fit:
+\code{"sparse"} (the default), only what it added or dropped; or
+\code{"verbose"}, what it added or dropped and the covariates its model has.}
 
-\item{selected}{How the table shows the candidate each round kept, one
-of: \code{"none"} (the default), every candidate with the kept one
-unmarked; \code{"column"}, every candidate with a Round Result column
-reading "added" or "dropped" on the kept one's row; \code{"bold"}, every
-candidate with the kept one's row in bold and no Round Result column;
-or \code{"only"}, the kept candidates alone, unmarked, with the rounds
-grouped by direction.}
+\item{selected}{How the table shows the candidate each round kept:
+\code{"none"} (the default), every candidate with the kept one unmarked;
+\code{"column"}, every candidate with a Round Result column reading "added"
+or "dropped" on the kept one's row; \code{"bold"}, every candidate with the
+kept one's row in bold; or \code{"path"}, the kept candidates alone,
+unmarked, with the rounds grouped by direction. \code{"column"} and \code{"bold"}
+can be given together, as \code{c("column", "bold")}; the others are given
+alone.}
 
 \item{other_section_label}{Section label for a model matching no round.}
 }
@@ -59,18 +59,19 @@ the backward steps are tested too, with the round's reference as the
 fuller model. The table has no footnotes. Customize further with the
 \verb{set_spec_*()} modifiers.
 
-\code{selected} picks the one way the table shows the candidate each round
-kept, the fit tagged \code{"selected"}. The choices exclude one another:
+\code{selected} picks how the table shows the candidate each round kept, the
+fit tagged \code{"selected"}. \code{"column"} and \code{"bold"} mark it among the other
+candidates and can be given together, \code{selected = c("column", "bold")};
+\code{"none"} and \code{"path"} are each given alone:
 \itemize{
 \item \code{"none"} (the default) does not mark it: every candidate shows
 alike, with no Round Result column and no bold row.
 \item \code{"column"} adds a Round Result column, which reads "added" or
 "dropped" on the kept candidate's row and is empty elsewhere.
-\item \code{"bold"} renders the kept candidate's row in bold. There is no
-Round Result column.
-\item \code{"only"} shows no other candidate, so there is nothing to mark
-and the table has no Round Result column and no bold row. It keeps
-the models that mattered: the base (or full) model, the working
+\item \code{"bold"} renders the kept candidate's row in bold.
+\item \code{"path"} shows the path the process took and no other
+candidate, so there is nothing to mark and the table has no Round
+Result column and no bold row. It keeps the models that mattered: the base (or full) model, the working
 full and reduced covariate models, and in each round the candidate
 it kept, so a round that kept none shows no row. Since each round
 then has at most one row, the rounds are grouped by direction
@@ -81,14 +82,24 @@ backward round dropped anything, the working full model says
 nothing the reduced covariate model does not, so it is left out too.
 }
 
-pharos ends every SCM fit's description with the covariates its model
-has, e.g. \code{"SCM forward_round2: add CRCL_CL (attempt 1); covariates: WT_CL, CRCL_CL"}, as does \code{hyperion::get_scm_lineage()}. \code{description}
-picks what the Description column shows: \code{"full"} (the default), the
-description as the lineage gives it, as \code{\link[=SummarySpec]{SummarySpec()}} shows it, so
-each row names both the step and the covariates its model has;
-\code{"step"}, the fit's action alone, "add WT_V"; or \code{"covariates"}, the
-covariates alone, "WT_CL, CRCL_CL, WT_V". A description without the
-covariates part shows as it is under either.
+\code{description} picks how much the Description column says about each
+fit:
+\itemize{
+\item \code{"sparse"} (the default) shows only what the fit added or
+dropped: "add CRCL_CL".
+\item \code{"verbose"} shows what the fit added or dropped, then the
+covariates its model has: "add CRCL_CL; covariates: WT_CL, CRCL_CL".
+}
+The base (or full), working full and reduced covariate models add or
+drop nothing and their section already names them, so their description
+never repeats the name: it is empty when sparse and "covariates: WT_CL,
+CRCL_CL" when verbose.
+
+Both parts come from the description the lineage gives each fit, which
+pharos and \code{hyperion::get_scm_lineage()} end with the covariates the
+model has, as in \code{"SCM forward_round2: add CRCL_CL (attempt 1); covariates: WT_CL, CRCL_CL"}. The round and attempt pharos writes around
+the step are left out, so the table reads the same from either lineage.
+A fit whose description has no covariates part shows its step alone.
 
 The section rules end with a catch-all, so rules appended with
 \code{\link[=set_spec_sections]{set_spec_sections()}} never apply; pass \code{overwrite = TRUE} to replace them.
@@ -108,16 +119,18 @@ scm |>
   apply_summary_spec(scm_summary_spec(scm, title = "Covariate search")) |>
   make_summary_table()
 
-# Show only each fit's step, or only its model's covariates
-scm_summary_spec(scm, description = "step")
-scm_summary_spec(scm, description = "covariates")
+# Describe each fit by what it added or dropped and its model's
+# covariates
+scm_summary_spec(scm, description = "verbose")
 
-# Mark the candidate each round kept: a Round Result column, or its row
-# in bold
+# Mark the candidate each round kept: a Round Result column, its row in
+# bold, or both
 scm_summary_spec(scm, selected = "column")
 scm_summary_spec(scm, selected = "bold")
-# Show only the models that mattered: no other candidates, nothing marked
-scm_summary_spec(scm, selected = "only")
+scm_summary_spec(scm, selected = c("column", "bold"))
+# Show the path the process took: only the models that mattered, with no
+# other candidates and nothing marked
+scm_summary_spec(scm, selected = "path")
 
 # Customize further with modifiers
 spec <- scm_summary_spec(scm) |>

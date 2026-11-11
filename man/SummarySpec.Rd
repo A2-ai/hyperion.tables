@@ -97,7 +97,8 @@ satisfies any is rendered in bold. Usually set with
 
 \item{description_transform}{NULL (the default), or a function applied to
 the description column, as a character vector, before the table is
-built. Usually set with \code{\link[=set_spec_description_transform]{set_spec_description_transform()}}.}
+built; one with a \code{tags} argument also gets the models' tags. Usually
+set with \code{\link[=set_spec_description_transform]{set_spec_description_transform()}}.}
 
 \item{computed_columns}{Named list of columns computed from each model's
 row by rules, each \verb{list(rules = <quosures of formulas>, label = )}.
