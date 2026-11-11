@@ -7,26 +7,40 @@
 # an SCM spec changes. Any other SummarySpec passes through them untouched.
 # ==============================================================================
 
-#' How an SCM summary table marks the candidate each round selected
+#' How an SCM summary table shows the candidate each round selected
 #'
 #' `ScmSelectedOptions()` is what [scm_summary_spec()] takes as `selected`.
 #' Each round of an SCM process selects at most one candidate, the fit
 #' tagged `"selected"`: the covariate a forward round added, or the one a
 #' backward round dropped. The table can mark it with a column, with a bold
-#' row, with both, or not at all.
+#' row, or with both; it can show the selected candidates alone, the path
+#' the process took; or it can show every candidate alike (the default).
+#' The settings combine freely.
+#'
+#' With `path = TRUE` the table keeps the models that mattered: the base
+#' (or full) model, the working full and reduced covariate models, and in
+#' each round the candidate it selected, so a round that selected none
+#' shows no row. Since each round then has at most one row, the rounds are
+#' grouped by direction instead of sectioned one by one: the reference
+#' model, then the forward steps under "Forward", the working full model,
+#' the backward steps under "Backward", and the reduced covariate model.
+#' When no backward round dropped anything, the working full model says
+#' nothing the reduced covariate model does not, so it is left out too.
 #'
 #' @param column Logical. If TRUE, the table has a Round Result column,
 #'   which reads "added" or "dropped" on the selected candidate's row and is
 #'   empty elsewhere. Default `FALSE`.
 #' @param bold Logical. If TRUE, the selected candidate's row is rendered in
 #'   bold. Default `FALSE`.
-#' @param column_label Label of the Round Result column.
+#' @param path Logical. If TRUE, the table shows only the path the process
+#'   took: the selected candidates and no others, with the rounds grouped
+#'   by direction. Default `FALSE` shows every candidate.
 #'
 #' @section Properties:
 #' \itemize{
 #'   \item `column` - Whether the table has a Round Result column.
 #'   \item `bold` - Whether the selected candidate's row is bold.
-#'   \item `column_label` - Label of the Round Result column.
+#'   \item `path` - Whether the table shows only the selected candidates.
 #' }
 #'
 #' @seealso [scm_summary_spec()].
@@ -34,27 +48,21 @@
 #' @examples
 #' ScmSelectedOptions(column = TRUE)
 #' ScmSelectedOptions(column = TRUE, bold = TRUE)
-#' ScmSelectedOptions(column = TRUE, column_label = "Step")
+#' ScmSelectedOptions(path = TRUE)
 ScmSelectedOptions <- S7::new_class(
   "ScmSelectedOptions",
   package = "hyperion.tables",
   properties = list(
     column = S7::new_property(class = S7::class_logical, default = FALSE),
     bold = S7::new_property(class = S7::class_logical, default = FALSE),
-    column_label = S7::new_property(
-      class = S7::class_character,
-      default = "Round Result"
-    )
+    path = S7::new_property(class = S7::class_logical, default = FALSE)
   ),
   validator = function(self) {
-    for (flag in c("column", "bold")) {
+    for (flag in c("column", "bold", "path")) {
       value <- S7::prop(self, flag)
       if (length(value) != 1 || is.na(value)) {
         return(sprintf("@%s must be TRUE or FALSE.", flag))
       }
-    }
-    if (length(self@column_label) != 1 || is.na(self@column_label)) {
-      return("@column_label must be a single character string.")
     }
   }
 )
@@ -74,7 +82,6 @@ ScmSummarySpec <- S7::new_class(
       class = ScmSelectedOptions,
       default = ScmSelectedOptions()
     ),
-    path = S7::new_property(class = S7::class_logical, default = FALSE),
     other_section_label = S7::new_property(
       class = S7::class_character,
       default = "Other"
@@ -83,7 +90,6 @@ ScmSummarySpec <- S7::new_class(
   constructor = function(
     description = "sparse",
     selected = ScmSelectedOptions(),
-    path = FALSE,
     other_section_label = "Other",
     ...
   ) {
@@ -91,7 +97,6 @@ ScmSummarySpec <- S7::new_class(
       SummarySpec(...),
       description = description,
       selected = selected,
-      path = path,
       other_section_label = other_section_label
     )
   }
@@ -140,20 +145,12 @@ is_scm_summary_spec <- function(spec) {
 #' A lineage from `hyperion::get_model_lineage()` has none, so `"verbose"`
 #' shows what `"sparse"` does for it, with a warning.
 #'
-#' `selected`, a [ScmSelectedOptions()], picks how the table marks the
-#' candidate each round selected, the fit tagged `"selected"`: with a Round
-#' Result column reading "added" or "dropped", with its row in bold, with
-#' both, or (the default) not at all.
-#'
-#' `path = TRUE` shows the path the process took and no other candidate: the
-#' base (or full) model, the working full and reduced covariate models, and
-#' in each round the candidate it selected, so a round that selected none
-#' shows no row. Since each round then has at most one row, the rounds are
-#' grouped by direction instead of sectioned one by one: the reference
-#' model, then the forward steps under "Forward", the working full model,
-#' the backward steps under "Backward", and the reduced covariate model.
-#' When no backward round dropped anything, the working full model says
-#' nothing the reduced covariate model does not, so it is left out too.
+#' `selected`, a [ScmSelectedOptions()], picks how the table shows the
+#' candidate each round selected, the fit tagged `"selected"`: marked with
+#' a Round Result column reading "added" or "dropped" (`column = TRUE`),
+#' with its row in bold (`bold = TRUE`), or alone, as the path the process
+#' took, with the other candidates left out and the rounds grouped by
+#' direction (`path = TRUE`). The default shows every candidate alike.
 #'
 #' Section rules set on the spec with [set_spec_sections()] replace the ones
 #' it would work out.
@@ -163,11 +160,10 @@ is_scm_summary_spec <- function(spec) {
 #' @param description How much the Description column says about each fit:
 #'   `"sparse"` (the default), only what it added or dropped; or
 #'   `"verbose"`, what it added or dropped and the covariates its model has.
-#' @param selected A [ScmSelectedOptions()] object: how the table marks the
-#'   candidate each round selected. The default marks nothing.
-#' @param path Logical. If TRUE, show only the path the process took: the
-#'   selected candidates, with the rounds grouped by direction. Default
-#'   `FALSE` shows every candidate.
+#' @param selected A [ScmSelectedOptions()] object: how the table shows the
+#'   candidate each round selected: marked with a Round Result column or a
+#'   bold row, or alone, as the path the process took. The default shows
+#'   every candidate alike.
 #' @param other_section_label Section label for a model matching no round.
 #'
 #' @return A [SummarySpec] object.
@@ -198,7 +194,7 @@ is_scm_summary_spec <- function(spec) {
 #' scm_summary_spec(selected = ScmSelectedOptions(column = TRUE, bold = TRUE))
 #'
 #' # Show the path the process took: only the models that mattered
-#' scm_summary_spec(path = TRUE)
+#' scm_summary_spec(selected = ScmSelectedOptions(path = TRUE))
 #'
 #' # Customize further with modifiers
 #' spec <- scm_summary_spec() |>
@@ -211,7 +207,6 @@ scm_summary_spec <- function(
   title = NULL,
   description = c("sparse", "verbose"),
   selected = ScmSelectedOptions(),
-  path = FALSE,
   other_section_label = "Other"
 ) {
   if (
@@ -230,9 +225,6 @@ scm_summary_spec <- function(
   if (!S7::S7_inherits(selected, ScmSelectedOptions)) {
     rlang::abort("`selected` must be a <ScmSelectedOptions> object.")
   }
-  if (!rlang::is_bool(path)) {
-    rlang::abort("`path` must be TRUE or FALSE.")
-  }
   if (!rlang::is_string(other_section_label)) {
     rlang::abort("`other_section_label` must be a single character string.")
   }
@@ -240,7 +232,6 @@ scm_summary_spec <- function(
   spec <- ScmSummarySpec(
     description = description,
     selected = selected,
-    path = path,
     other_section_label = other_section_label
   )
   spec <- set_spec_tag_filter(spec, include = "scm")
@@ -269,7 +260,7 @@ scm_spec_sections <- function(spec, tree) {
   }
   # The rules evaluate against each row with `tags` unwrapped; they need
   # base R for `%in%`, nothing else.
-  label <- if (spec@path) scm_direction_label else scm_round_label
+  label <- if (spec@selected@path) scm_direction_label else scm_round_label
   labels <- vapply(rounds, label, character(1))
   rules <- lapply(unique(labels), function(section) {
     members <- rounds[labels == section]
@@ -324,7 +315,7 @@ scm_summary_rows <- function(df, spec, tree) {
   if (spec@selected@bold) {
     df$.bold <- is_selected
   }
-  if (spec@path) {
+  if (spec@selected@path) {
     # Without a backward step that dropped anything, the working full model
     # is the reduced covariate model less its cov step, so only the latter
     # stays.
@@ -401,7 +392,7 @@ scm_summary_labels <- function(label_map, data, spec) {
     return(label_map)
   }
   if ("round_result" %in% names(data)) {
-    label_map[["round_result"]] <- spec@selected@column_label
+    label_map[["round_result"]] <- "Round Result"
   }
   if ("dofv" %in% names(label_map)) {
     label_map[["dofv"]] <- "\u0394OFV"

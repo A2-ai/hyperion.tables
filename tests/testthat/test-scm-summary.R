@@ -61,11 +61,11 @@ test_that("scm_summary_spec() is a SummarySpec that needs no lineage", {
 
   # Its SCM settings, with their defaults.
   expect_equal(spec@description, "sparse")
-  expect_false(spec@path)
+  expect_false(spec@selected@path)
   expect_false(spec@selected@column)
   expect_false(spec@selected@bold)
   expect_equal(scm_summary_spec(description = "verbose")@description, "verbose")
-  expect_true(scm_summary_spec(path = TRUE)@path)
+  expect_true(scm_summary_spec(selected = ScmSelectedOptions(path = TRUE))@selected@path)
 
   # The modifiers take it and it stays an SCM spec.
   modified <- spec |>
@@ -78,7 +78,8 @@ test_that("scm_summary_spec() is a SummarySpec that needs no lineage", {
   expect_error(scm_summary_spec(description = "x"), "should be one of")
   expect_error(scm_summary_spec(description = "covariates"), "should be one of")
   expect_error(scm_summary_spec(selected = "column"), "<ScmSelectedOptions>")
-  expect_error(scm_summary_spec(path = "yes"), "TRUE or FALSE")
+  # The path is one of the `selected` options, not an argument of its own.
+  expect_error(scm_summary_spec(path = TRUE), "unused argument")
   expect_error(scm_summary_spec(other_section_label = 1), "single character string")
   # The lineage goes to apply_summary_spec(), not here.
   expect_error(scm_summary_spec(pharos_tagged_lineage()), "does not take the lineage")
@@ -88,16 +89,18 @@ test_that("ScmSelectedOptions() holds how the selected candidate is marked", {
   options <- ScmSelectedOptions()
   expect_false(options@column)
   expect_false(options@bold)
-  expect_equal(options@column_label, "Round Result")
+  expect_false(options@path)
 
-  both <- ScmSelectedOptions(column = TRUE, bold = TRUE, column_label = "Step")
+  both <- ScmSelectedOptions(column = TRUE, bold = TRUE)
   expect_true(both@column)
   expect_true(both@bold)
-  expect_equal(both@column_label, "Step")
+  expect_true(ScmSelectedOptions(path = TRUE)@path)
+  expect_error(ScmSelectedOptions(path = NA), "@path must be TRUE or FALSE")
 
   expect_error(ScmSelectedOptions(column = NA), "@column must be TRUE or FALSE")
   expect_error(ScmSelectedOptions(bold = c(TRUE, FALSE)), "@bold must be TRUE or FALSE")
-  expect_error(ScmSelectedOptions(column_label = c("a", "b")), "@column_label")
+  # The Round Result column's label is fixed.
+  expect_error(ScmSelectedOptions(column_label = "Step"), "unused argument")
 })
 
 test_that("an SCM spec sections the rounds of the lineage it is applied to", {
@@ -112,7 +115,10 @@ test_that("an SCM spec sections the rounds of the lineage it is applied to", {
   )
   # With only the path shown, the rounds of a direction share a section.
   expect_equal(
-    section_labels(scm_spec_sections(scm_summary_spec(path = TRUE), tree)),
+    section_labels(scm_spec_sections(
+      scm_summary_spec(selected = ScmSelectedOptions(path = TRUE)),
+      tree
+    )),
     c("Base model", "Forward", "Working full model", "Backward", "Reduced covariate model", "Other")
   )
   expect_equal(
@@ -195,7 +201,11 @@ test_that("an SCM spec shapes the summary rows and leaves other specs alone", {
 
   # The path: the stage fits and the selected candidates. No backward round
   # dropped anything here, so the working full model is left out.
-  path <- scm_summary_rows(df, scm_summary_spec(path = TRUE), tree)
+  path <- scm_summary_rows(
+    df,
+    scm_summary_spec(selected = ScmSelectedOptions(path = TRUE)),
+    tree
+  )
   expect_equal(path$model, c("run001_base", "run001_wt_cl", "run001_scm_reduced_covariate"))
 
   # The labels an SCM table adds or changes; any other spec's are untouched.
@@ -204,10 +214,10 @@ test_that("an SCM spec shapes the summary rows and leaves other specs alone", {
   scm_labels <- scm_summary_labels(
     labels,
     marked,
-    scm_summary_spec(selected = ScmSelectedOptions(column = TRUE, column_label = "Step"))
+    scm_summary_spec(selected = ScmSelectedOptions(column = TRUE))
   )
-  expect_equal(scm_labels$round_result, "Step")
-  expect_equal(scm_labels$dofv, "ΔOFV")
+  expect_equal(scm_labels$round_result, "Round Result")
+  expect_equal(scm_labels$dofv, "\u0394OFV")
 })
 
 test_that("the general spec functions carry no SCM arguments", {
@@ -318,9 +328,12 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
   expect_equal(both$round_result, marked$round_result)
   expect_equal(both$.bold, bold$.bold)
 
-  # With path = TRUE, only the stages and the selected candidates stay,
+  # With the path, only the stages and the selected candidates stay,
   # with the rounds grouped by direction.
-  kept <- apply_summary_spec(tree, scm_summary_spec(path = TRUE))
+  kept <- apply_summary_spec(
+    tree,
+    scm_summary_spec(selected = ScmSelectedOptions(path = TRUE))
+  )
   expect_equal(kept$model, data$model[data$section %in% stages | !is.na(marked$round_result)])
   expect_false(any(c("round_result", ".bold") %in% names(kept)))
   expect_lt(nrow(kept), nrow(data))
@@ -332,7 +345,7 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
   # The path can carry the Round Result too.
   kept_marked <- apply_summary_spec(
     tree,
-    scm_summary_spec(path = TRUE, selected = ScmSelectedOptions(column = TRUE))
+    scm_summary_spec(selected = ScmSelectedOptions(path = TRUE, column = TRUE))
   )
   expect_equal(kept_marked$round_result, c(NA, "added", "added", NA, "dropped", NA))
 
@@ -343,7 +356,10 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
     function(node) !any(grepl("^backward_round", unlist(node$model$tags))),
     forward_only$nodes
   )
-  path <- apply_summary_spec(forward_only, scm_summary_spec(path = TRUE))
+  path <- apply_summary_spec(
+    forward_only,
+    scm_summary_spec(selected = ScmSelectedOptions(path = TRUE))
+  )
   expect_equal(path$section, c("Reference model", "Forward", "Forward", "Reduced covariate model"))
   expect_false("1001_scm_working_full" %in% path$model)
   expect_true("1001_scm_working_full" %in% kept$model)
@@ -357,7 +373,7 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
 
   labels <- make_summary_table(marked, output = "data")@col_labels
   expect_equal(labels$round_result, "Round Result")
-  expect_equal(labels$dofv, "ΔOFV")
+  expect_equal(labels$dofv, "\u0394OFV")
   snapshot_gt(make_summary_table(data), "scm-summary-gt")
   snapshot_gt(make_summary_table(marked), "scm-summary-column-gt")
   snapshot_gt(make_summary_table(both), "scm-summary-bold-gt")

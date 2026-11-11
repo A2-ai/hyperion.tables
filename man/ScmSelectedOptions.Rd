@@ -2,9 +2,9 @@
 % Please edit documentation in R/scm-spec.R
 \name{ScmSelectedOptions}
 \alias{ScmSelectedOptions}
-\title{How an SCM summary table marks the candidate each round selected}
+\title{How an SCM summary table shows the candidate each round selected}
 \usage{
-ScmSelectedOptions(column = FALSE, bold = FALSE, column_label = "Round Result")
+ScmSelectedOptions(column = FALSE, bold = FALSE, path = FALSE)
 }
 \arguments{
 \item{column}{Logical. If TRUE, the table has a Round Result column,
@@ -14,28 +14,43 @@ empty elsewhere. Default \code{FALSE}.}
 \item{bold}{Logical. If TRUE, the selected candidate's row is rendered in
 bold. Default \code{FALSE}.}
 
-\item{column_label}{Label of the Round Result column.}
+\item{path}{Logical. If TRUE, the table shows only the path the process
+took: the selected candidates and no others, with the rounds grouped
+by direction. Default \code{FALSE} shows every candidate.}
 }
 \description{
 \code{ScmSelectedOptions()} is what \code{\link[=scm_summary_spec]{scm_summary_spec()}} takes as \code{selected}.
 Each round of an SCM process selects at most one candidate, the fit
 tagged \code{"selected"}: the covariate a forward round added, or the one a
 backward round dropped. The table can mark it with a column, with a bold
-row, with both, or not at all.
+row, or with both; it can show the selected candidates alone, the path
+the process took; or it can show every candidate alike (the default).
+The settings combine freely.
+}
+\details{
+With \code{path = TRUE} the table keeps the models that mattered: the base
+(or full) model, the working full and reduced covariate models, and in
+each round the candidate it selected, so a round that selected none
+shows no row. Since each round then has at most one row, the rounds are
+grouped by direction instead of sectioned one by one: the reference
+model, then the forward steps under "Forward", the working full model,
+the backward steps under "Backward", and the reduced covariate model.
+When no backward round dropped anything, the working full model says
+nothing the reduced covariate model does not, so it is left out too.
 }
 \section{Properties}{
 
 \itemize{
 \item \code{column} - Whether the table has a Round Result column.
 \item \code{bold} - Whether the selected candidate's row is bold.
-\item \code{column_label} - Label of the Round Result column.
+\item \code{path} - Whether the table shows only the selected candidates.
 }
 }
 
 \examples{
 ScmSelectedOptions(column = TRUE)
 ScmSelectedOptions(column = TRUE, bold = TRUE)
-ScmSelectedOptions(column = TRUE, column_label = "Step")
+ScmSelectedOptions(path = TRUE)
 }
 \seealso{
 \code{\link[=scm_summary_spec]{scm_summary_spec()}}.

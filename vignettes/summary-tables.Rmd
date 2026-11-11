@@ -138,11 +138,10 @@ rules for however many rounds the process ran. It keeps the fits tagged
 `"scm"` and shows every candidate alike.
 
 - `selected` takes a `ScmSelectedOptions()`, which picks how the candidate
-  each round selected is marked: `column = TRUE` adds a Round Result column
-  reading "added" or "dropped" on its row, and `bold = TRUE` renders its
-  row in bold.
-- `path = TRUE` leaves out the candidates the rounds did not select,
-  grouping the steps that remain under "Forward" and "Backward".
+  each round selected is shown: `column = TRUE` adds a Round Result column
+  reading "added" or "dropped" on its row, `bold = TRUE` renders its row in
+  bold, and `path = TRUE` leaves out the candidates the rounds did not
+  select, grouping the steps that remain under "Forward" and "Backward".
 - The Description column shows what each fit added or dropped;
   `description = "verbose"` adds the covariates its model has. Those come
   from the process record, so they need the lineage

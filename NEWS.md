@@ -21,15 +21,15 @@
     The base, working full and reduced covariate models do not repeat their
     section's name there: they show nothing when sparse and their
     covariates when verbose.
-  - `selected` takes a `ScmSelectedOptions()`: how the table marks the
-    candidate each round selected, with a Round Result column reading
-    "added" or "dropped" (`column = TRUE`), with its row in bold (`bold =
-    TRUE`), with both, or (the default) not at all. `column_label` renames
-    the column.
-  - `path = TRUE` shows the path the process took: only the base, working
-    full and reduced covariate models and each round's selected candidate,
-    with the rounds grouped into "Forward" and "Backward" sections, leaving
-    out the working full model when no backward round dropped anything.
+  - `selected` takes a `ScmSelectedOptions()`: how the table shows the
+    candidate each round selected. `column = TRUE` adds a Round Result
+    column reading "added" or "dropped" on its row, and `bold = TRUE`
+    renders its row in bold. `path = TRUE` shows the
+    path the process took: only the base, working full and reduced
+    covariate models and each round's selected candidate, with the rounds
+    grouped into "Forward" and "Backward" sections, leaving out the working
+    full model when no backward round dropped anything. The settings
+    combine, and the default shows every candidate alike.
 
 ## Bug fixes
 

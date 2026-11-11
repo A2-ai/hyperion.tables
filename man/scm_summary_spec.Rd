@@ -8,7 +8,6 @@ scm_summary_spec(
   title = NULL,
   description = c("sparse", "verbose"),
   selected = ScmSelectedOptions(),
-  path = FALSE,
   other_section_label = "Other"
 )
 }
@@ -20,12 +19,10 @@ title; pass a string to set one.}
 \code{"sparse"} (the default), only what it added or dropped; or
 \code{"verbose"}, what it added or dropped and the covariates its model has.}
 
-\item{selected}{A \code{\link[=ScmSelectedOptions]{ScmSelectedOptions()}} object: how the table marks the
-candidate each round selected. The default marks nothing.}
-
-\item{path}{Logical. If TRUE, show only the path the process took: the
-selected candidates, with the rounds grouped by direction. Default
-\code{FALSE} shows every candidate.}
+\item{selected}{A \code{\link[=ScmSelectedOptions]{ScmSelectedOptions()}} object: how the table shows the
+candidate each round selected: marked with a Round Result column or a
+bold row, or alone, as the path the process took. The default shows
+every candidate alike.}
 
 \item{other_section_label}{Section label for a model matching no round.}
 }
@@ -70,20 +67,12 @@ They come from the SCM process record, which
 A lineage from \code{hyperion::get_model_lineage()} has none, so \code{"verbose"}
 shows what \code{"sparse"} does for it, with a warning.
 
-\code{selected}, a \code{\link[=ScmSelectedOptions]{ScmSelectedOptions()}}, picks how the table marks the
-candidate each round selected, the fit tagged \code{"selected"}: with a Round
-Result column reading "added" or "dropped", with its row in bold, with
-both, or (the default) not at all.
-
-\code{path = TRUE} shows the path the process took and no other candidate: the
-base (or full) model, the working full and reduced covariate models, and
-in each round the candidate it selected, so a round that selected none
-shows no row. Since each round then has at most one row, the rounds are
-grouped by direction instead of sectioned one by one: the reference
-model, then the forward steps under "Forward", the working full model,
-the backward steps under "Backward", and the reduced covariate model.
-When no backward round dropped anything, the working full model says
-nothing the reduced covariate model does not, so it is left out too.
+\code{selected}, a \code{\link[=ScmSelectedOptions]{ScmSelectedOptions()}}, picks how the table shows the
+candidate each round selected, the fit tagged \code{"selected"}: marked with
+a Round Result column reading "added" or "dropped" (\code{column = TRUE}),
+with its row in bold (\code{bold = TRUE}), or alone, as the path the process
+took, with the other candidates left out and the rounds grouped by
+direction (\code{path = TRUE}). The default shows every candidate alike.
 
 Section rules set on the spec with \code{\link[=set_spec_sections]{set_spec_sections()}} replace the ones
 it would work out.
@@ -113,7 +102,7 @@ scm_summary_spec(selected = ScmSelectedOptions(bold = TRUE))
 scm_summary_spec(selected = ScmSelectedOptions(column = TRUE, bold = TRUE))
 
 # Show the path the process took: only the models that mattered
-scm_summary_spec(path = TRUE)
+scm_summary_spec(selected = ScmSelectedOptions(path = TRUE))
 
 # Customize further with modifiers
 spec <- scm_summary_spec() |>
