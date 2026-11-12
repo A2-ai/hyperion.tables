@@ -16,6 +16,7 @@ S7 classes for configuring table output:
 \itemize{
 \item \link{TableSpec} - Configuration for parameter tables
 \item \link{SummarySpec} - Configuration for run summary tables
+\item \link{ScmSummarySpec} - Configuration for SCM run summary tables, a SummarySpec
 \item \link{CIOptions} - Confidence interval display options
 \item \link{ParameterNameOptions} - Parameter name display options
 \item \link{SectionOptions} - Section assignment, order, and filter options
@@ -152,7 +153,7 @@ Functions for comparing models:
 
 A run summary table of an SCM process, from the lineage \code{hyperion::get_scm_lineage()} builds:
 \itemize{
-\item \code{\link[=scm_summary_spec]{scm_summary_spec()}} - SummarySpec preset with a section per round
+\item \code{\link[=scm_summary_spec]{scm_summary_spec()}} - ScmSummarySpec preset with a section per round
 \item \code{\link[=set_spec_scm_selected]{set_spec_scm_selected()}} - Set how the table shows the candidate each round selected
 \item \code{\link[=get_spec_scm_selected]{get_spec_scm_selected()}} - Get those options from an SCM spec
 \item \link{ScmSelectedOptions} - The options that modifier builds

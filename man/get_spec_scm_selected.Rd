@@ -7,7 +7,7 @@
 get_spec_scm_selected(spec, ...)
 }
 \arguments{
-\item{spec}{A spec from \code{\link[=scm_summary_spec]{scm_summary_spec()}}.}
+\item{spec}{A ScmSummarySpec object, from \code{\link[=scm_summary_spec]{scm_summary_spec()}}.}
 
 \item{...}{Not used.}
 }
@@ -16,7 +16,7 @@ ScmSelectedOptions object.
 }
 \description{
 \code{get_spec_scm_selected()} returns the ScmSelectedOptions object.
-Operates only on a spec from \code{\link[=scm_summary_spec]{scm_summary_spec()}}.
+Operates on \link{ScmSummarySpec} only.
 }
 \examples{
 spec <- scm_summary_spec() |>

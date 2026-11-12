@@ -10,6 +10,7 @@
 #' \itemize{
 #'   \item [TableSpec] - Configuration for parameter tables
 #'   \item [SummarySpec] - Configuration for run summary tables
+#'   \item [ScmSummarySpec] - Configuration for SCM run summary tables, a SummarySpec
 #'   \item [CIOptions] - Confidence interval display options
 #'   \item [ParameterNameOptions] - Parameter name display options
 #'   \item [SectionOptions] - Section assignment, order, and filter options
@@ -122,7 +123,7 @@
 #' @section Stepwise Covariate Modeling:
 #' A run summary table of an SCM process, from the lineage `hyperion::get_scm_lineage()` builds:
 #' \itemize{
-#'   \item [scm_summary_spec()] - SummarySpec preset with a section per round
+#'   \item [scm_summary_spec()] - ScmSummarySpec preset with a section per round
 #'   \item [set_spec_scm_selected()] - Set how the table shows the candidate each round selected
 #'   \item [get_spec_scm_selected()] - Get those options from an SCM spec
 #'   \item [ScmSelectedOptions] - The options that modifier builds

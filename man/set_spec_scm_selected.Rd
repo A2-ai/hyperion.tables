@@ -7,7 +7,7 @@
 set_spec_scm_selected(spec, ..., column = NULL, bold = NULL, path = NULL)
 }
 \arguments{
-\item{spec}{A spec from \code{\link[=scm_summary_spec]{scm_summary_spec()}}.}
+\item{spec}{A ScmSummarySpec object, from \code{\link[=scm_summary_spec]{scm_summary_spec()}}.}
 
 \item{...}{Not used.}
 
@@ -29,7 +29,7 @@ Modified spec.
 candidate each round selected: marked with a Round Result column, with
 its row in bold, or alone, as the path the process took. It builds the
 spec's \code{\link[=ScmSelectedOptions]{ScmSelectedOptions()}}; a setting not given keeps its value.
-Operates only on a spec from \code{\link[=scm_summary_spec]{scm_summary_spec()}}.
+Operates on \link{ScmSummarySpec} only.
 }
 \examples{
 spec <- scm_summary_spec() |>

@@ -2,7 +2,7 @@
 % Please edit documentation in R/scm-spec.R
 \name{scm_summary_spec}
 \alias{scm_summary_spec}
-\title{Pre-configured SummarySpec for a stepwise covariate modeling process}
+\title{Pre-configured ScmSummarySpec for a stepwise covariate modeling process}
 \usage{
 scm_summary_spec(
   title = NULL,
@@ -27,10 +27,10 @@ every candidate alike.}
 \item{other_section_label}{Section label for a model matching no round.}
 }
 \value{
-A \link{SummarySpec} object.
+A \link{ScmSummarySpec} object.
 }
 \description{
-\code{scm_summary_spec()} returns a \link{SummarySpec} for the run summary table of
+\code{scm_summary_spec()} returns a \link{ScmSummarySpec} for the run summary table of
 an SCM process: the fits tagged \code{"scm"}, in one section per round, from
 the round tag pharos writes to each fit's metadata (\code{"base"} or \code{"full"},
 \code{"forward_round1"}, ..., \code{"working_full"}, \code{"reduced_covariate"}), in the
@@ -45,8 +45,8 @@ round's own; the working full and reduced covariate models are based on
 the reference fit, so theirs is against it. The columns are Reference,
 Description, OFV, dOFV and p-value. The backward steps get a p-value
 too, with the round's reference as the fuller model. The table has no
-footnotes. The spec is a \link{SummarySpec}, so the \verb{set_spec_*()} modifiers
-customize it further.
+footnotes. A \link{ScmSummarySpec} is a \link{SummarySpec}, so the \verb{set_spec_*()}
+modifiers customize it further.
 
 \code{description} picks how much the Description column says about each
 fit:
@@ -117,6 +117,6 @@ spec <- scm_summary_spec() |>
 }
 }
 \seealso{
-\code{\link[=set_spec_scm_selected]{set_spec_scm_selected()}}, \code{\link[=ScmSelectedOptions]{ScmSelectedOptions()}}, \link{SummarySpec},
-\code{\link[=apply_summary_spec]{apply_summary_spec()}}, \code{\link[=make_summary_table]{make_summary_table()}}.
+\link{ScmSummarySpec}, \code{\link[=set_spec_scm_selected]{set_spec_scm_selected()}},
+\code{\link[=ScmSelectedOptions]{ScmSelectedOptions()}}, \code{\link[=apply_summary_spec]{apply_summary_spec()}}, \code{\link[=make_summary_table]{make_summary_table()}}.
 }

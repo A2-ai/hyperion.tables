@@ -68,11 +68,40 @@ ScmSelectedOptions <- S7::new_class(
   }
 )
 
-# The spec scm_summary_spec() returns: a SummarySpec, so every modifier and
-# apply_summary_spec() take it, with the SCM settings the table is built by.
+#' Summary specification for SCM run summary tables
+#'
+#' `ScmSummarySpec` is the [SummarySpec] of a stepwise covariate modeling
+#' table. It is a child class of `SummarySpec`, as `SummarySpec` is of
+#' `BaseSpec`: everything that takes a `SummarySpec` takes it, including
+#' [apply_summary_spec()] and the `set_spec_*()` modifiers, and it adds the
+#' settings only an SCM table has. Only a `ScmSummarySpec` gets the SCM
+#' behavior (a section per round, Round Result column, bold rows, the path,
+#' p-values for backward steps), and the SCM functions,
+#' [set_spec_scm_selected()] and [get_spec_scm_selected()], accept nothing
+#' else, so an ordinary run summary cannot pick it up by accident. Applied
+#' to a lineage with no SCM fits, it is an error.
+#'
+#' [scm_summary_spec()] is the usual way to make one and describes what the
+#' table shows.
+#'
+#' @param description What the Description column says about each fit:
+#'   `"sparse"` (the default), only what it added or dropped; or
+#'   `"verbose"`, what it added or dropped and the covariates its model has.
+#' @param selected A [ScmSelectedOptions()] object: how the table shows the
+#'   candidate each round selected. Prefer [set_spec_scm_selected()] in a
+#'   pipe for user-facing code.
+#' @param other_section_label Section label for a model matching no round.
+#' @param ... Arguments of [SummarySpec()]. Those not given take the SCM
+#'   table's defaults: no title, the fits tagged `"scm"`, the columns
+#'   Reference, Description, OFV, dOFV and p-value, and no footnotes.
+#'
+#' @seealso [scm_summary_spec()], [SummarySpec].
+#' @export
+#' @examples
+#' spec <- ScmSummarySpec(description = "verbose")
+#' S7::S7_inherits(spec, SummarySpec)
 ScmSummarySpec <- S7::new_class(
   "ScmSummarySpec",
-  package = "hyperion.tables",
   parent = SummarySpec,
   properties = list(
     description = S7::new_property(
@@ -88,14 +117,39 @@ ScmSummarySpec <- S7::new_class(
       default = "Other"
     )
   ),
+  validator = function(self) {
+    if (
+      length(self@description) != 1 ||
+        !self@description %in% c("sparse", "verbose")
+    ) {
+      return("@description must be \"sparse\" or \"verbose\".")
+    }
+    if (
+      length(self@other_section_label) != 1 ||
+        is.na(self@other_section_label)
+    ) {
+      return("@other_section_label must be a single character string.")
+    }
+  },
   constructor = function(
     description = "sparse",
     selected = ScmSelectedOptions(),
     other_section_label = "Other",
     ...
   ) {
+    # What an SCM table has in place of a run summary's defaults
+    summary_args <- list(...)
+    defaults <- list(
+      title = "",
+      tag_filter = "scm",
+      columns = c("based_on", "description", "ofv", "dofv", "pvalue"),
+      footnote_order = NULL
+    )
+    for (name in setdiff(names(defaults), names(summary_args))) {
+      summary_args[name] <- list(defaults[[name]])
+    }
     S7::new_object(
-      SummarySpec(...),
+      do.call(SummarySpec, summary_args),
       description = description,
       selected = selected,
       other_section_label = other_section_label
@@ -107,9 +161,9 @@ is_scm_summary_spec <- function(spec) {
   S7::S7_inherits(spec, ScmSummarySpec)
 }
 
-#' Pre-configured SummarySpec for a stepwise covariate modeling process
+#' Pre-configured ScmSummarySpec for a stepwise covariate modeling process
 #'
-#' `scm_summary_spec()` returns a [SummarySpec] for the run summary table of
+#' `scm_summary_spec()` returns a [ScmSummarySpec] for the run summary table of
 #' an SCM process: the fits tagged `"scm"`, in one section per round, from
 #' the round tag pharos writes to each fit's metadata (`"base"` or `"full"`,
 #' `"forward_round1"`, ..., `"working_full"`, `"reduced_covariate"`), in the
@@ -124,8 +178,8 @@ is_scm_summary_spec <- function(spec) {
 #' the reference fit, so theirs is against it. The columns are Reference,
 #' Description, OFV, dOFV and p-value. The backward steps get a p-value
 #' too, with the round's reference as the fuller model. The table has no
-#' footnotes. The spec is a [SummarySpec], so the `set_spec_*()` modifiers
-#' customize it further.
+#' footnotes. A [ScmSummarySpec] is a [SummarySpec], so the `set_spec_*()`
+#' modifiers customize it further.
 #'
 #' `description` picks how much the Description column says about each
 #' fit:
@@ -168,9 +222,9 @@ is_scm_summary_spec <- function(spec) {
 #'   every candidate alike.
 #' @param other_section_label Section label for a model matching no round.
 #'
-#' @return A [SummarySpec] object.
-#' @seealso [set_spec_scm_selected()], [ScmSelectedOptions()], [SummarySpec],
-#'   [apply_summary_spec()], [make_summary_table()].
+#' @return A [ScmSummarySpec] object.
+#' @seealso [ScmSummarySpec], [set_spec_scm_selected()],
+#'   [ScmSelectedOptions()], [apply_summary_spec()], [make_summary_table()].
 #' @export
 #' @examples \dontrun{
 #' # From the process record: descriptions and each model's covariates
@@ -234,15 +288,12 @@ scm_summary_spec <- function(
     rlang::abort("`other_section_label` must be a single character string.")
   }
 
-  spec <- ScmSummarySpec(
+  ScmSummarySpec(
     description = description,
     selected = selected,
-    other_section_label = other_section_label
+    other_section_label = other_section_label,
+    title = title %||% ""
   )
-  spec <- set_spec_tag_filter(spec, include = "scm")
-  spec <- set_spec_columns(spec, "based_on", "description", "ofv", "dofv", "pvalue")
-  spec <- set_spec_footnotes(spec, NULL)
-  set_spec_title(spec, title %||% "")
 }
 
 #' Set how an SCM summary table shows the selected candidates
@@ -251,9 +302,9 @@ scm_summary_spec <- function(
 #' candidate each round selected: marked with a Round Result column, with
 #' its row in bold, or alone, as the path the process took. It builds the
 #' spec's [ScmSelectedOptions()]; a setting not given keeps its value.
-#' Operates only on a spec from [scm_summary_spec()].
+#' Operates on [ScmSummarySpec] only.
 #'
-#' @param spec A spec from [scm_summary_spec()].
+#' @param spec A ScmSummarySpec object, from [scm_summary_spec()].
 #' @param ... Not used.
 #' @param column Logical. If TRUE, the table has a Round Result column,
 #'   which reads "added" or "dropped" on the selected candidate's row.
@@ -280,7 +331,7 @@ set_spec_scm_selected <- function(
   path = NULL
 ) {
   if (!is_scm_summary_spec(spec)) {
-    rlang::abort("`spec` must be a spec from `scm_summary_spec()`.")
+    rlang::abort("`spec` must be a <ScmSummarySpec> object.")
   }
   rlang::check_dots_empty()
   selected_args <- list(
@@ -304,9 +355,9 @@ set_spec_scm_selected <- function(
 #' Get how an SCM summary table shows the selected candidates
 #'
 #' `get_spec_scm_selected()` returns the ScmSelectedOptions object.
-#' Operates only on a spec from [scm_summary_spec()].
+#' Operates on [ScmSummarySpec] only.
 #'
-#' @param spec A spec from [scm_summary_spec()].
+#' @param spec A ScmSummarySpec object, from [scm_summary_spec()].
 #' @param ... Not used.
 #' @return ScmSelectedOptions object.
 #' @seealso [set_spec_scm_selected()].
@@ -317,7 +368,7 @@ set_spec_scm_selected <- function(
 #' get_spec_scm_selected(spec)
 get_spec_scm_selected <- function(spec, ...) {
   if (!is_scm_summary_spec(spec)) {
-    rlang::abort("`spec` must be a spec from `scm_summary_spec()`.")
+    rlang::abort("`spec` must be a <ScmSummarySpec> object.")
   }
   spec@selected
 }

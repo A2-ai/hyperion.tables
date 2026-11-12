@@ -10,8 +10,10 @@
   Reference, Description, OFV, dOFV and p-value (for the backward steps
   too). It takes no lineage: the sections are worked out from the lineage
   `apply_summary_spec()` is given, `hyperion::get_scm_lineage()` or
-  `hyperion::get_model_lineage()`. Everything the table adds to a run
-  summary lives behind this preset; `SummarySpec()` and the `set_spec_*()`
+  `hyperion::get_model_lineage()`. It returns a `ScmSummarySpec`, a child
+  class of `SummarySpec` as `SummarySpec` is of `BaseSpec`. Everything an
+  SCM table adds to a run summary belongs to that class, so an ordinary
+  `SummarySpec` never gets it; `SummarySpec()` and the `set_spec_*()`
   modifiers are unchanged, and still customize the spec it returns.
   - `description` picks how much the Description column says about each
     fit: `"sparse"` (the default), what it added or dropped ("add

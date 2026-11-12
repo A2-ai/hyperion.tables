@@ -44,8 +44,34 @@ pharos_tagged_lineage <- function() {
   structure(list(nodes = nodes), class = "hyperion_nonmem_tree")
 }
 
-test_that("scm_summary_spec() is a SummarySpec that needs no lineage", {
+test_that("ScmSummarySpec is a SummarySpec with the SCM settings", {
+  spec <- ScmSummarySpec()
+  # A child of SummarySpec, as SummarySpec is of BaseSpec.
+  expect_true(S7::S7_inherits(spec, ScmSummarySpec))
+  expect_true(S7::S7_inherits(spec, SummarySpec))
+  expect_true(S7::S7_inherits(spec, BaseSpec))
+  expect_false(S7::S7_inherits(SummarySpec(), ScmSummarySpec))
+  expect_false(S7::S7_inherits(TableSpec(), ScmSummarySpec))
+  # The preset makes the same spec.
+  expect_equal(spec, scm_summary_spec())
+
+  # SummarySpec's arguments pass through; those not given are the SCM table's.
+  expect_equal(get_spec_title(ScmSummarySpec(title = "Search")), "Search")
+  expect_equal(get_spec_tag_filter(ScmSummarySpec(title = "Search"))$include, "scm")
+  expect_equal(get_spec_columns(ScmSummarySpec(columns = c("ofv", "dofv"))), c("ofv", "dofv"))
+  expect_equal(ScmSummarySpec(n_decimals_ofv = 1)@n_decimals_ofv, 1)
+
+  expect_error(ScmSummarySpec(description = "x"), "@description must be")
+  expect_error(ScmSummarySpec(description = c("sparse", "verbose")), "@description must be")
+  expect_error(ScmSummarySpec(other_section_label = c("a", "b")), "@other_section_label")
+  expect_error(ScmSummarySpec(selected = "column"))
+  # The parent's validation still applies.
+  expect_error(ScmSummarySpec(columns = "not_a_column"))
+})
+
+test_that("scm_summary_spec() is a ScmSummarySpec that needs no lineage", {
   spec <- scm_summary_spec()
+  expect_true(S7::S7_inherits(spec, ScmSummarySpec))
   expect_true(S7::S7_inherits(spec, SummarySpec))
   expect_true(is_scm_summary_spec(spec))
   expect_false(is_scm_summary_spec(SummarySpec()))
@@ -128,11 +154,11 @@ test_that("set_spec_scm_selected() sets the selected options of an SCM spec", {
   expect_identical(get_spec_scm_selected(spec), spec@selected)
   expect_true(S7::S7_inherits(get_spec_scm_selected(scm_summary_spec()), ScmSelectedOptions))
   expect_false(get_spec_scm_selected(scm_summary_spec())@column)
-  expect_error(get_spec_scm_selected(SummarySpec()), "scm_summary_spec")
-  expect_error(get_spec_scm_selected(TableSpec()), "scm_summary_spec")
+  expect_error(get_spec_scm_selected(SummarySpec()), "<ScmSummarySpec>")
+  expect_error(get_spec_scm_selected(TableSpec()), "<ScmSummarySpec>")
 
-  expect_error(set_spec_scm_selected(SummarySpec(), column = TRUE), "scm_summary_spec")
-  expect_error(set_spec_scm_selected(TableSpec(), column = TRUE), "scm_summary_spec")
+  expect_error(set_spec_scm_selected(SummarySpec(), column = TRUE), "<ScmSummarySpec>")
+  expect_error(set_spec_scm_selected(TableSpec(), column = TRUE), "<ScmSummarySpec>")
   expect_error(set_spec_scm_selected(scm_summary_spec(), column = NA), "@column must be TRUE or FALSE")
   expect_error(set_spec_scm_selected(scm_summary_spec(), TRUE))
 })
