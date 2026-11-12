@@ -7,6 +7,7 @@
 ScmSummarySpec(
   description = "sparse",
   selected = ScmSelectedOptions(),
+  rounds = NULL,
   other_section_label = "Other",
   ...
 )
@@ -19,6 +20,11 @@ ScmSummarySpec(
 \item{selected}{A \code{\link[=ScmSelectedOptions]{ScmSelectedOptions()}} object: how the table shows the
 candidate each round selected. Prefer \code{\link[=set_spec_scm_selected]{set_spec_scm_selected()}} in a
 pipe for user-facing code.}
+
+\item{rounds}{The rounds the table shows, as a character vector of round
+names (\code{"forward_round1"}) and directions (\code{"forward"}, \code{"backward"}),
+or \code{NULL} (the default) for every round. Prefer \code{\link[=set_spec_scm_rounds]{set_spec_scm_rounds()}}
+in a pipe for user-facing code.}
 
 \item{other_section_label}{Section label for a model matching no round.}
 

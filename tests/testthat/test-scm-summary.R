@@ -163,6 +163,70 @@ test_that("set_spec_scm_selected() sets the selected options of an SCM spec", {
   expect_error(set_spec_scm_selected(scm_summary_spec(), TRUE))
 })
 
+test_that("set_spec_scm_rounds() picks the rounds an SCM spec shows", {
+  # Every round by default.
+  expect_null(get_spec_scm_rounds(scm_summary_spec()))
+
+  spec <- scm_summary_spec() |>
+    set_spec_scm_rounds("forward_round1", "forward_round2")
+  expect_true(is_scm_summary_spec(spec))
+  expect_equal(get_spec_scm_rounds(spec), c("forward_round1", "forward_round2"))
+  # As a vector, with a direction, and without repeats.
+  expect_equal(
+    get_spec_scm_rounds(set_spec_scm_rounds(spec, c("backward", "forward_round1", "backward"))),
+    c("backward", "forward_round1")
+  )
+  # With none, every round again.
+  expect_null(get_spec_scm_rounds(set_spec_scm_rounds(spec)))
+  expect_null(get_spec_scm_rounds(set_spec_scm_rounds(spec, NULL)))
+  # The same spec as the one made in one call, or from the class.
+  expect_equal(spec, scm_summary_spec(rounds = c("forward_round1", "forward_round2")))
+  expect_equal(spec, ScmSummarySpec(rounds = c("forward_round1", "forward_round2")))
+
+  # Only rounds and directions are names of rounds; a stage fit is not one.
+  expect_error(set_spec_scm_rounds(spec, "Forward round 1"), "@rounds must name rounds")
+  expect_error(set_spec_scm_rounds(spec, "working_full"), "Got: 'working_full'")
+  expect_error(set_spec_scm_rounds(spec, 1), "given as strings")
+  expect_error(scm_summary_spec(rounds = 1), "character vector")
+  expect_error(scm_summary_spec(rounds = "round1"), "@rounds must name rounds")
+  expect_error(ScmSummarySpec(rounds = character()), "@rounds must name rounds")
+  expect_error(set_spec_scm_rounds(SummarySpec(), "forward"), "<ScmSummarySpec>")
+  expect_error(get_spec_scm_rounds(SummarySpec()), "<ScmSummarySpec>")
+  expect_error(get_spec_scm_rounds(TableSpec()), "<ScmSummarySpec>")
+
+  # The rows a round keeps: its candidates, and the stage fits, which are
+  # in no round.
+  tree <- pharos_tagged_lineage()
+  scm_nodes <- tree$nodes[-1]
+  df <- data.frame(
+    model = vapply(scm_nodes, function(n) tools::file_path_sans_ext(basename(n$name)), ""),
+    .name = vapply(scm_nodes, function(n) tools::file_path_sans_ext(n$name), ""),
+    stringsAsFactors = FALSE
+  )
+  df$tags <- I(lapply(scm_nodes, function(n) as.character(unlist(n$model$tags))))
+  shown <- function(...) {
+    scm_summary_rows(df, set_spec_scm_rounds(scm_summary_spec(), ...), tree)$model
+  }
+  stage <- c("run001_base", "run001_scm_working_full", "run001_scm_reduced_covariate")
+  expect_equal(shown(), df$model)
+  expect_equal(
+    shown("forward_round1"),
+    c("run001_base", "run001_wt_cl", "run001_wt_v", "run001_scm_working_full", "run001_scm_reduced_covariate")
+  )
+  expect_equal(
+    shown("forward"),
+    df$model[df$model != "run001_wt_cl" | !grepl("backward", df$.name)]
+  )
+  expect_equal(
+    shown("backward"),
+    c("run001_base", "run001_scm_working_full", "run001_wt_cl", "run001_scm_reduced_covariate")
+  )
+  expect_equal(shown("forward", "backward"), df$model)
+  # A round the lineage does not have is a warning; the stage fits stay.
+  expect_warning(only_stage <- shown("forward_round9"), "has no fits in: 'forward_round9'")
+  expect_equal(only_stage, stage)
+})
+
 test_that("an SCM spec sections the rounds of the lineage it is applied to", {
   tree <- pharos_tagged_lineage()
   spec <- scm_spec_sections(scm_summary_spec(), tree)
@@ -408,6 +472,43 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
     scm_summary_spec(selected = ScmSelectedOptions(path = TRUE, column = TRUE))
   )
   expect_equal(kept_marked$round_result, c(NA, "added", "added", NA, "dropped", NA))
+
+  # With rounds picked, the table has those rounds and the stage fits, and
+  # every row keeps the dOFV and p-value it has in the full table.
+  two <- apply_summary_spec(
+    tree,
+    scm_summary_spec() |> set_spec_scm_rounds("forward_round2", "backward_round1")
+  )
+  expect_equal(
+    unique(two$section),
+    c(
+      "Reference model", "Forward round 2", "Working full model",
+      "Backward round 1", "Reduced covariate model"
+    )
+  )
+  in_two <- data$section %in% unique(two$section)
+  expect_equal(two$model, data$model[in_two])
+  expect_equal(two$dofv, data$dofv[in_two])
+  expect_equal(two$pvalue, data$pvalue[in_two])
+  # A direction names all of its rounds, and combines with the path.
+  backward <- apply_summary_spec(tree, scm_summary_spec() |> set_spec_scm_rounds("backward"))
+  expect_equal(
+    unique(backward$section),
+    c(
+      "Reference model", "Working full model", "Backward round 1",
+      "Backward round 2", "Reduced covariate model"
+    )
+  )
+  backward_path <- apply_summary_spec(
+    tree,
+    scm_summary_spec() |>
+      set_spec_scm_selected(path = TRUE) |>
+      set_spec_scm_rounds("backward")
+  )
+  expect_equal(
+    backward_path$section,
+    c("Reference model", "Working full model", "Backward", "Reduced covariate model")
+  )
 
   # Without a backward step that dropped anything, the working full model
   # is left out: the reduced covariate model is the result.

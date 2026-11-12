@@ -8,6 +8,7 @@ scm_summary_spec(
   title = NULL,
   description = c("sparse", "verbose"),
   selected = ScmSelectedOptions(),
+  rounds = NULL,
   other_section_label = "Other"
 )
 }
@@ -23,6 +24,10 @@ title; pass a string to set one.}
 candidate each round selected: marked with a Round Result column or a
 bold row, or alone, as the path the process took. The default shows
 every candidate alike.}
+
+\item{rounds}{The rounds the table shows, as a character vector of round
+names (\code{"forward_round1"}) and directions (\code{"forward"}, \code{"backward"}),
+or \code{NULL} (the default) for every round.}
 
 \item{other_section_label}{Section label for a model matching no round.}
 }
@@ -75,6 +80,13 @@ took, with the other candidates left out and the rounds grouped by
 direction (\code{path = TRUE}). The default shows every candidate alike.
 \code{\link[=set_spec_scm_selected]{set_spec_scm_selected()}} sets the same on a spec already made.
 
+\code{rounds} picks the rounds the table shows, by name (\code{"forward_round1"})
+or by direction (\code{"forward"}, \code{"backward"}); the default shows them all.
+The base (or full), working full and reduced covariate models are not
+rounds, so they always show, and every row keeps the dOFV and p-value it
+has in the full table. \code{\link[=set_spec_scm_rounds]{set_spec_scm_rounds()}} sets the same on a spec
+already made.
+
 Section rules set on the spec with \code{\link[=set_spec_sections]{set_spec_sections()}} replace the ones
 it would work out.
 }
@@ -102,6 +114,10 @@ scm_summary_spec() |> set_spec_scm_selected(column = TRUE)
 scm_summary_spec() |> set_spec_scm_selected(bold = TRUE)
 scm_summary_spec() |> set_spec_scm_selected(column = TRUE, bold = TRUE)
 
+# Show only some rounds
+scm_summary_spec() |> set_spec_scm_rounds("forward_round1", "forward_round2")
+scm_summary_spec() |> set_spec_scm_rounds("backward")
+
 # Show the path the process took: only the models that mattered
 scm_summary_spec() |> set_spec_scm_selected(path = TRUE)
 
@@ -117,6 +133,6 @@ spec <- scm_summary_spec() |>
 }
 }
 \seealso{
-\link{ScmSummarySpec}, \code{\link[=set_spec_scm_selected]{set_spec_scm_selected()}},
+\link{ScmSummarySpec}, \code{\link[=set_spec_scm_selected]{set_spec_scm_selected()}}, \code{\link[=set_spec_scm_rounds]{set_spec_scm_rounds()}},
 \code{\link[=ScmSelectedOptions]{ScmSelectedOptions()}}, \code{\link[=apply_summary_spec]{apply_summary_spec()}}, \code{\link[=make_summary_table]{make_summary_table()}}.
 }

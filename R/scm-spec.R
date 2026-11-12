@@ -90,6 +90,10 @@ ScmSelectedOptions <- S7::new_class(
 #' @param selected A [ScmSelectedOptions()] object: how the table shows the
 #'   candidate each round selected. Prefer [set_spec_scm_selected()] in a
 #'   pipe for user-facing code.
+#' @param rounds The rounds the table shows, as a character vector of round
+#'   names (`"forward_round1"`) and directions (`"forward"`, `"backward"`),
+#'   or `NULL` (the default) for every round. Prefer [set_spec_scm_rounds()]
+#'   in a pipe for user-facing code.
 #' @param other_section_label Section label for a model matching no round.
 #' @param ... Arguments of [SummarySpec()]. Those not given take the SCM
 #'   table's defaults: no title, the fits tagged `"scm"`, the columns
@@ -112,12 +116,20 @@ ScmSummarySpec <- S7::new_class(
       class = ScmSelectedOptions,
       default = ScmSelectedOptions()
     ),
+    rounds = S7::new_property(
+      class = S7::class_character | NULL,
+      default = NULL
+    ),
     other_section_label = S7::new_property(
       class = S7::class_character,
       default = "Other"
     )
   ),
   validator = function(self) {
+    rounds_msg <- validate_scm_rounds(self@rounds)
+    if (!is.null(rounds_msg)) {
+      return(rounds_msg)
+    }
     if (
       length(self@description) != 1 ||
         !self@description %in% c("sparse", "verbose")
@@ -134,6 +146,7 @@ ScmSummarySpec <- S7::new_class(
   constructor = function(
     description = "sparse",
     selected = ScmSelectedOptions(),
+    rounds = NULL,
     other_section_label = "Other",
     ...
   ) {
@@ -152,10 +165,29 @@ ScmSummarySpec <- S7::new_class(
       do.call(SummarySpec, summary_args),
       description = description,
       selected = selected,
+      rounds = rounds,
       other_section_label = other_section_label
     )
   }
 )
+
+# NULL when `rounds` is every round (NULL) or names rounds and directions;
+# otherwise what is wrong with it.
+validate_scm_rounds <- function(rounds) {
+  if (is.null(rounds)) {
+    return(NULL)
+  }
+  is_round <- grepl("^(forward|backward)(_round[0-9]+)?$", rounds)
+  if (length(rounds) == 0 || anyNA(rounds) || !all(is_round)) {
+    bad <- rounds[is.na(rounds) | !is_round]
+    return(paste0(
+      "@rounds must name rounds (\"forward_round1\") or directions ",
+      "(\"forward\", \"backward\"), or be NULL for every round.",
+      if (length(bad) > 0) paste0(" Got: ", paste0("'", bad, "'", collapse = ", "))
+    ))
+  }
+  NULL
+}
 
 is_scm_summary_spec <- function(spec) {
   S7::S7_inherits(spec, ScmSummarySpec)
@@ -208,6 +240,13 @@ is_scm_summary_spec <- function(spec) {
 #' direction (`path = TRUE`). The default shows every candidate alike.
 #' [set_spec_scm_selected()] sets the same on a spec already made.
 #'
+#' `rounds` picks the rounds the table shows, by name (`"forward_round1"`)
+#' or by direction (`"forward"`, `"backward"`); the default shows them all.
+#' The base (or full), working full and reduced covariate models are not
+#' rounds, so they always show, and every row keeps the dOFV and p-value it
+#' has in the full table. [set_spec_scm_rounds()] sets the same on a spec
+#' already made.
+#'
 #' Section rules set on the spec with [set_spec_sections()] replace the ones
 #' it would work out.
 #'
@@ -220,10 +259,13 @@ is_scm_summary_spec <- function(spec) {
 #'   candidate each round selected: marked with a Round Result column or a
 #'   bold row, or alone, as the path the process took. The default shows
 #'   every candidate alike.
+#' @param rounds The rounds the table shows, as a character vector of round
+#'   names (`"forward_round1"`) and directions (`"forward"`, `"backward"`),
+#'   or `NULL` (the default) for every round.
 #' @param other_section_label Section label for a model matching no round.
 #'
 #' @return A [ScmSummarySpec] object.
-#' @seealso [ScmSummarySpec], [set_spec_scm_selected()],
+#' @seealso [ScmSummarySpec], [set_spec_scm_selected()], [set_spec_scm_rounds()],
 #'   [ScmSelectedOptions()], [apply_summary_spec()], [make_summary_table()].
 #' @export
 #' @examples \dontrun{
@@ -249,6 +291,10 @@ is_scm_summary_spec <- function(spec) {
 #' scm_summary_spec() |> set_spec_scm_selected(bold = TRUE)
 #' scm_summary_spec() |> set_spec_scm_selected(column = TRUE, bold = TRUE)
 #'
+#' # Show only some rounds
+#' scm_summary_spec() |> set_spec_scm_rounds("forward_round1", "forward_round2")
+#' scm_summary_spec() |> set_spec_scm_rounds("backward")
+#'
 #' # Show the path the process took: only the models that mattered
 #' scm_summary_spec() |> set_spec_scm_selected(path = TRUE)
 #'
@@ -266,6 +312,7 @@ scm_summary_spec <- function(
   title = NULL,
   description = c("sparse", "verbose"),
   selected = ScmSelectedOptions(),
+  rounds = NULL,
   other_section_label = "Other"
 ) {
   if (
@@ -284,6 +331,9 @@ scm_summary_spec <- function(
   if (!S7::S7_inherits(selected, ScmSelectedOptions)) {
     rlang::abort("`selected` must be a <ScmSelectedOptions> object.")
   }
+  if (!is.null(rounds) && !is.character(rounds)) {
+    rlang::abort("`rounds` must be a character vector of round names, or NULL.")
+  }
   if (!rlang::is_string(other_section_label)) {
     rlang::abort("`other_section_label` must be a single character string.")
   }
@@ -291,6 +341,7 @@ scm_summary_spec <- function(
   ScmSummarySpec(
     description = description,
     selected = selected,
+    rounds = rounds,
     other_section_label = other_section_label,
     title = title %||% ""
   )
@@ -371,6 +422,64 @@ get_spec_scm_selected <- function(spec, ...) {
     rlang::abort("`spec` must be a <ScmSummarySpec> object.")
   }
   spec@selected
+}
+
+#' Set the rounds an SCM summary table shows
+#'
+#' `set_spec_scm_rounds()` picks the rounds the table of an SCM spec shows,
+#' by name or by direction. The base (or full), working full and reduced
+#' covariate models are not rounds, so they always show. A round is left
+#' out after dOFV and the p-value are computed, so every row keeps the
+#' values it has in the full table. A round the lineage does not have is a
+#' warning. Operates on [ScmSummarySpec] only.
+#'
+#' @param spec A ScmSummarySpec object, from [scm_summary_spec()].
+#' @param ... Round names as pharos tags the fits, such as
+#'   `"forward_round1"`, and directions, `"forward"` or `"backward"`, for
+#'   every round of one; as strings or a character vector. With none, or
+#'   `NULL`, the table shows every round.
+#' @return Modified spec.
+#' @seealso [get_spec_scm_rounds()], [scm_summary_spec()].
+#' @export
+#' @examples
+#' spec <- scm_summary_spec() |>
+#'   set_spec_scm_rounds("forward_round1", "forward_round2")
+#' # Every backward round
+#' spec <- scm_summary_spec() |>
+#'   set_spec_scm_rounds("backward")
+#' # Every round again
+#' spec <- set_spec_scm_rounds(spec)
+set_spec_scm_rounds <- function(spec, ...) {
+  if (!is_scm_summary_spec(spec)) {
+    rlang::abort("`spec` must be a <ScmSummarySpec> object.")
+  }
+  rounds <- unlist(list(...), use.names = FALSE)
+  if (!is.null(rounds) && !is.character(rounds)) {
+    rlang::abort("Rounds must be given as strings, such as \"forward_round1\" or \"forward\".")
+  }
+  spec@rounds <- if (length(rounds) == 0) NULL else unique(rounds)
+  spec
+}
+
+#' Get the rounds an SCM summary table shows
+#'
+#' `get_spec_scm_rounds()` returns the rounds the table shows, or NULL when
+#' it shows every round. Operates on [ScmSummarySpec] only.
+#'
+#' @param spec A ScmSummarySpec object, from [scm_summary_spec()].
+#' @param ... Not used.
+#' @return Character vector of round names and directions, or NULL.
+#' @seealso [set_spec_scm_rounds()].
+#' @export
+#' @examples
+#' spec <- scm_summary_spec() |>
+#'   set_spec_scm_rounds("forward")
+#' get_spec_scm_rounds(spec)
+get_spec_scm_rounds <- function(spec, ...) {
+  if (!is_scm_summary_spec(spec)) {
+    rlang::abort("`spec` must be a <ScmSummarySpec> object.")
+  }
+  spec@rounds
 }
 
 # ------------------------------------------------------------------------------
@@ -461,7 +570,36 @@ scm_summary_rows <- function(df, spec, tree) {
       rlang::abort("The lineage has no SCM fits on the path the process took.")
     }
   }
+  if (!is.null(spec@rounds)) {
+    df <- df[scm_rows_in_rounds(df, spec@rounds), , drop = FALSE]
+  }
   df
+}
+
+# TRUE for the rows the spec's rounds keep: a stage fit, which is in no
+# round, and a candidate of a round that is named or whose direction is.
+# `df` already has every row's dOFV, so leaving a round out changes no
+# other row. A round the lineage does not have is a warning.
+scm_rows_in_rounds <- function(df, rounds) {
+  tags <- unclass(df$tags)
+  row_round <- vapply(
+    tags,
+    function(t) {
+      round <- grep("^(forward|backward)_round[0-9]+$", t, value = TRUE)
+      if (length(round) == 0) NA_character_ else round[1]
+    },
+    character(1)
+  )
+  row_direction <- sub("_round[0-9]+$", "", row_round)
+  missing <- setdiff(rounds, c(row_round, row_direction))
+  if (length(missing) > 0) {
+    rlang::warn(paste0(
+      "The lineage has no fits in: ",
+      paste0("'", missing, "'", collapse = ", "),
+      "."
+    ))
+  }
+  is.na(row_round) | row_round %in% rounds | row_direction %in% rounds
 }
 
 # What the Description column shows. A fit's description is its step, what

@@ -127,6 +127,8 @@
 #'   \item [set_spec_scm_selected()] - Set how the table shows the candidate each round selected
 #'   \item [get_spec_scm_selected()] - Get those options from an SCM spec
 #'   \item [ScmSelectedOptions] - The options that modifier builds
+#'   \item [set_spec_scm_rounds()] - Set the rounds the table shows
+#'   \item [get_spec_scm_rounds()] - Get the rounds the table shows
 #' }
 #'
 ## usethis namespace: start

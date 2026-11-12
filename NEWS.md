@@ -34,6 +34,12 @@
     grouped into "Forward" and "Backward" sections, leaving out the working
     full model when no backward round dropped anything. The settings
     combine, and the default shows every candidate alike.
+  - `set_spec_scm_rounds()` picks the rounds the table shows, by name
+    (`"forward_round1"`) or by direction (`"forward"`, `"backward"`), as
+    does `rounds`; `get_spec_scm_rounds()` reads them. The base, working
+    full and reduced covariate models always show, and a round is left out
+    after dOFV and the p-value are computed, so every row keeps the values
+    it has in the full table.
 
 ## Bug fixes
 
