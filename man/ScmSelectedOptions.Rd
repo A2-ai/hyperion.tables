@@ -4,7 +4,7 @@
 \alias{ScmSelectedOptions}
 \title{How an SCM summary table shows the candidate each round selected}
 \usage{
-ScmSelectedOptions(column = FALSE, bold = FALSE, path = FALSE)
+ScmSelectedOptions(column = FALSE, bold = FALSE, selected_only = FALSE)
 }
 \arguments{
 \item{column}{Logical. If TRUE, the table has a Round Result column,
@@ -14,9 +14,9 @@ empty elsewhere. Default \code{FALSE}.}
 \item{bold}{Logical. If TRUE, the selected candidate's row is rendered in
 bold. Default \code{FALSE}.}
 
-\item{path}{Logical. If TRUE, the table shows only the path the process
-took: the selected candidates and no others, with the rounds grouped
-by direction. Default \code{FALSE} shows every candidate.}
+\item{selected_only}{Logical. If TRUE, the table shows only the
+selected candidates, and no others, with the rounds grouped by
+direction. Default \code{FALSE} shows every candidate.}
 }
 \description{
 \code{ScmSelectedOptions()} is what \code{\link[=scm_summary_spec]{scm_summary_spec()}} takes as \code{selected}.
@@ -24,15 +24,15 @@ It is usually set with \code{\link[=set_spec_scm_selected]{set_spec_scm_selected
 Each round of an SCM process selects at most one candidate, the fit
 tagged \code{"selected"}: the covariate a forward round added, or the one a
 backward round dropped. The table can mark it with a column, with a bold
-row, or with both; it can show the selected candidates alone, the path
-the process took; or it can show every candidate alike (the default).
+row, or with both; it can show the selected candidates alone; or it can
+show every candidate alike (the default).
 The settings combine freely.
 }
 \details{
-With \code{path = TRUE} the table keeps the models that mattered: the base
-(or full) model, the working full and reduced covariate models, and in
-each round the candidate it selected, so a round that selected none
-shows no row. Since each round then has at most one row, the rounds are
+With \code{selected_only = TRUE} the table keeps the models that mattered:
+the base (or full) model, the working full and reduced covariate models,
+and in each round the candidate it selected, so a round that selected
+none shows no row. Since each round then has at most one row, the rounds are
 grouped by direction instead of sectioned one by one: the reference
 model, then the forward steps under "Forward", the working full model,
 the backward steps under "Backward", and the reduced covariate model.
@@ -44,14 +44,15 @@ nothing the reduced covariate model does not, so it is left out too.
 \itemize{
 \item \code{column} - Whether the table has a Round Result column.
 \item \code{bold} - Whether the selected candidate's row is bold.
-\item \code{path} - Whether the table shows only the selected candidates.
+\item \code{selected_only} - Whether the table shows only the selected
+candidates.
 }
 }
 
 \examples{
 ScmSelectedOptions(column = TRUE)
 ScmSelectedOptions(column = TRUE, bold = TRUE)
-ScmSelectedOptions(path = TRUE)
+ScmSelectedOptions(selected_only = TRUE)
 }
 \seealso{
 \code{\link[=set_spec_scm_selected]{set_spec_scm_selected()}}, \code{\link[=scm_summary_spec]{scm_summary_spec()}}.

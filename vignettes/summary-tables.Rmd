@@ -140,7 +140,7 @@ rules for however many rounds the process ran. It keeps the fits tagged
 - `set_spec_scm_selected()` picks how the candidate each round selected is
   shown: `column = TRUE` adds a Round Result column
   reading "added" or "dropped" on its row, `bold = TRUE` renders its row in
-  bold, and `path = TRUE` leaves out the candidates the rounds did not
+  bold, and `selected_only = TRUE` leaves out the candidates the rounds did not
   select, grouping the steps that remain under "Forward" and "Backward".
 - `set_spec_scm_rounds()` picks the rounds the table shows, by name
   (`"forward_round1"`) or by direction (`"forward"`, `"backward"`). The

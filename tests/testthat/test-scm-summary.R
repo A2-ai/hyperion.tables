@@ -87,11 +87,11 @@ test_that("scm_summary_spec() is a ScmSummarySpec that needs no lineage", {
 
   # Its SCM settings, with their defaults.
   expect_equal(spec@description, "sparse")
-  expect_false(spec@selected@path)
+  expect_false(spec@selected@selected_only)
   expect_false(spec@selected@column)
   expect_false(spec@selected@bold)
   expect_equal(scm_summary_spec(description = "verbose")@description, "verbose")
-  expect_true(scm_summary_spec(selected = ScmSelectedOptions(path = TRUE))@selected@path)
+  expect_true(scm_summary_spec(selected = ScmSelectedOptions(selected_only = TRUE))@selected@selected_only)
 
   # The modifiers take it and it stays an SCM spec.
   modified <- spec |>
@@ -104,8 +104,10 @@ test_that("scm_summary_spec() is a ScmSummarySpec that needs no lineage", {
   expect_error(scm_summary_spec(description = "x"), "should be one of")
   expect_error(scm_summary_spec(description = "covariates"), "should be one of")
   expect_error(scm_summary_spec(selected = "column"), "<ScmSelectedOptions>")
-  # The path is one of the `selected` options, not an argument of its own.
-  expect_error(scm_summary_spec(path = TRUE), "unused argument")
+  # Showing only the selected candidates is one of the `selected` options,
+  # not an argument of its own, and its earlier name is gone.
+  expect_error(scm_summary_spec(selected_only = TRUE), "unused argument")
+  expect_error(ScmSelectedOptions(path = TRUE), "unused argument")
   expect_error(scm_summary_spec(other_section_label = 1), "single character string")
   # The lineage goes to apply_summary_spec(), not here.
   expect_error(scm_summary_spec(pharos_tagged_lineage()), "does not take the lineage")
@@ -115,13 +117,13 @@ test_that("ScmSelectedOptions() holds how the selected candidate is marked", {
   options <- ScmSelectedOptions()
   expect_false(options@column)
   expect_false(options@bold)
-  expect_false(options@path)
+  expect_false(options@selected_only)
 
   both <- ScmSelectedOptions(column = TRUE, bold = TRUE)
   expect_true(both@column)
   expect_true(both@bold)
-  expect_true(ScmSelectedOptions(path = TRUE)@path)
-  expect_error(ScmSelectedOptions(path = NA), "@path must be TRUE or FALSE")
+  expect_true(ScmSelectedOptions(selected_only = TRUE)@selected_only)
+  expect_error(ScmSelectedOptions(selected_only = NA), "@selected_only must be TRUE or FALSE")
 
   expect_error(ScmSelectedOptions(column = NA), "@column must be TRUE or FALSE")
   expect_error(ScmSelectedOptions(bold = c(TRUE, FALSE)), "@bold must be TRUE or FALSE")
@@ -135,19 +137,19 @@ test_that("set_spec_scm_selected() sets the selected options of an SCM spec", {
   expect_true(is_scm_summary_spec(spec))
   expect_true(spec@selected@column)
   expect_true(spec@selected@bold)
-  expect_false(spec@selected@path)
+  expect_false(spec@selected@selected_only)
 
   # A setting not given keeps its value.
-  spec <- set_spec_scm_selected(spec, path = TRUE, bold = FALSE)
+  spec <- set_spec_scm_selected(spec, selected_only = TRUE, bold = FALSE)
   expect_true(spec@selected@column)
   expect_false(spec@selected@bold)
-  expect_true(spec@selected@path)
+  expect_true(spec@selected@selected_only)
   expect_identical(set_spec_scm_selected(spec), spec)
 
   # It is the same spec as the one made in one call.
   expect_equal(
-    scm_summary_spec() |> set_spec_scm_selected(path = TRUE),
-    scm_summary_spec(selected = ScmSelectedOptions(path = TRUE))
+    scm_summary_spec() |> set_spec_scm_selected(selected_only = TRUE),
+    scm_summary_spec(selected = ScmSelectedOptions(selected_only = TRUE))
   )
 
   # The getter returns the options object.
@@ -237,10 +239,10 @@ test_that("an SCM spec sections the rounds of the lineage it is applied to", {
       "Backward round 1", "Reduced covariate model", "Other"
     )
   )
-  # With only the path shown, the rounds of a direction share a section.
+  # With only the selected candidates shown, the rounds of a direction share a section.
   expect_equal(
     section_labels(scm_spec_sections(
-      scm_summary_spec(selected = ScmSelectedOptions(path = TRUE)),
+      scm_summary_spec(selected = ScmSelectedOptions(selected_only = TRUE)),
       tree
     )),
     c("Base model", "Forward", "Working full model", "Backward", "Reduced covariate model", "Other")
@@ -323,14 +325,14 @@ test_that("an SCM spec shapes the summary rows and leaves other specs alone", {
   bold <- scm_summary_rows(df, scm_summary_spec(selected = ScmSelectedOptions(bold = TRUE)), tree)
   expect_false("round_result" %in% names(bold))
 
-  # The path: the stage fits and the selected candidates. No backward round
+  # Selected only: the stage fits and the selected candidates. No backward round
   # dropped anything here, so the working full model is left out.
-  path <- scm_summary_rows(
+  only <- scm_summary_rows(
     df,
-    scm_summary_spec(selected = ScmSelectedOptions(path = TRUE)),
+    scm_summary_spec(selected = ScmSelectedOptions(selected_only = TRUE)),
     tree
   )
-  expect_equal(path$model, c("run001_base", "run001_wt_cl", "run001_scm_reduced_covariate"))
+  expect_equal(only$model, c("run001_base", "run001_wt_cl", "run001_scm_reduced_covariate"))
 
   # The labels an SCM table adds or changes; any other spec's are untouched.
   labels <- list(dofv = "$\\Delta$OFV")
@@ -452,11 +454,11 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
   expect_equal(both$round_result, marked$round_result)
   expect_equal(both$.bold, bold$.bold)
 
-  # With the path, only the stages and the selected candidates stay,
+  # With selected_only, only the stages and the selected candidates stay,
   # with the rounds grouped by direction.
   kept <- apply_summary_spec(
     tree,
-    scm_summary_spec(selected = ScmSelectedOptions(path = TRUE))
+    scm_summary_spec(selected = ScmSelectedOptions(selected_only = TRUE))
   )
   expect_equal(kept$model, data$model[data$section %in% stages | !is.na(marked$round_result)])
   expect_false(any(c("round_result", ".bold") %in% names(kept)))
@@ -466,10 +468,10 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
     c("Reference model", "Forward", "Forward", "Working full model", "Backward", "Reduced covariate model")
   )
   expect_equal(kept$dofv[kept$model == "1001_wt_cl" & kept$section == "Forward"], -20)
-  # The path can carry the Round Result too.
+  # It can carry the Round Result too.
   kept_marked <- apply_summary_spec(
     tree,
-    scm_summary_spec(selected = ScmSelectedOptions(path = TRUE, column = TRUE))
+    scm_summary_spec(selected = ScmSelectedOptions(selected_only = TRUE, column = TRUE))
   )
   expect_equal(kept_marked$round_result, c(NA, "added", "added", NA, "dropped", NA))
 
@@ -490,7 +492,7 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
   expect_equal(two$model, data$model[in_two])
   expect_equal(two$dofv, data$dofv[in_two])
   expect_equal(two$pvalue, data$pvalue[in_two])
-  # A direction names all of its rounds, and combines with the path.
+  # A direction names all of its rounds, and combines with selected_only.
   backward <- apply_summary_spec(tree, scm_summary_spec() |> set_spec_scm_rounds("backward"))
   expect_equal(
     unique(backward$section),
@@ -499,14 +501,14 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
       "Backward round 2", "Reduced covariate model"
     )
   )
-  backward_path <- apply_summary_spec(
+  backward_only <- apply_summary_spec(
     tree,
     scm_summary_spec() |>
-      set_spec_scm_selected(path = TRUE) |>
+      set_spec_scm_selected(selected_only = TRUE) |>
       set_spec_scm_rounds("backward")
   )
   expect_equal(
-    backward_path$section,
+    backward_only$section,
     c("Reference model", "Working full model", "Backward", "Reduced covariate model")
   )
 
@@ -517,12 +519,12 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
     function(node) !any(grepl("^backward_round", unlist(node$model$tags))),
     forward_only$nodes
   )
-  path <- apply_summary_spec(
+  only <- apply_summary_spec(
     forward_only,
-    scm_summary_spec(selected = ScmSelectedOptions(path = TRUE))
+    scm_summary_spec(selected = ScmSelectedOptions(selected_only = TRUE))
   )
-  expect_equal(path$section, c("Reference model", "Forward", "Forward", "Reduced covariate model"))
-  expect_false("1001_scm_working_full" %in% path$model)
+  expect_equal(only$section, c("Reference model", "Forward", "Forward", "Reduced covariate model"))
+  expect_false("1001_scm_working_full" %in% only$model)
   expect_true("1001_scm_working_full" %in% kept$model)
   # With every candidate shown, the rounds keep their own sections.
   expect_true("Forward round 1" %in% apply_summary_spec(forward_only, scm_summary_spec())$section)
@@ -538,7 +540,7 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
   snapshot_gt(make_summary_table(data), "scm-summary-gt")
   snapshot_gt(make_summary_table(marked), "scm-summary-column-gt")
   snapshot_gt(make_summary_table(both), "scm-summary-bold-gt")
-  snapshot_gt(make_summary_table(kept), "scm-summary-path-gt")
+  snapshot_gt(make_summary_table(kept), "scm-summary-selected-only-gt")
 })
 
 test_that("an SCM table's p-value column tests both directions", {

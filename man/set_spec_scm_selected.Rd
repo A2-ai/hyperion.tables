@@ -4,7 +4,13 @@
 \alias{set_spec_scm_selected}
 \title{Set how an SCM summary table shows the selected candidates}
 \usage{
-set_spec_scm_selected(spec, ..., column = NULL, bold = NULL, path = NULL)
+set_spec_scm_selected(
+  spec,
+  ...,
+  column = NULL,
+  bold = NULL,
+  selected_only = NULL
+)
 }
 \arguments{
 \item{spec}{A ScmSummarySpec object, from \code{\link[=scm_summary_spec]{scm_summary_spec()}}.}
@@ -17,9 +23,9 @@ which reads "added" or "dropped" on the selected candidate's row.}
 \item{bold}{Logical. If TRUE, the selected candidate's row is rendered in
 bold.}
 
-\item{path}{Logical. If TRUE, the table shows only the path the process
-took: the selected candidates and no others, with the rounds grouped
-by direction.}
+\item{selected_only}{Logical. If TRUE, the table shows only the
+selected candidates, and no others, with the rounds grouped by
+direction.}
 }
 \value{
 Modified spec.
@@ -27,16 +33,16 @@ Modified spec.
 \description{
 \code{set_spec_scm_selected()} sets how the table of an SCM spec shows the
 candidate each round selected: marked with a Round Result column, with
-its row in bold, or alone, as the path the process took. It builds the
+its row in bold, or alone, without the other candidates. It builds the
 spec's \code{\link[=ScmSelectedOptions]{ScmSelectedOptions()}}; a setting not given keeps its value.
 Operates on \link{ScmSummarySpec} only.
 }
 \examples{
 spec <- scm_summary_spec() |>
   set_spec_scm_selected(column = TRUE, bold = TRUE)
-# Only the path the process took
+# Only the selected candidates
 spec <- scm_summary_spec() |>
-  set_spec_scm_selected(path = TRUE)
+  set_spec_scm_selected(selected_only = TRUE)
 }
 \seealso{
 \code{\link[=get_spec_scm_selected]{get_spec_scm_selected()}}, \code{\link[=ScmSelectedOptions]{ScmSelectedOptions()}},

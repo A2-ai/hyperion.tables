@@ -38,8 +38,9 @@ table. It is a child class of \code{SummarySpec}, as \code{SummarySpec} is of
 \code{BaseSpec}: everything that takes a \code{SummarySpec} takes it, including
 \code{\link[=apply_summary_spec]{apply_summary_spec()}} and the \verb{set_spec_*()} modifiers, and it adds the
 settings only an SCM table has. Only a \code{ScmSummarySpec} gets the SCM
-behavior (a section per round, Round Result column, bold rows, the path,
-p-values for backward steps), and the SCM functions,
+behavior (a section per round, Round Result column, bold rows, only
+the selected candidates, p-values for backward steps), and the SCM
+functions,
 \code{\link[=set_spec_scm_selected]{set_spec_scm_selected()}} and \code{\link[=get_spec_scm_selected]{get_spec_scm_selected()}}, accept nothing
 else, so an ordinary run summary cannot pick it up by accident. Applied
 to a lineage with no SCM fits, it is an error.

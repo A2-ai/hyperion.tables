@@ -22,8 +22,7 @@ title; pass a string to set one.}
 
 \item{selected}{A \code{\link[=ScmSelectedOptions]{ScmSelectedOptions()}} object: how the table shows the
 candidate each round selected: marked with a Round Result column or a
-bold row, or alone, as the path the process took. The default shows
-every candidate alike.}
+bold row, or alone. The default shows every candidate alike.}
 
 \item{rounds}{The rounds the table shows, as a character vector of round
 names (\code{"forward_round1"}) and directions (\code{"forward"}, \code{"backward"}),
@@ -75,9 +74,9 @@ shows what \code{"sparse"} does for it, with a warning.
 \code{selected}, a \code{\link[=ScmSelectedOptions]{ScmSelectedOptions()}}, picks how the table shows the
 candidate each round selected, the fit tagged \code{"selected"}: marked with
 a Round Result column reading "added" or "dropped" (\code{column = TRUE}),
-with its row in bold (\code{bold = TRUE}), or alone, as the path the process
-took, with the other candidates left out and the rounds grouped by
-direction (\code{path = TRUE}). The default shows every candidate alike.
+with its row in bold (\code{bold = TRUE}), or alone, with the other
+candidates left out and the rounds grouped by direction
+(\code{selected_only = TRUE}). The default shows every candidate alike.
 \code{\link[=set_spec_scm_selected]{set_spec_scm_selected()}} sets the same on a spec already made.
 
 \code{rounds} picks the rounds the table shows, by name (\code{"forward_round1"})
@@ -118,11 +117,11 @@ scm_summary_spec() |> set_spec_scm_selected(column = TRUE, bold = TRUE)
 scm_summary_spec() |> set_spec_scm_rounds("forward_round1", "forward_round2")
 scm_summary_spec() |> set_spec_scm_rounds("backward")
 
-# Show the path the process took: only the models that mattered
-scm_summary_spec() |> set_spec_scm_selected(path = TRUE)
+# Show only the selected candidates: the models that mattered
+scm_summary_spec() |> set_spec_scm_selected(selected_only = TRUE)
 
 # The same in one call
-scm_summary_spec(selected = ScmSelectedOptions(path = TRUE))
+scm_summary_spec(selected = ScmSelectedOptions(selected_only = TRUE))
 
 # Customize further with modifiers
 spec <- scm_summary_spec() |>

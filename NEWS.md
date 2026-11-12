@@ -28,9 +28,9 @@
     `ScmSelectedOptions()` the modifier builds; `get_spec_scm_selected()`
     reads it. `column = TRUE` adds a Round Result
     column reading "added" or "dropped" on its row, and `bold = TRUE`
-    renders its row in bold. `path = TRUE` shows the
-    path the process took: only the base, working full and reduced
-    covariate models and each round's selected candidate, with the rounds
+    renders its row in bold. `selected_only = TRUE` shows only the base,
+    working full and reduced covariate models and each round's selected
+    candidate, with the rounds
     grouped into "Forward" and "Backward" sections, leaving out the working
     full model when no backward round dropped anything. The settings
     combine, and the default shows every candidate alike.
