@@ -1,0 +1,11 @@
+{
+  "based_on": [
+    "model/nonmem/PK/scm/scm-vignette/backward_round1/scm-vignette_alb_cl.mod"
+  ],
+  "copied_from": "model/nonmem/PK/scm-vignette.mod",
+  "description": "drop CRCL_CL",
+  "tags": [
+    "scm",
+    "backward_round2"
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "start": "2026-11-13T15:44:14+00:00",
+  "end": "2026-11-13T15:44:40+00:00",
+  "exit_code": 0,
+  "runtime_ms": 25725,
+  "files_copied": [
+    ".gitignore",
+    "scm-vignette_age_v2.ext",
+    "scm-vignette_age_v2.sh",
+    "pharos_start.json",
+    "PRDERR",
+    "scm-vignette_age_v2.xml",
+    "scm-vignette_age_v2.grd",
+    "OUTPUT",
+    "sdtab1",
+    "scm-vignette_age_v2.mod",
+    "scm-vignette_age_v2.lst",
+    "scm-vignette_age_v2.shk",
+    "pharos_config.json"
+  ],
+  "output_files_rewrites": {
+    "sdtab1": "sdtab1"
+  },
+  "output_files_hashes": [
+    {
+      "filename": "scm-vignette_age_v2.ext",
+      "hashes": {
+        "blake3": "79686c72a563c4bf68e4988a1151ee1fee216e7491f974566ba319504b61d7f1"
+      }
+    },
+    {
+      "filename": "scm-vignette_age_v2.grd",
+      "hashes": {
+        "blake3": "3d5de6ea0cc8166dceb7189bae2fcf27d2c72cb8e480e86d5c0645a7bf30e7f3"
+      }
+    },
+    {
+      "filename": "scm-vignette_age_v2.lst",
+      "hashes": {
+        "blake3": "2b8a5728acf69b303759507edee17dee3f6cfe24eaded128a6a6e7ecb82e3ab0"
+      }
+    },
+    {
+      "filename": "scm-vignette_age_v2.mod",
+      "hashes": {
+        "blake3": "1bf3f62edf8112e0537f83afe9e2b26488c008a32212d2449662e7d5830d3eb0"
+      }
+    },
+    {
+      "filename": "scm-vignette_age_v2.shk",
+      "hashes": {
+        "blake3": "920ee2b7a30ffe7a31e71a399d4d7143c5641d5219be7570b67a17a92fd6c174"
+      }
+    },
+    {
+      "filename": "scm-vignette_age_v2.xml",
+      "hashes": {
+        "blake3": "07c1071ac271570928c350beb7fb7eee37999207d7bf842dd80e451f0a8d325f"
+      }
+    },
+    {
+      "filename": "sdtab1",
+      "hashes": {
+        "blake3": "eb778137e9c9e1953a93b6fd53dac613819b805aa9c97de568afb8f0600e7430"
+      }
+    }
+  ]
+}

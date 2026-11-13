@@ -1,0 +1,12 @@
+{
+  "based_on": [
+    "model/nonmem/PK/scm/scm-vignette/forward_round1/scm-vignette_wt_v2.mod"
+  ],
+  "copied_from": "model/nonmem/PK/scm-vignette.mod",
+  "description": "add WT_CL",
+  "tags": [
+    "scm",
+    "forward_round2",
+    "selected"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "start": "2026-11-13T15:48:56+00:00",
+  "model_name": "scm-vignette_scm_working_full",
+  "model_path": "model/nonmem/PK/scm/scm-vignette/working_full/scm-vignette_scm_working_full.mod",
+  "dataset_path": "../../../../../../data/PK/scm-vignette.csv",
+  "dataset_canonical_path": "/data/user-homes/brendan/projects/scm-demo/data/PK/scm-vignette.csv",
+  "dataset_hashes": {
+    "blake3": "9699efa2cb8e32a0c948f740385b91afc1abedbc8b76a584ca7eb416413a121e"
+  },
+  "model_hashes": {
+    "blake3": "8738528850ac6981c6c2edf88b5e4531a31d5b1633eabae9bb9081e672c58e92"
+  },
+  "slurm_partition": "cpu2mem4gb",
+  "parallel_cpus": 1
+}

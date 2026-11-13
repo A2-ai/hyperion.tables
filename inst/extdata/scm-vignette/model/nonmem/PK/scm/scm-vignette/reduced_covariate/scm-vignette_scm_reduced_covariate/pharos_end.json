@@ -1,0 +1,82 @@
+{
+  "start": "2026-11-13T15:50:28+00:00",
+  "end": "2026-11-13T15:50:51+00:00",
+  "exit_code": 0,
+  "runtime_ms": 22119,
+  "files_copied": [
+    "scm-vignette_scm_reduced_covariate.shk",
+    "scm-vignette_scm_reduced_covariate.mod",
+    "scm-vignette_scm_reduced_covariate.xml",
+    "PRDERR",
+    "scm-vignette_scm_reduced_covariate.sh",
+    "scm-vignette_scm_reduced_covariate.lst",
+    "OUTPUT",
+    ".gitignore",
+    "sdtab1",
+    "scm-vignette_scm_reduced_covariate.cor",
+    "scm-vignette_scm_reduced_covariate.cov",
+    "scm-vignette_scm_reduced_covariate.grd",
+    "scm-vignette_scm_reduced_covariate.ext",
+    "pharos_start.json",
+    "pharos_config.json"
+  ],
+  "output_files_rewrites": {
+    "sdtab1": "sdtab1"
+  },
+  "output_files_hashes": [
+    {
+      "filename": "scm-vignette_scm_reduced_covariate.cor",
+      "hashes": {
+        "blake3": "2109796c921f144020baf4499651ab9b31fefbcaa099e9cbd87bca8b00b5f297"
+      }
+    },
+    {
+      "filename": "scm-vignette_scm_reduced_covariate.cov",
+      "hashes": {
+        "blake3": "10af4c2b3f106357b8b05f9b0f6dfc3058b2698b69a55098a5dbab505a8c1b8b"
+      }
+    },
+    {
+      "filename": "scm-vignette_scm_reduced_covariate.ext",
+      "hashes": {
+        "blake3": "46025b3518a96db21c419f5dd423d42f810bf9e570cd070bb1a9d39001ebe738"
+      }
+    },
+    {
+      "filename": "scm-vignette_scm_reduced_covariate.grd",
+      "hashes": {
+        "blake3": "dfe8ff24490689f5c106bed2e2c1f3e3f71cd0cad68d1f0c2d6abf349effe24c"
+      }
+    },
+    {
+      "filename": "scm-vignette_scm_reduced_covariate.lst",
+      "hashes": {
+        "blake3": "c2b3b6c889dff692c9f2e98121f4b8f911f2fa70e277da227f9c58a55e6686a6"
+      }
+    },
+    {
+      "filename": "scm-vignette_scm_reduced_covariate.mod",
+      "hashes": {
+        "blake3": "cd80ff115ac84534f390a4c9699bbd56284a6e4c9278f39e6e3c60c21f38a6cd"
+      }
+    },
+    {
+      "filename": "scm-vignette_scm_reduced_covariate.shk",
+      "hashes": {
+        "blake3": "175097441b97a24c3f62d39909c416cef08b036f2fcee5c9275893355bb8a928"
+      }
+    },
+    {
+      "filename": "scm-vignette_scm_reduced_covariate.xml",
+      "hashes": {
+        "blake3": "3fd1bb7f1cdb67df2e687b58ac0fbc9f08793e6d9bd88bacd2644f299259c39d"
+      }
+    },
+    {
+      "filename": "sdtab1",
+      "hashes": {
+        "blake3": "b68bfa4d785bc0062589d0eb1f35e2e81a0bedd8811c25cf42172b58abebd76b"
+      }
+    }
+  ]
+}

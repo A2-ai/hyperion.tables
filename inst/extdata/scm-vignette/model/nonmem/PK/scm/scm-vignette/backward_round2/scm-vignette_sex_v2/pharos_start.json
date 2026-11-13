@@ -1,0 +1,15 @@
+{
+  "start": "2026-11-13T15:49:28+00:00",
+  "model_name": "scm-vignette_sex_v2",
+  "model_path": "model/nonmem/PK/scm/scm-vignette/backward_round2/scm-vignette_sex_v2.mod",
+  "dataset_path": "../../../../../../data/PK/scm-vignette.csv",
+  "dataset_canonical_path": "/data/user-homes/brendan/projects/scm-demo/data/PK/scm-vignette.csv",
+  "dataset_hashes": {
+    "blake3": "9699efa2cb8e32a0c948f740385b91afc1abedbc8b76a584ca7eb416413a121e"
+  },
+  "model_hashes": {
+    "blake3": "772140388ea80f048dc9a6bf3964723860289069819047240093a8ed98fb43ae"
+  },
+  "slurm_partition": "cpu2mem4gb",
+  "parallel_cpus": 1
+}

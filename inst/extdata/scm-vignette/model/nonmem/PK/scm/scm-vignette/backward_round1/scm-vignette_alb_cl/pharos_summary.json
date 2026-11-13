@@ -1,0 +1,191 @@
+{
+  "run_name": "scm-vignette_alb_cl",
+  "lst": {
+    "run_details": {
+      "problem": "2-cmt oral 500 mg single dose (scm-vignette) -- SCM base, type2 comments created from pharos see scm-vignette_alb_cl_metadata.json for details.",
+      "number_data_records": 2000,
+      "number_subjects": 200,
+      "number_obs": 1600,
+      "estimation_time": [
+        3.82
+      ],
+      "covariance_time": [],
+      "postprocess_time": 0.04,
+      "estimation_methods": [
+        "First Order Conditional Estimation with Interaction"
+      ],
+      "function_evaluations": 318,
+      "significant_digits": 3.2,
+      "only_sim": false
+    },
+    "run_heuristics": {
+      "covariance_step_aborted": null,
+      "eigenvalue_issues": null,
+      "parameter_near_boundary": false,
+      "hessian_reset": false,
+      "minimization_terminated": false,
+      "program_terminated_by_obj": false
+    }
+  },
+  "minimization_results": [
+    {
+      "ofv": -2486.4802014611596,
+      "condition_number": null,
+      "termination_code": null
+    }
+  ],
+  "parameters": {
+    "method": "Foce",
+    "theta": [
+      {
+        "name": "TVCL",
+        "estimate": 4.83199,
+        "stderr": null,
+        "rse": null,
+        "fixed": false
+      },
+      {
+        "name": "TVV2",
+        "estimate": 51.7848,
+        "stderr": null,
+        "rse": null,
+        "fixed": false
+      },
+      {
+        "name": "TVQ",
+        "estimate": 2.9894,
+        "stderr": null,
+        "rse": null,
+        "fixed": false
+      },
+      {
+        "name": "TVV3",
+        "estimate": 60.6655,
+        "stderr": null,
+        "rse": null,
+        "fixed": false
+      },
+      {
+        "name": "TVKA",
+        "estimate": 0.946105,
+        "stderr": null,
+        "rse": null,
+        "fixed": false
+      },
+      {
+        "name": "WT_CL",
+        "estimate": 0.864498,
+        "stderr": null,
+        "rse": null,
+        "fixed": false
+      },
+      {
+        "name": "CRCL_CL",
+        "estimate": 0.578123,
+        "stderr": null,
+        "rse": null,
+        "fixed": false
+      },
+      {
+        "name": "ALB_CL",
+        "estimate": 0.0,
+        "stderr": null,
+        "rse": null,
+        "fixed": true
+      },
+      {
+        "name": "WT_V2",
+        "estimate": 0.736288,
+        "stderr": null,
+        "rse": null,
+        "fixed": false
+      },
+      {
+        "name": "AGE_V2",
+        "estimate": 0.0,
+        "stderr": null,
+        "rse": null,
+        "fixed": true
+      },
+      {
+        "name": "SEX_V2",
+        "estimate": -0.24605,
+        "stderr": null,
+        "rse": null,
+        "fixed": false
+      }
+    ],
+    "random_effects": [
+      {
+        "name": "PropErr",
+        "param_type": "Sigma",
+        "random_effect": "EPS1",
+        "estimate": 0.00896483,
+        "sd": null,
+        "corr": null,
+        "stderr": null,
+        "rse": null,
+        "shrinkage": 17.2663,
+        "fixed": false,
+        "diagonal": true
+      },
+      {
+        "name": "IIV_CL (TVCL)",
+        "param_type": "Omega",
+        "random_effect": "ETA1",
+        "estimate": 0.0856331,
+        "sd": null,
+        "corr": null,
+        "stderr": null,
+        "rse": null,
+        "shrinkage": 0.685094,
+        "fixed": false,
+        "diagonal": true
+      },
+      {
+        "name": "IIV_V2 (TVV2)",
+        "param_type": "Omega",
+        "random_effect": "ETA2",
+        "estimate": 0.0742924,
+        "sd": null,
+        "corr": null,
+        "stderr": null,
+        "rse": null,
+        "shrinkage": 6.55005,
+        "fixed": false,
+        "diagonal": true
+      },
+      {
+        "name": "IIV_KA (TVKA)",
+        "param_type": "Omega",
+        "random_effect": "ETA3",
+        "estimate": 0.156442,
+        "sd": null,
+        "corr": null,
+        "stderr": null,
+        "rse": null,
+        "shrinkage": 15.3247,
+        "fixed": false,
+        "diagonal": true
+      }
+    ]
+  },
+  "parameter_names": {
+    "OMEGA(1,1)": "IIV_CL (TVCL)",
+    "OMEGA(2,2)": "IIV_V2 (TVV2)",
+    "OMEGA(3,3)": "IIV_KA (TVKA)",
+    "SIGMA(1,1)": "PropErr",
+    "THETA1": "TVCL",
+    "THETA10": "AGE_V2",
+    "THETA11": "SEX_V2",
+    "THETA2": "TVV2",
+    "THETA3": "TVQ",
+    "THETA4": "TVV3",
+    "THETA5": "TVKA",
+    "THETA6": "WT_CL",
+    "THETA7": "CRCL_CL",
+    "THETA8": "ALB_CL",
+    "THETA9": "WT_V2"
+  },
+  "correlation_matrix": null
+}

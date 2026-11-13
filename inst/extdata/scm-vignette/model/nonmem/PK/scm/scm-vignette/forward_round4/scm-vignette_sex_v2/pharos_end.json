@@ -1,0 +1,68 @@
+{
+  "start": "2026-11-13T15:46:54+00:00",
+  "end": "2026-11-13T15:47:14+00:00",
+  "exit_code": 0,
+  "runtime_ms": 19031,
+  "files_copied": [
+    "PRDERR",
+    "pharos_start.json",
+    "pharos_config.json",
+    "scm-vignette_sex_v2.lst",
+    "scm-vignette_sex_v2.xml",
+    "OUTPUT",
+    "scm-vignette_sex_v2.grd",
+    "scm-vignette_sex_v2.shk",
+    "scm-vignette_sex_v2.ext",
+    "scm-vignette_sex_v2.mod",
+    "sdtab1",
+    "scm-vignette_sex_v2.sh",
+    ".gitignore"
+  ],
+  "output_files_rewrites": {
+    "sdtab1": "sdtab1"
+  },
+  "output_files_hashes": [
+    {
+      "filename": "scm-vignette_sex_v2.ext",
+      "hashes": {
+        "blake3": "4a858317d57a93beea1ce8d8de0932ef98438d4b026da1ff65a975d63867c569"
+      }
+    },
+    {
+      "filename": "scm-vignette_sex_v2.grd",
+      "hashes": {
+        "blake3": "e67e08370b1bdc375c3e57a44e46a59ef56bbc0ade305733fac339700c9ce962"
+      }
+    },
+    {
+      "filename": "scm-vignette_sex_v2.lst",
+      "hashes": {
+        "blake3": "680b35dde450587d755fb9f5e548bef1d264f6a364df3a59929e7e6d10beeb71"
+      }
+    },
+    {
+      "filename": "scm-vignette_sex_v2.mod",
+      "hashes": {
+        "blake3": "7fe443f798da421bd2da99bbb827680231c6ecaf3b08cb1dfb8b476334e3e8ab"
+      }
+    },
+    {
+      "filename": "scm-vignette_sex_v2.shk",
+      "hashes": {
+        "blake3": "55a5d7ca9c5ec3b3f5bed4032a9c38a017d16d218844bdc51f3e4621fe3c1b9b"
+      }
+    },
+    {
+      "filename": "scm-vignette_sex_v2.xml",
+      "hashes": {
+        "blake3": "46bfa5713253f2ae94471065ab7d6c6ff40402047958f4a254f2f78ff894402d"
+      }
+    },
+    {
+      "filename": "sdtab1",
+      "hashes": {
+        "blake3": "84f88c5254c2c34e85ad189f9f08a3cf64965a74e02a23432f97d8ee9f0e688b"
+      }
+    }
+  ]
+}
