@@ -4,12 +4,13 @@
 \alias{ScmSelectedOptions}
 \title{How an SCM summary table shows the candidate each round selected}
 \usage{
-ScmSelectedOptions(column = FALSE, bold = FALSE, selected_only = FALSE)
+ScmSelectedOptions(column = TRUE, bold = FALSE, selected_only = FALSE)
 }
 \arguments{
-\item{column}{Logical. If TRUE, the table has a Round Result column,
-which reads "added" or "dropped" on the selected candidate's row and is
-empty elsewhere. Default \code{FALSE}.}
+\item{column}{Logical. If TRUE (the default), the table has a Round
+Result column, which reads "added" or "dropped" on the selected
+candidate's row and is empty elsewhere. A table that shows no round's
+candidates has no result to report, so it has no such column.}
 
 \item{bold}{Logical. If TRUE, the selected candidate's row is rendered in
 bold. Default \code{FALSE}.}
@@ -23,10 +24,9 @@ direction. Default \code{FALSE} shows every candidate.}
 It is usually set with \code{\link[=set_spec_scm_selected]{set_spec_scm_selected()}}.
 Each round of an SCM process selects at most one candidate, the fit
 tagged \code{"selected"}: the covariate a forward round added, or the one a
-backward round dropped. The table can mark it with a column, with a bold
-row, or with both; it can show the selected candidates alone; or it can
-show every candidate alike (the default).
-The settings combine freely.
+backward round dropped. The table marks it with a Round Result column
+(the default), with a bold row, or with both, and it can show the
+selected candidates alone. The settings combine freely.
 }
 \details{
 With \code{selected_only = TRUE} the table keeps the models that mattered:
@@ -50,8 +50,9 @@ candidates.
 }
 
 \examples{
-ScmSelectedOptions(column = TRUE)
-ScmSelectedOptions(column = TRUE, bold = TRUE)
+ScmSelectedOptions()
+ScmSelectedOptions(bold = TRUE)
+ScmSelectedOptions(column = FALSE)
 ScmSelectedOptions(selected_only = TRUE)
 }
 \seealso{

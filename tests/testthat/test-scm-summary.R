@@ -61,8 +61,13 @@ test_that("ScmSummarySpec is a SummarySpec with the SCM settings", {
   expect_equal(get_spec_columns(ScmSummarySpec(columns = c("ofv", "dofv"))), c("ofv", "dofv"))
   expect_equal(ScmSummarySpec(n_decimals_ofv = 1)@n_decimals_ofv, 1)
 
-  expect_error(ScmSummarySpec(description = "x"), "@description must be")
-  expect_error(ScmSummarySpec(description = c("sparse", "verbose")), "@description must be")
+  expect_error(ScmSummarySpec(show_all_covariates = NA), "@show_all_covariates must be TRUE or FALSE")
+  expect_error(
+    ScmSummarySpec(show_all_covariates = c(TRUE, FALSE)),
+    "@show_all_covariates must be TRUE or FALSE"
+  )
+  # The description setting it replaced is gone.
+  expect_error(ScmSummarySpec(description = "verbose"))
   expect_error(ScmSummarySpec(other_section_label = c("a", "b")), "@other_section_label")
   expect_error(ScmSummarySpec(selected = "column"))
   # The parent's validation still applies.
@@ -86,11 +91,11 @@ test_that("scm_summary_spec() is a ScmSummarySpec that needs no lineage", {
   expect_length(spec@sections@rules, 0)
 
   # Its SCM settings, with their defaults.
-  expect_equal(spec@description, "sparse")
+  expect_false(spec@show_all_covariates)
   expect_false(spec@selected@selected_only)
-  expect_false(spec@selected@column)
+  expect_true(spec@selected@column)
   expect_false(spec@selected@bold)
-  expect_equal(scm_summary_spec(description = "verbose")@description, "verbose")
+  expect_true(scm_summary_spec(show_all_covariates = TRUE)@show_all_covariates)
   expect_true(scm_summary_spec(selected = ScmSelectedOptions(selected_only = TRUE))@selected@selected_only)
 
   # The modifiers take it and it stays an SCM spec.
@@ -101,8 +106,10 @@ test_that("scm_summary_spec() is a ScmSummarySpec that needs no lineage", {
   expect_equal(get_spec_title(modified), "Search")
 
   expect_error(scm_summary_spec(title = 1), "single character string")
-  expect_error(scm_summary_spec(description = "x"), "should be one of")
-  expect_error(scm_summary_spec(description = "covariates"), "should be one of")
+  expect_error(scm_summary_spec(show_all_covariates = "yes"), "must be TRUE or FALSE")
+  expect_error(scm_summary_spec(show_all_covariates = NA), "must be TRUE or FALSE")
+  # Listing the covariates is a flag; the description setting is gone.
+  expect_error(scm_summary_spec(description = "verbose"), "unused argument")
   expect_error(scm_summary_spec(selected = "column"), "<ScmSelectedOptions>")
   # Showing only the selected candidates is one of the `selected` options,
   # not an argument of its own, and its earlier name is gone.
@@ -114,12 +121,14 @@ test_that("scm_summary_spec() is a ScmSummarySpec that needs no lineage", {
 })
 
 test_that("ScmSelectedOptions() holds how the selected candidate is marked", {
+  # The Round Result column is on unless turned off.
   options <- ScmSelectedOptions()
-  expect_false(options@column)
+  expect_true(options@column)
   expect_false(options@bold)
   expect_false(options@selected_only)
+  expect_false(ScmSelectedOptions(column = FALSE)@column)
 
-  both <- ScmSelectedOptions(column = TRUE, bold = TRUE)
+  both <- ScmSelectedOptions(bold = TRUE)
   expect_true(both@column)
   expect_true(both@bold)
   expect_true(ScmSelectedOptions(selected_only = TRUE)@selected_only)
@@ -133,18 +142,19 @@ test_that("ScmSelectedOptions() holds how the selected candidate is marked", {
 
 test_that("set_spec_scm_selected() sets the selected options of an SCM spec", {
   spec <- scm_summary_spec() |>
-    set_spec_scm_selected(column = TRUE, bold = TRUE)
+    set_spec_scm_selected(column = FALSE, bold = TRUE)
   expect_true(is_scm_summary_spec(spec))
-  expect_true(spec@selected@column)
+  expect_false(spec@selected@column)
   expect_true(spec@selected@bold)
   expect_false(spec@selected@selected_only)
 
   # A setting not given keeps its value.
   spec <- set_spec_scm_selected(spec, selected_only = TRUE, bold = FALSE)
-  expect_true(spec@selected@column)
+  expect_false(spec@selected@column)
   expect_false(spec@selected@bold)
   expect_true(spec@selected@selected_only)
   expect_identical(set_spec_scm_selected(spec), spec)
+  expect_true(set_spec_scm_selected(spec, column = TRUE)@selected@column)
 
   # It is the same spec as the one made in one call.
   expect_equal(
@@ -155,7 +165,7 @@ test_that("set_spec_scm_selected() sets the selected options of an SCM spec", {
   # The getter returns the options object.
   expect_identical(get_spec_scm_selected(spec), spec@selected)
   expect_true(S7::S7_inherits(get_spec_scm_selected(scm_summary_spec()), ScmSelectedOptions))
-  expect_false(get_spec_scm_selected(scm_summary_spec())@column)
+  expect_true(get_spec_scm_selected(scm_summary_spec())@column)
   expect_error(get_spec_scm_selected(SummarySpec()), "<ScmSummarySpec>")
   expect_error(get_spec_scm_selected(TableSpec()), "<ScmSummarySpec>")
 
@@ -185,11 +195,23 @@ test_that("set_spec_scm_rounds() picks the rounds an SCM spec shows", {
   expect_equal(spec, scm_summary_spec(rounds = c("forward_round1", "forward_round2")))
   expect_equal(spec, ScmSummarySpec(rounds = c("forward_round1", "forward_round2")))
 
+  # NA is no round: only the milestones. It is held as a character NA.
+  milestones <- set_spec_scm_rounds(spec, NA)
+  expect_identical(get_spec_scm_rounds(milestones), NA_character_)
+  expect_equal(milestones, scm_summary_spec(rounds = NA))
+  expect_equal(milestones, ScmSummarySpec(rounds = NA))
+  expect_equal(milestones, scm_summary_spec(rounds = NA_character_))
+  expect_null(get_spec_scm_rounds(set_spec_scm_rounds(milestones)))
+  # It does not combine with rounds.
+  expect_error(scm_summary_spec(rounds = c(NA, "forward")), "@rounds must name rounds")
+  expect_error(set_spec_scm_rounds(spec, NA, "forward"), "@rounds must name rounds")
+
   # Only rounds and directions are names of rounds; a stage fit is not one.
   expect_error(set_spec_scm_rounds(spec, "Forward round 1"), "@rounds must name rounds")
   expect_error(set_spec_scm_rounds(spec, "working_full"), "Got: 'working_full'")
   expect_error(set_spec_scm_rounds(spec, 1), "given as strings")
   expect_error(scm_summary_spec(rounds = 1), "character vector")
+  expect_error(scm_summary_spec(rounds = TRUE), "character vector")
   expect_error(scm_summary_spec(rounds = "round1"), "@rounds must name rounds")
   expect_error(ScmSummarySpec(rounds = character()), "@rounds must name rounds")
   expect_error(set_spec_scm_rounds(SummarySpec(), "forward"), "<ScmSummarySpec>")
@@ -227,6 +249,9 @@ test_that("set_spec_scm_rounds() picks the rounds an SCM spec shows", {
   # A round the lineage does not have is a warning; the stage fits stay.
   expect_warning(only_stage <- shown("forward_round9"), "has no fits in: 'forward_round9'")
   expect_equal(only_stage, stage)
+  # NA asks for the stage fits alone, so it is no warning.
+  expect_no_warning(milestones_only <- shown(NA))
+  expect_equal(milestones_only, stage)
 })
 
 test_that("an SCM spec sections the rounds of the lineage it is applied to", {
@@ -279,20 +304,22 @@ test_that("an SCM spec shapes the summary rows and leaves other specs alone", {
 
   expect_identical(scm_summary_rows(df, SummarySpec(), tree), df)
 
-  # Sparse: a candidate shows its step, a stage fit nothing.
-  sparse <- scm_summary_rows(df, scm_summary_spec(), tree)
+  # By default a candidate shows its step, a stage fit nothing, and the
+  # candidate its round selected has the round's result.
+  plain <- scm_summary_rows(df, scm_summary_spec(), tree)
   expect_equal(
-    sparse$description,
+    plain$description,
     c("", "add WT_CL", "add WT_V", "add WT_V", "", "drop WT_CL", "")
   )
-  expect_false(any(c("round_result", ".bold") %in% names(sparse)))
+  expect_equal(plain$round_result, c(NA, "added", NA, NA, NA, NA, NA))
+  expect_false(".bold" %in% names(plain))
 
-  # Verbose needs the covariates on the lineage; pharos' metadata has none.
+  # Listing the covariates needs them on the lineage; pharos' metadata has none.
   expect_warning(
-    verbose <- scm_summary_rows(df, scm_summary_spec(description = "verbose"), tree),
+    listed <- scm_summary_rows(df, scm_summary_spec(show_all_covariates = TRUE), tree),
     "does not say which covariates"
   )
-  expect_equal(verbose$description, sparse$description)
+  expect_equal(listed$description, plain$description)
 
   # With them, each row adds its model's covariates; a stage fit shows only those.
   covariates <- list(
@@ -302,9 +329,9 @@ test_that("an SCM spec shapes the summary rows and leaves other specs alone", {
   for (i in seq_along(covariates)) {
     with_covariates$nodes[[i + 1]]$model$covariates <- as.list(covariates[[i]])
   }
-  verbose <- scm_summary_rows(df, scm_summary_spec(description = "verbose"), with_covariates)
+  listed <- scm_summary_rows(df, scm_summary_spec(show_all_covariates = TRUE), with_covariates)
   expect_equal(
-    verbose$description,
+    listed$description,
     c(
       "covariates: none", "add WT_CL; covariates: WT_CL", "add WT_V; covariates: WT_V",
       "add WT_V; covariates: WT_CL, WT_V", "covariates: WT_CL",
@@ -315,15 +342,26 @@ test_that("an SCM spec shapes the summary rows and leaves other specs alone", {
   # The selected candidate, marked with a column, a bold row, or both.
   marked <- scm_summary_rows(
     df,
-    scm_summary_spec(selected = ScmSelectedOptions(column = TRUE, bold = TRUE)),
+    scm_summary_spec(selected = ScmSelectedOptions(bold = TRUE)),
     tree
   )
   expect_equal(marked$round_result, c(NA, "added", NA, NA, NA, NA, NA))
   expect_equal(marked$.bold, c(FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE))
-  column <- scm_summary_rows(df, scm_summary_spec(selected = ScmSelectedOptions(column = TRUE)), tree)
-  expect_false(".bold" %in% names(column))
-  bold <- scm_summary_rows(df, scm_summary_spec(selected = ScmSelectedOptions(bold = TRUE)), tree)
+  bold <- scm_summary_rows(
+    df,
+    scm_summary_spec(selected = ScmSelectedOptions(column = FALSE, bold = TRUE)),
+    tree
+  )
   expect_false("round_result" %in% names(bold))
+  expect_equal(bold$.bold, marked$.bold)
+  unmarked <- scm_summary_rows(df, scm_summary_spec(selected = ScmSelectedOptions(column = FALSE)), tree)
+  expect_false(any(c("round_result", ".bold") %in% names(unmarked)))
+
+  # With the milestones alone there is no round to report a result for, so
+  # the column is left out.
+  milestones <- scm_summary_rows(df, scm_summary_spec(rounds = NA), tree)
+  expect_equal(milestones$model, c("run001_base", "run001_scm_working_full", "run001_scm_reduced_covariate"))
+  expect_false("round_result" %in% names(milestones))
 
   # Selected only: the stage fits and the selected candidates. No backward round
   # dropped anything here, so the working full model is left out.
@@ -337,11 +375,7 @@ test_that("an SCM spec shapes the summary rows and leaves other specs alone", {
   # The labels an SCM table adds or changes; any other spec's are untouched.
   labels <- list(dofv = "$\\Delta$OFV")
   expect_identical(scm_summary_labels(labels, marked, SummarySpec()), labels)
-  scm_labels <- scm_summary_labels(
-    labels,
-    marked,
-    scm_summary_spec(selected = ScmSelectedOptions(column = TRUE))
-  )
+  scm_labels <- scm_summary_labels(labels, marked, scm_summary_spec())
   expect_equal(scm_labels$round_result, "Round Result")
   expect_equal(scm_labels$dofv, "\u0394OFV")
 })
@@ -359,9 +393,13 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
   withr::local_options(hyperion.config_dir = system.file(package = "hyperion"))
 
   tree <- hyperion::get_scm_lineage(scm_fixture_config())
-  data <- apply_summary_spec(tree, scm_summary_spec())
+  data <- apply_summary_spec(
+    tree,
+    scm_summary_spec(selected = ScmSelectedOptions(column = FALSE))
+  )
 
-  # By default the candidate a round selected is not marked.
+  # Without the Round Result column, the candidate a round selected is not
+  # marked.
   expect_equal(
     names(data),
     c("model", "based_on", "description", "ofv", "dofv", "pvalue", "df", "section")
@@ -405,28 +443,25 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
   expect_equal(working_full$description, "")
   expect_equal(final$description, "")
 
-  # With description = "verbose", each row also shows the covariates its
+  # With show_all_covariates, each row also shows the covariates its
   # model has, from the process record, which is all a stage fit shows.
-  verbose <- apply_summary_spec(tree, scm_summary_spec(description = "verbose"))
-  expect_equal(verbose$description[verbose$model == "1001_wt_cl"][1], "add WT_CL; covariates: WT_CL")
+  listed <- apply_summary_spec(tree, scm_summary_spec(show_all_covariates = TRUE))
+  expect_equal(listed$description[listed$model == "1001_wt_cl"][1], "add WT_CL; covariates: WT_CL")
   expect_equal(
-    verbose$description[verbose$section %in% c("Reference model", "Working full model", "Reduced covariate model")],
+    listed$description[listed$section %in% c("Reference model", "Working full model", "Reduced covariate model")],
     c("covariates: none", "covariates: WT_CL, CRCL_CL", "covariates: WT_CL")
   )
   expect_equal(
-    verbose$description[verbose$section == "Forward round 2"],
+    listed$description[listed$section == "Forward round 2"],
     c("add CRCL_CL; covariates: WT_CL, CRCL_CL", "add WT_V; covariates: WT_CL, WT_V")
   )
 
   stages <- c("Reference model", "Working full model", "Reduced covariate model")
   expect_true(is.na(row("1001_base", "Reference model")$dofv))
 
-  # With a Round Result column, the same rows gain the round's result on
-  # the candidate it selected, and nothing on the others.
-  marked <- apply_summary_spec(
-    tree,
-    scm_summary_spec(selected = ScmSelectedOptions(column = TRUE))
-  )
+  # By default the table has a Round Result column: the same rows gain the
+  # round's result on the candidate it selected, and nothing on the others.
+  marked <- apply_summary_spec(tree, scm_summary_spec())
   expect_equal(
     names(marked),
     c("model", "based_on", "description", "ofv", "dofv", "pvalue", "df", "round_result", "section")
@@ -441,15 +476,18 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
   # The reference and stage fits are not candidates, so they have no result.
   expect_true(all(is.na(marked$round_result[marked$section %in% stages])))
 
-  # With bold, the selected candidates are in bold and nothing else.
-  bold <- apply_summary_spec(tree, scm_summary_spec(selected = ScmSelectedOptions(bold = TRUE)))
+  # With bold alone, the selected candidates are in bold and nothing else.
+  bold <- apply_summary_spec(
+    tree,
+    scm_summary_spec(selected = ScmSelectedOptions(column = FALSE, bold = TRUE))
+  )
   expect_false("round_result" %in% names(bold))
   expect_equal(bold$.bold, !is.na(marked$round_result))
 
   # With both, the same rows have the Round Result and the bold rows.
   both <- apply_summary_spec(
     tree,
-    scm_summary_spec(selected = ScmSelectedOptions(column = TRUE, bold = TRUE))
+    scm_summary_spec(selected = ScmSelectedOptions(bold = TRUE))
   )
   expect_equal(both$round_result, marked$round_result)
   expect_equal(both$.bold, bold$.bold)
@@ -458,7 +496,7 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
   # with the rounds grouped by direction.
   kept <- apply_summary_spec(
     tree,
-    scm_summary_spec(selected = ScmSelectedOptions(selected_only = TRUE))
+    scm_summary_spec(selected = ScmSelectedOptions(selected_only = TRUE, column = FALSE))
   )
   expect_equal(kept$model, data$model[data$section %in% stages | !is.na(marked$round_result)])
   expect_false(any(c("round_result", ".bold") %in% names(kept)))
@@ -468,10 +506,10 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
     c("Reference model", "Forward", "Forward", "Working full model", "Backward", "Reduced covariate model")
   )
   expect_equal(kept$dofv[kept$model == "1001_wt_cl" & kept$section == "Forward"], -20)
-  # It can carry the Round Result too.
+  # It carries the Round Result unless that is turned off.
   kept_marked <- apply_summary_spec(
     tree,
-    scm_summary_spec(selected = ScmSelectedOptions(selected_only = TRUE, column = TRUE))
+    scm_summary_spec(selected = ScmSelectedOptions(selected_only = TRUE))
   )
   expect_equal(kept_marked$round_result, c(NA, "added", "added", NA, "dropped", NA))
 
@@ -492,6 +530,13 @@ test_that("an SCM lineage summarizes as one row per fit with its round's dOFV", 
   expect_equal(two$model, data$model[in_two])
   expect_equal(two$dofv, data$dofv[in_two])
   expect_equal(two$pvalue, data$pvalue[in_two])
+  expect_equal(two$round_result, marked$round_result[in_two])
+  # With rounds = NA, the table has the milestones alone, with the dOFV
+  # they have in the full table and no Round Result column.
+  milestones <- apply_summary_spec(tree, scm_summary_spec(rounds = NA))
+  expect_equal(milestones$section, stages)
+  expect_equal(milestones$dofv, data$dofv[data$section %in% stages])
+  expect_false("round_result" %in% names(milestones))
   # A direction names all of its rounds, and combines with selected_only.
   backward <- apply_summary_spec(tree, scm_summary_spec() |> set_spec_scm_rounds("backward"))
   expect_equal(

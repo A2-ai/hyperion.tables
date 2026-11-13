@@ -32,14 +32,18 @@ Modified spec.
 }
 \description{
 \code{set_spec_scm_selected()} sets how the table of an SCM spec shows the
-candidate each round selected: marked with a Round Result column, with
-its row in bold, or alone, without the other candidates. It builds the
-spec's \code{\link[=ScmSelectedOptions]{ScmSelectedOptions()}}; a setting not given keeps its value.
+candidate each round selected: marked with a Round Result column (on
+unless turned off), with its row in bold, or alone, without the other
+candidates. It builds the spec's \code{\link[=ScmSelectedOptions]{ScmSelectedOptions()}}; a setting not
+given keeps its value.
 Operates on \link{ScmSummarySpec} only.
 }
 \examples{
 spec <- scm_summary_spec() |>
-  set_spec_scm_selected(column = TRUE, bold = TRUE)
+  set_spec_scm_selected(bold = TRUE)
+# Without the Round Result column
+spec <- scm_summary_spec() |>
+  set_spec_scm_selected(column = FALSE)
 # Only the selected candidates
 spec <- scm_summary_spec() |>
   set_spec_scm_selected(selected_only = TRUE)

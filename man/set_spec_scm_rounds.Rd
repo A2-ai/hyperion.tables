@@ -12,18 +12,20 @@ set_spec_scm_rounds(spec, ...)
 \item{...}{Round names as pharos tags the fits, such as
 \code{"forward_round1"}, and directions, \code{"forward"} or \code{"backward"}, for
 every round of one; as strings or a character vector. With none, or
-\code{NULL}, the table shows every round.}
+\code{NULL}, the table shows every round. With \code{NA}, it shows no round, only
+the milestones.}
 }
 \value{
 Modified spec.
 }
 \description{
 \code{set_spec_scm_rounds()} picks the rounds the table of an SCM spec shows,
-by name or by direction. The base (or full), working full and reduced
-covariate models are not rounds, so they always show. A round is left
-out after dOFV and the p-value are computed, so every row keeps the
-values it has in the full table. A round the lineage does not have is a
-warning. Operates on \link{ScmSummarySpec} only.
+by name or by direction. The milestones (the base or full model, the
+working full model and the reduced covariate model) are not rounds, so
+they always show; \code{NA} shows them alone. A round is left out after dOFV
+and the p-value are computed, so every row keeps the values it has in
+the full table. A round the lineage does not have is a warning. Operates
+on \link{ScmSummarySpec} only.
 }
 \examples{
 spec <- scm_summary_spec() |>
@@ -31,6 +33,9 @@ spec <- scm_summary_spec() |>
 # Every backward round
 spec <- scm_summary_spec() |>
   set_spec_scm_rounds("backward")
+# Only the milestones
+spec <- scm_summary_spec() |>
+  set_spec_scm_rounds(NA)
 # Every round again
 spec <- set_spec_scm_rounds(spec)
 }

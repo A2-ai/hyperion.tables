@@ -5,7 +5,7 @@
 \title{Summary specification for SCM run summary tables}
 \usage{
 ScmSummarySpec(
-  description = "sparse",
+  show_all_covariates = FALSE,
   selected = ScmSelectedOptions(),
   rounds = NULL,
   other_section_label = "Other",
@@ -13,18 +13,19 @@ ScmSummarySpec(
 )
 }
 \arguments{
-\item{description}{What the Description column says about each fit:
-\code{"sparse"} (the default), only what it added or dropped; or
-\code{"verbose"}, what it added or dropped and the covariates its model has.}
+\item{show_all_covariates}{Logical. If TRUE, the Description column
+also lists the covariates each fit's model has, after what the fit
+added or dropped. Default \code{FALSE}.}
 
 \item{selected}{A \code{\link[=ScmSelectedOptions]{ScmSelectedOptions()}} object: how the table shows the
 candidate each round selected. Prefer \code{\link[=set_spec_scm_selected]{set_spec_scm_selected()}} in a
 pipe for user-facing code.}
 
 \item{rounds}{The rounds the table shows, as a character vector of round
-names (\code{"forward_round1"}) and directions (\code{"forward"}, \code{"backward"}),
-or \code{NULL} (the default) for every round. Prefer \code{\link[=set_spec_scm_rounds]{set_spec_scm_rounds()}}
-in a pipe for user-facing code.}
+names (\code{"forward_round1"}) and directions (\code{"forward"}, \code{"backward"});
+\code{NULL} (the default) for every round; or \code{NA} for none, which leaves
+only the milestones. Prefer \code{\link[=set_spec_scm_rounds]{set_spec_scm_rounds()}} in a pipe for
+user-facing code.}
 
 \item{other_section_label}{Section label for a model matching no round.}
 
@@ -50,7 +51,7 @@ to a lineage with no SCM fits, it is an error.
 table shows.
 }
 \examples{
-spec <- ScmSummarySpec(description = "verbose")
+spec <- ScmSummarySpec(show_all_covariates = TRUE)
 S7::S7_inherits(spec, SummarySpec)
 }
 \seealso{

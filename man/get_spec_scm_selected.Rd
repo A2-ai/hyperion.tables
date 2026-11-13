@@ -20,7 +20,7 @@ Operates on \link{ScmSummarySpec} only.
 }
 \examples{
 spec <- scm_summary_spec() |>
-  set_spec_scm_selected(column = TRUE)
+  set_spec_scm_selected(bold = TRUE)
 get_spec_scm_selected(spec)
 }
 \seealso{

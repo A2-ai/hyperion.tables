@@ -13,10 +13,9 @@
 #' It is usually set with [set_spec_scm_selected()].
 #' Each round of an SCM process selects at most one candidate, the fit
 #' tagged `"selected"`: the covariate a forward round added, or the one a
-#' backward round dropped. The table can mark it with a column, with a bold
-#' row, or with both; it can show the selected candidates alone; or it can
-#' show every candidate alike (the default).
-#' The settings combine freely.
+#' backward round dropped. The table marks it with a Round Result column
+#' (the default), with a bold row, or with both, and it can show the
+#' selected candidates alone. The settings combine freely.
 #'
 #' With `selected_only = TRUE` the table keeps the models that mattered:
 #' the base (or full) model, the working full and reduced covariate models,
@@ -28,9 +27,10 @@
 #' When no backward round dropped anything, the working full model says
 #' nothing the reduced covariate model does not, so it is left out too.
 #'
-#' @param column Logical. If TRUE, the table has a Round Result column,
-#'   which reads "added" or "dropped" on the selected candidate's row and is
-#'   empty elsewhere. Default `FALSE`.
+#' @param column Logical. If TRUE (the default), the table has a Round
+#'   Result column, which reads "added" or "dropped" on the selected
+#'   candidate's row and is empty elsewhere. A table that shows no round's
+#'   candidates has no result to report, so it has no such column.
 #' @param bold Logical. If TRUE, the selected candidate's row is rendered in
 #'   bold. Default `FALSE`.
 #' @param selected_only Logical. If TRUE, the table shows only the
@@ -48,14 +48,15 @@
 #' @seealso [set_spec_scm_selected()], [scm_summary_spec()].
 #' @export
 #' @examples
-#' ScmSelectedOptions(column = TRUE)
-#' ScmSelectedOptions(column = TRUE, bold = TRUE)
+#' ScmSelectedOptions()
+#' ScmSelectedOptions(bold = TRUE)
+#' ScmSelectedOptions(column = FALSE)
 #' ScmSelectedOptions(selected_only = TRUE)
 ScmSelectedOptions <- S7::new_class(
   "ScmSelectedOptions",
   package = "hyperion.tables",
   properties = list(
-    column = S7::new_property(class = S7::class_logical, default = FALSE),
+    column = S7::new_property(class = S7::class_logical, default = TRUE),
     bold = S7::new_property(class = S7::class_logical, default = FALSE),
     selected_only = S7::new_property(
       class = S7::class_logical,
@@ -89,16 +90,17 @@ ScmSelectedOptions <- S7::new_class(
 #' [scm_summary_spec()] is the usual way to make one and describes what the
 #' table shows.
 #'
-#' @param description What the Description column says about each fit:
-#'   `"sparse"` (the default), only what it added or dropped; or
-#'   `"verbose"`, what it added or dropped and the covariates its model has.
+#' @param show_all_covariates Logical. If TRUE, the Description column
+#'   also lists the covariates each fit's model has, after what the fit
+#'   added or dropped. Default `FALSE`.
 #' @param selected A [ScmSelectedOptions()] object: how the table shows the
 #'   candidate each round selected. Prefer [set_spec_scm_selected()] in a
 #'   pipe for user-facing code.
 #' @param rounds The rounds the table shows, as a character vector of round
-#'   names (`"forward_round1"`) and directions (`"forward"`, `"backward"`),
-#'   or `NULL` (the default) for every round. Prefer [set_spec_scm_rounds()]
-#'   in a pipe for user-facing code.
+#'   names (`"forward_round1"`) and directions (`"forward"`, `"backward"`);
+#'   `NULL` (the default) for every round; or `NA` for none, which leaves
+#'   only the milestones. Prefer [set_spec_scm_rounds()] in a pipe for
+#'   user-facing code.
 #' @param other_section_label Section label for a model matching no round.
 #' @param ... Arguments of [SummarySpec()]. Those not given take the SCM
 #'   table's defaults: no title, the fits tagged `"scm"`, the columns
@@ -107,15 +109,15 @@ ScmSelectedOptions <- S7::new_class(
 #' @seealso [scm_summary_spec()], [SummarySpec].
 #' @export
 #' @examples
-#' spec <- ScmSummarySpec(description = "verbose")
+#' spec <- ScmSummarySpec(show_all_covariates = TRUE)
 #' S7::S7_inherits(spec, SummarySpec)
 ScmSummarySpec <- S7::new_class(
   "ScmSummarySpec",
   parent = SummarySpec,
   properties = list(
-    description = S7::new_property(
-      class = S7::class_character,
-      default = "sparse"
+    show_all_covariates = S7::new_property(
+      class = S7::class_logical,
+      default = FALSE
     ),
     selected = S7::new_property(
       class = ScmSelectedOptions,
@@ -136,10 +138,10 @@ ScmSummarySpec <- S7::new_class(
       return(rounds_msg)
     }
     if (
-      length(self@description) != 1 ||
-        !self@description %in% c("sparse", "verbose")
+      length(self@show_all_covariates) != 1 ||
+        is.na(self@show_all_covariates)
     ) {
-      return("@description must be \"sparse\" or \"verbose\".")
+      return("@show_all_covariates must be TRUE or FALSE.")
     }
     if (
       length(self@other_section_label) != 1 ||
@@ -149,12 +151,16 @@ ScmSummarySpec <- S7::new_class(
     }
   },
   constructor = function(
-    description = "sparse",
+    show_all_covariates = FALSE,
     selected = ScmSelectedOptions(),
     rounds = NULL,
     other_section_label = "Other",
     ...
   ) {
+    # `rounds = NA` is held as a character NA, as the rounds are.
+    if (scm_milestones_only(rounds)) {
+      rounds <- NA_character_
+    }
     # What an SCM table has in place of a run summary's defaults
     summary_args <- list(...)
     defaults <- list(
@@ -168,7 +174,7 @@ ScmSummarySpec <- S7::new_class(
     }
     S7::new_object(
       do.call(SummarySpec, summary_args),
-      description = description,
+      show_all_covariates = show_all_covariates,
       selected = selected,
       rounds = rounds,
       other_section_label = other_section_label
@@ -176,10 +182,15 @@ ScmSummarySpec <- S7::new_class(
   }
 )
 
-# NULL when `rounds` is every round (NULL) or names rounds and directions;
-# otherwise what is wrong with it.
+# TRUE when `rounds` is NA: the table shows no round, only the milestones.
+scm_milestones_only <- function(rounds) {
+  length(rounds) == 1 && is.na(rounds)
+}
+
+# NULL when `rounds` is every round (NULL), none (NA), or names rounds and
+# directions; otherwise what is wrong with it.
 validate_scm_rounds <- function(rounds) {
-  if (is.null(rounds)) {
+  if (is.null(rounds) || scm_milestones_only(rounds)) {
     return(NULL)
   }
   is_round <- grepl("^(forward|backward)(_round[0-9]+)?$", rounds)
@@ -187,7 +198,7 @@ validate_scm_rounds <- function(rounds) {
     bad <- rounds[is.na(rounds) | !is_round]
     return(paste0(
       "@rounds must name rounds (\"forward_round1\") or directions ",
-      "(\"forward\", \"backward\"), or be NULL for every round.",
+      "(\"forward\", \"backward\"), or be NULL for every round or NA for none.",
       if (length(bad) > 0) paste0(" Got: ", paste0("'", bad, "'", collapse = ", "))
     ))
   }
@@ -218,54 +229,50 @@ is_scm_summary_spec <- function(spec) {
 #' footnotes. A [ScmSummarySpec] is a [SummarySpec], so the `set_spec_*()`
 #' modifiers customize it further.
 #'
-#' `description` picks how much the Description column says about each
-#' fit:
-#' \itemize{
-#'   \item `"sparse"` (the default) shows the fit's description, which for
-#'     an SCM fit is what it added or dropped: "add CRCL_CL".
-#'   \item `"verbose"` adds the covariates its model has: "add CRCL_CL;
-#'     covariates: WT_CL, CRCL_CL".
-#' }
-#' The base (or full), working full and reduced covariate models add or
-#' drop nothing and their section already names them, so their description
-#' never repeats the name: it is empty when sparse and "covariates: WT_CL,
-#' CRCL_CL" when verbose.
+#' The Description column shows each fit's description, which for an SCM
+#' fit is what it added or dropped: "add CRCL_CL". The milestones (the base
+#' or full model, the working full model and the reduced covariate model)
+#' add or drop nothing and their section already names them, so theirs is
+#' empty. `show_all_covariates = TRUE` also lists the covariates each fit's
+#' model has: "add CRCL_CL; covariates: WT_CL, CRCL_CL", and "covariates:
+#' WT_CL, CRCL_CL" for a milestone.
 #'
 #' The covariates a model has are not in its description or its metadata.
 #' They come from the SCM process record, which
 #' `hyperion::get_scm_lineage()` puts on each fit of the lineage it builds.
-#' A lineage from `hyperion::get_model_lineage()` has none, so `"verbose"`
-#' shows what `"sparse"` does for it, with a warning.
+#' A lineage from `hyperion::get_model_lineage()` has none, so for it
+#' `show_all_covariates = TRUE` adds nothing, with a warning.
 #'
 #' `selected`, a [ScmSelectedOptions()], picks how the table shows the
-#' candidate each round selected, the fit tagged `"selected"`: marked with
-#' a Round Result column reading "added" or "dropped" (`column = TRUE`),
-#' with its row in bold (`bold = TRUE`), or alone, with the other
-#' candidates left out and the rounds grouped by direction
-#' (`selected_only = TRUE`). The default shows every candidate alike.
-#' [set_spec_scm_selected()] sets the same on a spec already made.
+#' candidate each round selected, the fit tagged `"selected"`. By default a
+#' Round Result column reads "added" or "dropped" on its row; `column =
+#' FALSE` leaves the column out. `bold = TRUE` renders its row in bold, and
+#' `selected_only = TRUE` shows it alone, with the other candidates left
+#' out and the rounds grouped by direction. [set_spec_scm_selected()] sets
+#' the same on a spec already made.
 #'
 #' `rounds` picks the rounds the table shows, by name (`"forward_round1"`)
 #' or by direction (`"forward"`, `"backward"`); the default shows them all.
-#' The base (or full), working full and reduced covariate models are not
-#' rounds, so they always show, and every row keeps the dOFV and p-value it
-#' has in the full table. [set_spec_scm_rounds()] sets the same on a spec
-#' already made.
+#' The milestones are not rounds, so they always show, and every row keeps
+#' the dOFV and p-value it has in the full table. `rounds = NA` shows no
+#' round at all, only the milestones. [set_spec_scm_rounds()] sets the same
+#' on a spec already made.
 #'
 #' Section rules set on the spec with [set_spec_sections()] replace the ones
 #' it would work out.
 #'
 #' @param title Table title. `NULL` (the default) gives a table with no
 #'   title; pass a string to set one.
-#' @param description How much the Description column says about each fit:
-#'   `"sparse"` (the default), only what it added or dropped; or
-#'   `"verbose"`, what it added or dropped and the covariates its model has.
+#' @param show_all_covariates Logical. If TRUE, the Description column
+#'   also lists the covariates each fit's model has, after what the fit
+#'   added or dropped. Default `FALSE`.
 #' @param selected A [ScmSelectedOptions()] object: how the table shows the
 #'   candidate each round selected: marked with a Round Result column or a
-#'   bold row, or alone. The default shows every candidate alike.
+#'   bold row, or alone. The default has the Round Result column.
 #' @param rounds The rounds the table shows, as a character vector of round
-#'   names (`"forward_round1"`) and directions (`"forward"`, `"backward"`),
-#'   or `NULL` (the default) for every round.
+#'   names (`"forward_round1"`) and directions (`"forward"`, `"backward"`);
+#'   `NULL` (the default) for every round; or `NA` for none, which leaves
+#'   only the milestones.
 #' @param other_section_label Section label for a model matching no round.
 #'
 #' @return A [ScmSummarySpec] object.
@@ -285,25 +292,24 @@ is_scm_summary_spec <- function(spec) {
 #'   apply_summary_spec(scm_summary_spec()) |>
 #'   make_summary_table()
 #'
-#' # Describe each fit by what it added or dropped and its model's
-#' # covariates
-#' scm_summary_spec(description = "verbose")
+#' # Also list the covariates each fit's model has
+#' scm_summary_spec(show_all_covariates = TRUE)
 #'
-#' # Mark the candidate each round selected: a Round Result column, its row
-#' # in bold, or both
-#' scm_summary_spec() |> set_spec_scm_selected(column = TRUE)
-#' scm_summary_spec() |> set_spec_scm_selected(bold = TRUE)
-#' scm_summary_spec() |> set_spec_scm_selected(column = TRUE, bold = TRUE)
+#' # The candidate each round selected: also in bold, or without the Round
+#' # Result column
+#' scm_summary_spec(selected = ScmSelectedOptions(bold = TRUE))
+#' scm_summary_spec(selected = ScmSelectedOptions(column = FALSE))
 #'
-#' # Show only some rounds
-#' scm_summary_spec() |> set_spec_scm_rounds("forward_round1", "forward_round2")
-#' scm_summary_spec() |> set_spec_scm_rounds("backward")
+#' # Show only some rounds, or only the milestones
+#' scm_summary_spec(rounds = c("forward_round1", "forward_round2"))
+#' scm_summary_spec(rounds = "backward")
+#' scm_summary_spec(rounds = NA)
 #'
 #' # Show only the selected candidates: the models that mattered
-#' scm_summary_spec() |> set_spec_scm_selected(selected_only = TRUE)
-#'
-#' # The same in one call
 #' scm_summary_spec(selected = ScmSelectedOptions(selected_only = TRUE))
+#'
+#' # The same on a spec already made
+#' scm_summary_spec() |> set_spec_scm_selected(selected_only = TRUE)
 #'
 #' # Customize further with modifiers
 #' spec <- scm_summary_spec() |>
@@ -314,7 +320,7 @@ is_scm_summary_spec <- function(spec) {
 #' }
 scm_summary_spec <- function(
   title = NULL,
-  description = c("sparse", "verbose"),
+  show_all_covariates = FALSE,
   selected = ScmSelectedOptions(),
   rounds = NULL,
   other_section_label = "Other"
@@ -331,19 +337,25 @@ scm_summary_spec <- function(
   if (!is.null(title) && !rlang::is_string(title)) {
     rlang::abort("`title` must be a single character string or NULL.")
   }
-  description <- match.arg(description)
+  if (!rlang::is_bool(show_all_covariates)) {
+    rlang::abort("`show_all_covariates` must be TRUE or FALSE.")
+  }
   if (!S7::S7_inherits(selected, ScmSelectedOptions)) {
     rlang::abort("`selected` must be a <ScmSelectedOptions> object.")
   }
-  if (!is.null(rounds) && !is.character(rounds)) {
-    rlang::abort("`rounds` must be a character vector of round names, or NULL.")
+  if (
+    !is.null(rounds) && !is.character(rounds) && !scm_milestones_only(rounds)
+  ) {
+    rlang::abort(
+      "`rounds` must be a character vector of round names, NA, or NULL."
+    )
   }
   if (!rlang::is_string(other_section_label)) {
     rlang::abort("`other_section_label` must be a single character string.")
   }
 
   ScmSummarySpec(
-    description = description,
+    show_all_covariates = show_all_covariates,
     selected = selected,
     rounds = rounds,
     other_section_label = other_section_label,
@@ -354,9 +366,10 @@ scm_summary_spec <- function(
 #' Set how an SCM summary table shows the selected candidates
 #'
 #' `set_spec_scm_selected()` sets how the table of an SCM spec shows the
-#' candidate each round selected: marked with a Round Result column, with
-#' its row in bold, or alone, without the other candidates. It builds the
-#' spec's [ScmSelectedOptions()]; a setting not given keeps its value.
+#' candidate each round selected: marked with a Round Result column (on
+#' unless turned off), with its row in bold, or alone, without the other
+#' candidates. It builds the spec's [ScmSelectedOptions()]; a setting not
+#' given keeps its value.
 #' Operates on [ScmSummarySpec] only.
 #'
 #' @param spec A ScmSummarySpec object, from [scm_summary_spec()].
@@ -374,7 +387,10 @@ scm_summary_spec <- function(
 #' @export
 #' @examples
 #' spec <- scm_summary_spec() |>
-#'   set_spec_scm_selected(column = TRUE, bold = TRUE)
+#'   set_spec_scm_selected(bold = TRUE)
+#' # Without the Round Result column
+#' spec <- scm_summary_spec() |>
+#'   set_spec_scm_selected(column = FALSE)
 #' # Only the selected candidates
 #' spec <- scm_summary_spec() |>
 #'   set_spec_scm_selected(selected_only = TRUE)
@@ -419,7 +435,7 @@ set_spec_scm_selected <- function(
 #' @export
 #' @examples
 #' spec <- scm_summary_spec() |>
-#'   set_spec_scm_selected(column = TRUE)
+#'   set_spec_scm_selected(bold = TRUE)
 #' get_spec_scm_selected(spec)
 get_spec_scm_selected <- function(spec, ...) {
   if (!is_scm_summary_spec(spec)) {
@@ -431,17 +447,19 @@ get_spec_scm_selected <- function(spec, ...) {
 #' Set the rounds an SCM summary table shows
 #'
 #' `set_spec_scm_rounds()` picks the rounds the table of an SCM spec shows,
-#' by name or by direction. The base (or full), working full and reduced
-#' covariate models are not rounds, so they always show. A round is left
-#' out after dOFV and the p-value are computed, so every row keeps the
-#' values it has in the full table. A round the lineage does not have is a
-#' warning. Operates on [ScmSummarySpec] only.
+#' by name or by direction. The milestones (the base or full model, the
+#' working full model and the reduced covariate model) are not rounds, so
+#' they always show; `NA` shows them alone. A round is left out after dOFV
+#' and the p-value are computed, so every row keeps the values it has in
+#' the full table. A round the lineage does not have is a warning. Operates
+#' on [ScmSummarySpec] only.
 #'
 #' @param spec A ScmSummarySpec object, from [scm_summary_spec()].
 #' @param ... Round names as pharos tags the fits, such as
 #'   `"forward_round1"`, and directions, `"forward"` or `"backward"`, for
 #'   every round of one; as strings or a character vector. With none, or
-#'   `NULL`, the table shows every round.
+#'   `NULL`, the table shows every round. With `NA`, it shows no round, only
+#'   the milestones.
 #' @return Modified spec.
 #' @seealso [get_spec_scm_rounds()], [scm_summary_spec()].
 #' @export
@@ -451,6 +469,9 @@ get_spec_scm_selected <- function(spec, ...) {
 #' # Every backward round
 #' spec <- scm_summary_spec() |>
 #'   set_spec_scm_rounds("backward")
+#' # Only the milestones
+#' spec <- scm_summary_spec() |>
+#'   set_spec_scm_rounds(NA)
 #' # Every round again
 #' spec <- set_spec_scm_rounds(spec)
 set_spec_scm_rounds <- function(spec, ...) {
@@ -458,6 +479,10 @@ set_spec_scm_rounds <- function(spec, ...) {
     rlang::abort("`spec` must be a <ScmSummarySpec> object.")
   }
   rounds <- unlist(list(...), use.names = FALSE)
+  if (scm_milestones_only(rounds)) {
+    spec@rounds <- NA_character_
+    return(spec)
+  }
   if (!is.null(rounds) && !is.character(rounds)) {
     rlang::abort("Rounds must be given as strings, such as \"forward_round1\" or \"forward\".")
   }
@@ -467,12 +492,13 @@ set_spec_scm_rounds <- function(spec, ...) {
 
 #' Get the rounds an SCM summary table shows
 #'
-#' `get_spec_scm_rounds()` returns the rounds the table shows, or NULL when
-#' it shows every round. Operates on [ScmSummarySpec] only.
+#' `get_spec_scm_rounds()` returns the rounds the table shows: NULL when
+#' it shows every round, NA when it shows only the milestones. Operates on
+#' [ScmSummarySpec] only.
 #'
 #' @param spec A ScmSummarySpec object, from [scm_summary_spec()].
 #' @param ... Not used.
-#' @return Character vector of round names and directions, or NULL.
+#' @return Character vector of round names and directions, NULL, or NA.
 #' @seealso [set_spec_scm_rounds()].
 #' @export
 #' @examples
@@ -557,14 +583,8 @@ scm_summary_rows <- function(df, spec, tree) {
   if ("description" %in% names(df)) {
     df$description <- scm_descriptions(df, spec, tree, is_stage)
   }
-  if (spec@selected@column) {
-    df$round_result <- NA_character_
-    df$round_result[added] <- "added"
-    df$round_result[dropped] <- "dropped"
-  }
-  if (spec@selected@bold) {
-    df$.bold <- is_selected
-  }
+
+  keep <- rep(TRUE, nrow(df))
   if (spec@selected@selected_only) {
     # Without a backward step that dropped anything, the working full model
     # is the reduced covariate model less its cov step, so only the latter
@@ -573,21 +593,32 @@ scm_summary_rows <- function(df, spec, tree) {
     if (!any(dropped)) {
       keep <- keep & !has_tag("working_full")
     }
-    df <- df[keep, , drop = FALSE]
-    if (nrow(df) == 0) {
+    if (!any(keep)) {
       rlang::abort("The lineage has no selected SCM fits to show.")
     }
   }
   if (!is.null(spec@rounds)) {
-    df <- df[scm_rows_in_rounds(df, spec@rounds), , drop = FALSE]
+    keep <- keep & scm_rows_in_rounds(df, spec@rounds)
   }
-  df
+
+  # The Round Result is a round's: a table left with the milestones alone
+  # has no round to report one for.
+  if (spec@selected@column && any(keep & !is_stage)) {
+    df$round_result <- NA_character_
+    df$round_result[added] <- "added"
+    df$round_result[dropped] <- "dropped"
+  }
+  if (spec@selected@bold) {
+    df$.bold <- is_selected
+  }
+  df[keep, , drop = FALSE]
 }
 
 # TRUE for the rows the spec's rounds keep: a stage fit, which is in no
 # round, and a candidate of a round that is named or whose direction is.
-# `df` already has every row's dOFV, so leaving a round out changes no
-# other row. A round the lineage does not have is a warning.
+# With `rounds = NA`, only the stage fits. `df` already has every row's
+# dOFV, so leaving a round out changes no other row. A round the lineage
+# does not have is a warning.
 scm_rows_in_rounds <- function(df, rounds) {
   tags <- unclass(df$tags)
   row_round <- vapply(
@@ -598,6 +629,9 @@ scm_rows_in_rounds <- function(df, rounds) {
     },
     character(1)
   )
+  if (scm_milestones_only(rounds)) {
+    return(is.na(row_round))
+  }
   row_direction <- sub("_round[0-9]+$", "", row_round)
   missing <- setdiff(rounds, c(row_round, row_direction))
   if (length(missing) > 0) {
@@ -612,21 +646,21 @@ scm_rows_in_rounds <- function(df, rounds) {
 
 # What the Description column shows. A fit's description is its step, what
 # it added or dropped; a stage fit (base, working full, reduced covariate)
-# has no step, since its section names it. Verbose adds the covariates the
-# fit's model has, which the lineage's nodes carry when
+# has no step, since its section names it. `show_all_covariates` adds the
+# covariates the fit's model has, which the lineage's nodes carry when
 # hyperion::get_scm_lineage() built it.
 scm_descriptions <- function(df, spec, tree, is_stage) {
   step <- df$description
   step[is_stage] <- ""
-  if (spec@description != "verbose") {
+  if (!spec@show_all_covariates) {
     return(step)
   }
   covariates <- scm_lineage_covariates(tree)[df$.name]
   known <- !vapply(covariates, is.null, logical(1))
   if (!any(known)) {
     rlang::warn(c(
-      "The lineage does not say which covariates each model has, so the descriptions are sparse.",
-      i = "`description = \"verbose\"` needs the lineage from `hyperion::get_scm_lineage()`."
+      "The lineage does not say which covariates each model has, so the descriptions list none.",
+      i = "`show_all_covariates = TRUE` needs the lineage from `hyperion::get_scm_lineage()`."
     ))
     return(step)
   }

@@ -135,20 +135,22 @@ and sections by round are ordinary section rules such as
 `"forward_round1" %in% tags ~ "Forward round 1"`. `scm_summary_spec()`
 needs no lineage: when `apply_summary_spec()` gives it one, it writes those
 rules for however many rounds the process ran. It keeps the fits tagged
-`"scm"` and shows every candidate alike.
+`"scm"`.
 
-- `set_spec_scm_selected()` picks how the candidate each round selected is
-  shown: `column = TRUE` adds a Round Result column
-  reading "added" or "dropped" on its row, `bold = TRUE` renders its row in
-  bold, and `selected_only = TRUE` leaves out the candidates the rounds did not
+- `selected` picks how the candidate each round selected is shown. A Round
+  Result column reads "added" or "dropped" on its row unless
+  `column = FALSE`, `bold = TRUE` renders its row in bold, and
+  `selected_only = TRUE` leaves out the candidates the rounds did not
   select, grouping the steps that remain under "Forward" and "Backward".
-- `set_spec_scm_rounds()` picks the rounds the table shows, by name
-  (`"forward_round1"`) or by direction (`"forward"`, `"backward"`). The
-  base, working full and reduced covariate models always show.
+- `rounds` picks the rounds the table shows, by name (`"forward_round1"`)
+  or by direction (`"forward"`, `"backward"`). The base, working full and
+  reduced covariate models always show, and `rounds = NA` shows them alone.
 - The Description column shows what each fit added or dropped;
-  `description = "verbose"` adds the covariates its model has. Those come
-  from the process record, so they need the lineage
+  `show_all_covariates = TRUE` adds the covariates its model has. Those
+  come from the process record, so they need the lineage
   `hyperion::get_scm_lineage()` builds, which is what this example uses.
+
+See the `scm-tables` vignette for each of these.
 
 ```{r scm-summary}
 scm_root <- system.file(package = "hyperion")

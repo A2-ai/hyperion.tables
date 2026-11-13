@@ -12,11 +12,12 @@ get_spec_scm_rounds(spec, ...)
 \item{...}{Not used.}
 }
 \value{
-Character vector of round names and directions, or NULL.
+Character vector of round names and directions, NULL, or NA.
 }
 \description{
-\code{get_spec_scm_rounds()} returns the rounds the table shows, or NULL when
-it shows every round. Operates on \link{ScmSummarySpec} only.
+\code{get_spec_scm_rounds()} returns the rounds the table shows: NULL when
+it shows every round, NA when it shows only the milestones. Operates on
+\link{ScmSummarySpec} only.
 }
 \examples{
 spec <- scm_summary_spec() |>

@@ -27,23 +27,13 @@ scm <- read_scm(
 
 ## SCM Lineage
 
-An SCM summary table is a run summary table of the models a stepwise
-covariate modeling (SCM) process fitted. The process here tested six
-covariate effects on a two-compartment model, forward and then backward.
-Start by loading its lineage tree, which `get_scm_lineage()` builds from
-the process record:
-
 ```{r}
 lineage <- get_scm_lineage(scm)
 
 lineage
 ```
 
-## Basic SCM Summary Table
-
-`scm_summary_spec()` is the spec for an SCM summary table. It takes no
-lineage: `apply_summary_spec()` gives it one, and the table gets a section
-for each round the process ran:
+## Base SCM Summary Table
 
 ```{r}
 lineage |>
@@ -52,18 +42,13 @@ lineage |>
   render_to_image()
 ```
 
-Each candidate's dOFV and p-value are against the model its round started
-from. The working full and reduced covariate models are compared with the
-base model, which this lineage lists under "Reference model". None of the
-three is a candidate, so they have no description.
-
 ## Choosing Rounds
 
 Use the `rounds` argument to control which rounds appear. Name the rounds
-to show, here the first forward round:
+to show, here the first forward round (The base, working full and reduced covariate models always show):
 
 ```{r}
-spec <- scm_summary_spec(rounds = "forward_round1")
+spec <- scm_summary_spec(rounds = NULL)
 
 lineage |>
   apply_summary_spec(spec) |>
@@ -71,18 +56,16 @@ lineage |>
   render_to_image()
 ```
 
-The base, working full and reduced covariate models always show.
-
 ## Marking the Selected Candidates
 
-Use the `selected` argument to show which candidate each round selected.
-It takes `ScmSelectedOptions()`; `column = TRUE` adds a Round Result
-column:
+Use the `selected` argument to show which covariate candidate was most significant in each round, if applicable.
+It takes `ScmSelectedOptions()`, which has multiple flags. The Round Result
+column is there by default; `column = FALSE` leaves it out:
 
 ```{r}
 spec <- scm_summary_spec(
   rounds = "forward_round1",
-  selected = ScmSelectedOptions(column = TRUE)
+  selected = ScmSelectedOptions(column = FALSE)
 )
 
 lineage |>
@@ -91,7 +74,7 @@ lineage |>
   render_to_image()
 ```
 
-`bold = TRUE` renders the selected candidate's row in bold:
+`bold = TRUE` renders the selected covariate candidate's row in bold:
 
 ```{r}
 spec <- scm_summary_spec(
@@ -105,25 +88,11 @@ lineage |>
   render_to_image()
 ```
 
-The two can be combined:
+The same specifications on the full table:
 
 ```{r}
 spec <- scm_summary_spec(
-  rounds = "forward_round1",
-  selected = ScmSelectedOptions(column = TRUE, bold = TRUE)
-)
-
-lineage |>
-  apply_summary_spec(spec) |>
-  make_summary_table() |>
-  render_to_image()
-```
-
-The same on every round:
-
-```{r}
-spec <- scm_summary_spec(
-  selected = ScmSelectedOptions(column = TRUE, bold = TRUE)
+  selected = ScmSelectedOptions(bold = TRUE)
 )
 
 lineage |>
@@ -134,7 +103,7 @@ lineage |>
 
 ## Selected Candidates Only
 
-`selected_only = TRUE` leaves out the candidates the rounds did not select.
+`selected_only = TRUE` leaves out the covariate candidates the rounds did not select.
 The steps that remain are grouped under "Forward" and "Backward":
 
 ```{r}
@@ -162,15 +131,29 @@ lineage |>
   render_to_image()
 ```
 
+## Milestones Only
+
+`rounds = NA` shows no round at all, only the base, working full and
+reduced covariate models:
+
+```{r}
+spec <- scm_summary_spec(rounds = NA)
+
+lineage |>
+  apply_summary_spec(spec) |>
+  make_summary_table() |>
+  render_to_image()
+```
+
 ## Descriptions
 
 The Description column shows what each fit added or dropped.
-`description = "verbose"` adds the covariates its model has:
+`show_all_covariates = TRUE` adds all of the covariates a model has:
 
 ```{r}
 spec <- scm_summary_spec(
-  description = "verbose",
-  selected = ScmSelectedOptions(column = TRUE, bold = TRUE)
+  show_all_covariates = TRUE,
+  selected = ScmSelectedOptions(bold = TRUE)
 )
 
 lineage |>
@@ -179,12 +162,12 @@ lineage |>
   render_to_image()
 ```
 
-With `selected_only = TRUE`, the verbose descriptions show the model
-growing and shrinking step by step:
+With `selected_only = TRUE`, the descriptions show the model growing and
+shrinking step by step:
 
 ```{r}
 spec <- scm_summary_spec(
-  description = "verbose",
+  show_all_covariates = TRUE,
   selected = ScmSelectedOptions(selected_only = TRUE)
 )
 
@@ -193,9 +176,6 @@ lineage |>
   make_summary_table() |>
   render_to_image()
 ```
-
-The covariates come from the process record, so verbose descriptions need
-the lineage from `get_scm_lineage()`.
 
 ## Table Title
 
@@ -214,7 +194,7 @@ lineage |>
 
 ## Summary Table Modifiers
 
-An SCM summary spec is a `SummarySpec`, so the summary table modifiers
+An SCM summary spec is a `SummarySpec`, so summary table modifiers
 apply to it:
 
 ```{r}
