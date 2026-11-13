@@ -1,0 +1,68 @@
+{
+  "start": "2026-11-13T18:41:23+00:00",
+  "end": "2026-11-13T18:41:40+00:00",
+  "exit_code": 0,
+  "runtime_ms": 17781,
+  "files_copied": [
+    "PRDERR",
+    "scm-001_crcl_cl.lst",
+    "scm-001_crcl_cl.grd",
+    "pharos_config.json",
+    "scm-001_crcl_cl.sh",
+    ".gitignore",
+    "scm-001_crcl_cl.xml",
+    "scm-001_crcl_cl.shk",
+    "pharos_start.json",
+    "sdtab1",
+    "OUTPUT",
+    "scm-001_crcl_cl.ext",
+    "scm-001_crcl_cl.mod"
+  ],
+  "output_files_rewrites": {
+    "sdtab1": "sdtab1"
+  },
+  "output_files_hashes": [
+    {
+      "filename": "scm-001_crcl_cl.ext",
+      "hashes": {
+        "blake3": "8201b3871bb0fc9fa6241558851156685a6d573c30aea25a4e3d5c48ba7de53f"
+      }
+    },
+    {
+      "filename": "scm-001_crcl_cl.grd",
+      "hashes": {
+        "blake3": "ba46f570bfd2df9182cfbb065a0e631a07fa8f29d963d4117b2cfbd979f0f9e0"
+      }
+    },
+    {
+      "filename": "scm-001_crcl_cl.lst",
+      "hashes": {
+        "blake3": "ee855ceffb16a8b487384225e22f9f8d27221d40c253f5e63ca6a030a86b8aa6"
+      }
+    },
+    {
+      "filename": "scm-001_crcl_cl.mod",
+      "hashes": {
+        "blake3": "78b6b1e1906c5f53f93702ca701cf9ce7ffab27c3c6c8cc0e2d016048cebd1f3"
+      }
+    },
+    {
+      "filename": "scm-001_crcl_cl.shk",
+      "hashes": {
+        "blake3": "3c629c0fd82d186b52e69daa29cac70da7cc11a07aaf9bfd937b1e5f033e6794"
+      }
+    },
+    {
+      "filename": "scm-001_crcl_cl.xml",
+      "hashes": {
+        "blake3": "382a0a0cc1d8e3776330201b2ecd5413107c2a88bfab608f58f41e8fe1078b7e"
+      }
+    },
+    {
+      "filename": "sdtab1",
+      "hashes": {
+        "blake3": "4332110542813b251aa399cdac4c9fae4bcc3b50d6738cacb76d9fc1f2ff8265"
+      }
+    }
+  ]
+}

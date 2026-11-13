@@ -1,0 +1,68 @@
+{
+  "start": "2026-11-13T18:40:44+00:00",
+  "end": "2026-11-13T18:41:06+00:00",
+  "exit_code": 0,
+  "runtime_ms": 22171,
+  "files_copied": [
+    "pharos_config.json",
+    "scm-001_sex_v2.lst",
+    "scm-001_sex_v2.grd",
+    "PRDERR",
+    "OUTPUT",
+    ".gitignore",
+    "sdtab1",
+    "scm-001_sex_v2.shk",
+    "scm-001_sex_v2.xml",
+    "pharos_start.json",
+    "scm-001_sex_v2.ext",
+    "scm-001_sex_v2.sh",
+    "scm-001_sex_v2.mod"
+  ],
+  "output_files_rewrites": {
+    "sdtab1": "sdtab1"
+  },
+  "output_files_hashes": [
+    {
+      "filename": "scm-001_sex_v2.ext",
+      "hashes": {
+        "blake3": "89ac54b281bc38f4253130cf2c61840ec130e1d6bed633ac3d4e687f16f7ab5e"
+      }
+    },
+    {
+      "filename": "scm-001_sex_v2.grd",
+      "hashes": {
+        "blake3": "6610e80ea2112dcada0a7d2d2d25897b40a46a0a6d7d154057018da6088fff03"
+      }
+    },
+    {
+      "filename": "scm-001_sex_v2.lst",
+      "hashes": {
+        "blake3": "5ac3b95c2873783d25865ae6ea9455ae50908a28da0f39ce251344324e355a62"
+      }
+    },
+    {
+      "filename": "scm-001_sex_v2.mod",
+      "hashes": {
+        "blake3": "d1830d98ec489750db6f1be7e8bc30cf295c9053df8ca37cd0251a1be0e5580e"
+      }
+    },
+    {
+      "filename": "scm-001_sex_v2.shk",
+      "hashes": {
+        "blake3": "497f46e9417bb75805ecc3aa5a435e5991fd8f6b7cc59b5d7f633042969f0748"
+      }
+    },
+    {
+      "filename": "scm-001_sex_v2.xml",
+      "hashes": {
+        "blake3": "c67704680f24c1fb020a8720eca06519e060ad0edc2b8ed8f61e2d7f1c3f0b7b"
+      }
+    },
+    {
+      "filename": "sdtab1",
+      "hashes": {
+        "blake3": "814d5bef715b2d149be9ed90000f8a9dfe507ac598d55325acd491e5251f37f5"
+      }
+    }
+  ]
+}

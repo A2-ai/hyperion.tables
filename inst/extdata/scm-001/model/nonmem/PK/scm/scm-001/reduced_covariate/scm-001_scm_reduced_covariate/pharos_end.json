@@ -1,0 +1,82 @@
+{
+  "start": "2026-11-13T18:47:28+00:00",
+  "end": "2026-11-13T18:47:47+00:00",
+  "exit_code": 0,
+  "runtime_ms": 18429,
+  "files_copied": [
+    "pharos_config.json",
+    ".gitignore",
+    "scm-001_scm_reduced_covariate.cor",
+    "scm-001_scm_reduced_covariate.mod",
+    "scm-001_scm_reduced_covariate.xml",
+    "PRDERR",
+    "scm-001_scm_reduced_covariate.cov",
+    "pharos_start.json",
+    "scm-001_scm_reduced_covariate.lst",
+    "scm-001_scm_reduced_covariate.shk",
+    "sdtab1",
+    "scm-001_scm_reduced_covariate.ext",
+    "scm-001_scm_reduced_covariate.grd",
+    "scm-001_scm_reduced_covariate.sh",
+    "OUTPUT"
+  ],
+  "output_files_rewrites": {
+    "sdtab1": "sdtab1"
+  },
+  "output_files_hashes": [
+    {
+      "filename": "scm-001_scm_reduced_covariate.cor",
+      "hashes": {
+        "blake3": "2109796c921f144020baf4499651ab9b31fefbcaa099e9cbd87bca8b00b5f297"
+      }
+    },
+    {
+      "filename": "scm-001_scm_reduced_covariate.cov",
+      "hashes": {
+        "blake3": "10af4c2b3f106357b8b05f9b0f6dfc3058b2698b69a55098a5dbab505a8c1b8b"
+      }
+    },
+    {
+      "filename": "scm-001_scm_reduced_covariate.ext",
+      "hashes": {
+        "blake3": "46025b3518a96db21c419f5dd423d42f810bf9e570cd070bb1a9d39001ebe738"
+      }
+    },
+    {
+      "filename": "scm-001_scm_reduced_covariate.grd",
+      "hashes": {
+        "blake3": "dfe8ff24490689f5c106bed2e2c1f3e3f71cd0cad68d1f0c2d6abf349effe24c"
+      }
+    },
+    {
+      "filename": "scm-001_scm_reduced_covariate.lst",
+      "hashes": {
+        "blake3": "1d10a6a06e4a289f2e35f8a629b6ee7e9fd5d58ac327099be729ff2bb6f154a9"
+      }
+    },
+    {
+      "filename": "scm-001_scm_reduced_covariate.mod",
+      "hashes": {
+        "blake3": "59cb3d02982e98ab5d7e600459dbc1f2463130735964e1da50cd0067a80380b2"
+      }
+    },
+    {
+      "filename": "scm-001_scm_reduced_covariate.shk",
+      "hashes": {
+        "blake3": "175097441b97a24c3f62d39909c416cef08b036f2fcee5c9275893355bb8a928"
+      }
+    },
+    {
+      "filename": "scm-001_scm_reduced_covariate.xml",
+      "hashes": {
+        "blake3": "5ca7faf5dd57b0cb1c25c9f096acadf341b9d73f0ae2127f9f467694435462f2"
+      }
+    },
+    {
+      "filename": "sdtab1",
+      "hashes": {
+        "blake3": "b68bfa4d785bc0062589d0eb1f35e2e81a0bedd8811c25cf42172b58abebd76b"
+      }
+    }
+  ]
+}

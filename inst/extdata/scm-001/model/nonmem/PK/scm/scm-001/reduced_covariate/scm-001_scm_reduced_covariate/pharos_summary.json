@@ -1,0 +1,997 @@
+{
+  "run_name": "scm-001_scm_reduced_covariate",
+  "lst": {
+    "run_details": {
+      "problem": "2-cmt oral 500 mg single dose (scm-001) -- SCM base, type2 comments created from pharos see scm-001_scm_reduced_covariate_metadata.json for details.",
+      "number_data_records": 2000,
+      "number_subjects": 200,
+      "number_obs": 1600,
+      "estimation_time": [
+        6.1
+      ],
+      "covariance_time": [
+        5.79
+      ],
+      "postprocess_time": 0.03,
+      "estimation_methods": [
+        "First Order Conditional Estimation with Interaction"
+      ],
+      "function_evaluations": 517,
+      "significant_digits": 3.0,
+      "only_sim": false
+    },
+    "run_heuristics": {
+      "covariance_step_aborted": false,
+      "eigenvalue_issues": false,
+      "parameter_near_boundary": false,
+      "hessian_reset": false,
+      "minimization_terminated": false,
+      "program_terminated_by_obj": false
+    }
+  },
+  "minimization_results": [
+    {
+      "ofv": -2486.4802578021563,
+      "condition_number": 16.0053,
+      "termination_code": null
+    }
+  ],
+  "parameters": {
+    "method": "Foce",
+    "theta": [
+      {
+        "name": "TVCL",
+        "estimate": 4.83213,
+        "stderr": 0.125195,
+        "rse": 2.590886420688185,
+        "fixed": false
+      },
+      {
+        "name": "TVV2",
+        "estimate": 51.7803,
+        "stderr": 2.08015,
+        "rse": 4.0172613909150785,
+        "fixed": false
+      },
+      {
+        "name": "TVQ",
+        "estimate": 2.98939,
+        "stderr": 0.0383558,
+        "rse": 1.2830644378953564,
+        "fixed": false
+      },
+      {
+        "name": "TVV3",
+        "estimate": 60.6664,
+        "stderr": 0.537081,
+        "rse": 0.8853022430867827,
+        "fixed": false
+      },
+      {
+        "name": "TVKA",
+        "estimate": 0.94611,
+        "stderr": 0.0318195,
+        "rse": 3.3631924406252978,
+        "fixed": false
+      },
+      {
+        "name": "WT_CL",
+        "estimate": 0.86533,
+        "stderr": 0.101709,
+        "rse": 11.75378179422879,
+        "fixed": false
+      },
+      {
+        "name": "CRCL_CL",
+        "estimate": 0.57856,
+        "stderr": 0.0693617,
+        "rse": 11.988678788716815,
+        "fixed": false
+      },
+      {
+        "name": "ALB_CL",
+        "estimate": 0.0,
+        "stderr": null,
+        "rse": null,
+        "fixed": true
+      },
+      {
+        "name": "WT_V2",
+        "estimate": 0.736571,
+        "stderr": 0.105474,
+        "rse": 14.319597160355213,
+        "fixed": false
+      },
+      {
+        "name": "AGE_V2",
+        "estimate": 0.0,
+        "stderr": null,
+        "rse": null,
+        "fixed": true
+      },
+      {
+        "name": "SEX_V2",
+        "estimate": -0.245967,
+        "stderr": 0.0371377,
+        "rse": 15.098651445112557,
+        "fixed": false
+      }
+    ],
+    "random_effects": [
+      {
+        "name": "PropErr",
+        "param_type": "Sigma",
+        "random_effect": "EPS1",
+        "estimate": 0.00896418,
+        "sd": null,
+        "corr": null,
+        "stderr": 0.000407513,
+        "rse": 4.546015363368429,
+        "shrinkage": 17.2635,
+        "fixed": false,
+        "diagonal": true
+      },
+      {
+        "name": "IIV_CL (TVCL)",
+        "param_type": "Omega",
+        "random_effect": "ETA1",
+        "estimate": 0.0856246,
+        "sd": null,
+        "corr": null,
+        "stderr": 0.00812214,
+        "rse": 9.485755261922392,
+        "shrinkage": 0.679756,
+        "fixed": false,
+        "diagonal": true
+      },
+      {
+        "name": "IIV_V2 (TVV2)",
+        "param_type": "Omega",
+        "random_effect": "ETA2",
+        "estimate": 0.0742936,
+        "sd": null,
+        "corr": null,
+        "stderr": 0.00856725,
+        "rse": 11.531612413451494,
+        "shrinkage": 6.55053,
+        "fixed": false,
+        "diagonal": true
+      },
+      {
+        "name": "IIV_KA (TVKA)",
+        "param_type": "Omega",
+        "random_effect": "ETA3",
+        "estimate": 0.156449,
+        "sd": null,
+        "corr": null,
+        "stderr": 0.0225042,
+        "rse": 14.384368068827541,
+        "shrinkage": 15.3245,
+        "fixed": false,
+        "diagonal": true
+      }
+    ]
+  },
+  "parameter_names": {
+    "OMEGA(1,1)": "IIV_CL (TVCL)",
+    "OMEGA(2,2)": "IIV_V2 (TVV2)",
+    "OMEGA(3,3)": "IIV_KA (TVKA)",
+    "SIGMA(1,1)": "PropErr",
+    "THETA1": "TVCL",
+    "THETA10": "AGE_V2",
+    "THETA11": "SEX_V2",
+    "THETA2": "TVV2",
+    "THETA3": "TVQ",
+    "THETA4": "TVV3",
+    "THETA5": "TVKA",
+    "THETA6": "WT_CL",
+    "THETA7": "CRCL_CL",
+    "THETA8": "ALB_CL",
+    "THETA9": "WT_V2"
+  },
+  "correlation_matrix": {
+    "method": "Foce",
+    "parameters": [
+      "THETA1",
+      "THETA2",
+      "THETA3",
+      "THETA4",
+      "THETA5",
+      "THETA6",
+      "THETA7",
+      "THETA8",
+      "THETA9",
+      "THETA10",
+      "THETA11",
+      "SIGMA(1,1)",
+      "OMEGA(1,1)",
+      "OMEGA(2,1)",
+      "OMEGA(2,2)",
+      "OMEGA(3,1)",
+      "OMEGA(3,2)",
+      "OMEGA(3,3)"
+    ],
+    "correlations": [
+      {
+        "param1": "THETA1",
+        "param2": "THETA2",
+        "value": -0.049261
+      },
+      {
+        "param1": "THETA1",
+        "param2": "THETA3",
+        "value": 0.0538657
+      },
+      {
+        "param1": "THETA1",
+        "param2": "THETA4",
+        "value": 0.035328
+      },
+      {
+        "param1": "THETA1",
+        "param2": "THETA5",
+        "value": 0.0346994
+      },
+      {
+        "param1": "THETA1",
+        "param2": "THETA6",
+        "value": -0.484142
+      },
+      {
+        "param1": "THETA1",
+        "param2": "THETA7",
+        "value": 0.363917
+      },
+      {
+        "param1": "THETA1",
+        "param2": "THETA9",
+        "value": 0.0687211
+      },
+      {
+        "param1": "THETA1",
+        "param2": "THETA11",
+        "value": -0.0104512
+      },
+      {
+        "param1": "THETA1",
+        "param2": "SIGMA(1,1)",
+        "value": -0.0836547
+      },
+      {
+        "param1": "THETA1",
+        "param2": "OMEGA(1,1)",
+        "value": -0.138273
+      },
+      {
+        "param1": "THETA1",
+        "param2": "OMEGA(2,2)",
+        "value": 0.00636493
+      },
+      {
+        "param1": "THETA1",
+        "param2": "OMEGA(3,3)",
+        "value": 0.100202
+      },
+      {
+        "param1": "THETA2",
+        "param2": "THETA1",
+        "value": -0.049261
+      },
+      {
+        "param1": "THETA2",
+        "param2": "THETA3",
+        "value": -0.101844
+      },
+      {
+        "param1": "THETA2",
+        "param2": "THETA4",
+        "value": 0.177566
+      },
+      {
+        "param1": "THETA2",
+        "param2": "THETA5",
+        "value": 0.117437
+      },
+      {
+        "param1": "THETA2",
+        "param2": "THETA6",
+        "value": 0.0369378
+      },
+      {
+        "param1": "THETA2",
+        "param2": "THETA7",
+        "value": 0.0104238
+      },
+      {
+        "param1": "THETA2",
+        "param2": "THETA9",
+        "value": -0.7165
+      },
+      {
+        "param1": "THETA2",
+        "param2": "THETA11",
+        "value": -0.774267
+      },
+      {
+        "param1": "THETA2",
+        "param2": "SIGMA(1,1)",
+        "value": 0.0426523
+      },
+      {
+        "param1": "THETA2",
+        "param2": "OMEGA(1,1)",
+        "value": 0.0213849
+      },
+      {
+        "param1": "THETA2",
+        "param2": "OMEGA(2,2)",
+        "value": -0.211997
+      },
+      {
+        "param1": "THETA2",
+        "param2": "OMEGA(3,3)",
+        "value": 0.102136
+      },
+      {
+        "param1": "THETA3",
+        "param2": "THETA1",
+        "value": 0.0538657
+      },
+      {
+        "param1": "THETA3",
+        "param2": "THETA2",
+        "value": -0.101844
+      },
+      {
+        "param1": "THETA3",
+        "param2": "THETA4",
+        "value": 0.17604
+      },
+      {
+        "param1": "THETA3",
+        "param2": "THETA5",
+        "value": -0.305123
+      },
+      {
+        "param1": "THETA3",
+        "param2": "THETA6",
+        "value": 0.0651122
+      },
+      {
+        "param1": "THETA3",
+        "param2": "THETA7",
+        "value": -0.0447922
+      },
+      {
+        "param1": "THETA3",
+        "param2": "THETA9",
+        "value": 0.0249932
+      },
+      {
+        "param1": "THETA3",
+        "param2": "THETA11",
+        "value": -0.090788
+      },
+      {
+        "param1": "THETA3",
+        "param2": "SIGMA(1,1)",
+        "value": 0.0508806
+      },
+      {
+        "param1": "THETA3",
+        "param2": "OMEGA(1,1)",
+        "value": -0.0640046
+      },
+      {
+        "param1": "THETA3",
+        "param2": "OMEGA(2,2)",
+        "value": 0.154407
+      },
+      {
+        "param1": "THETA3",
+        "param2": "OMEGA(3,3)",
+        "value": 0.00295599
+      },
+      {
+        "param1": "THETA4",
+        "param2": "THETA1",
+        "value": 0.035328
+      },
+      {
+        "param1": "THETA4",
+        "param2": "THETA2",
+        "value": 0.177566
+      },
+      {
+        "param1": "THETA4",
+        "param2": "THETA3",
+        "value": 0.17604
+      },
+      {
+        "param1": "THETA4",
+        "param2": "THETA5",
+        "value": 0.0627313
+      },
+      {
+        "param1": "THETA4",
+        "param2": "THETA6",
+        "value": 0.0395463
+      },
+      {
+        "param1": "THETA4",
+        "param2": "THETA7",
+        "value": 0.118149
+      },
+      {
+        "param1": "THETA4",
+        "param2": "THETA9",
+        "value": -0.10994
+      },
+      {
+        "param1": "THETA4",
+        "param2": "THETA11",
+        "value": -0.160235
+      },
+      {
+        "param1": "THETA4",
+        "param2": "SIGMA(1,1)",
+        "value": 0.121273
+      },
+      {
+        "param1": "THETA4",
+        "param2": "OMEGA(1,1)",
+        "value": 0.0677509
+      },
+      {
+        "param1": "THETA4",
+        "param2": "OMEGA(2,2)",
+        "value": -0.10477
+      },
+      {
+        "param1": "THETA4",
+        "param2": "OMEGA(3,3)",
+        "value": 0.0572418
+      },
+      {
+        "param1": "THETA5",
+        "param2": "THETA1",
+        "value": 0.0346994
+      },
+      {
+        "param1": "THETA5",
+        "param2": "THETA2",
+        "value": 0.117437
+      },
+      {
+        "param1": "THETA5",
+        "param2": "THETA3",
+        "value": -0.305123
+      },
+      {
+        "param1": "THETA5",
+        "param2": "THETA4",
+        "value": 0.0627313
+      },
+      {
+        "param1": "THETA5",
+        "param2": "THETA6",
+        "value": 0.0427669
+      },
+      {
+        "param1": "THETA5",
+        "param2": "THETA7",
+        "value": 0.0168595
+      },
+      {
+        "param1": "THETA5",
+        "param2": "THETA9",
+        "value": -0.0428661
+      },
+      {
+        "param1": "THETA5",
+        "param2": "THETA11",
+        "value": -0.0617001
+      },
+      {
+        "param1": "THETA5",
+        "param2": "SIGMA(1,1)",
+        "value": 0.0159517
+      },
+      {
+        "param1": "THETA5",
+        "param2": "OMEGA(1,1)",
+        "value": 0.142534
+      },
+      {
+        "param1": "THETA5",
+        "param2": "OMEGA(2,2)",
+        "value": -0.161667
+      },
+      {
+        "param1": "THETA5",
+        "param2": "OMEGA(3,3)",
+        "value": 0.0144413
+      },
+      {
+        "param1": "THETA6",
+        "param2": "THETA1",
+        "value": -0.484142
+      },
+      {
+        "param1": "THETA6",
+        "param2": "THETA2",
+        "value": 0.0369378
+      },
+      {
+        "param1": "THETA6",
+        "param2": "THETA3",
+        "value": 0.0651122
+      },
+      {
+        "param1": "THETA6",
+        "param2": "THETA4",
+        "value": 0.0395463
+      },
+      {
+        "param1": "THETA6",
+        "param2": "THETA5",
+        "value": 0.0427669
+      },
+      {
+        "param1": "THETA6",
+        "param2": "THETA7",
+        "value": -0.0421
+      },
+      {
+        "param1": "THETA6",
+        "param2": "THETA9",
+        "value": -0.0337213
+      },
+      {
+        "param1": "THETA6",
+        "param2": "THETA11",
+        "value": 0.0141135
+      },
+      {
+        "param1": "THETA6",
+        "param2": "SIGMA(1,1)",
+        "value": 0.124114
+      },
+      {
+        "param1": "THETA6",
+        "param2": "OMEGA(1,1)",
+        "value": 0.215696
+      },
+      {
+        "param1": "THETA6",
+        "param2": "OMEGA(2,2)",
+        "value": 0.072818
+      },
+      {
+        "param1": "THETA6",
+        "param2": "OMEGA(3,3)",
+        "value": -0.0291054
+      },
+      {
+        "param1": "THETA7",
+        "param2": "THETA1",
+        "value": 0.363917
+      },
+      {
+        "param1": "THETA7",
+        "param2": "THETA2",
+        "value": 0.0104238
+      },
+      {
+        "param1": "THETA7",
+        "param2": "THETA3",
+        "value": -0.0447922
+      },
+      {
+        "param1": "THETA7",
+        "param2": "THETA4",
+        "value": 0.118149
+      },
+      {
+        "param1": "THETA7",
+        "param2": "THETA5",
+        "value": 0.0168595
+      },
+      {
+        "param1": "THETA7",
+        "param2": "THETA6",
+        "value": -0.0421
+      },
+      {
+        "param1": "THETA7",
+        "param2": "THETA9",
+        "value": -0.0177904
+      },
+      {
+        "param1": "THETA7",
+        "param2": "THETA11",
+        "value": -0.0527953
+      },
+      {
+        "param1": "THETA7",
+        "param2": "SIGMA(1,1)",
+        "value": -0.089089
+      },
+      {
+        "param1": "THETA7",
+        "param2": "OMEGA(1,1)",
+        "value": 0.104103
+      },
+      {
+        "param1": "THETA7",
+        "param2": "OMEGA(2,2)",
+        "value": -0.0544727
+      },
+      {
+        "param1": "THETA7",
+        "param2": "OMEGA(3,3)",
+        "value": 0.155159
+      },
+      {
+        "param1": "THETA9",
+        "param2": "THETA1",
+        "value": 0.0687211
+      },
+      {
+        "param1": "THETA9",
+        "param2": "THETA2",
+        "value": -0.7165
+      },
+      {
+        "param1": "THETA9",
+        "param2": "THETA3",
+        "value": 0.0249932
+      },
+      {
+        "param1": "THETA9",
+        "param2": "THETA4",
+        "value": -0.10994
+      },
+      {
+        "param1": "THETA9",
+        "param2": "THETA5",
+        "value": -0.0428661
+      },
+      {
+        "param1": "THETA9",
+        "param2": "THETA6",
+        "value": -0.0337213
+      },
+      {
+        "param1": "THETA9",
+        "param2": "THETA7",
+        "value": -0.0177904
+      },
+      {
+        "param1": "THETA9",
+        "param2": "THETA11",
+        "value": 0.553715
+      },
+      {
+        "param1": "THETA9",
+        "param2": "SIGMA(1,1)",
+        "value": -0.0218438
+      },
+      {
+        "param1": "THETA9",
+        "param2": "OMEGA(1,1)",
+        "value": -0.0046341
+      },
+      {
+        "param1": "THETA9",
+        "param2": "OMEGA(2,2)",
+        "value": 0.135571
+      },
+      {
+        "param1": "THETA9",
+        "param2": "OMEGA(3,3)",
+        "value": -0.0809329
+      },
+      {
+        "param1": "THETA11",
+        "param2": "THETA1",
+        "value": -0.0104512
+      },
+      {
+        "param1": "THETA11",
+        "param2": "THETA2",
+        "value": -0.774267
+      },
+      {
+        "param1": "THETA11",
+        "param2": "THETA3",
+        "value": -0.090788
+      },
+      {
+        "param1": "THETA11",
+        "param2": "THETA4",
+        "value": -0.160235
+      },
+      {
+        "param1": "THETA11",
+        "param2": "THETA5",
+        "value": -0.0617001
+      },
+      {
+        "param1": "THETA11",
+        "param2": "THETA6",
+        "value": 0.0141135
+      },
+      {
+        "param1": "THETA11",
+        "param2": "THETA7",
+        "value": -0.0527953
+      },
+      {
+        "param1": "THETA11",
+        "param2": "THETA9",
+        "value": 0.553715
+      },
+      {
+        "param1": "THETA11",
+        "param2": "SIGMA(1,1)",
+        "value": -0.00376998
+      },
+      {
+        "param1": "THETA11",
+        "param2": "OMEGA(1,1)",
+        "value": 0.022164
+      },
+      {
+        "param1": "THETA11",
+        "param2": "OMEGA(2,2)",
+        "value": 0.186325
+      },
+      {
+        "param1": "THETA11",
+        "param2": "OMEGA(3,3)",
+        "value": -0.0842745
+      },
+      {
+        "param1": "SIGMA(1,1)",
+        "param2": "THETA1",
+        "value": -0.0836547
+      },
+      {
+        "param1": "SIGMA(1,1)",
+        "param2": "THETA2",
+        "value": 0.0426523
+      },
+      {
+        "param1": "SIGMA(1,1)",
+        "param2": "THETA3",
+        "value": 0.0508806
+      },
+      {
+        "param1": "SIGMA(1,1)",
+        "param2": "THETA4",
+        "value": 0.121273
+      },
+      {
+        "param1": "SIGMA(1,1)",
+        "param2": "THETA5",
+        "value": 0.0159517
+      },
+      {
+        "param1": "SIGMA(1,1)",
+        "param2": "THETA6",
+        "value": 0.124114
+      },
+      {
+        "param1": "SIGMA(1,1)",
+        "param2": "THETA7",
+        "value": -0.089089
+      },
+      {
+        "param1": "SIGMA(1,1)",
+        "param2": "THETA9",
+        "value": -0.0218438
+      },
+      {
+        "param1": "SIGMA(1,1)",
+        "param2": "THETA11",
+        "value": -0.00376998
+      },
+      {
+        "param1": "SIGMA(1,1)",
+        "param2": "OMEGA(1,1)",
+        "value": -0.0345337
+      },
+      {
+        "param1": "SIGMA(1,1)",
+        "param2": "OMEGA(2,2)",
+        "value": -0.000975016
+      },
+      {
+        "param1": "SIGMA(1,1)",
+        "param2": "OMEGA(3,3)",
+        "value": -0.0767966
+      },
+      {
+        "param1": "OMEGA(1,1)",
+        "param2": "THETA1",
+        "value": -0.138273
+      },
+      {
+        "param1": "OMEGA(1,1)",
+        "param2": "THETA2",
+        "value": 0.0213849
+      },
+      {
+        "param1": "OMEGA(1,1)",
+        "param2": "THETA3",
+        "value": -0.0640046
+      },
+      {
+        "param1": "OMEGA(1,1)",
+        "param2": "THETA4",
+        "value": 0.0677509
+      },
+      {
+        "param1": "OMEGA(1,1)",
+        "param2": "THETA5",
+        "value": 0.142534
+      },
+      {
+        "param1": "OMEGA(1,1)",
+        "param2": "THETA6",
+        "value": 0.215696
+      },
+      {
+        "param1": "OMEGA(1,1)",
+        "param2": "THETA7",
+        "value": 0.104103
+      },
+      {
+        "param1": "OMEGA(1,1)",
+        "param2": "THETA9",
+        "value": -0.0046341
+      },
+      {
+        "param1": "OMEGA(1,1)",
+        "param2": "THETA11",
+        "value": 0.022164
+      },
+      {
+        "param1": "OMEGA(1,1)",
+        "param2": "SIGMA(1,1)",
+        "value": -0.0345337
+      },
+      {
+        "param1": "OMEGA(1,1)",
+        "param2": "OMEGA(2,2)",
+        "value": -0.0937306
+      },
+      {
+        "param1": "OMEGA(1,1)",
+        "param2": "OMEGA(3,3)",
+        "value": 0.00345938
+      },
+      {
+        "param1": "OMEGA(2,2)",
+        "param2": "THETA1",
+        "value": 0.00636493
+      },
+      {
+        "param1": "OMEGA(2,2)",
+        "param2": "THETA2",
+        "value": -0.211997
+      },
+      {
+        "param1": "OMEGA(2,2)",
+        "param2": "THETA3",
+        "value": 0.154407
+      },
+      {
+        "param1": "OMEGA(2,2)",
+        "param2": "THETA4",
+        "value": -0.10477
+      },
+      {
+        "param1": "OMEGA(2,2)",
+        "param2": "THETA5",
+        "value": -0.161667
+      },
+      {
+        "param1": "OMEGA(2,2)",
+        "param2": "THETA6",
+        "value": 0.072818
+      },
+      {
+        "param1": "OMEGA(2,2)",
+        "param2": "THETA7",
+        "value": -0.0544727
+      },
+      {
+        "param1": "OMEGA(2,2)",
+        "param2": "THETA9",
+        "value": 0.135571
+      },
+      {
+        "param1": "OMEGA(2,2)",
+        "param2": "THETA11",
+        "value": 0.186325
+      },
+      {
+        "param1": "OMEGA(2,2)",
+        "param2": "SIGMA(1,1)",
+        "value": -0.000975016
+      },
+      {
+        "param1": "OMEGA(2,2)",
+        "param2": "OMEGA(1,1)",
+        "value": -0.0937306
+      },
+      {
+        "param1": "OMEGA(2,2)",
+        "param2": "OMEGA(3,3)",
+        "value": 0.0199874
+      },
+      {
+        "param1": "OMEGA(3,3)",
+        "param2": "THETA1",
+        "value": 0.100202
+      },
+      {
+        "param1": "OMEGA(3,3)",
+        "param2": "THETA2",
+        "value": 0.102136
+      },
+      {
+        "param1": "OMEGA(3,3)",
+        "param2": "THETA3",
+        "value": 0.00295599
+      },
+      {
+        "param1": "OMEGA(3,3)",
+        "param2": "THETA4",
+        "value": 0.0572418
+      },
+      {
+        "param1": "OMEGA(3,3)",
+        "param2": "THETA5",
+        "value": 0.0144413
+      },
+      {
+        "param1": "OMEGA(3,3)",
+        "param2": "THETA6",
+        "value": -0.0291054
+      },
+      {
+        "param1": "OMEGA(3,3)",
+        "param2": "THETA7",
+        "value": 0.155159
+      },
+      {
+        "param1": "OMEGA(3,3)",
+        "param2": "THETA9",
+        "value": -0.0809329
+      },
+      {
+        "param1": "OMEGA(3,3)",
+        "param2": "THETA11",
+        "value": -0.0842745
+      },
+      {
+        "param1": "OMEGA(3,3)",
+        "param2": "SIGMA(1,1)",
+        "value": -0.0767966
+      },
+      {
+        "param1": "OMEGA(3,3)",
+        "param2": "OMEGA(1,1)",
+        "value": 0.00345938
+      },
+      {
+        "param1": "OMEGA(3,3)",
+        "param2": "OMEGA(2,2)",
+        "value": 0.0199874
+      }
+    ]
+  }
+}

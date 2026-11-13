@@ -1,0 +1,9 @@
+{
+  "based_on": [],
+  "copied_from": "model/nonmem/PK/scm-001.mod",
+  "description": "base model",
+  "tags": [
+    "scm",
+    "base"
+  ]
+}

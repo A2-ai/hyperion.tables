@@ -1,0 +1,15 @@
+{
+  "start": "2026-11-13T18:41:25+00:00",
+  "model_name": "scm-001_age_v2",
+  "model_path": "model/nonmem/PK/scm/scm-001/forward_round2/scm-001_age_v2.mod",
+  "dataset_path": "../../../../../../data/PK/scm-001.csv",
+  "dataset_canonical_path": "/data/user-homes/brendan/projects/scm-demo/data/PK/scm-001.csv",
+  "dataset_hashes": {
+    "blake3": "9699efa2cb8e32a0c948f740385b91afc1abedbc8b76a584ca7eb416413a121e"
+  },
+  "model_hashes": {
+    "blake3": "eeaa9e4daf445a3b648c9b93b13feb59af4debc9c7f2278b7ef951c3b4db6544"
+  },
+  "slurm_partition": "cpu2mem4gb",
+  "parallel_cpus": 1
+}

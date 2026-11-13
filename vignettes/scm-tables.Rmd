@@ -3,8 +3,8 @@ title: "scm-tables"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{scm-tables}
-  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
 ---
 
 ```{r, include = FALSE}
@@ -18,10 +18,10 @@ knitr::opts_chunk$set(
 library(hyperion)
 library(hyperion.tables)
 
-project_dir <- system.file("extdata", "scm-vignette", package = "hyperion.tables")
+project_dir <- system.file("extdata", "scm-001", package = "hyperion.tables")
 options(hyperion.config_dir = project_dir)
 scm <- read_scm(
-  file.path(project_dir, "model", "nonmem", "PK", "scm", "scm-vignettescm.toml")
+  file.path(project_dir, "model", "nonmem", "PK", "scm", "scm-001scm.toml")
 )
 ```
 

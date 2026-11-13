@@ -1,9 +1,0 @@
-{
-  "based_on": [],
-  "copied_from": "model/nonmem/PK/scm-vignette.mod",
-  "description": "base model",
-  "tags": [
-    "scm",
-    "base"
-  ]
-}

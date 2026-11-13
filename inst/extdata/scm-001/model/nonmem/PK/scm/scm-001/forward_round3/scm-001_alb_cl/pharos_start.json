@@ -1,0 +1,15 @@
+{
+  "start": "2026-11-13T18:42:26+00:00",
+  "model_name": "scm-001_alb_cl",
+  "model_path": "model/nonmem/PK/scm/scm-001/forward_round3/scm-001_alb_cl.mod",
+  "dataset_path": "../../../../../../data/PK/scm-001.csv",
+  "dataset_canonical_path": "/data/user-homes/brendan/projects/scm-demo/data/PK/scm-001.csv",
+  "dataset_hashes": {
+    "blake3": "9699efa2cb8e32a0c948f740385b91afc1abedbc8b76a584ca7eb416413a121e"
+  },
+  "model_hashes": {
+    "blake3": "9f3812ae714c84eeb1b94d0669de768fd40701fdfdf117997ac6666e05e25ba1"
+  },
+  "slurm_partition": "cpu2mem4gb",
+  "parallel_cpus": 1
+}

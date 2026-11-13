@@ -1,0 +1,66 @@
+{
+  "start": "2026-11-13T18:44:24+00:00",
+  "end": "2026-11-13T18:44:34+00:00",
+  "exit_code": 0,
+  "runtime_ms": 9856,
+  "files_copied": [
+    "scm-001_alb_cl.grd",
+    ".gitignore",
+    "sdtab1",
+    "scm-001_alb_cl.sh",
+    "pharos_start.json",
+    "pharos_config.json",
+    "scm-001_alb_cl.shk",
+    "scm-001_alb_cl.ext",
+    "scm-001_alb_cl.xml",
+    "scm-001_alb_cl.lst",
+    "scm-001_alb_cl.mod"
+  ],
+  "output_files_rewrites": {
+    "sdtab1": "sdtab1"
+  },
+  "output_files_hashes": [
+    {
+      "filename": "scm-001_alb_cl.ext",
+      "hashes": {
+        "blake3": "d70589cb034eab6d5291e5c5fadbb9022d2d244ba9df2fa500276fc3245aa2fd"
+      }
+    },
+    {
+      "filename": "scm-001_alb_cl.grd",
+      "hashes": {
+        "blake3": "0693347313a8f797525aeddeb9d1bafa0a414d7f5f8c7dfd26290611946ed337"
+      }
+    },
+    {
+      "filename": "scm-001_alb_cl.lst",
+      "hashes": {
+        "blake3": "3ef5a43c750ff293542bfa961ebe23313ab68721459129ab67110dcc5ef79569"
+      }
+    },
+    {
+      "filename": "scm-001_alb_cl.mod",
+      "hashes": {
+        "blake3": "e4849eb9eaf0e8dc084645240a506a39d9c2af2892e5a2391d96dbba899658e3"
+      }
+    },
+    {
+      "filename": "scm-001_alb_cl.shk",
+      "hashes": {
+        "blake3": "1c1f2b3a97368c5382d2610e388211b2e90577417f8260af0fd9afaaf847ea61"
+      }
+    },
+    {
+      "filename": "scm-001_alb_cl.xml",
+      "hashes": {
+        "blake3": "518433afdc3049ea95cb12f5766db659140cc08ff02a86699fe92b6a6a03c8f9"
+      }
+    },
+    {
+      "filename": "sdtab1",
+      "hashes": {
+        "blake3": "27ee6e66be1c8302f077e91a765252cc4d5cd801dad0c992e76f61e64c30dec7"
+      }
+    }
+  ]
+}

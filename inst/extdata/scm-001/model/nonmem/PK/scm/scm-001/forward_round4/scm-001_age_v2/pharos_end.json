@@ -1,0 +1,68 @@
+{
+  "start": "2026-11-13T18:43:25+00:00",
+  "end": "2026-11-13T18:43:46+00:00",
+  "exit_code": 0,
+  "runtime_ms": 20083,
+  "files_copied": [
+    "scm-001_age_v2.shk",
+    ".gitignore",
+    "pharos_start.json",
+    "scm-001_age_v2.lst",
+    "sdtab1",
+    "pharos_config.json",
+    "scm-001_age_v2.mod",
+    "PRDERR",
+    "scm-001_age_v2.sh",
+    "scm-001_age_v2.grd",
+    "scm-001_age_v2.ext",
+    "OUTPUT",
+    "scm-001_age_v2.xml"
+  ],
+  "output_files_rewrites": {
+    "sdtab1": "sdtab1"
+  },
+  "output_files_hashes": [
+    {
+      "filename": "scm-001_age_v2.ext",
+      "hashes": {
+        "blake3": "1b9ecd31ba07d071b585f2cdcb95ab44b93793ea9777a7d28130e10d671fc2bb"
+      }
+    },
+    {
+      "filename": "scm-001_age_v2.grd",
+      "hashes": {
+        "blake3": "aa8516771253abc38a1998fa06611d5e465e4b903616f68f17e2d0af495a67fe"
+      }
+    },
+    {
+      "filename": "scm-001_age_v2.lst",
+      "hashes": {
+        "blake3": "da8cb74a09148d3109fad7d0af8e90af37532a130c694f8d8d299ded11a0ad8c"
+      }
+    },
+    {
+      "filename": "scm-001_age_v2.mod",
+      "hashes": {
+        "blake3": "cb9c33267033ab65d5eff1173d656a601165d326a8be26b8f7728ad6b780869d"
+      }
+    },
+    {
+      "filename": "scm-001_age_v2.shk",
+      "hashes": {
+        "blake3": "43767e496f1486aad2e4555a6731a1de6a6d0dbd64d223ddfde84e0274d5201a"
+      }
+    },
+    {
+      "filename": "scm-001_age_v2.xml",
+      "hashes": {
+        "blake3": "35958a3b9ade71a2cb40a371949494594a62984c1e2a8b8b45b69cf48f891f16"
+      }
+    },
+    {
+      "filename": "sdtab1",
+      "hashes": {
+        "blake3": "4c998c9c606b5380909965978940d0a9afc00da91da1200c173bb886764f6da1"
+      }
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "start": "2026-11-13T18:45:58+00:00",
+  "end": "2026-11-13T18:46:17+00:00",
+  "exit_code": 0,
+  "runtime_ms": 19288,
+  "files_copied": [
+    "scm-001_wt_cl.shk",
+    "pharos_config.json",
+    "scm-001_wt_cl.lst",
+    "scm-001_wt_cl.mod",
+    "scm-001_wt_cl.xml",
+    "PRDERR",
+    "scm-001_wt_cl.grd",
+    "OUTPUT",
+    "scm-001_wt_cl.sh",
+    "scm-001_wt_cl.ext",
+    ".gitignore",
+    "sdtab1",
+    "pharos_start.json"
+  ],
+  "output_files_rewrites": {
+    "sdtab1": "sdtab1"
+  },
+  "output_files_hashes": [
+    {
+      "filename": "scm-001_wt_cl.ext",
+      "hashes": {
+        "blake3": "5c72a88413f449efb75d31bc5b3f624bdb5f4340168c31d6be33f12d01043bbc"
+      }
+    },
+    {
+      "filename": "scm-001_wt_cl.grd",
+      "hashes": {
+        "blake3": "f3375f0bc9572d97ef64e34999b47b6a6a12766e1fa3c9b8b6d5e5917be0737a"
+      }
+    },
+    {
+      "filename": "scm-001_wt_cl.lst",
+      "hashes": {
+        "blake3": "e80c459e67b5042cfd03e92917293393cdb10d589567b0f9025b37ce0d864054"
+      }
+    },
+    {
+      "filename": "scm-001_wt_cl.mod",
+      "hashes": {
+        "blake3": "f0ce87a16fe943f4da16a21dbad64820f37a692e90e4790e943a34ab2cdb2d6e"
+      }
+    },
+    {
+      "filename": "scm-001_wt_cl.shk",
+      "hashes": {
+        "blake3": "abc11df7577d132234a8f60d73d9783d536eb505491b69f782017ca2f8a4eeec"
+      }
+    },
+    {
+      "filename": "scm-001_wt_cl.xml",
+      "hashes": {
+        "blake3": "df5a93cf792a39f6d3c057461e31e18760f32439ae7b355e55df74f08f053f12"
+      }
+    },
+    {
+      "filename": "sdtab1",
+      "hashes": {
+        "blake3": "a0a028f1fe3c95e3b66781988a501ce9219280af5c07de1e889166c1e1247bef"
+      }
+    }
+  ]
+}

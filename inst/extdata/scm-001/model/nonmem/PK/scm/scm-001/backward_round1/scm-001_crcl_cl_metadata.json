@@ -1,0 +1,11 @@
+{
+  "based_on": [
+    "model/nonmem/PK/scm/scm-001/forward_round5/scm-001_alb_cl.mod"
+  ],
+  "copied_from": "model/nonmem/PK/scm-001.mod",
+  "description": "drop CRCL_CL",
+  "tags": [
+    "scm",
+    "backward_round1"
+  ]
+}
