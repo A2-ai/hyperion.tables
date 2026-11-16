@@ -2,45 +2,39 @@
 % Please edit documentation in R/scm-spec.R
 \name{ScmSelectedOptions}
 \alias{ScmSelectedOptions}
-\title{How an SCM summary table shows the candidate each round selected}
+\title{Selected candidate display options for SCM summary tables}
 \usage{
 ScmSelectedOptions(column = TRUE, bold = FALSE, selected_only = FALSE)
 }
 \arguments{
 \item{column}{Logical. If TRUE (the default), the table has a Round
-Result column, which reads "added" or "dropped" on the selected
-candidate's row and is empty elsewhere. A table that shows no round's
-candidates has no result to report, so it has no such column.}
+Result column that reads "added" or "dropped" on the selected
+candidate's row. The column is omitted when the table shows no round
+candidates.}
 
 \item{bold}{Logical. If TRUE, the selected candidate's row is rendered in
 bold. Default \code{FALSE}.}
 
-\item{selected_only}{Logical. If TRUE, the table shows only the
-selected candidates, and no others, with the rounds grouped by
-direction. Default \code{FALSE} shows every candidate.}
+\item{selected_only}{Logical. If TRUE, the table shows only the selected
+candidates, with the rounds grouped by direction. Default \code{FALSE}.}
 }
 \description{
-\code{ScmSelectedOptions()} is what \code{\link[=scm_summary_spec]{scm_summary_spec()}} takes as \code{selected}.
-It is usually set with \code{\link[=set_spec_scm_selected]{set_spec_scm_selected()}}.
-Each round of an SCM process selects at most one candidate, the fit
-tagged \code{"selected"}: the covariate a forward round added, or the one a
-backward round dropped. The table marks it with a Round Result column
-(the default), with a bold row, or with both, and it can show the
-selected candidates alone. The settings combine freely.
+Controls how an SCM summary table shows the candidate each round
+selected: the covariate a forward round added, or the one a backward
+round dropped (the fit tagged \code{"selected"}). The settings can be
+combined. Usually set with \code{\link[=set_spec_scm_selected]{set_spec_scm_selected()}}.
 }
 \details{
-With \code{selected_only = TRUE} the table keeps the models that mattered:
-the base (or full) model, the working full and reduced covariate models,
-and in each round the candidate it selected, so a round that selected
-none shows no row. Since each round then has at most one row, the rounds are
-grouped by direction instead of sectioned one by one: the reference
-model, then the forward steps under "Forward", the working full model,
-the backward steps under "Backward", and the reduced covariate model.
-When no backward round dropped anything, the working full model says
-nothing the reduced covariate model does not, so it is left out too.
+With \code{selected_only = TRUE} the table keeps the milestones (the base or
+full model, the working full model and the reduced covariate model) and
+the selected candidate of each round. The rounds are then grouped by
+direction, under "Forward" and "Backward", instead of one section per
+round. The working full model is left out when no backward round
+dropped a covariate, since it then matches the reduced covariate model.
 }
 \section{Properties}{
 
+The following properties are available on a \code{ScmSelectedOptions} object:
 \itemize{
 \item \code{column} - Whether the table has a Round Result column.
 \item \code{bold} - Whether the selected candidate's row is bold.

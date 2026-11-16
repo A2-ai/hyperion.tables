@@ -41,6 +41,7 @@ articles = [
 		{ slug = "parameter-tables", label = "Parameter Tables" },
 		{ slug = "comparison-tables", label = "Comparison Tables" },
 		{ slug = "summary-tables", label = "Summary Tables" },
+		{ slug = "scm-tables", label = "SCM Tables" },
 		{ slug = "table-rendering", label = "Customizing Table Renders" },
 	] },
 ]
@@ -49,12 +50,15 @@ reference = [
 	{ label = "Spec Classes", collapsed = true, contents = [
 		"TableSpec",
 		"SummarySpec",
+		"ScmSummarySpec",
 		"SectionOptions",
 		"CIOptions",
 		"ParameterNameOptions",
+		"ScmSelectedOptions",
 	] },
 	{ label = "Spec Presets", collapsed = true, contents = [
 		"parameter_table_spec",
+		"scm_summary_spec",
 	] },
 	{ label = "Table Creation", collapsed = true, contents = [
 		"make_parameter_table",
@@ -83,6 +87,8 @@ reference = [
 		"get_spec_parameter_sections",
 		"get_spec_pvalue",
 		"get_spec_remove_unrun",
+		"get_spec_scm_rounds",
+		"get_spec_scm_selected",
 		"get_spec_section_filter",
 		"get_spec_sections",
 		"get_spec_sigfig",
@@ -107,6 +113,8 @@ reference = [
 		"set_spec_parameter_names",
 		"set_spec_pvalue",
 		"set_spec_remove_unrun",
+		"set_spec_scm_rounds",
+		"set_spec_scm_selected",
 		"set_spec_section_filter",
 		"set_spec_sections",
 		"set_spec_sigfig",

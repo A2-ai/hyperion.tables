@@ -144,7 +144,8 @@ rules for however many rounds the process ran. It keeps the fits tagged
   select, grouping the steps that remain under "Forward" and "Backward".
 - `rounds` picks the rounds the table shows, by name (`"forward_round1"`)
   or by direction (`"forward"`, `"backward"`). The base, working full and
-  reduced covariate models always show, and `rounds = NA` shows them alone.
+  reduced covariate models always show, and `rounds = "none"` shows them
+  alone.
 - The Description column shows what each fit added or dropped;
   `show_all_covariates = TRUE` adds the covariates its model has. Those
   come from the process record, so they need the lineage

@@ -7,7 +7,7 @@
 get_spec_scm_selected(spec, ...)
 }
 \arguments{
-\item{spec}{A ScmSummarySpec object, from \code{\link[=scm_summary_spec]{scm_summary_spec()}}.}
+\item{spec}{A ScmSummarySpec object.}
 
 \item{...}{Not used.}
 }

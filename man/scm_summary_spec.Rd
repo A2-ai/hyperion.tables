@@ -2,13 +2,13 @@
 % Please edit documentation in R/scm-spec.R
 \name{scm_summary_spec}
 \alias{scm_summary_spec}
-\title{Pre-configured ScmSummarySpec for a stepwise covariate modeling process}
+\title{Pre-configured ScmSummarySpec for an SCM run summary table}
 \usage{
 scm_summary_spec(
   title = NULL,
   show_all_covariates = FALSE,
   selected = ScmSelectedOptions(),
-  rounds = NULL,
+  rounds = "all",
   other_section_label = "Other"
 )
 }
@@ -16,105 +16,86 @@ scm_summary_spec(
 \item{title}{Table title. \code{NULL} (the default) gives a table with no
 title; pass a string to set one.}
 
-\item{show_all_covariates}{Logical. If TRUE, the Description column
-also lists the covariates each fit's model has, after what the fit
-added or dropped. Default \code{FALSE}.}
+\item{show_all_covariates}{Logical. If TRUE, the Description column also
+lists the covariates in each fit's model, after what the fit added or
+dropped. Default \code{FALSE}.}
 
-\item{selected}{A \code{\link[=ScmSelectedOptions]{ScmSelectedOptions()}} object: how the table shows the
-candidate each round selected: marked with a Round Result column or a
-bold row, or alone. The default has the Round Result column.}
+\item{selected}{A \code{\link[=ScmSelectedOptions]{ScmSelectedOptions()}} object controlling how the
+candidate each round selected is shown: marked with a Round Result
+column (the default) or a bold row, or shown alone. See
+\code{\link[=set_spec_scm_selected]{set_spec_scm_selected()}}.}
 
-\item{rounds}{The rounds the table shows, as a character vector of round
-names (\code{"forward_round1"}) and directions (\code{"forward"}, \code{"backward"});
-\code{NULL} (the default) for every round; or \code{NA} for none, which leaves
-only the milestones.}
+\item{rounds}{Rounds to show: \code{"all"} (the default) for every round; a
+character vector of round names (\code{"forward_round1"}) and directions
+(\code{"forward"}, \code{"backward"}); or \code{"none"} or \code{NULL} for no round, which
+leaves only the milestones. The milestones are always shown, and every
+row keeps the dOFV and p-value it has in the full table. See
+\code{\link[=set_spec_scm_rounds]{set_spec_scm_rounds()}}.}
 
-\item{other_section_label}{Section label for a model matching no round.}
+\item{other_section_label}{Section label for models matching no round.}
 }
 \value{
 A \link{ScmSummarySpec} object.
 }
 \description{
-\code{scm_summary_spec()} returns a \link{ScmSummarySpec} for the run summary table of
-an SCM process: the fits tagged \code{"scm"}, in one section per round, from
-the round tag pharos writes to each fit's metadata (\code{"base"} or \code{"full"},
-\code{"forward_round1"}, ..., \code{"working_full"}, \code{"reduced_covariate"}), in the
-order the process ran them. It does not need the lineage: the sections
-are worked out from the rounds of the lineage \code{\link[=apply_summary_spec]{apply_summary_spec()}} is
-given, as the rules you would write by hand with \code{\link[=set_spec_sections]{set_spec_sections()}},
-\code{"base" \%in\% tags ~ "Base model"}, \code{"forward_round1" \%in\% tags ~ "Forward round 1"}, ..., for however many rounds the process ran.
+\code{scm_summary_spec()} returns a \link{ScmSummarySpec} configured for the run
+summary table of a stepwise covariate modeling (SCM) process: the fits
+tagged \code{"scm"}, grouped into one section per round in the order the
+process ran them, with the columns Reference, Description, OFV, dOFV and
+p-value and no footnotes. The returned spec can be customized further
+with the \verb{set_spec_*()} modifiers.
 }
 \details{
-Every fit is based on the model its round tested against, so dOFV is the
-round's own; the working full and reduced covariate models are based on
-the reference fit, so theirs is against it. The columns are Reference,
-Description, OFV, dOFV and p-value. The backward steps get a p-value
-too, with the round's reference as the fuller model. The table has no
-footnotes. A \link{ScmSummarySpec} is a \link{SummarySpec}, so the \verb{set_spec_*()}
-modifiers customize it further.
+The sections are built when the spec is applied, from the round tags of
+the lineage passed to \code{\link[=apply_summary_spec]{apply_summary_spec()}} (\code{"base"} or \code{"full"},
+\code{"forward_round1"}, ..., \code{"working_full"}, \code{"reduced_covariate"}), so the
+spec does not take the lineage itself. Section rules set with
+\code{\link[=set_spec_sections]{set_spec_sections()}} replace the generated ones.
 
-The Description column shows each fit's description, which for an SCM
-fit is what it added or dropped: "add CRCL_CL". The milestones (the base
-or full model, the working full model and the reduced covariate model)
-add or drop nothing and their section already names them, so theirs is
-empty. \code{show_all_covariates = TRUE} also lists the covariates each fit's
-model has: "add CRCL_CL; covariates: WT_CL, CRCL_CL", and "covariates:
-WT_CL, CRCL_CL" for a milestone.
+Each fit is based on the model its round tested against, so dOFV and the
+p-value are those of its round. Backward steps get a p-value too, with
+the round's reference as the fuller model. The working full and reduced
+covariate models are based on the reference fit.
 
-The covariates a model has are not in its description or its metadata.
-They come from the SCM process record, which
-\code{hyperion::get_scm_lineage()} puts on each fit of the lineage it builds.
-A lineage from \code{hyperion::get_model_lineage()} has none, so for it
-\code{show_all_covariates = TRUE} adds nothing, with a warning.
-
-\code{selected}, a \code{\link[=ScmSelectedOptions]{ScmSelectedOptions()}}, picks how the table shows the
-candidate each round selected, the fit tagged \code{"selected"}. By default a
-Round Result column reads "added" or "dropped" on its row; \code{column = FALSE} leaves the column out. \code{bold = TRUE} renders its row in bold, and
-\code{selected_only = TRUE} shows it alone, with the other candidates left
-out and the rounds grouped by direction. \code{\link[=set_spec_scm_selected]{set_spec_scm_selected()}} sets
-the same on a spec already made.
-
-\code{rounds} picks the rounds the table shows, by name (\code{"forward_round1"})
-or by direction (\code{"forward"}, \code{"backward"}); the default shows them all.
-The milestones are not rounds, so they always show, and every row keeps
-the dOFV and p-value it has in the full table. \code{rounds = NA} shows no
-round at all, only the milestones. \code{\link[=set_spec_scm_rounds]{set_spec_scm_rounds()}} sets the same
-on a spec already made.
-
-Section rules set on the spec with \code{\link[=set_spec_sections]{set_spec_sections()}} replace the ones
-it would work out.
+The Description column shows what each fit added or dropped (e.g., "add
+CRCL_CL"). It is empty for the milestones (the base or full model, the
+working full model and the reduced covariate model), which their section
+already names. With \code{show_all_covariates = TRUE} it also lists the
+covariates in each fit's model (e.g., "add CRCL_CL; covariates: WT_CL,
+CRCL_CL"). The covariates come from the SCM process record, so this needs
+a lineage from \code{hyperion::get_scm_lineage()}. For a lineage from
+\code{hyperion::get_model_lineage()} nothing is added and a warning is raised.
 }
 \examples{
 \dontrun{
-# From the process record: descriptions and each model's covariates
+# From the SCM process record
 scm <- hyperion::read_scm("model/nonmem/scm/run001scm.toml")
 scm |>
   hyperion::get_scm_lineage() |>
   apply_summary_spec(scm_summary_spec(title = "Covariate search")) |>
   make_summary_table()
 
-# From the fits' metadata, as any other lineage
+# From the fits' metadata, like any other lineage
 hyperion::get_model_lineage() |>
   apply_summary_spec(scm_summary_spec()) |>
   make_summary_table()
 
-# Also list the covariates each fit's model has
+# List the covariates in each fit's model
 scm_summary_spec(show_all_covariates = TRUE)
 
-# The candidate each round selected: also in bold, or without the Round
-# Result column
+# Show the selected candidates in bold, or without the Round Result column
 scm_summary_spec(selected = ScmSelectedOptions(bold = TRUE))
 scm_summary_spec(selected = ScmSelectedOptions(column = FALSE))
 
 # Show only some rounds, or only the milestones
 scm_summary_spec(rounds = c("forward_round1", "forward_round2"))
 scm_summary_spec(rounds = "backward")
-scm_summary_spec(rounds = NA)
+scm_summary_spec(rounds = "none")
 
-# Show only the selected candidates: the models that mattered
+# Show only the selected candidates
 scm_summary_spec(selected = ScmSelectedOptions(selected_only = TRUE))
 
-# The same on a spec already made
+# Set the same options on an existing spec
 scm_summary_spec() |> set_spec_scm_selected(selected_only = TRUE)
 
 # Customize further with modifiers

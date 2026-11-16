@@ -76,7 +76,7 @@ apply_summary_spec <- function(tree, spec) {
     rlang::abort("tree must contain at least one model.")
   }
 
-  # An SCM spec sections the rounds this lineage has
+  # Add SCM round sections
   spec <- scm_spec_sections(spec, tree)
 
   metadata_df <- build_metadata_df(tree) |>
@@ -94,7 +94,7 @@ apply_summary_spec <- function(tree, spec) {
   needs_dofv <- taken$value
   df <- taken$df
 
-  # An SCM spec's own rows: descriptions, Round Result, bold flag, path
+  # Apply SCM row settings
   df <- scm_summary_rows(df, spec, tree)
 
   # Evaluate section rules (before column trim so rule-referenced cols available)
@@ -359,8 +359,8 @@ select_output_columns <- function(df, spec, needs_dofv) {
       col_order <- append(col_order, "df", after = pvalue_idx)
     }
   }
-  # Preserve section column for grouped rendering, and an SCM spec's Round
-  # Result column and bold flag
+  # Preserve section column for grouped rendering, and the SCM round result
+  # column and bold flag
   for (col in c("round_result", "section", ".bold")) {
     if (col %in% names(df) && !col %in% col_order) {
       col_order <- c(col_order, col)
@@ -700,11 +700,9 @@ calculate_dofv <- function(df, spec) {
         # The model adds parameters: its OFV drop is the LRT statistic.
         df_val <- df_calc
         pvalue <- lrt_pvalue(-dofv, df_val)
-      } else if (
-        !is.na(df_calc) && df_calc < 0 && is_scm_summary_spec(spec)
-      ) {
-        # The model drops parameters, which an SCM backward step tests: the
-        # parent is the fuller model, so its OFV drop is the statistic.
+      } else if (!is.na(df_calc) && df_calc < 0 && is_scm_summary_spec(spec)) {
+        # SCM backward step: the parent is the fuller model, so its OFV
+        # drop is the LRT statistic
         df_val <- -df_calc
         pvalue <- lrt_pvalue(dofv, df_val)
       }
@@ -960,7 +958,7 @@ hyperion_summary_table <- function(data, spec) {
     bold_locs <- c(bold_locs, "row_groups")
   }
 
-  # Rows an SCM spec flagged as bold; the flag itself is not shown
+  # Bold rows flagged by an SCM spec; hide the flag column
   bold_rows <- integer(0)
   if (".bold" %in% names(data)) {
     bold_rows <- which(data$.bold)

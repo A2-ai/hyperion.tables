@@ -2,42 +2,29 @@
 
 ## New features
 
-- `scm_summary_spec()` returns a `SummarySpec` preset for the run summary
-  table of a stepwise covariate modeling process: the fits tagged `"scm"`,
-  in a section per round from the round tag pharos writes to each fit's
-  metadata (`"base"`, `"forward_round1"`, ..., `"working_full"`,
-  `"reduced_covariate"`), in the order the process ran them, with
-  Reference, Description, OFV, dOFV and p-value (for the backward steps
-  too). It takes no lineage: the sections are worked out from the lineage
-  `apply_summary_spec()` is given, `hyperion::get_scm_lineage()` or
-  `hyperion::get_model_lineage()`. It returns a `ScmSummarySpec`, a child
-  class of `SummarySpec` as `SummarySpec` is of `BaseSpec`. Everything an
-  SCM table adds to a run summary belongs to that class, so an ordinary
-  `SummarySpec` never gets it; `SummarySpec()` and the `set_spec_*()`
-  modifiers are unchanged, and still customize the spec it returns.
-  - The Description column shows what each fit added or dropped ("add
-    CRCL_CL"). `show_all_covariates = TRUE` also lists the covariates its
-    model has ("add CRCL_CL; covariates: WT_CL, CRCL_CL"). The covariates
-    come from the SCM process record, on the lineage
-    `hyperion::get_scm_lineage()` builds. The milestones (the base, working
-    full and reduced covariate models) do not repeat their section's name
-    there: they show nothing, or only their covariates.
-  - `set_spec_scm_selected()` sets how the table shows the candidate each
-    round selected, as does `selected`, which takes the
-    `ScmSelectedOptions()` the modifier builds; `get_spec_scm_selected()`
-    reads it. By default the table has a Round Result column reading
-    "added" or "dropped" on its row; `column = FALSE` leaves it out.
-    `bold = TRUE` renders its row in bold. `selected_only = TRUE` shows
-    only the milestones and each round's selected candidate, with the
-    rounds grouped into "Forward" and "Backward" sections, leaving out the
-    working full model when no backward round dropped anything. The
-    settings combine.
-  - `set_spec_scm_rounds()` picks the rounds the table shows, by name
-    (`"forward_round1"`) or by direction (`"forward"`, `"backward"`), as
-    does `rounds`; `get_spec_scm_rounds()` reads them. The milestones
-    always show, and `rounds = NA` shows them alone. A round is left out
-    after dOFV and the p-value are computed, so every row keeps the values
-    it has in the full table.
+- `scm_summary_spec()` returns a `ScmSummarySpec` preset for the run summary
+  table of a stepwise covariate modeling (SCM) process: the fits tagged
+  `"scm"`, in a section per round, with Reference, Description, OFV, dOFV
+  and p-value columns (p-values for the backward steps too). Apply it to the
+  lineage from `hyperion::get_scm_lineage()` or
+  `hyperion::get_model_lineage()`.
+- `ScmSummarySpec` is a child class of `SummarySpec` that holds the SCM
+  table settings. `SummarySpec()` and the `set_spec_*()` modifiers are
+  unchanged and also work on it.
+- `show_all_covariates = TRUE` lists the covariates in each fit's model in
+  the Description column ("add CRCL_CL; covariates: WT_CL, CRCL_CL"). It
+  needs the lineage from `hyperion::get_scm_lineage()`.
+- `set_spec_scm_selected()` and `get_spec_scm_selected()` control how the
+  candidate each round selected is shown, through `ScmSelectedOptions()`: a
+  Round Result column reading "added" or "dropped" (the default), a bold
+  row, or only the selected candidates with the rounds grouped under
+  "Forward" and "Backward".
+- `set_spec_scm_rounds()` and `get_spec_scm_rounds()` choose the rounds
+  shown, by name (`"forward_round1"`) or by direction (`"forward"`,
+  `"backward"`). `"all"` (the default) shows every round; `"none"`, or
+  `NULL`, shows only the base, working full and reduced covariate models.
+  Every row keeps the dOFV and p-value it has in the full table.
+- New vignette: `vignette("scm-tables")`.
 
 ## Bug fixes
 

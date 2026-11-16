@@ -48,7 +48,7 @@ Use the `rounds` argument to control which rounds appear. Name the rounds
 to show, here the first forward round (The base, working full and reduced covariate models always show):
 
 ```{r}
-spec <- scm_summary_spec(rounds = NULL)
+spec <- scm_summary_spec(rounds = "forward_round1")
 
 lineage |>
   apply_summary_spec(spec) |>
@@ -133,11 +133,11 @@ lineage |>
 
 ## Milestones Only
 
-`rounds = NA` shows no round at all, only the base, working full and
-reduced covariate models:
+`rounds = "none"`, or `NULL`, shows no round at all, only the base, working
+full and reduced covariate models:
 
 ```{r}
-spec <- scm_summary_spec(rounds = NA)
+spec <- scm_summary_spec(rounds = "none")
 
 lineage |>
   apply_summary_spec(spec) |>

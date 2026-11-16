@@ -7,17 +7,17 @@
 get_spec_scm_rounds(spec, ...)
 }
 \arguments{
-\item{spec}{A ScmSummarySpec object, from \code{\link[=scm_summary_spec]{scm_summary_spec()}}.}
+\item{spec}{A ScmSummarySpec object.}
 
 \item{...}{Not used.}
 }
 \value{
-Character vector of round names and directions, NULL, or NA.
+Character vector: \code{"all"}, \code{"none"}, or round names and directions.
 }
 \description{
-\code{get_spec_scm_rounds()} returns the rounds the table shows: NULL when
-it shows every round, NA when it shows only the milestones. Operates on
-\link{ScmSummarySpec} only.
+\code{get_spec_scm_rounds()} returns the rounds the table shows: \code{"all"} for
+every round, or \code{"none"} for only the milestones.
+Operates on \link{ScmSummarySpec} only.
 }
 \examples{
 spec <- scm_summary_spec() |>

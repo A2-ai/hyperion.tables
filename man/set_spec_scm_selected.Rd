@@ -13,29 +13,27 @@ set_spec_scm_selected(
 )
 }
 \arguments{
-\item{spec}{A ScmSummarySpec object, from \code{\link[=scm_summary_spec]{scm_summary_spec()}}.}
+\item{spec}{A ScmSummarySpec object.}
 
 \item{...}{Not used.}
 
-\item{column}{Logical. If TRUE, the table has a Round Result column,
-which reads "added" or "dropped" on the selected candidate's row.}
+\item{column}{Logical. If TRUE, the table has a Round Result column that
+reads "added" or "dropped" on the selected candidate's row.}
 
 \item{bold}{Logical. If TRUE, the selected candidate's row is rendered in
 bold.}
 
-\item{selected_only}{Logical. If TRUE, the table shows only the
-selected candidates, and no others, with the rounds grouped by
-direction.}
+\item{selected_only}{Logical. If TRUE, the table shows only the selected
+candidates, with the rounds grouped by direction.}
 }
 \value{
 Modified spec.
 }
 \description{
-\code{set_spec_scm_selected()} sets how the table of an SCM spec shows the
-candidate each round selected: marked with a Round Result column (on
-unless turned off), with its row in bold, or alone, without the other
-candidates. It builds the spec's \code{\link[=ScmSelectedOptions]{ScmSelectedOptions()}}; a setting not
-given keeps its value.
+\code{set_spec_scm_selected()} sets how the table shows the candidate each
+round selected: marked with a Round Result column, with its row in bold,
+or shown alone without the other candidates. Settings that are not given
+keep their current value. See \code{\link[=ScmSelectedOptions]{ScmSelectedOptions()}} for details.
 Operates on \link{ScmSummarySpec} only.
 }
 \examples{

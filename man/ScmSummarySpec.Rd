@@ -7,48 +7,45 @@
 ScmSummarySpec(
   show_all_covariates = FALSE,
   selected = ScmSelectedOptions(),
-  rounds = NULL,
+  rounds = "all",
   other_section_label = "Other",
   ...
 )
 }
 \arguments{
-\item{show_all_covariates}{Logical. If TRUE, the Description column
-also lists the covariates each fit's model has, after what the fit
-added or dropped. Default \code{FALSE}.}
+\item{show_all_covariates}{Logical. If TRUE, the Description column also
+lists the covariates in each fit's model, after what the fit added or
+dropped. Default \code{FALSE}.}
 
-\item{selected}{A \code{\link[=ScmSelectedOptions]{ScmSelectedOptions()}} object: how the table shows the
-candidate each round selected. Prefer \code{\link[=set_spec_scm_selected]{set_spec_scm_selected()}} in a
-pipe for user-facing code.}
+\item{selected}{A \code{\link[=ScmSelectedOptions]{ScmSelectedOptions()}} object controlling how the
+candidate each round selected is shown. Prefer
+\code{\link[=set_spec_scm_selected]{set_spec_scm_selected()}} in a pipe for user-facing code.}
 
-\item{rounds}{The rounds the table shows, as a character vector of round
-names (\code{"forward_round1"}) and directions (\code{"forward"}, \code{"backward"});
-\code{NULL} (the default) for every round; or \code{NA} for none, which leaves
-only the milestones. Prefer \code{\link[=set_spec_scm_rounds]{set_spec_scm_rounds()}} in a pipe for
-user-facing code.}
+\item{rounds}{Rounds to show: \code{"all"} (the default) for every round; a
+character vector of round names (\code{"forward_round1"}) and directions
+(\code{"forward"}, \code{"backward"}); or \code{"none"} or \code{NULL} for no round, which
+leaves only the milestones. Prefer \code{\link[=set_spec_scm_rounds]{set_spec_scm_rounds()}} in a pipe
+for user-facing code.}
 
-\item{other_section_label}{Section label for a model matching no round.}
+\item{other_section_label}{Section label for models matching no round.}
 
-\item{...}{Arguments of \code{\link[=SummarySpec]{SummarySpec()}}. Those not given take the SCM
-table's defaults: no title, the fits tagged \code{"scm"}, the columns
+\item{...}{Arguments passed to \code{\link[=SummarySpec]{SummarySpec()}}. Those not given take the
+SCM table defaults: no title, the fits tagged \code{"scm"}, the columns
 Reference, Description, OFV, dOFV and p-value, and no footnotes.}
 }
 \description{
-\code{ScmSummarySpec} is the \link{SummarySpec} of a stepwise covariate modeling
-table. It is a child class of \code{SummarySpec}, as \code{SummarySpec} is of
-\code{BaseSpec}: everything that takes a \code{SummarySpec} takes it, including
-\code{\link[=apply_summary_spec]{apply_summary_spec()}} and the \verb{set_spec_*()} modifiers, and it adds the
-settings only an SCM table has. Only a \code{ScmSummarySpec} gets the SCM
-behavior (a section per round, Round Result column, bold rows, only
-the selected candidates, p-values for backward steps), and the SCM
-functions,
-\code{\link[=set_spec_scm_selected]{set_spec_scm_selected()}} and \code{\link[=get_spec_scm_selected]{get_spec_scm_selected()}}, accept nothing
-else, so an ordinary run summary cannot pick it up by accident. Applied
-to a lineage with no SCM fits, it is an error.
+\code{ScmSummarySpec} is a child class of \link{SummarySpec} for the run summary
+table of a stepwise covariate modeling (SCM) process. It works with
+everything that takes a \code{SummarySpec}, including \code{\link[=apply_summary_spec]{apply_summary_spec()}}
+and the \verb{set_spec_*()} modifiers, and adds the settings specific to an
+SCM table: a section per round, the Round Result column, bold rows for
+the selected candidates, a choice of rounds, and p-values for backward
+steps. The SCM modifiers, \code{\link[=set_spec_scm_selected]{set_spec_scm_selected()}} and
+\code{\link[=set_spec_scm_rounds]{set_spec_scm_rounds()}}, accept only a \code{ScmSummarySpec}. Applying one to
+a lineage with no SCM fits is an error.
 }
 \details{
-\code{\link[=scm_summary_spec]{scm_summary_spec()}} is the usual way to make one and describes what the
-table shows.
+Use \code{\link[=scm_summary_spec]{scm_summary_spec()}} to create one.
 }
 \examples{
 spec <- ScmSummarySpec(show_all_covariates = TRUE)
